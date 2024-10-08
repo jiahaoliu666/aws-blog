@@ -6,3 +6,10 @@ git commit -m "v1"
 git push -u origin main
 ---
 
+我現在要使用next.js、AWS SDK for JavaScript v3完成一個專案：
+1.在lambda使用puppeteer爬取aws blog的文章
+2.將爬取到的檔案儲存到dynamodb
+3.將儲存到dyanmodb的數據返回給前端
+4.使用eventbridge每小時調用lambda
+5.以上需求除了前端UI之外都是使用AWS SDK for JavaScript v3完成的
+根據以上需求，實際該如何實現，給我完整步驟，用繁體回答

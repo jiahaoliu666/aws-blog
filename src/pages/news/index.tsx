@@ -1,58 +1,25 @@
 import React, { useEffect, useState } from 'react';  
-import { ArrowUp } from 'lucide-react';  
-import { SearchField, SwitchField, Pagination } from "@aws-amplify/ui-react";  
+import { SwitchField, Pagination } from "@aws-amplify/ui-react";  
 import "@aws-amplify/ui-react/styles.css";  
-
-interface Article {  
-  title: string;  
-  description: string;  
-  info?: string;  
-  isFavorite: boolean;  
-  createdAt: string;  
-  author: string;  
-  link: string;  
-}  
+import useFetchNews from '../../hooks/useFetchNews';  
+import ArticleCard from '../../components/ArticleCard';  
+import BlogSearch from '../../components/BlogSearch';  
+import { News } from '../../dynamoDB/newsType';  
+import { ArrowUp } from 'lucide-react';  
 
 const articlesPerPage = 12;  
 
 const NewsPage: React.FC = () => {  
-  const [articles, setArticles] = useState<Article[]>([]);  
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);  
-  const [currentArticles, setCurrentArticles] = useState<Article[]>([]);  
+  const articles = useFetchNews();  
+  const [filteredArticles, setFilteredArticles] = useState<News[]>([]);  
+  const [currentArticles, setCurrentArticles] = useState<News[]>([]);  
   const [currentPage, setCurrentPage] = useState(1);  
   const [totalPages, setTotalPages] = useState(0);  
   const [gridView, setGridView] = useState<boolean>(false);  
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);  
   const [showFavorites, setShowFavorites] = useState<boolean>(false);  
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");  
-  const [searchValue, setSearchValue] = useState<string>("");  
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);  
-
-  useEffect(() => {  
-    const fetchArticles = async () => {  
-      try {  
-        const response = await fetch('/api/news');  
-        if (!response.ok) throw new Error('Network response was not ok');  
-        const data = await response.json();  
-
-        const articlesWithDefaults: Article[] = data.map((article: any) => ({  
-          title: article.title,  
-          description: article.description,  
-          info: article.info || '',  
-          isFavorite: false,  
-          createdAt: article.createdAt || new Date().toISOString(),  
-          author: article.author || '未知',  
-          link: article.link || '#',  
-        }));  
-
-        setArticles(articlesWithDefaults);  
-      } catch (error) {  
-        console.error('獲取文章時發生錯誤:', error);  
-      }  
-    };  
-
-    fetchArticles();  
-  }, []);  
 
   useEffect(() => {  
     let updatedArticles = [...articles];  
@@ -61,33 +28,13 @@ const NewsPage: React.FC = () => {
       updatedArticles = updatedArticles.filter(article => article.isFavorite);  
     }  
 
-    if (searchValue) {  
-      updatedArticles = updatedArticles.filter(article =>  
-        article.title.toLowerCase().includes(searchValue.toLowerCase())  
-      );  
-    }  
-
-    // 用info中的日期排序  
-    const dateRegex = /(\d{4}年\d{1,2}月\d{1,2}日)/;  
-    updatedArticles.sort((a, b) => {  
-      const aDateMatch = a.info ? a.info.match(dateRegex) : null;  
-      const bDateMatch = b.info ? b.info.match(dateRegex) : null;  
-
-      const aDate = aDateMatch ? new Date(aDateMatch[0].replace(/[年月]/g, '-').replace(/日/, '')) : new Date(0);  
-      const bDate = bDateMatch ? new Date(bDateMatch[0].replace(/[年月]/g, '-').replace(/日/, '')) : new Date(0);  
-
-      return sortOrder === "newest"  
-        ? bDate.getTime() - aDate.getTime()  
-        : aDate.getTime() - bDate.getTime();  
-    });  
-
     setFilteredArticles(updatedArticles);  
     setTotalPages(Math.ceil(updatedArticles.length / articlesPerPage));  
 
     if (currentPage > Math.ceil(updatedArticles.length / articlesPerPage)) {  
       setCurrentPage(Math.ceil(updatedArticles.length / articlesPerPage) || 1);  
     }  
-  }, [articles, showFavorites, searchValue, sortOrder, currentPage]);  
+  }, [articles, showFavorites, sortOrder, currentPage]);  
 
   useEffect(() => {  
     const startIndex = (currentPage - 1) * articlesPerPage;  
@@ -114,80 +61,14 @@ const NewsPage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });  
   };  
 
-  useEffect(() => {  
-    const handleKeyDown = (event: KeyboardEvent) => {  
-      switch (event.key) {  
-        case 'ArrowUp':  
-          scrollToTop();  
-          break;  
-        case 'ArrowRight':  
-          handlePageChange(currentPage + 1);  
-          break;  
-        case 'ArrowLeft':  
-          handlePageChange(currentPage - 1);  
-          break;  
-        default:  
-          break;  
-      }  
-    };  
-
-    window.addEventListener('keydown', handleKeyDown);  
-
-    return () => {  
-      window.removeEventListener('keydown', handleKeyDown);  
-    };  
-  }, [currentPage, totalPages]);  
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {  
-    setSearchValue(e.target.value);  
-  };  
-
-  const toggleFavorite = (article: Article) => {  
+  const toggleFavorite = (article: News) => {  
     const updatedArticles = [...articles];  
     const originalIndex = articles.findIndex((a) => a.title === article.title);  
     if (originalIndex !== -1) {  
       updatedArticles[originalIndex].isFavorite = !updatedArticles[originalIndex].isFavorite;  
-      setArticles(updatedArticles);  
+      setFilteredArticles(updatedArticles);  
     }  
   };  
-
-  const renderArticleCard = (article: Article, index: number) => (  
-    <div  
-      key={index}  
-      className={`w-full ${gridView ? "h-70" : "h-auto"} rounded-lg shadow-md p-4 cursor-pointer transition duration-200 ${isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-white hover:bg-gray-100"} mt-4`}>  
-      <a  
-        href={article.link || '#'}  
-        target="_blank"  
-        rel="noopener noreferrer"  
-        className={`text-xl font-semibold mb-2 block ${isDarkMode ? "text-yellow-400" : "text-blue-800"} hover:text-blue-500 hover:underline transition-colors duration-200`}>  
-        {gridView  
-          ? (article.title.length > 30 ? article.title.substring(0, 30) + '...' : article.title)  
-          : article.title}  
-      </a>  
-      <p className={`mb-4 ${isDarkMode ? "text-gray-400" : "text-gray-700"}`}>  
-        {article.info}  
-      </p>  
-      <p className={`mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>  
-        {gridView ? (article.description.substring(0, 80) + '...') : article.description}  
-      </p>  
-      <button  
-        onClick={(e) => {  
-          e.stopPropagation();  
-          toggleFavorite(article);  
-        }}  
-        className={`text-white px-4 py-1 rounded transition duration-200 ${article.isFavorite ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}`}>  
-        {article.isFavorite ? "已收藏" : "收藏"}  
-      </button>  
-    </div>  
-  );  
-
-  const latestUpdateDate = filteredArticles.length > 0  
-    ? filteredArticles.reduce((latest, article) => {  
-        const dateMatch = article.info ? article.info.match(/(\d{4}年\d{1,2}月\d{1,2}日)/) : null;  
-        const articleDate = dateMatch ? new Date(dateMatch[0].replace(/[年月]/g, '-').replace(/日/, '')) : new Date(0);  
-        return articleDate > new Date(latest) ? articleDate.toISOString() : latest;  
-      }, new Date(0).toISOString())  
-    : "無資料";  
 
   return (  
     <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>  
@@ -230,23 +111,27 @@ const NewsPage: React.FC = () => {
           </div>  
           <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>  
             文章數量: {filteredArticles.length}  
-            <span className="ml-4">最近更新日期: {new Date(latestUpdateDate).toLocaleDateString("zh-TW")}</span>  
           </div>  
         </div>  
 
-        <SearchField  
-          placeholder="搜尋文章"  
-          label="搜尋"  
-          labelHidden  
-          value={searchValue}  
-          onChange={handleSearch}  
-          hasSearchButton={false}  
-          hasSearchIcon={true}  
-          className="mb-6"  
+        <BlogSearch   
+          articles={filteredArticles}   
+          setFilteredArticles={setFilteredArticles}   
+          isDarkMode={isDarkMode}   
         />  
+
         <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"}`}>  
           {currentArticles.length > 0 ? (  
-            currentArticles.map((article, index) => renderArticleCard(article, index))  
+            currentArticles.map((article, index) => (  
+              <ArticleCard  
+                key={index}  
+                article={article}  
+                index={index}  
+                gridView={gridView}  
+                isDarkMode={isDarkMode}  
+                toggleFavorite={toggleFavorite}  
+              />  
+            ))  
           ) : (  
             <p className="text-center text-gray-500 col-span-full">未找到符合條件的文章，請嘗試不同的搜尋條件！</p>  
           )}  

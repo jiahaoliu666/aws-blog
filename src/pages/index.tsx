@@ -1,3 +1,4 @@
+// src/pages/index.tsx
 import React from 'react';  
 import Link from 'next/link';  
 
@@ -6,7 +7,7 @@ const Home: React.FC = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-200">  
       <h1 className="text-4xl font-bold text-center mb-6 text-gray-800">歡迎來到 AWS Blog</h1>  
       <p className="text-lg text-center mb-4 text-gray-700">  
-        這是一個專為AWS文章而設的閱讀平台。在這裡，您可以輕鬆找到、收藏和管理您的文章。  
+        這是一個專為 AWS 文章而設的閱讀平台。在這裡，您可以輕鬆找到、收藏和管理您的文章。  
       </p>  
       <Link href="/news" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200">  
         開始閱讀文章  

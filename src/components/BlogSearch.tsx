@@ -1,17 +1,10 @@
 // src/components/BlogSearch.tsx  
 import React, { useState } from 'react';  
-
-interface Article {  
-  title: string;  
-  content: string;  
-  tags?: string[];  
-  isFavorite: boolean;  
-  createdAt: string;  
-}  
+import { News } from '../dynamoDB/newsTpye';   
 
 interface BlogSearchProps {  
-  articles: Article[];  
-  setFilteredArticles: React.Dispatch<React.SetStateAction<Article[]>>;  
+  articles: News[];  
+  setFilteredArticles: React.Dispatch<React.SetStateAction<News[]>>;  
   isDarkMode: boolean;   
 }  
 
@@ -22,7 +15,7 @@ const BlogSearch: React.FC<BlogSearchProps> = ({ articles, setFilteredArticles, 
     const term = event.target.value;  
     setSearchTerm(term);  
     const filtered = articles.filter((article) =>   
-      article.title.includes(term) || article.content.includes(term)  
+      article.title.includes(term) // 使用 title 進行搜尋  
     );  
     setFilteredArticles(filtered);  
   };  
@@ -34,7 +27,7 @@ const BlogSearch: React.FC<BlogSearchProps> = ({ articles, setFilteredArticles, 
         placeholder="搜尋文章..."  
         value={searchTerm}  
         onChange={handleSearch}  
-        className={`border rounded p-2 w-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-900'}`} // 適應深色模式  
+        className={`border rounded p-2 w-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-900'}`}  
       />  
     </div>  
   );  
