@@ -1,29 +1,22 @@
 import { useEffect, useState } from 'react';  
-import { News } from '@/dynamoDB/newsType';  
+import { News } from '../dynamoDB/newsType';  
 
 const useFetchNews = () => {  
   const [articles, setArticles] = useState<News[]>([]);  
 
   useEffect(() => {  
     const fetchArticles = async () => {  
-      try {  
-        const response = await fetch('/api/news'); // 使用 Next.js API 路由  
-        if (!response.ok) throw new Error('Network response was not ok');  
-        const data = await response.json();  
+      // 假設這裡是從 API 獲取文章的邏輯  
+      const response = await fetch('/api/news');  
+      const data: News[] = await response.json();  
 
-        const articlesWithDefaults: News[] = data.map((article: any) => ({  
-          title: article.title,  
-          description: article.description,  
-          info: article.info || '',  
-          isFavorite: false,  
-          author: article.author || '未知',  
-          link: article.link || '#',  
-        }));  
+      // 確保每篇文章都有 isFavorite 屬性  
+      const initializedArticles = data.map(article => ({  
+        ...article,  
+        isFavorite: article.isFavorite ?? false, // 如果沒有 isFavorite，則設置為 false  
+      }));  
 
-        setArticles(articlesWithDefaults);  
-      } catch (error) {  
-        console.error('獲取文章時發生錯誤:', error);  
-      }  
+      setArticles(initializedArticles);  
     };  
 
     fetchArticles();  
