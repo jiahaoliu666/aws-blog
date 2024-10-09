@@ -1,10 +1,10 @@
+// src/pages/news/index.tsx  
 import React, { useEffect, useState } from 'react';  
-import { Pagination as AmplifyPagination } from "@aws-amplify/ui-react";  
-import "@aws-amplify/ui-react/styles.css";  
 import useFetchNews from '../../hooks/useFetchNews';  
-import NewsCard from '../../components/NewsCard';  
-import BlogSearch from '../../components/BlogSearch';  
-import NewsFilters from '../../components/NewsFilters';  
+import NewsCard from '../../components/news/NewsCard';  
+import BlogSearch from '../../components/news/NewsBlogSearch';  
+import NewsFilters from '../../components/news/NewsFilters';  
+import Pagination from '../../components/Pagination';  
 import { News } from '../../dynamoDB/newsType';  
 import { ArrowUp } from 'lucide-react';  
 
@@ -37,26 +37,24 @@ const NewsPage: React.FC = () => {
       updatedArticles = updatedArticles.filter(article => article.isFavorite);  
     }  
 
-    // 根據日期篩選範圍  
     if (startDate || endDate) {  
       updatedArticles = updatedArticles.filter(article => {  
-        const dateFromInfo = extractDateFromInfo(article.info); // 使用 info 提取日期  
+        const dateFromInfo = extractDateFromInfo(article.info);  
         const start = startDate ? new Date(startDate) : null;  
         const end = endDate ? new Date(endDate) : null;  
 
         if (dateFromInfo) {  
           const isAfterStart = start ? dateFromInfo >= start : true;  
           const isBeforeEnd = end ? dateFromInfo <= end : true;  
-          return isAfterStart && isBeforeEnd; // 確保在範圍內  
+          return isAfterStart && isBeforeEnd;  
         }  
-        return false; // 未找到日期時不包括該文章  
+        return false;  
       });  
     }  
 
-    // 根據日期排序  
     updatedArticles.sort((a, b) => {  
-        const dateA = extractDateFromInfo(a.info); // 使用 info 提取日期  
-        const dateB = extractDateFromInfo(b.info); // 使用 info 提取日期  
+        const dateA = extractDateFromInfo(a.info);  
+        const dateB = extractDateFromInfo(b.info);  
 
         if (dateA && dateB) {  
             return sortOrder === "newest"   
@@ -94,7 +92,7 @@ const NewsPage: React.FC = () => {
   const toggleFavorite = (article: News) => {  
     const updatedArticles = filteredArticles.map((art) => {  
       if (art.article_id === article.article_id) {  
-        return { ...art, isFavorite: !art.isFavorite }; // 切換 isFavorite  
+        return { ...art, isFavorite: !art.isFavorite };  
       }  
       return art;   
     });  
@@ -103,19 +101,17 @@ const NewsPage: React.FC = () => {
   };  
 
   const extractDateFromInfo = (info: string): Date | null => {  
-    // 使用正則表達式提取日期，格式為 "2024年10月8日"  
     const dateMatch = info.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);  
     if (dateMatch) {  
         const year = parseInt(dateMatch[1], 10);  
-        const month = parseInt(dateMatch[2], 10) - 1; // 月份從 0 開始  
+        const month = parseInt(dateMatch[2], 10) - 1;  
         const day = parseInt(dateMatch[3], 10);  
         const date = new Date(year, month, day);  
-        return isNaN(date.getTime()) ? null : date; // 確保返回有效日期  
+        return isNaN(date.getTime()) ? null : date;  
     }  
-    return null; // 如果未找到日期，返回 null  
+    return null;  
   };  
 
-  // 新增的日期篩選函數  
   const handleDateFilterChange = (start: string, end: string) => {  
     setStartDate(start);  
     setEndDate(end);  
@@ -124,9 +120,7 @@ const NewsPage: React.FC = () => {
   return (  
     <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>  
       <div className="container mx-auto px-4 py-8 flex-grow">  
-        <h1 className="text-5xl font-bold text-center mb-6">AWS 最新新聞</h1>  
-
-        {/* 使用 NewsFilters 組件 */}  
+        <h1 className="text-5xl font-bold text-center mb-8">AWS 最新新聞</h1>  
         <NewsFilters  
           gridView={gridView}  
           isDarkMode={isDarkMode}  
@@ -140,9 +134,9 @@ const NewsPage: React.FC = () => {
           setEndDate={setEndDate}  
           sortOrder={sortOrder}  
           setSortOrder={setSortOrder}  
-          onDateFilterChange={handleDateFilterChange} // 傳遞篩選函數  
-          filteredArticles={filteredArticles} // 傳遞篩選後的文章  
-          filteredFavoritesCount={filteredFavoritesCount} // 傳遞篩選的收藏數量  
+          onDateFilterChange={handleDateFilterChange}  
+          filteredArticles={filteredArticles}  
+          filteredFavoritesCount={filteredFavoritesCount}  
         />  
 
         <BlogSearch   
@@ -167,15 +161,13 @@ const NewsPage: React.FC = () => {
             <p className="text-center text-gray-500 col-span-full">未找到符合條件的文章，請嘗試不同的搜尋條件！</p>  
           )}  
         </div>  
-      </div>  
 
-      <div className="flex justify-center mt-6 py-4">  
-        <AmplifyPagination  
-          currentPage={currentPage}  
-          totalPages={totalPages}  
-          onNext={() => handlePageChange(currentPage + 1)}  
-          onPrevious={() => handlePageChange(currentPage - 1)}  
-          onChange={handlePageChange}  
+        {/* 傳遞 show 屬性 */}  
+        <Pagination   
+          currentPage={currentPage}   
+          totalPages={totalPages}   
+          onPageChange={handlePageChange}  
+          show={currentArticles.length > 0} // 根據是否有文章來決定是否顯示  
         />  
       </div>  
 

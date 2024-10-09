@@ -65,7 +65,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
       </div>  
 
       {/* 第二列：篩選日期範圍、排序方式、文章數量 */}  
-      <div className="flex items-center space-x-2 ml-auto ">  
+      <div className="flex items-center space-x-* ml-auto ">  
         <div className="flex items-center">  
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} mr-2`}>篩選日期範圍:</label>  
           <input   
@@ -108,4 +108,3 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 };  
 
 export default NewsFilters;
-//space-x-6

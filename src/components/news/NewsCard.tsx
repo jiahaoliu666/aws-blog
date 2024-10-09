@@ -1,5 +1,5 @@
 import React from 'react';  
-import { News } from '../dynamoDB/newsType';  
+import { News } from '@/dynamoDB/newsType';  
 import { Heart } from 'lucide-react';  
 
 interface NewsCardProps {  
@@ -23,7 +23,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-900'  
       } ${gridView ? 'shadow-md hover:shadow-lg' : 'mb-4'}`}  
     >  
-      <h2 className="text-xl font-bold">  
+      <h2 className="text-xl font-bold mb-2">  
         <a   
           href={article.link}   
           target="_blank"   
@@ -33,19 +33,18 @@ const NewsCard: React.FC<NewsCardProps> = ({
           {article.title}  
         </a>  
       </h2>  
-      <span className="text-sm text-gray-500">{article.info}</span>   
+      <span className="text-sm text-gray-500 mb-1">{article.info}</span>  
       <p className="mt-2">{article.description}</p>  
       <div className="flex justify-between items-center mt-4">  
-        <span className="text-sm text-gray-500">{article.createdAt}</span>  
         <button  
           onClick={() => toggleFavorite(article)}  
-          className="focus:outline-none"  
+          className={`px-3 py-2 text-sm rounded transition-colors duration-300 focus:outline-none ${  
+            article.isFavorite ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'  
+          }`}  
         >  
-          <Heart  
-            color={article.isFavorite ? "red" : "gray"}  
-            size={24}  
-          />  
+          {article.isFavorite ? '已收藏' : '收藏'}  
         </button>  
+        <span className="text-sm text-gray-500">{article.createdAt}</span>  
       </div>  
     </div>  
   );  
