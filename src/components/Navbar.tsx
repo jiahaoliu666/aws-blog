@@ -10,8 +10,10 @@ const Navbar: React.FC = () => {
           <Link href="/" className="text-lg font-bold">AWS Blog</Link>  
         </div>  
         <div className="space-x-4">  
+          <Link href="/announcement" className="text-white hover:underline">最新公告</Link>
           <Link href="/news" className="text-white hover:underline">最新新聞</Link>  
           <Link href="/knowledge" className="text-white hover:underline">知識集</Link>  
+          <Link href="/other" className="text-white hover:underline">其他資源</Link>
           <Link href="/login" className="text-white hover:underline">登入</Link>  
         </div>  
       </div>  

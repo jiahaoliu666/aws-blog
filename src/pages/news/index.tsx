@@ -1,8 +1,7 @@
-// src/pages/news/index.tsx  
 import React, { useEffect, useState } from 'react';  
 import useFetchNews from '../../hooks/useFetchNews';  
 import NewsCard from '../../components/news/NewsCard';  
-import BlogSearch from '../../components/news/NewsBlogSearch';  
+import BlogSearch from '../../components/news/NewsSearch';  
 import NewsFilters from '../../components/news/NewsFilters';  
 import Pagination from '../../components/Pagination';  
 import { News } from '../../dynamoDB/newsType';  
@@ -11,7 +10,8 @@ import { ArrowUp } from 'lucide-react';
 const articlesPerPage = 12;  
 
 const NewsPage: React.FC = () => {  
-  const articles = useFetchNews();  
+  const [language, setLanguage] = useState<string>("zh-TW");  
+  const articles = useFetchNews(language);  
   const [filteredArticles, setFilteredArticles] = useState<News[]>(articles || []);  
   const [currentArticles, setCurrentArticles] = useState<News[]>([]);  
   const [currentPage, setCurrentPage] = useState(1);  
@@ -120,7 +120,7 @@ const NewsPage: React.FC = () => {
   return (  
     <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>  
       <div className="container mx-auto px-4 py-8 flex-grow">  
-        <h1 className="text-5xl font-bold text-center mb-8">AWS 最新新聞</h1>  
+        <h1 className="text-5xl font-bold text-center mb-5">AWS 最新新聞</h1>  
         <NewsFilters  
           gridView={gridView}  
           isDarkMode={isDarkMode}  
@@ -137,6 +137,8 @@ const NewsPage: React.FC = () => {
           onDateFilterChange={handleDateFilterChange}  
           filteredArticles={filteredArticles}  
           filteredFavoritesCount={filteredFavoritesCount}  
+          language={language}  
+          setLanguage={setLanguage}  
         />  
 
         <BlogSearch   
@@ -155,6 +157,7 @@ const NewsPage: React.FC = () => {
                 gridView={gridView}  
                 isDarkMode={isDarkMode}  
                 toggleFavorite={toggleFavorite}  
+                language={language}  // 傳遞 language 給 NewsCard  
               />  
             ))  
           ) : (  
@@ -162,12 +165,11 @@ const NewsPage: React.FC = () => {
           )}  
         </div>  
 
-        {/* 傳遞 show 屬性 */}  
         <Pagination   
           currentPage={currentPage}   
           totalPages={totalPages}   
           onPageChange={handlePageChange}  
-          show={currentArticles.length > 0} // 根據是否有文章來決定是否顯示  
+          show={currentArticles.length > 0}  
         />  
       </div>  
 

@@ -5,7 +5,27 @@ git add .
 git commit -m "v1"
 git push -u origin main
 ---
+頁碼計數器
+中英頁面轉換
+搜尋欄中英轉換
+登入驗證只限 @metaage
+沒有登入無法使用功能
+功能介紹頁面
+Line通知 S N S通知
+爬取另外一個aws 部落格
+新增問題部落格
+新增個人頁面 通知勾選項
+手機版App
+訂閱通知Outlook Line-notify
+懸停到總結顯示AI生成的文章總結
+服務類型分類
+MFA
+爬取其他aws非官方文章
+2024.10.06 星期日
+Line的通知可以更改Line帳號
 
+
+---
 我現在要使用next.js、AWS SDK for JavaScript v3完成一個專案：
 1.在lambda使用puppeteer爬取aws blog的文章
 2.將爬取到的檔案儲存到dynamodb

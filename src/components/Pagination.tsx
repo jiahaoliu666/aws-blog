@@ -14,7 +14,6 @@ interface PaginationProps {
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange, show }) => {  
   if (!show) return null;  
 
-  // 鍵盤事件處理函數  
   const handleKeyDown = (event: KeyboardEvent) => {  
     if (event.key === 'ArrowRight') {  
       if (currentPage < totalPages) {  
@@ -27,7 +26,6 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
     }  
   };  
 
-  // 使用 useEffect 來添加和清除鍵盤事件監聽器  
   useEffect(() => {  
     window.addEventListener('keydown', handleKeyDown);  
     return () => {  
@@ -35,7 +33,6 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
     };  
   }, [currentPage, totalPages]);  
 
-  // 回到頂部的功能  
   const scrollToTop = () => {  
     window.scrollTo({ top: 0, behavior: 'smooth' });  
   };  
@@ -49,11 +46,12 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
         onPrevious={() => onPageChange(currentPage - 1)}  
         onChange={onPageChange}  
       />  
+
       <button  
         className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition duration-300 fixed right-4 bottom-6 flex items-center justify-center p-3"  
         onClick={scrollToTop}  
       >  
-        <ArrowUp size={28} className="text-white" /> {/* 增大箭頭圖標的大小 */}  
+        <ArrowUp size={28} className="text-white" />  
       </button>  
     </div>  
   );  

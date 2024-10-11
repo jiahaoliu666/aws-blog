@@ -1,6 +1,6 @@
 import React from 'react';  
 import { SwitchField } from "@aws-amplify/ui-react";  
-import { News } from '@/dynamoDB/newsType';
+import { News } from '@/dynamoDB/newsType';  
 
 interface NewsFiltersProps {  
   gridView: boolean;  
@@ -15,9 +15,11 @@ interface NewsFiltersProps {
   setEndDate: (value: string) => void;  
   sortOrder: "newest" | "oldest";  
   setSortOrder: (value: "newest" | "oldest") => void;  
-  onDateFilterChange: (startDate: string, endDate: string) => void; // 更新的屬性  
-  filteredArticles: News[]; // 新增的屬性  
-  filteredFavoritesCount: number; // 新增的屬性  
+  onDateFilterChange: (startDate: string, endDate: string) => void;  
+  filteredArticles: News[];  
+  filteredFavoritesCount: number;  
+  language: string;  
+  setLanguage: (value: string) => void;  
 }  
 
 const NewsFilters: React.FC<NewsFiltersProps> = ({  
@@ -33,14 +35,16 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   setEndDate,  
   sortOrder,  
   setSortOrder,  
-  onDateFilterChange, // 更新的屬性  
-  filteredArticles, // 新增的屬性  
-  filteredFavoritesCount // 新增的屬性  
+  onDateFilterChange,  
+  filteredArticles,  
+  filteredFavoritesCount,  
+  language,  
+  setLanguage  
 }) => {  
   return (  
-    <div className="mb-4 flex flex-wrap justify-between">  
+    <div className="mb-4 flex flex-col md:flex-row justify-between p-4">  
       {/* 第一列：切換視圖、主題、檢視收藏 */}  
-      <div className="flex items-center space-x-6">  
+      <div className="flex flex-wrap items-center space-x-4 mb-4 md:mb-0">  
         <SwitchField  
           isDisabled={false}  
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}  
@@ -64,8 +68,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         />  
       </div>  
 
-      {/* 第二列：篩選日期範圍、排序方式、文章數量 */}  
-      <div className="flex items-center space-x-* ml-auto ">  
+      {/* 第二列：篩選日期範圍、排序方式、語言切換、文章數量 */}  
+      <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">  
         <div className="flex items-center">  
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} mr-2`}>篩選日期範圍:</label>  
           <input   
@@ -73,9 +77,9 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             value={startDate}   
             onChange={(e) => {  
               setStartDate(e.target.value);  
-              onDateFilterChange(e.target.value, endDate); // 調用篩選函數  
+              onDateFilterChange(e.target.value, endDate);  
             }}   
-            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2`}  
+            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}  
           />  
           <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} mx-2`}>至</span>  
           <input   
@@ -83,23 +87,34 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             value={endDate}   
             onChange={(e) => {  
               setEndDate(e.target.value);  
-              onDateFilterChange(startDate, e.target.value); // 調用篩選函數  
+              onDateFilterChange(startDate, e.target.value);  
             }}   
-            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2`}  
+            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}  
           />  
         </div>  
-        <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} ml-4 mr-2`}>排序方式:</label>  
+        <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} ml-0 md:ml-4 mr-2`}>排序方式:</label>  
         <select   
           value={sortOrder}   
           onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}   
-          className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2`}  
+          className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}  
         >  
           <option value="newest">最新文章</option>  
           <option value="oldest">最舊文章</option>  
         </select>  
 
+        {/* 語言切換 */}  
+        <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} ml-0 md:ml-4 mr-2`}>文章語言:</label>  
+        <select   
+          value={language}   
+          onChange={(e) => setLanguage(e.target.value)}   
+          className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}  
+        >  
+          <option value="zh-TW">繁體中文</option>  
+          <option value="en">English</option>  
+        </select>  
+
         {/* 文章數量 */}  
-        <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} ml-4`}>  
+        <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} ml-0 md:ml-4`}>  
           文章數量: {showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
         </div>  
       </div>  
