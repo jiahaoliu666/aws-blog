@@ -3,50 +3,30 @@ import React from 'react';
 import Link from 'next/link';  
 import { Menu, MenuItem, View } from '@aws-amplify/ui-react';  
 import { SwitchField } from "@aws-amplify/ui-react";  
+import { useAppContext } from '../../context/AppContext'; // Import the context hook  
 
-interface NavbarProps {  
-  gridView: boolean;  
-  isDarkMode: boolean;  
-  showFavorites: boolean;  
-  setGridView: (value: boolean) => void;  
-  setIsDarkMode: (value: boolean) => void;  
-  setShowFavorites: (value: boolean) => void;  
-  startDate: string;  
-  endDate: string;  
-  setStartDate: (value: string) => void;  
-  setEndDate: (value: string) => void;  
-  sortOrder: "newest" | "oldest";  
-  setSortOrder: (value: "newest" | "oldest") => void;  
-  onDateFilterChange: (startDate: string, endDate: string) => void;  
-  filteredArticles: any[];  
-  filteredFavoritesCount: number;  
-  language: string;  
-  setLanguage: (value: string) => void;  
-  toggleShowSummaries: () => void;  
-  showSummaries: boolean;  
-}  
-
-const Navbar: React.FC<NavbarProps> = ({  
-  gridView,  
-  isDarkMode,  
-  showFavorites,  
-  setGridView,  
-  setIsDarkMode,  
-  setShowFavorites,  
-  startDate,  
-  endDate,  
-  setStartDate,  
-  setEndDate,  
-  sortOrder,  
-  setSortOrder,  
-  onDateFilterChange,  
-  filteredArticles,  
-  filteredFavoritesCount,  
-  language,  
-  setLanguage,  
-  toggleShowSummaries,  
-  showSummaries  
-}) => {  
+const Navbar: React.FC = () => {  
+  const {  
+    gridView,  
+    isDarkMode,  
+    showFavorites,  
+    setGridView,  
+    setIsDarkMode,  
+    setShowFavorites,  
+    startDate,  
+    endDate,  
+    setStartDate,  
+    setEndDate,  
+    sortOrder,  
+    setSortOrder,  
+    onDateFilterChange,  
+    filteredArticles,  
+    filteredFavoritesCount,  
+    language,  
+    setLanguage,  
+    toggleShowSummaries,  
+    showSummaries  
+  } = useAppContext(); // Use the context hook to access state  
 
   const handleDarkModeToggle = (checked: boolean) => {  
     console.log("Dark mode toggled:", checked);  

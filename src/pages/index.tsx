@@ -1,19 +1,25 @@
-// src/pages/index.tsx
+// src/pages/index.tsx  
 import React from 'react';  
 import Link from 'next/link';  
 
 const Home: React.FC = () => {  
   return (  
+    // 設置主頁面容器，使用 Flexbox 進行垂直和水平居中  
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-200">  
+      {/* 主標題，歡迎用戶來到 AWS Blog */}  
       <h1 className="text-4xl font-bold text-center mb-6 text-gray-800">歡迎來到 AWS Blog</h1>  
+      {/* 簡短介紹平台功能 */}  
       <p className="text-lg text-center mb-4 text-gray-700">  
         這是一個專為 AWS 文章而設的閱讀平台。在這裡，您可以輕鬆找到、收藏和管理您的文章。  
       </p>  
+      {/* 導航鏈接，帶用戶到新聞頁面 */}  
       <Link href="/news" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200">  
         開始閱讀文章  
       </Link>  
       <div className="mt-8">  
+        {/* 次標題，介紹主要功能 */}  
         <h2 className="text-2xl font-semibold text-gray-800">主要功能</h2>  
+        {/* 功能列表，列出平台的主要特點 */}  
         <ul className="list-disc list-inside mt-4 text-gray-700">  
           <li>輕鬆搜尋和篩選文章</li>  
           <li>收藏您喜愛的內容</li>  

@@ -5,20 +5,19 @@ import Footer from '../components/common/Footer';
 import { AppProps } from 'next/app';  
 import '../styles/globals.css';  
 import Head from 'next/head';  
-import { useAppLogic } from '@/hooks/useAppLogic'; // Import the custom hook  
+import { AppProvider } from '../context/AppContext'; // 引入 AppProvider，提供全局上下文  
 
 const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {  
-  const appLogic = useAppLogic(); // Use the custom hook  
-
   return (  
-    <>  
+    // 使用 AppProvider 包裹應用程序，提供全局狀態管理  
+    <AppProvider>  
       <Head>  
         <title>AWS Blog</title>  
       </Head>  
-      <Navbar {...appLogic} /> {/* Spread the logic as props */}  
-      <Component {...pageProps} />  
+      <Navbar />   
+      <Component {...pageProps} />    
       <Footer />  
-    </>  
+    </AppProvider>  
   );  
 };  
 
