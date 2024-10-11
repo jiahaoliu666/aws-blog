@@ -120,26 +120,27 @@ const NewsPage: React.FC = () => {
   return (  
     <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>  
       <div className="container mx-auto px-4 py-8 flex-grow">  
-        <h1 className="text-5xl font-bold text-center mb-5">AWS 最新新聞</h1>  
+        <h1 className="text-5xl font-bold text-center mb-5">AWS 最新公告</h1>  
         <NewsFilters  
-          gridView={gridView}  
-          isDarkMode={isDarkMode}  
-          showFavorites={showFavorites}  
-          setGridView={setGridView}  
-          setIsDarkMode={setIsDarkMode}  
-          setShowFavorites={setShowFavorites}  
-          startDate={startDate}  
-          endDate={endDate}  
-          setStartDate={setStartDate}  
-          setEndDate={setEndDate}  
-          sortOrder={sortOrder}  
-          setSortOrder={setSortOrder}  
-          onDateFilterChange={handleDateFilterChange}  
-          filteredArticles={filteredArticles}  
-          filteredFavoritesCount={filteredFavoritesCount}  
-          language={language}  
-          setLanguage={setLanguage}  
-        />  
+          gridView={gridView}
+          isDarkMode={isDarkMode}
+          showFavorites={showFavorites}
+          setGridView={setGridView}
+          setIsDarkMode={setIsDarkMode}
+          setShowFavorites={setShowFavorites}
+          startDate={startDate}
+          endDate={endDate}
+          setStartDate={setStartDate}
+          setEndDate={setEndDate}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          onDateFilterChange={handleDateFilterChange}
+          filteredArticles={filteredArticles}
+          filteredFavoritesCount={filteredFavoritesCount}
+          language={language}
+          setLanguage={setLanguage} toggleShowSummaries={function (): void {
+            throw new Error('Function not implemented.');
+          } } showSummaries={false}        />  
 
         <BlogSearch   
           articles={articles}   
@@ -151,14 +152,13 @@ const NewsPage: React.FC = () => {
           {currentArticles.length > 0 ? (  
             currentArticles.map((article, index) => (  
               <NewsCard  
-                key={index}  
-                article={article}  
-                index={index}  
-                gridView={gridView}  
-                isDarkMode={isDarkMode}  
-                toggleFavorite={toggleFavorite}  
-                language={language}  
-              />  
+                key={index}
+                article={article}
+                index={index}
+                gridView={gridView}
+                isDarkMode={isDarkMode}
+                toggleFavorite={toggleFavorite}
+                language={language} showSummaries={false}              />  
             ))  
           ) : (  
             <p className="text-center text-gray-500 col-span-full">未找到符合條件的文章，請嘗試不同的搜尋條件！</p>  

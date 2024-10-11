@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';  
 import useFetchNews from '../../hooks/useFetchNews';  
 import NewsCard from '../../components/news/NewsCard';  
@@ -23,6 +24,7 @@ const NewsPage: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);  
   const [startDate, setStartDate] = useState<string>("");  
   const [endDate, setEndDate] = useState<string>("");  
+  const [showSummaries, setShowSummaries] = useState<boolean>(false);  // 新增狀態  
 
   useEffect(() => {  
     setFilteredArticles(articles || []);  
@@ -117,6 +119,10 @@ const NewsPage: React.FC = () => {
     setEndDate(end);  
   };  
 
+  const toggleShowSummaries = () => {  // 新增方法  
+    setShowSummaries(prev => !prev);  
+  };   
+
   return (  
     <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>  
       <div className="container mx-auto px-4 py-8 flex-grow">  
@@ -139,6 +145,8 @@ const NewsPage: React.FC = () => {
           filteredFavoritesCount={filteredFavoritesCount}  
           language={language}  
           setLanguage={setLanguage}  
+          toggleShowSummaries={toggleShowSummaries}  // 傳遞方法  
+          showSummaries={showSummaries}  // 傳遞狀態  
         />  
 
         <BlogSearch   
@@ -158,6 +166,7 @@ const NewsPage: React.FC = () => {
                 isDarkMode={isDarkMode}  
                 toggleFavorite={toggleFavorite}  
                 language={language}  
+                showSummaries={showSummaries}  // 傳遞狀態  
               />  
             ))  
           ) : (  
@@ -186,3 +195,5 @@ const NewsPage: React.FC = () => {
 };  
 
 export default NewsPage;
+
+
