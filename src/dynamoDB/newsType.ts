@@ -1,4 +1,3 @@
-
 // src/dynamoDB/newsType.ts  
 export interface News {  
   article_id: string;  

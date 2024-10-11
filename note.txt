@@ -1,11 +1,29 @@
 
 
+
+----
+NewsFilters
+將切換選項和篩選排序選項放在同一個容器裡，並分成左右兩欄
+桌面版保持不變，僅在手機版上進行變更
+
+
+----
+Amazon Bedrock 
+Converse API
+eventbridge
+lambda
+dynamodb
+cognito
+amplify
+
+puppeteer
+
 ---
 git add .
 git commit -m "v1"
 git push -u origin main
 ---
-頁碼計數器
+
 中英頁面轉換
 搜尋欄中英轉換
 登入驗證只限 @metaage

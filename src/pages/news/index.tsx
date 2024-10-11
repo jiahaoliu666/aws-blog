@@ -157,7 +157,7 @@ const NewsPage: React.FC = () => {
                 gridView={gridView}  
                 isDarkMode={isDarkMode}  
                 toggleFavorite={toggleFavorite}  
-                language={language}  // 傳遞 language 給 NewsCard  
+                language={language}  
               />  
             ))  
           ) : (  
