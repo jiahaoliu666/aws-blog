@@ -1,6 +1,7 @@
+// src/components/news/NewsSearch.tsx
 import React, { useState, useEffect } from 'react';  
 import { SearchField } from '@aws-amplify/ui-react';  
-import { News } from '@/dynamoDB/newsType';  
+import { News } from '@/types/newsType';  
 
 interface BlogSearchProps {  
   articles: News[];  

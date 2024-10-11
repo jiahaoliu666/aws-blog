@@ -1,4 +1,4 @@
-
+// src/pages/api/news/news.ts
 import { NextApiRequest, NextApiResponse } from 'next';  
 import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';  
 

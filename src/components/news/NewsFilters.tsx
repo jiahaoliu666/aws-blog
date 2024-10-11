@@ -1,6 +1,7 @@
+// src/components/news/NewsFilters.tsx
 import React from 'react';  
 import { SwitchField } from "@aws-amplify/ui-react";  
-import { News } from '@/dynamoDB/newsType';  
+import { News } from '@/types/newsType';  
 
 interface NewsFiltersProps {  
   gridView: boolean;  

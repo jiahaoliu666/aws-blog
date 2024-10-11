@@ -1,127 +1,40 @@
-
-import React, { useEffect, useState } from 'react';  
-import useFetchNews from '../../hooks/useFetchNews';  
+// src/pages/news/index.tsx  
+import React from 'react';  
+import { News } from '../../types/newsType';  
 import NewsCard from '../../components/news/NewsCard';  
 import BlogSearch from '../../components/news/NewsSearch';  
 import NewsFilters from '../../components/news/NewsFilters';  
-import Pagination from '../../components/Pagination';  
-import { News } from '../../dynamoDB/newsType';  
-import { ArrowUp } from 'lucide-react';  
-
-const articlesPerPage = 12;  
+import Pagination from '../../components/common/Pagination';  
+import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';   
 
 const NewsPage: React.FC = () => {  
-  const [language, setLanguage] = useState<string>("zh-TW");  
-  const articles = useFetchNews(language);  
-  const [filteredArticles, setFilteredArticles] = useState<News[]>(articles || []);  
-  const [currentArticles, setCurrentArticles] = useState<News[]>([]);  
-  const [currentPage, setCurrentPage] = useState(1);  
-  const [totalPages, setTotalPages] = useState(0);  
-  const [gridView, setGridView] = useState<boolean>(false);  
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);  
-  const [showFavorites, setShowFavorites] = useState<boolean>(false);  
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");  
-  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);  
-  const [startDate, setStartDate] = useState<string>("");  
-  const [endDate, setEndDate] = useState<string>("");  
-  const [showSummaries, setShowSummaries] = useState<boolean>(false);  // 新增狀態  
-
-  useEffect(() => {  
-    setFilteredArticles(articles || []);  
-  }, [articles]);  
-
-  const filteredFavoritesCount = filteredArticles.filter(article => article.isFavorite).length;  
-
-  useEffect(() => {  
-    let updatedArticles = [...filteredArticles];  
-
-    if (showFavorites) {  
-      updatedArticles = updatedArticles.filter(article => article.isFavorite);  
-    }  
-
-    if (startDate || endDate) {  
-      updatedArticles = updatedArticles.filter(article => {  
-        const dateFromInfo = extractDateFromInfo(article.info);  
-        const start = startDate ? new Date(startDate) : null;  
-        const end = endDate ? new Date(endDate) : null;  
-
-        if (dateFromInfo) {  
-          const isAfterStart = start ? dateFromInfo >= start : true;  
-          const isBeforeEnd = end ? dateFromInfo <= end : true;  
-          return isAfterStart && isBeforeEnd;  
-        }  
-        return false;  
-      });  
-    }  
-
-    updatedArticles.sort((a, b) => {  
-        const dateA = extractDateFromInfo(a.info);  
-        const dateB = extractDateFromInfo(b.info);  
-
-        if (dateA && dateB) {  
-            return sortOrder === "newest"   
-                ? dateB.getTime() - dateA.getTime()   
-                : dateA.getTime() - dateB.getTime();   
-        } else if (dateA) {  
-            return sortOrder === "newest" ? -1 : 1;   
-        } else if (dateB) {  
-            return sortOrder === "newest" ? 1 : -1;   
-        }  
-        return 0;   
-    });  
-
-    setTotalPages(Math.ceil(updatedArticles.length / articlesPerPage));  
-
-    if (currentPage > Math.ceil(updatedArticles.length / articlesPerPage)) {  
-      setCurrentPage(Math.ceil(updatedArticles.length / articlesPerPage) || 1);  
-    }  
-
-    const startIndex = (currentPage - 1) * articlesPerPage;  
-    const endIndex = startIndex + articlesPerPage;  
-    setCurrentArticles(updatedArticles.slice(startIndex, endIndex));  
-  }, [filteredArticles, showFavorites, sortOrder, currentPage, startDate, endDate]);  
-
-  const handlePageChange = (newPageIndex?: number) => {  
-    if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {  
-      setCurrentPage(newPageIndex);  
-    }  
-  };  
-
-  const scrollToTop = () => {  
-    window.scrollTo({ top: 0, behavior: 'smooth' });  
-  };  
-
-  const toggleFavorite = (article: News) => {  
-    const updatedArticles = filteredArticles.map((art) => {  
-      if (art.article_id === article.article_id) {  
-        return { ...art, isFavorite: !art.isFavorite };  
-      }  
-      return art;   
-    });  
-
-    setFilteredArticles(updatedArticles);   
-  };  
-
-  const extractDateFromInfo = (info: string): Date | null => {  
-    const dateMatch = info.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);  
-    if (dateMatch) {  
-        const year = parseInt(dateMatch[1], 10);  
-        const month = parseInt(dateMatch[2], 10) - 1;  
-        const day = parseInt(dateMatch[3], 10);  
-        const date = new Date(year, month, day);  
-        return isNaN(date.getTime()) ? null : date;  
-    }  
-    return null;  
-  };  
-
-  const handleDateFilterChange = (start: string, end: string) => {  
-    setStartDate(start);  
-    setEndDate(end);  
-  };  
-
-  const toggleShowSummaries = () => {  // 新增方法  
-    setShowSummaries(prev => !prev);  
-  };   
+  const {  
+    language,  
+    setLanguage,  
+    currentArticles,  
+    setFilteredArticles,  
+    currentPage,  
+    totalPages,  
+    gridView,  
+    setGridView,  
+    isDarkMode,  
+    setIsDarkMode,  
+    showFavorites,  
+    setShowFavorites,  
+    sortOrder,  
+    setSortOrder,  
+    startDate,  
+    endDate,  
+    setStartDate,  
+    setEndDate,  
+    showSummaries,  
+    toggleShowSummaries,  
+    handlePageChange,  
+    toggleFavorite,  
+    filteredFavoritesCount,  
+    filteredArticles,  
+    handleDateFilterChange  
+  } = useNewsPageLogic();  
 
   return (  
     <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>  
@@ -145,19 +58,17 @@ const NewsPage: React.FC = () => {
           filteredFavoritesCount={filteredFavoritesCount}  
           language={language}  
           setLanguage={setLanguage}  
-          toggleShowSummaries={toggleShowSummaries}  // 傳遞方法  
-          showSummaries={showSummaries}  // 傳遞狀態  
+          toggleShowSummaries={toggleShowSummaries}  
+          showSummaries={showSummaries}  
         />  
-
-        <BlogSearch   
-          articles={articles}   
-          setFilteredArticles={setFilteredArticles}   
-          isDarkMode={isDarkMode}   
+        <BlogSearch  
+          articles={filteredArticles}  
+          setFilteredArticles={setFilteredArticles}  
+          isDarkMode={isDarkMode}  
         />  
-
         <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"}`}>  
           {currentArticles.length > 0 ? (  
-            currentArticles.map((article, index) => (  
+            currentArticles.map((article: News, index: number) => (  
               <NewsCard  
                 key={index}  
                 article={article}  
@@ -166,34 +77,22 @@ const NewsPage: React.FC = () => {
                 isDarkMode={isDarkMode}  
                 toggleFavorite={toggleFavorite}  
                 language={language}  
-                showSummaries={showSummaries}  // 傳遞狀態  
+                showSummaries={showSummaries}  
               />  
             ))  
           ) : (  
             <p className="text-center text-gray-500 col-span-full">未找到符合條件的文章，請嘗試不同的搜尋條件！</p>  
           )}  
         </div>  
-
-        <Pagination   
-          currentPage={currentPage}   
-          totalPages={totalPages}   
+        <Pagination  
+          currentPage={currentPage}  
+          totalPages={totalPages}  
           onPageChange={handlePageChange}  
           show={currentArticles.length > 0}  
         />  
       </div>  
-
-      {showScrollTop && (  
-        <button  
-          className="fixed bottom-8 right-8 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg"  
-          onClick={scrollToTop}  
-        >  
-          <ArrowUp size={24} />  
-        </button>  
-      )}  
     </div>  
   );  
 };  
 
 export default NewsPage;
-
-

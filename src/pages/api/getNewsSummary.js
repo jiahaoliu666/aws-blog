@@ -1,3 +1,4 @@
+// src/pages/api/news/getNewsSummary.js
 import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
 
 const dbClient = new DynamoDBClient({ region: "ap-northeast-1" });
