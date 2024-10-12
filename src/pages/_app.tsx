@@ -5,17 +5,16 @@ import Footer from '../components/common/Footer';
 import { AppProps } from 'next/app';  
 import '../styles/globals.css';  
 import Head from 'next/head';  
-import { AppProvider } from '../context/AppContext'; // 引入 AppProvider，提供全局上下文  
+import { AppProvider } from '../context/AppContext'; // This might be for other global states  
 
 const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {  
   return (  
-    // 使用 AppProvider 包裹應用程序，提供全局狀態管理  
     <AppProvider>  
       <Head>  
         <title>AWS Blog</title>  
       </Head>  
-      <Navbar />   
-      <Component {...pageProps} />    
+      <Navbar />  
+      <Component {...pageProps} />  
       <Footer />  
     </AppProvider>  
   );  

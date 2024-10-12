@@ -1,17 +1,24 @@
 // src/hooks/news/useNewsPageLogic.ts  
-import { useEffect, useState } from "react";  
-import { News } from "../../types/newsType";  
-import useFetchNews from "./useFetchNews";   
+import { useEffect, useState, useMemo } from "react";  
+import { ExtendedNews } from "../../types/newsType";  
+import useFetchNews from "./useFetchNews";  
+import { extractDateFromInfo } from "../../utils/extractDateFromInfo";  
+import { useNewsFavorites } from "./useNewsFavorites";  
 
-/**  
- * 自定義 Hook，管理新聞頁面的狀態和邏輯。  
- * 包括過濾、排序和分頁功能。  
- */  
 function useNewsPageLogic() {  
-  const [language, setLanguage] = useState<string>("zh-TW");  // 文章語言，默認為繁體中文  
-  const articles = useFetchNews(language);  // 獲取文章  
-  const [filteredArticles, setFilteredArticles] = useState<News[]>(articles || []);  
-  const [currentArticles, setCurrentArticles] = useState<News[]>([]);  
+  const [language, setLanguage] = useState<string>("zh-TW");  
+  const fetchedArticles = useFetchNews(language);  
+  const { favorites, toggleFavorite, filteredFavoritesCount, filteredFavoriteArticles } = useNewsFavorites();  
+
+  const articles: ExtendedNews[] = useMemo(() => {  
+    return fetchedArticles.map(article => ({  
+      ...article,  
+      isFavorite: !!favorites[article.article_id]  
+    }));  
+  }, [fetchedArticles, favorites]);  
+
+  const [filteredArticles, setFilteredArticles] = useState<ExtendedNews[]>([]);  
+  const [currentArticles, setCurrentArticles] = useState<ExtendedNews[]>([]);  
   const [currentPage, setCurrentPage] = useState<number>(1);  
   const [totalPages, setTotalPages] = useState<number>(0);  
   const [gridView, setGridView] = useState<boolean>(false);  
@@ -23,70 +30,51 @@ function useNewsPageLogic() {
   const [showSummaries, setShowSummaries] = useState<boolean>(false);  
 
   useEffect(() => {  
-    setFilteredArticles(articles || []);  // 當文章變更時更新篩選後的文章  
-  }, [articles]);  
+    let updatedArticles = [...articles];  
 
-  useEffect(() => {  
-    let updatedArticles = [...filteredArticles];  
     if (showFavorites) {  
-      updatedArticles = updatedArticles.filter(article => article.isFavorite);  // 只顯示收藏的文章  
+      updatedArticles = filteredFavoriteArticles as ExtendedNews[];  
     }  
 
-    if (startDate || endDate) {  // 根據開始和結束日期篩選文章  
+    if (startDate || endDate) {  
       updatedArticles = updatedArticles.filter(article => {  
         const dateFromInfo = extractDateFromInfo(article.info);  
         const start = startDate ? new Date(startDate) : null;  
         const end = endDate ? new Date(endDate) : null;  
-        return dateFromInfo && (!start || dateFromInfo >= start) && (!end || dateFromInfo <= end);  
+        return dateFromInfo &&  
+          (!start || dateFromInfo >= start) &&  
+          (!end || dateFromInfo <= end);  
       });  
     }  
 
-    updatedArticles.sort((a, b) => {  // 根據排序順序排列文章  
+    updatedArticles.sort((a, b) => {  
       const dateA = extractDateFromInfo(a.info);  
       const dateB = extractDateFromInfo(b.info);  
       if (dateA && dateB) {  
-        return sortOrder === "newest" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();  
+        return sortOrder === "newest"  
+          ? dateB.getTime() - dateA.getTime()  
+          : dateA.getTime() - dateB.getTime();  
       }  
       return 0;  
     });  
 
-    const totalPagesComputed = Math.ceil(updatedArticles.length / 12);  // 計算總頁數  
+    setFilteredArticles(updatedArticles);  
+
+    const totalPagesComputed = Math.ceil(updatedArticles.length / 12);  
     setTotalPages(totalPagesComputed);  
 
-    if (currentPage > totalPagesComputed) {  // 確保當前頁不超過總頁數  
+    if (currentPage > totalPagesComputed) {  
       setCurrentPage(totalPagesComputed || 1);  
     }  
 
-    const startIndex = (currentPage - 1) * 12;  // 計算當前頁的文章索引  
+    const startIndex = (currentPage - 1) * 12;  
     setCurrentArticles(updatedArticles.slice(startIndex, startIndex + 12));  
-  }, [filteredArticles, showFavorites, sortOrder, currentPage, startDate, endDate]);  
+  }, [articles, showFavorites, startDate, endDate, sortOrder, currentPage, filteredFavoriteArticles]);  
 
-  // 從文章信息中提取日期  
-  const extractDateFromInfo = (info: string): Date | null => {  
-    const dateMatch = info.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);  
-    if (dateMatch) {  
-      const year = parseInt(dateMatch[1], 10);  
-      const month = parseInt(dateMatch[2], 10) - 1;  
-      const day = parseInt(dateMatch[3], 10);  
-      return new Date(year, month, day);  // 返回日期對象  
-    }  
-    return null;  
-  };  
-
-  // 處理頁面切換  
   const handlePageChange = (newPageIndex?: number) => {  
     if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {  
       setCurrentPage(newPageIndex);  
     }  
-  };  
-
-  // 切換文章收藏狀態  
-  const toggleFavorite = (article: News) => {  
-    const updatedArticles = filteredArticles.map(art => ({  
-      ...art,  
-      isFavorite: art.article_id === article.article_id ? !art.isFavorite : art.isFavorite  
-    }));  
-    setFilteredArticles(updatedArticles);  
   };  
 
   return {  
@@ -109,16 +97,16 @@ function useNewsPageLogic() {
     setStartDate,  
     setEndDate,  
     showSummaries,  
-    toggleShowSummaries: () => setShowSummaries(v => !v),  // 切換是否顯示摘要  
+    toggleShowSummaries: () => setShowSummaries(v => !v),  
     handlePageChange,  
     toggleFavorite,  
-    filteredFavoritesCount: filteredArticles.filter(article => article.isFavorite).length,  // 計算收藏的文章數量  
+    filteredFavoritesCount,  
     filteredArticles,  
-    handleDateFilterChange: (start: string, end: string) => {  // 處理日期篩選變更  
+    handleDateFilterChange: (start: string, end: string) => {  
       setStartDate(start);  
       setEndDate(end);  
-    }  
+    },  
   };  
 }  
 
-export default useNewsPageLogic;  
+export default useNewsPageLogic;

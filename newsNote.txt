@@ -1,4 +1,3 @@
-
 /src  
   ├── /components  
   │     ├── /common  
@@ -9,10 +8,13 @@
   │     │     ├── NewsCard.tsx              // 顯示單個新聞文章的卡片組件，包含標題、摘要和鏈接  
   │     │     ├── NewsSearch.tsx            // 搜索新聞文章的組件，提供搜索框和按鈕  
   │     │     └── NewsFilters.tsx           // 過濾新聞文章的組件，提供過濾選項按鈕  
+  ├── /context  
+  │     └── AppContext.tsx                  // 管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
   ├── /hooks  
   │     ├── /news  
   │     │     ├── useFetchNews.ts           // 自定義 Hook，用於從 API 獲取新聞文章數據  
-  │     │     └── useNewsPageLogic.ts       // 自定義 Hook，管理新聞頁面的狀態和邏輯，包括過濾、排序和分頁功能  
+  │     │     ├── useNewsPageLogic.ts       // 自定義 Hook，管理新聞頁面的狀態和邏輯，包括過濾、排序和分頁功能  
+  │     │     └── useNewsFavorites.ts       // 自定義 Hook，管理新聞收藏邏輯，提供添加和移除收藏的功能  
   │     └── useAppLogic.ts                  // 自定義 Hook，管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
   ├── /pages  
   │     ├── /api  
@@ -24,59 +26,6 @@
   ├── /styles  
   │     └── globals.css                     // 全局樣式文件，定義應用程序的基本樣式  
   ├── /types  
-  │     └── newsType.ts                     // 定義新聞文章的 TypeScript 類型，描述新聞數據結構
-
-----
-
-
-
-
-
-----
-
-根據以上所有代碼，我現在遇到一個問題，當我在NewsFilters.tsx選擇日期時，NewsFilters.tsx文章數量沒有同步到正確的文章數量，仔細檢查以上所有代碼，是什麼問題導致的，給我需要修改的完整代碼同時確保不要影響到現行功能，用繁體回答
-
-根據以上所有代碼，讓Navbar.tsx裡面的Menu能夠正常調用NewsFilters.tsx裡面對應的功能menu，目的要能夠在menu正常調用原有在NewsFilters.tsx裡的功能，用繁體回答，給我完整代碼
-
-----
-NewsFilters
-將切換選項和篩選排序選項放在同一個容器裡，並分成左右兩欄
-桌面版保持不變，僅在手機版上進行變更
-
-
-----
-Amazon Bedrock 
-Converse API
-eventbridge
-lambda
-dynamodb
-cognito
-amplify
-
-puppeteer
-
----
-git add .
-git commit -m "v1"
-git push -u origin main
----
-將數據快取，避免浪費額外資源
-中英頁面轉換
-搜尋欄中英轉換
-登入驗證只限 @metaage
-沒有登入無法使用功能
-功能介紹頁面
-Line通知 S N S通知
-爬取另外一個aws 部落格
-新增問題部落格
-新增個人頁面 通知勾選項
-手機版App
-訂閱通知Outlook Line-notify
-懸停到總結顯示AI生成的文章總結
-服務類型分類
-MFA
-爬取其他aws非官方文章
-2024.10.06 星期日
-Line的通知可以更改Line帳號
-
-
+  │     └── newsType.ts                     // 定義新聞文章的 TypeScript 類型，描述新聞數據結構  
+  ├── /utils  
+  │     └── extractDateFromInfo.ts          // 工具函數，用於從字符串中提取日期，假設格式為 "YYYY年MM月DD日"

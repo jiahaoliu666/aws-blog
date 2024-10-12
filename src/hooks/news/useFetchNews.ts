@@ -1,30 +1,27 @@
 // src/hooks/news/useFetchNews.ts  
 import { useEffect, useState } from 'react';  
-import { News } from '@/types/newsType';  
+import { News, ExtendedNews } from '@/types/newsType';  
 
-// 自定義 Hook，用於從 API 獲取新聞  
-const useFetchNews = (language: string) => {  
-  const [articles, setArticles] = useState<News[]>([]);  
+const useFetchNews = (language: string): ExtendedNews[] => {  
+  const [articles, setArticles] = useState<ExtendedNews[]>([]);  
 
   useEffect(() => {  
-    // 定義異步函數以獲取文章  
     const fetchArticles = async () => {  
-      const response = await fetch(`/api/news?language=${language}`);  // 向 API 發送請求  
-      const data: News[] = await response.json();  // 解析回應為 JSON  
+      const response = await fetch(`/api/news?language=${language}`);  
+      const data: News[] = await response.json();  
 
-      // 初始化文章，確保每個文章都有 isFavorite 屬性  
-      const initializedArticles = data.map(article => ({  
+      const initializedArticles: ExtendedNews[] = data.map(article => ({  
         ...article,  
-        isFavorite: article.isFavorite ?? false,  
+        isFavorite: article.isFavorite ?? false,  // 確保 isFavorite 被初始化  
       }));  
 
-      setArticles(initializedArticles);  // 更新狀態  
+      setArticles(initializedArticles);  
     };  
 
-    fetchArticles();  // 執行文章獲取函數  
-  }, [language]);  // 當語言變更時重新獲取文章  
+    fetchArticles();  
+  }, [language]);  
 
   return articles;  
 };  
 
-export default useFetchNews;  
+export default useFetchNews;

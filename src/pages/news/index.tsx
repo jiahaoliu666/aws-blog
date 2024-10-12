@@ -1,7 +1,7 @@
 // src/pages/news/index.tsx  
 import React, { useEffect } from 'react';  
 import { useRouter } from 'next/router';  
-import { News } from '../../types/newsType';  
+import { ExtendedNews } from '../../types/newsType';  
 import NewsCard from '../../components/news/NewsCard';  
 import BlogSearch from '../../components/news/NewsSearch';  
 import NewsFilters from '../../components/news/NewsFilters';  
@@ -99,10 +99,10 @@ const NewsPage: React.FC = () => {
         <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"}`}>  
           {currentArticles.length > 0 ? (  
             // 遍歷並顯示每篇文章  
-            currentArticles.map((article: News, index: number) => (  
+            currentArticles.map((article: ExtendedNews, index: number) => (  
               <NewsCard  
-                key={index}  
-                article={article}  
+                key={article.article_id} // 最好使用 article_id 作為 key，更穩定  
+                article={article}  // 因此 Map 使用 ExtendedNews 類型  
                 index={index}  
                 gridView={gridView}  
                 isDarkMode={isDarkMode}  

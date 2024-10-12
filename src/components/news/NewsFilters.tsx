@@ -1,5 +1,6 @@
-// src/components/news/NewsFilters.tsx  
-import React from 'react';  
+
+// // src/components/news/NewsFilters.tsx  
+import React, { useEffect } from 'react';  // 確保引入 useEffect  
 import { SwitchField } from "@aws-amplify/ui-react";  
 import { News } from '@/types/newsType';  
 
@@ -47,12 +48,16 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   toggleShowSummaries,  
   showSummaries  
 }) => {  
+
+  // Log 出已收藏的文章數量  
+  useEffect(() => {  
+    console.log(`Filtered Articles Count: ${filteredArticles.length}, Favorite Articles Count: ${filteredFavoritesCount}`);  
+  }, [filteredArticles, filteredFavoritesCount]);  
+
   return (  
-    <div className="mb-4 p-4">  {/* 外層容器，為過濾器組件提供間距和內邊距 */}  
+    <div className="mb-4 p-4">  
       <div className="flex flex-col gap-4 md:flex-row justify-between">  
-        {/* 左側開關集合 */}  
         <div className="flex flex-col md:flex-wrap md:flex-row items-center gap-4">  
-          {/* 切換是否顯示摘要的開關 */}  
           <SwitchField  
             isDisabled={false}  
             label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}  
@@ -60,7 +65,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             isChecked={showSummaries}  
             onChange={() => toggleShowSummaries()}  
           />  
-          {/* 切換是否顯示收藏文章 */}  
           <SwitchField  
             isDisabled={false}  
             label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}  
@@ -68,7 +72,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             isChecked={showFavorites}  
             onChange={(e) => setShowFavorites(e.target.checked)}  
           />  
-          {/* 切換主題（亮暗模式） */}  
           <SwitchField  
             isDisabled={false}  
             label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}  
@@ -76,7 +79,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             isChecked={isDarkMode}  
             onChange={(e) => setIsDarkMode(e.target.checked)}  
           />  
-          {/* 切換顯示視圖（列表或網格） */}  
           <SwitchField  
             isDisabled={false}  
             label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}  
@@ -86,34 +88,32 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           />  
         </div>  
 
-        {/* 右側日期篩選和其他選擇器 */}  
         <div className="flex flex-col md:flex-row items-center gap-4">  
           <div className="flex items-center gap-2">  
             <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期:</label>  
-            <input   
+            <input  
               type="date"  
               value={startDate}  
               onChange={(e) => {  
                 setStartDate(e.target.value);  
-                onDateFilterChange(e.target.value, endDate);  // 更新開始日期並調用篩選變更函數  
-              }}   
+                onDateFilterChange(e.target.value, endDate);  
+              }}  
               className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}  
             />  
             <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>至</span>  
-            <input   
+            <input  
               type="date"  
               value={endDate}  
               onChange={(e) => {  
                 setEndDate(e.target.value);  
-                onDateFilterChange(startDate, e.target.value);  // 更新結束日期並調用篩選變更函數  
-              }}   
+                onDateFilterChange(startDate, e.target.value);  
+              }}  
               className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}  
             />  
           </div>  
-          {/* 排序選項：最新或最舊 */}  
           <div className="flex items-center gap-2">  
             <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>排序:</label>  
-            <select   
+            <select  
               value={sortOrder}  
               onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}  
               className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}  
@@ -123,10 +123,9 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             </select>  
           </div>  
 
-          {/* 語言選擇 */}  
           <div className="flex items-center gap-2">  
             <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言:</label>  
-            <select   
+            <select  
               value={language}  
               onChange={(e) => setLanguage(e.target.value)}  
               className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}  
@@ -136,7 +135,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             </select>  
           </div>  
 
-          {/* 顯示篩選後的文章數量 */}  
           <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>  
             文章數量: {showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
           </div>  
@@ -147,3 +145,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 };  
 
 export default NewsFilters;
+
+
+
