@@ -1,30 +1,30 @@
 
 // // src/components/news/NewsFilters.tsx  
-import React, { useEffect } from 'react';  // 確保引入 useEffect  
+import React from 'react';  // useEffect is removed from the import  
 import { SwitchField } from "@aws-amplify/ui-react";  
 import { News } from '@/types/newsType';  
 
 // 定義 NewsFilters 組件的屬性類型  
 interface NewsFiltersProps {  
-  gridView: boolean;  // 是否使用網格視圖  
-  isDarkMode: boolean;  // 是否啟用深色模式  
-  showFavorites: boolean;  // 是否顯示收藏的文章  
-  setGridView: (value: boolean) => void;  // 設置網格視圖的函數  
-  setIsDarkMode: (value: boolean) => void;  // 設置深色模式的函數  
-  setShowFavorites: (value: boolean) => void;  // 設定顯示收藏文章的函數  
-  startDate: string;  // 篩選的開始日期  
-  endDate: string;  // 篩選的結束日期  
-  setStartDate: (value: string) => void;  // 設置開始日期的函數  
-  setEndDate: (value: string) => void;  // 設置結束日期的函數  
-  sortOrder: "newest" | "oldest";  // 排序順序  
-  setSortOrder: (value: "newest" | "oldest") => void;  // 設置排序順序的函數  
-  onDateFilterChange: (startDate: string, endDate: string) => void;  // 處理日期篩選變更的函數  
-  filteredArticles: News[];  // 篩選後的文章列表  
-  filteredFavoritesCount: number;  // 篩選後收藏的文章數量  
-  language: string;  // 語言設置  
-  setLanguage: (value: string) => void;  // 設置語言的函數  
-  toggleShowSummaries: () => void;  // 切換顯示摘要的函數  
-  showSummaries: boolean;  // 是否顯示摘要  
+  gridView: boolean;  
+  isDarkMode: boolean;  
+  showFavorites: boolean;  
+  setGridView: (value: boolean) => void;  
+  setIsDarkMode: (value: boolean) => void;  
+  setShowFavorites: (value: boolean) => void;  
+  startDate: string;  
+  endDate: string;  
+  setStartDate: (value: string) => void;  
+  setEndDate: (value: string) => void;  
+  sortOrder: "newest" | "oldest";  
+  setSortOrder: (value: "newest" | "oldest") => void;  
+  onDateFilterChange: (startDate: string, endDate: string) => void;  
+  filteredArticles: News[];  
+  filteredFavoritesCount: number;  
+  language: string;  
+  setLanguage: (value: string) => void;  
+  toggleShowSummaries: () => void;  
+  showSummaries: boolean;  
 }  
 
 const NewsFilters: React.FC<NewsFiltersProps> = ({  
@@ -48,11 +48,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   toggleShowSummaries,  
   showSummaries  
 }) => {  
-
-  // Log 出已收藏的文章數量  
-  useEffect(() => {  
-    console.log(`Filtered Articles Count: ${filteredArticles.length}, Favorite Articles Count: ${filteredFavoritesCount}`);  
-  }, [filteredArticles, filteredFavoritesCount]);  
 
   return (  
     <div className="mb-4 p-4">  
@@ -145,6 +140,3 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 };  
 
 export default NewsFilters;
-
-
-

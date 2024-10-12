@@ -1,5 +1,6 @@
-// src/hooks/news/useNewsPageLogic.ts  
-import { useEffect, useState, useMemo } from "react";  
+// // src/hooks/news/useNewsPageLogic.ts  
+
+import { useEffect, useState, useMemo, useCallback } from "react";  
 import { ExtendedNews } from "../../types/newsType";  
 import useFetchNews from "./useFetchNews";  
 import { extractDateFromInfo } from "../../utils/extractDateFromInfo";  
@@ -8,6 +9,7 @@ import { useNewsFavorites } from "./useNewsFavorites";
 function useNewsPageLogic() {  
   const [language, setLanguage] = useState<string>("zh-TW");  
   const fetchedArticles = useFetchNews(language);  
+
   const { favorites, toggleFavorite, filteredFavoritesCount, filteredFavoriteArticles } = useNewsFavorites();  
 
   const articles: ExtendedNews[] = useMemo(() => {  
@@ -20,7 +22,7 @@ function useNewsPageLogic() {
   const [filteredArticles, setFilteredArticles] = useState<ExtendedNews[]>([]);  
   const [currentArticles, setCurrentArticles] = useState<ExtendedNews[]>([]);  
   const [currentPage, setCurrentPage] = useState<number>(1);  
-  const [totalPages, setTotalPages] = useState<number>(0);  
+  const [totalPages, setTotalPages] = useState<number>(1);  
   const [gridView, setGridView] = useState<boolean>(false);  
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);  
   const [showFavorites, setShowFavorites] = useState<boolean>(false);  
@@ -30,10 +32,10 @@ function useNewsPageLogic() {
   const [showSummaries, setShowSummaries] = useState<boolean>(false);  
 
   useEffect(() => {  
-    let updatedArticles = [...articles];  
+    let updatedArticles = articles;  
 
     if (showFavorites) {  
-      updatedArticles = filteredFavoriteArticles as ExtendedNews[];  
+      updatedArticles = filteredFavoriteArticles;  
     }  
 
     if (startDate || endDate) {  
@@ -41,41 +43,42 @@ function useNewsPageLogic() {
         const dateFromInfo = extractDateFromInfo(article.info);  
         const start = startDate ? new Date(startDate) : null;  
         const end = endDate ? new Date(endDate) : null;  
-        return dateFromInfo &&  
-          (!start || dateFromInfo >= start) &&  
-          (!end || dateFromInfo <= end);  
+        return dateFromInfo && (!start || dateFromInfo >= start) && (!end || dateFromInfo <= end);  
       });  
     }  
 
     updatedArticles.sort((a, b) => {  
-      const dateA = extractDateFromInfo(a.info);  
-      const dateB = extractDateFromInfo(b.info);  
-      if (dateA && dateB) {  
-        return sortOrder === "newest"  
-          ? dateB.getTime() - dateA.getTime()  
-          : dateA.getTime() - dateB.getTime();  
-      }  
-      return 0;  
+      const dateA = new Date(extractDateFromInfo(a.info) || 0);  
+      const dateB = new Date(extractDateFromInfo(b.info) || 0);  
+      return sortOrder === "newest" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();  
     });  
 
-    setFilteredArticles(updatedArticles);  
+    if (JSON.stringify(updatedArticles) !== JSON.stringify(filteredArticles)) {  
+      setFilteredArticles(updatedArticles);  
+    }  
 
-    const totalPagesComputed = Math.ceil(updatedArticles.length / 12);  
-    setTotalPages(totalPagesComputed);  
-
-    if (currentPage > totalPagesComputed) {  
-      setCurrentPage(totalPagesComputed || 1);  
+    const newTotalPages = Math.ceil(updatedArticles.length / 12);  
+    if (newTotalPages !== totalPages) {  
+      setTotalPages(newTotalPages);  
     }  
 
     const startIndex = (currentPage - 1) * 12;  
-    setCurrentArticles(updatedArticles.slice(startIndex, startIndex + 12));  
-  }, [articles, showFavorites, startDate, endDate, sortOrder, currentPage, filteredFavoriteArticles]);  
+    const newCurrentArticles = updatedArticles.slice(startIndex, startIndex + 12);  
+    if (JSON.stringify(newCurrentArticles) !== JSON.stringify(currentArticles)) {  
+      setCurrentArticles(newCurrentArticles);  
+    }  
 
-  const handlePageChange = (newPageIndex?: number) => {  
+    if (currentPage > newTotalPages && newTotalPages > 0) {  
+      setCurrentPage(newTotalPages);  
+    }  
+    
+  }, [articles, showFavorites, startDate, endDate, sortOrder, currentPage, filteredFavoriteArticles, filteredArticles, totalPages, currentArticles]);  
+
+  const handlePageChange = useCallback((newPageIndex?: number) => {  
     if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {  
       setCurrentPage(newPageIndex);  
     }  
-  };  
+  }, [totalPages]);  
 
   return {  
     language,  
@@ -110,5 +113,3 @@ function useNewsPageLogic() {
 }  
 
 export default useNewsPageLogic;
-
-
