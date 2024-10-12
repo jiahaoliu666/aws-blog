@@ -1,4 +1,4 @@
-// src/hooks/news/useNewsFavorites.ts  
+// src/hooks/news/useNewsFavorites.ts
 import { useState } from 'react';  
 import { ExtendedNews } from '@/types/newsType';  
 
@@ -7,12 +7,15 @@ export const useNewsFavorites = () => {
 
   const toggleFavorite = (article: ExtendedNews) => {  
     setFavorites((prevFavorites) => {  
-      if (prevFavorites[article.article_id]) {  
+      const isFavorite = !!prevFavorites[article.article_id];  
+      const updatedArticle = { ...article, isFavorite: !isFavorite };  
+
+      if (isFavorite) {  
         const newFavorites = { ...prevFavorites };  
         delete newFavorites[article.article_id];  
         return newFavorites;  
       } else {  
-        return { ...prevFavorites, [article.article_id]: article };  
+        return { ...prevFavorites, [article.article_id]: updatedArticle };  
       }  
     });  
   };  
@@ -27,3 +30,4 @@ export const useNewsFavorites = () => {
     filteredFavoriteArticles,  
   };  
 };
+

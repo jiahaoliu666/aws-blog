@@ -110,3 +110,5 @@ function useNewsPageLogic() {
 }  
 
 export default useNewsPageLogic;
+
+

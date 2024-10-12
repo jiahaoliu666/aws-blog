@@ -1,14 +1,14 @@
-// src/components/news/NewsCard.tsx  
+// // src/components/news/NewsCard.tsx  
+
 import React, { useState, useEffect } from 'react';  
 import { ExtendedNews } from '@/types/newsType';  
 
-// 定義 NewsCard 組件的屬性類型  
 interface NewsCardProps {  
-  article: ExtendedNews;  // 使用 ExtendedNews 類型  
+  article: ExtendedNews;  
   index: number;  
   gridView: boolean;  
   isDarkMode: boolean;  
-  toggleFavorite: (article: ExtendedNews) => void;  // 確保接受的函數參數類型一致  
+  toggleFavorite: (article: ExtendedNews) => void;  
   language: string;  
   showSummaries: boolean;  
 }  
@@ -49,7 +49,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         </a>  
       </h2>  
       <span className="text-sm text-gray-500 mb-1">{article.info}</span>  
-      <p className="mt-2">{language === 'zh-TW' ? article.translated_description || article.description : article.description}</p>    
+      <p className="mt-2">{language === 'zh-TW' ? article.translated_description || article.description : article.description}</p>  
       <div className="flex justify-between items-center mt-4">  
         <div className="flex">  
           <button  
@@ -58,21 +58,21 @@ const NewsCard: React.FC<NewsCardProps> = ({
               article.isFavorite ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'  
             }`}  
           >  
-            {article.isFavorite ? '已收藏' : '收藏'}   
+            {article.isFavorite ? '已收藏' : '收藏'}  
           </button>  
           <button  
             onClick={handleSummaryClick}  
             className="mx-2 px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-300"  
           >  
-            {isSummaryVisible ? '隱藏總結' : '顯示總結'}    
+            {isSummaryVisible ? '隱藏總結' : '顯示總結'}  
           </button>  
         </div>  
-        <span className="text-sm text-gray-500">{article.createdAt}</span>   
+        <span className="text-sm text-gray-500">{article.createdAt}</span>  
       </div>  
       {isSummaryVisible && article.summary && (  
         <div className={`mt-4 p-2 border rounded ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-900'}`}>  
           <h3 className="font-bold">內容總結：</h3>  
-          <p>{article.summary}</p>   
+          <p>{article.summary}</p>  
         </div>  
       )}  
     </div>  
@@ -80,4 +80,5 @@ const NewsCard: React.FC<NewsCardProps> = ({
 };  
 
 export default NewsCard;
+
 

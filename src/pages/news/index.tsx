@@ -1,4 +1,5 @@
-// src/pages/news/index.tsx  
+// // src/pages/news/index.tsx  
+
 import React, { useEffect } from 'react';  
 import { useRouter } from 'next/router';  
 import { ExtendedNews } from '../../types/newsType';  
@@ -11,7 +12,6 @@ import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';
 const NewsPage: React.FC = () => {  
   const router = useRouter();  
 
-  // 使用自定義 Hook 管理新聞頁面邏輯  
   const {  
     language,  
     setLanguage,  
@@ -41,10 +41,8 @@ const NewsPage: React.FC = () => {
   } = useNewsPageLogic();  
 
   useEffect(() => {  
-    // 當路由變化時重置狀態的函數  
     const handleRouteChange = (url: string) => {  
       if (url === '/') {  
-        // 當導航到首頁時將狀態重置為預設值  
         setGridView(false);  
         setIsDarkMode(false);  
         setShowFavorites(false);  
@@ -53,14 +51,11 @@ const NewsPage: React.FC = () => {
         setSortOrder('newest');  
         setLanguage('zh-TW');  
         setFilteredArticles([]);  
-        // 這裡可以加入其他需要重置的狀態  
       }  
     };  
 
-    // 監聽路由變化事件  
     router.events.on('routeChangeComplete', handleRouteChange);  
 
-    // 在組件卸載時清除事件監聽器以防止記憶體洩漏  
     return () => {  
       router.events.off('routeChangeComplete', handleRouteChange);  
     };  
@@ -98,11 +93,10 @@ const NewsPage: React.FC = () => {
         />  
         <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"}`}>  
           {currentArticles.length > 0 ? (  
-            // 遍歷並顯示每篇文章  
             currentArticles.map((article: ExtendedNews, index: number) => (  
               <NewsCard  
-                key={article.article_id} // 最好使用 article_id 作為 key，更穩定  
-                article={article}  // 因此 Map 使用 ExtendedNews 類型  
+                key={article.article_id}  
+                article={article}  
                 index={index}  
                 gridView={gridView}  
                 isDarkMode={isDarkMode}  
@@ -112,7 +106,6 @@ const NewsPage: React.FC = () => {
               />  
             ))  
           ) : (  
-            // 當沒有符合條件的文章時顯示的消息  
             <p className="text-center text-gray-500 col-span-full">未找到符合條件的文章，請嘗試不同的搜尋條件！</p>  
           )}  
         </div>  
@@ -120,7 +113,7 @@ const NewsPage: React.FC = () => {
           currentPage={currentPage}  
           totalPages={totalPages}  
           onPageChange={handlePageChange}  
-          show={currentArticles.length > 0}  // 只有當有文章顯示時才顯示分頁  
+          show={currentArticles.length > 0}  
         />  
       </div>  
     </div>  
@@ -128,3 +121,4 @@ const NewsPage: React.FC = () => {
 };  
 
 export default NewsPage;
+

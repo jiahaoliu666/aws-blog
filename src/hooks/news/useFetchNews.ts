@@ -25,3 +25,4 @@ const useFetchNews = (language: string): ExtendedNews[] => {
 };  
 
 export default useFetchNews;
+
