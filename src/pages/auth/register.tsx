@@ -1,5 +1,4 @@
 // src/pages/auth/register.tsx  
-
 import React, { useState } from 'react';  
 import { SignUpCommand, ConfirmSignUpCommand, ResendConfirmationCodeCommand } from "@aws-sdk/client-cognito-identity-provider";  
 import cognitoClient from '@/utils/cognitoClient';  
@@ -7,11 +6,14 @@ import { PasswordField, Input } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';  
 import Link from 'next/link';  
 import { useRouter } from 'next/router';  
+import Navbar from '@/components/common/Navbar';  
+import { useUserContext } from '@/context/UserContext';  // 使用 UserContext  
 
 const RegisterPage: React.FC = () => {  
   const router = useRouter();  
+  const { setUsername } = useUserContext();  // 設定用戶名到上下文  
 
-  const [username, setUsername] = useState('');  
+  const [username, setLocalUsername] = useState('');  
   const [email, setEmail] = useState('');  
   const [password, setPassword] = useState('');  
   const [confirmPassword, setConfirmPassword] = useState('');  
@@ -29,12 +31,6 @@ const RegisterPage: React.FC = () => {
       setSuccess(null);  
       return;  
     }  
-
-    // if (!email.endsWith('@metaage.com.tw')) {  
-    //   setError('僅允許使用 @metaage.com.tw 的電子郵件地址註冊');  
-    //   setSuccess(null);  
-    //   return;  
-    // }  
 
     if (password !== confirmPassword) {  
       setError('密碼不匹配');  
@@ -59,7 +55,7 @@ const RegisterPage: React.FC = () => {
       setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
       setError(null);  
       setIsVerificationNeeded(true);  
-
+      setUsername(username);  // 將用戶名設定到上下文  
     } catch (err: any) {  
       if (err.message.includes('Username should be an email')) {  
         setError('用戶名必須是有效的電子郵件地址');  
@@ -121,112 +117,115 @@ const RegisterPage: React.FC = () => {
   };  
 
   return (  
-    <div className="flex items-center justify-center min-h-screen bg-gray-200">  
-      <form className="bg-white p-10 rounded-lg shadow-lg w-96" onSubmit={isVerificationNeeded ? handleVerifyCode : handleRegister}>  
-        <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">註冊</h2>  
+    <>  
+      <Navbar />  
+      <div className="flex items-center justify-center min-h-screen bg-gray-200">  
+        <form className="bg-white p-10 rounded-lg shadow-lg w-96" onSubmit={isVerificationNeeded ? handleVerifyCode : handleRegister}>  
+          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">註冊</h2>  
 
-        <div className="mb-4">  
-          <label htmlFor="username" className="text-base text-gray-700">用戶名</label>  
-          <Input   
-            id="username"   
-            name="username"   
-            type="text"   
-            placeholder="輸入用戶名"  
-            value={username}   
-            onChange={(e) => setUsername(e.target.value)}   
-            required   
-            className="border border-gray-300 p-2 rounded"  
-            disabled={isVerificationNeeded}  
-            style={{ marginTop: '8px' }}  
-          />  
-        </div>  
+          <div className="mb-4">  
+            <label htmlFor="username" className="text-base text-gray-700">用戶名</label>  
+            <Input  
+              id="username"  
+              name="username"  
+              type="text"  
+              placeholder="輸入用戶名"  
+              value={username}  
+              onChange={(e) => setLocalUsername(e.target.value)}  
+              required  
+              className="border border-gray-300 p-2 rounded"  
+              disabled={isVerificationNeeded}  
+              style={{ marginTop: '8px' }}  
+            />  
+          </div>  
 
-        <div className="mb-4">  
-          <label htmlFor="email" className="text-base text-gray-700">電子郵件</label>  
-          <Input   
-            id="email"   
-            name="email"   
-            type="email"   
-            placeholder="@metaage.com.tw"  
-            value={email}   
-            onChange={(e) => setEmail(e.target.value)}   
-            required   
-            className="border border-gray-300 p-2 rounded"  
-            disabled={isVerificationNeeded}  
-            style={{ marginTop: '8px' }}  
-          />  
-        </div>  
+          <div className="mb-4">  
+            <label htmlFor="email" className="text-base text-gray-700">電子郵件</label>  
+            <Input  
+              id="email"  
+              name="email"  
+              type="email"  
+              placeholder="@metaage.com.tw"  
+              value={email}  
+              onChange={(e) => setEmail(e.target.value)}  
+              required  
+              className="border border-gray-300 p-2 rounded"  
+              disabled={isVerificationNeeded}  
+              style={{ marginTop: '8px' }}  
+            />  
+          </div>  
 
-        {!isVerificationNeeded && (  
-          <>  
-            <div className="mb-4">  
-              <PasswordField   
-                label="密碼"   
-                value={password}   
-                onChange={(e) => setPassword(e.target.value)}   
-                placeholder="輸入密碼"  
-                required   
-                className="border border-gray-300 p-2 rounded"  
-              />  
-            </div>  
+          {!isVerificationNeeded && (  
+            <>  
+              <div className="mb-4">  
+                <PasswordField  
+                  label="密碼"  
+                  value={password}  
+                  onChange={(e) => setPassword(e.target.value)}  
+                  placeholder="輸入密碼"  
+                  required  
+                  className="border border-gray-300 p-2 rounded"  
+                />  
+              </div>  
 
-            <div className="mb-6">  
-              <PasswordField   
-                label="確認密碼"   
-                value={confirmPassword}   
-                onChange={(e) => setConfirmPassword(e.target.value)}   
-                placeholder="再次輸入密碼"  
-                required   
-                className="border border-gray-300 p-2 rounded"  
-              />  
-            </div>  
-          </>  
-        )}  
+              <div className="mb-6">  
+                <PasswordField  
+                  label="確認密碼"  
+                  value={confirmPassword}  
+                  onChange={(e) => setConfirmPassword(e.target.value)}  
+                  placeholder="再次輸入密碼"  
+                  required  
+                  className="border border-gray-300 p-2 rounded"  
+                />  
+              </div>  
+            </>  
+          )}  
 
-        {isVerificationNeeded && (  
-          <>  
-            <div className="mb-4">  
-              <label htmlFor="verificationCode" className="text-base text-gray-700">驗證碼</label>  
-              <Input   
-                id="verificationCode"   
-                name="verificationCode"   
-                type="text"   
-                placeholder="輸入驗證碼"  
-                value={verificationCode}   
-                onChange={(e) => setVerificationCode(e.target.value)}   
-                required   
-                className="border border-gray-300 p-2 rounded"  
-                style={{ marginTop: '8px' }}   
-              />  
-            </div>  
-            <button  
-              type="button"  
-              className="text-blue-500 hover:underline mb-4"  
-              onClick={handleResendCode}  
-            >  
-              重新發送驗證碼  
-            </button>  
-          </>  
-        )}  
+          {isVerificationNeeded && (  
+            <>  
+              <div className="mb-4">  
+                <label htmlFor="verificationCode" className="text-base text-gray-700">驗證碼</label>  
+                <Input  
+                  id="verificationCode"  
+                  name="verificationCode"  
+                  type="text"  
+                  placeholder="輸入驗證碼"  
+                  value={verificationCode}  
+                  onChange={(e) => setVerificationCode(e.target.value)}  
+                  required  
+                  className="border border-gray-300 p-2 rounded"  
+                  style={{ marginTop: '8px' }}  
+                />  
+              </div>  
+              <button  
+                type="button"  
+                className="text-blue-500 hover:underline mb-4"  
+                onClick={handleResendCode}  
+              >  
+                重新發送驗證碼  
+              </button>  
+            </>  
+          )}  
 
-        {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded whitespace-pre-line">{error}</div>}  
-        {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
+          {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded whitespace-pre-line">{error}</div>}  
+          {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
 
-        <button  
-          type="submit"  
-          className="bg-green-600 text-white rounded w-full py-3 hover:bg-green-700 transition duration-150"  
-        >  
-          {isVerificationNeeded ? '確認驗證' : '註冊'}  
-        </button>  
-        
-        <div className="mt-4 text-center">  
-          <span className="text-gray-700">已經有帳號了？</span>&nbsp;  
-          <Link href="/auth/login" legacyBehavior>  
-            <a className="text-blue-500 hover:underline">登入</a>  
-          </Link>  
-        </div>  
-      </form>  
-    </div>  
+          <button  
+            type="submit"  
+            className="bg-green-600 text-white rounded w-full py-3 hover:bg-green-700 transition duration-150"  
+          >  
+            {isVerificationNeeded ? '確認驗證' : '註冊'}  
+          </button>  
+
+          <div className="mt-4 text-center">  
+            <span className="text-gray-700">已經有帳號了？</span>&nbsp;  
+            <Link href="/auth/login" legacyBehavior>  
+              <a className="text-blue-500 hover:underline">登入</a>  
+            </Link>  
+          </div>  
+        </form>  
+      </div>  
+    </>  
   );  
 };  
 

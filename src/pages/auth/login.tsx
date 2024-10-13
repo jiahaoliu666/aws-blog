@@ -35,7 +35,7 @@ const LoginPage: React.FC = () => {
         setSuccess('登入成功！');  
         setTimeout(() => {  
           router.push('/news'); // redirect after a delay  
-        }, 3000);  
+        }, 2500);  
       }  
     } catch (err: any) {  
       console.log("Log in failed, error message set", err.message || err);  
@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
     console.log("Processing error:", error); // 調試輸出  
 
     if (error.includes("User is not confirmed")) {  
-      return "您的帳戶尚未確認。請檢查您的電子郵件以確認帳戶。";  
+      return "您的帳戶尚未確認，請點擊忘記密碼重新驗證。";  
     }  
     // 可以在這裡添加更多條件來處理不同的錯誤類型  
 
