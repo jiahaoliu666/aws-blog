@@ -2,7 +2,7 @@
 import React, { useState } from 'react';  
 import { CognitoIdentityProviderClient, ForgotPasswordCommand, ConfirmForgotPasswordCommand } from "@aws-sdk/client-cognito-identity-provider";  
 import cognitoClient from '@/utils/cognitoClient';  
-import { Input, Label, Flex } from '@aws-amplify/ui-react';  
+import { Input, Label, Flex, PasswordField } from '@aws-amplify/ui-react';  // 假設 PasswordField 可以被引入  
 import '@aws-amplify/ui-react/styles.css';  
 import Link from 'next/link';  
 
@@ -27,10 +27,12 @@ const ForgotPasswordPage: React.FC = () => {
       setError(null);  
       setStep('reset');  
     } catch (err: any) {  
-      console.error("Error:", err); // 打印完整錯誤信息  
-      // 檢查錯誤名稱或代碼  
+      console.error("Error:", err);  
+
       if (err.name === 'UserNotFoundException' || err.code === 'UserNotFoundException') {  
         setError('此電子郵件尚未註冊。');  
+      } else if (err.message.includes('Attempt limit exceeded, please try after some time')) {  
+        setError('嘗試次數過多，請稍後再試。');  
       } else {  
         setError(err.message || '請求重置密碼失敗');  
       }  
@@ -52,7 +54,13 @@ const ForgotPasswordPage: React.FC = () => {
       setSuccess('密碼重置成功，您的帳戶已驗證。請使用新密碼登入。');  
       setError(null);  
     } catch (err: any) {  
-      setError(err.message || '重置密碼失敗');  
+      if (err.message.includes('Password does not conform to policy: Password not long enough')) {  
+        setError('密碼長度不足，請輸入至少 8 個字符。');  
+      } else if (err.message.includes('Attempt limit exceeded, please try after some time')) {  
+        setError('嘗試次數過多，請稍後再試。');  
+      } else {  
+        setError(err.message || '重置密碼失敗');  
+      }  
       setSuccess(null);  
     }  
   };  
@@ -82,11 +90,10 @@ const ForgotPasswordPage: React.FC = () => {
         {step === 'reset' && (  
           <>  
             <div className="mb-4">  
-              <Label htmlFor="newPassword" className="text-base text-gray-700">新密碼</Label>  
-              <Input  
+              <PasswordField  
                 id="newPassword"  
                 name="newPassword"  
-                type="password"  
+                label="新密碼"  // 添加 label 屬性  
                 placeholder="輸入新密碼"  
                 value={newPassword}  
                 onChange={(e) => setNewPassword(e.target.value)}  
@@ -105,6 +112,7 @@ const ForgotPasswordPage: React.FC = () => {
                 onChange={(e) => setVerificationCode(e.target.value)}  
                 required  
                 className="border border-gray-300 p-2 rounded"  
+                style={{ marginTop: '8px' }}
               />  
             </div>  
           </>  

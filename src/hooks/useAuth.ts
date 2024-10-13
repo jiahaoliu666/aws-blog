@@ -87,7 +87,10 @@ export function useAuth() {
     }  
   };  
 
-  const clearError = () => setError(null);  
+  const clearError = () => {  
+    console.log("Clearing error");  
+    setError(null);  
+  };  
 
   return { user, registerUser, loginUser, logoutUser, error, clearError };  
 }

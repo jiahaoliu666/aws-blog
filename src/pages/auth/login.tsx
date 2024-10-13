@@ -10,32 +10,48 @@ import { useAuthContext } from '../../context/AuthContext';
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
-  const { loginUser, clearError, error } = useAuthContext();  
+  const { loginUser, error, clearError } = useAuthContext();  
   const [email, setEmail] = useState('');  
   const [password, setPassword] = useState('');  
   const [success, setSuccess] = useState<string | null>(null);  
 
   useEffect(() => {  
-    return () => {  
-      clearError(); // 在頁面卸載時清除錯誤狀態  
-    };  
-  }, [clearError]);  
+    if (error) {  
+      console.log("Error state changed:", error);  
+    }  
+  }, [error]);  
 
   const handleLogin = async (e: React.FormEvent) => {  
     e.preventDefault();  
     setSuccess(null);  
-    clearError(); // 清除前置錯誤訊息  
 
-    const loginSucceeded = await loginUser(email, password);  
+    // Clear any existing error before attempting a new login  
+    clearError();  
 
-    if (loginSucceeded) {  
-      setSuccess('登入成功！');  
-      setTimeout(() => {  
-        router.push('/news'); // 成功登入後小延遲重定向，以顯示成功訊息  
-      }, 1000);  
-    } else {  
-      // 登入失敗，錯誤訊息已在 error 狀態中設定，界面會自動顯示  
+    try {  
+      const loginSucceeded = await loginUser(email, password);  
+
+      if (loginSucceeded) {  
+        setSuccess('登入成功！');  
+        setTimeout(() => {  
+          router.push('/news'); // redirect after a delay  
+        }, 3000);  
+      }  
+    } catch (err: any) {  
+      console.log("Log in failed, error message set", err.message || err);  
     }  
+  };  
+
+  // Function to map technical errors to user-friendly messages  
+  const errorMessage = (error: string): string => {  
+    console.log("Processing error:", error); // 調試輸出  
+
+    if (error.includes("User is not confirmed")) {  
+      return "您的帳戶尚未確認。請檢查您的電子郵件以確認帳戶。";  
+    }  
+    // 可以在這裡添加更多條件來處理不同的錯誤類型  
+
+    return "請確認電子郵件或密碼是否輸入正確。";  
   };  
 
   return (  
@@ -50,7 +66,7 @@ const LoginPage: React.FC = () => {
               id="email"  
               name="email"  
               type="email"  
-              placeholder="@metaage.com.tw"  
+              placeholder="@example.com"  
               value={email}  
               onChange={(e) => setEmail(e.target.value)}  
               required  
@@ -69,7 +85,7 @@ const LoginPage: React.FC = () => {
               className="border border-gray-300 p-2 rounded mt-1"  
             />  
           </div>  
-          {error && <ErrorMessage message={error} />}  
+          {error && <ErrorMessage message={errorMessage(error)} />}  
           {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
           <button  
             type="submit"  
@@ -79,12 +95,12 @@ const LoginPage: React.FC = () => {
           </button>  
           <div className="mt-0 text-center">  
             <Link href="/auth/forgot-password">  
-              <span className="text-blue-500 hover:underline">忘記密碼?</span>  
+              <span className="text-blue-500 hover:underline cursor-pointer">忘記密碼?</span>  
             </Link>  
           </div>  
           <div className="mt-4 text-center">  
             <Link href="/auth/register">  
-              <span className="bg-green-600 text-white rounded w-full py-3 inline-block text-center hover:bg-green-700 transition duration-150">  
+              <span className="bg-green-600 text-white rounded w-full py-3 inline-block text-center hover:bg-green-700 transition duration-150 cursor-pointer">  
                 註冊  
               </span>  
             </Link>  

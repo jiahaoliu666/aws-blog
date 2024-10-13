@@ -25,7 +25,7 @@ const RegisterPage: React.FC = () => {
 
     const invalidCharactersPattern = /[^a-zA-Z0-9\u4e00-\u9fff]/;  
     if (invalidCharactersPattern.test(username)) {  
-      setError('用戶名僅允許英文、繁體字和數字，不可包含特殊字符');  
+      setError('用戶名僅允許英文、繁體、數字，不可包含特殊字符');  
       setSuccess(null);  
       return;  
     }  
@@ -88,12 +88,12 @@ const RegisterPage: React.FC = () => {
       });  
 
       await cognitoClient.send(command);  
-      setSuccess('驗證成功！');  
+      setSuccess('驗證成功，請重新登入！');  
       setError(null);  
 
       setTimeout(() => {  
-        router.push('/news');  
-      }, 2000);  
+        router.push('/auth/login');  
+      }, 3000);  
 
     } catch (err: any) {  
       if (err.message.includes('Invalid verification code provided')) {  

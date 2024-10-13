@@ -1,5 +1,5 @@
 // src/context/AuthContext.tsx  
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';  
+import React, { createContext, useContext, ReactNode } from 'react';  
 import { useAuth } from '@/hooks/useAuth';  
 
 interface AuthContextType {  
@@ -16,17 +16,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {  
   const { user, registerUser, loginUser, logoutUser, error, clearError } = useAuth();  
 
-  const value = useMemo(  
-    () => ({  
-      user,  
-      registerUser,  
-      loginUser,  
-      logoutUser,  
-      error,  
-      clearError,  
-    }),  
-    [user, error]  
-  );  
+  const value = {  
+    user,  
+    registerUser,  
+    loginUser,  
+    logoutUser,  
+    error,  
+    clearError,  
+  };  
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;  
 };  
