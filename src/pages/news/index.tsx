@@ -1,7 +1,7 @@
-// // src/pages/news/index.tsx  
-
+// src/pages/news/index.tsx  
 import React, { useEffect } from 'react';  
 import { useRouter } from 'next/router';  
+import Navbar from '../../components/common/Navbar'; // 確保導入 Navbar  
 import { ExtendedNews } from '../../types/newsType';  
 import NewsCard from '../../components/news/NewsCard';  
 import BlogSearch from '../../components/news/NewsSearch';  
@@ -63,6 +63,7 @@ const NewsPage: React.FC = () => {
 
   return (  
     <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>  
+      <Navbar /> {/* 引入 Navbar */}  
       <div className="container mx-auto px-4 py-8 flex-grow">  
         <h1 className="text-5xl font-bold text-center mb-5">AWS 最新新聞</h1>  
         <NewsFilters  
@@ -121,4 +122,3 @@ const NewsPage: React.FC = () => {
 };  
 
 export default NewsPage;
-

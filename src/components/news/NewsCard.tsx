@@ -1,5 +1,4 @@
-// // src/components/news/NewsCard.tsx  
-
+// src/components/news/NewsCard.tsx  
 import React, { useState, useEffect } from 'react';  
 import { ExtendedNews } from '@/types/newsType';  
 
@@ -22,11 +21,11 @@ const NewsCard: React.FC<NewsCardProps> = ({
   language,  
   showSummaries,  
 }) => {  
-  const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(false);  
+  const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);  
 
   useEffect(() => {  
     setIsSummaryVisible(showSummaries);  
-  }, [language, showSummaries]);  
+  }, [showSummaries]);  
 
   const handleSummaryClick = () => {  
     setIsSummaryVisible(!isSummaryVisible);  
@@ -49,7 +48,9 @@ const NewsCard: React.FC<NewsCardProps> = ({
         </a>  
       </h2>  
       <span className="text-sm text-gray-500 mb-1">{article.info}</span>  
-      <p className="mt-2">{language === 'zh-TW' ? article.translated_description || article.description : article.description}</p>  
+      <p className="mt-2">  
+        {language === 'zh-TW' ? article.translated_description || article.description : article.description}  
+      </p>  
       <div className="flex justify-between items-center mt-4">  
         <div className="flex">  
           <button  
@@ -80,5 +81,3 @@ const NewsCard: React.FC<NewsCardProps> = ({
 };  
 
 export default NewsCard;
-
-

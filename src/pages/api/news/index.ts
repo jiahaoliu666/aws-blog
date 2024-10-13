@@ -1,4 +1,4 @@
-// src/pages/api/news/news.ts  
+// src/pages/api/news/index.ts  
 import { NextApiRequest, NextApiResponse } from 'next';  
 import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';  
 
@@ -36,3 +36,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: '無法獲取文章' });  
   }  
 }
+
