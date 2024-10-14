@@ -1,4 +1,4 @@
-// src/pages/auth/login.tsx
+// src/pages/auth/login.tsx  
 import React, { useState, useEffect } from 'react';  
 import { Input, PasswordField } from '@aws-amplify/ui-react';  
 import '@aws-amplify/ui-react/styles.css';  
@@ -7,12 +7,10 @@ import { useRouter } from 'next/router';
 import Navbar from '../../components/common/Navbar';  
 import ErrorMessage from '../../components/common/ErrorMessage';  
 import { useAuthContext } from '../../context/AuthContext';  
-import { useUserContext } from '../../context/UserContext';  
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
   const { loginUser, error, clearError } = useAuthContext();  
-  const { setUsername } = useUserContext();  
   const [email, setEmail] = useState('');  
   const [password, setPassword] = useState('');  
   const [success, setSuccess] = useState<string | null>(null);  
@@ -33,7 +31,6 @@ const LoginPage: React.FC = () => {
       const loginSucceeded = await loginUser(email, password);  
 
       if (loginSucceeded) {  
-        setUsername(email); // 假設用戶名是電子郵件  
         setSuccess('登入成功！');  
         setTimeout(() => {  
           router.push('/news');  

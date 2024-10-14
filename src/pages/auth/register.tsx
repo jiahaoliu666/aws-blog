@@ -1,17 +1,17 @@
 // src/pages/auth/register.tsx  
 import React, { useState } from 'react';  
-import { SignUpCommand, ConfirmSignUpCommand, ResendConfirmationCodeCommand } from "@aws-sdk/client-cognito-identity-provider";  
+import { ConfirmSignUpCommand, ResendConfirmationCodeCommand } from "@aws-sdk/client-cognito-identity-provider";  
 import cognitoClient from '@/utils/cognitoClient';  
 import { PasswordField, Input } from '@aws-amplify/ui-react';  
 import '@aws-amplify/ui-react/styles.css';  
 import Link from 'next/link';  
 import { useRouter } from 'next/router';  
 import Navbar from '@/components/common/Navbar';  
-import { useUserContext } from '@/context/UserContext';  // 使用 UserContext  
+import { useAuthContext } from '@/context/AuthContext';  // 使用 AuthContext  
 
 const RegisterPage: React.FC = () => {  
   const router = useRouter();  
-  const { setUsername } = useUserContext();  // 設定用戶名到上下文  
+  const { registerUser } = useAuthContext();  // 取得 registerUser  
 
   const [username, setLocalUsername] = useState('');  
   const [email, setEmail] = useState('');  
@@ -39,23 +39,13 @@ const RegisterPage: React.FC = () => {
     }  
 
     try {  
-      const command = new SignUpCommand({  
-        ClientId: "您的ClientId",  // 使用您實際的ClientId  
-        Username: email,  
-        Password: password,  
-        UserAttributes: [  
-          {  
-            Name: 'name',  // 確保Cognito用戶池有這個屬性  
-            Value: username,  // 使用註冊表格中的用戶名  
-          },  
-        ],  
-      });  
+      const success = await registerUser(email, password, username);  // 使用 registerUser 應用名  
 
-      await cognitoClient.send(command);  
-      setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
-      setError(null);  
-      setIsVerificationNeeded(true);  
-      setUsername(username);  // 在UserContext中設置用戶名  
+      if (success) {  
+        setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
+        setError(null);  
+        setIsVerificationNeeded(true);  
+      }  
     } catch (err: any) {  
       if (err.message.includes('Username should be an email')) {  
         setError('用戶名必須是有效的電子郵件地址');  
@@ -78,7 +68,7 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();  
     try {  
       const command = new ConfirmSignUpCommand({  
-        ClientId: "您的ClientId",  
+        ClientId: "5ua9kmb59lmqks0echkc261dgh",  
         Username: email,  
         ConfirmationCode: verificationCode,  
       });  
@@ -104,7 +94,7 @@ const RegisterPage: React.FC = () => {
   const handleResendCode = async () => {  
     try {  
       const command = new ResendConfirmationCodeCommand({  
-        ClientId: "您的ClientId",  
+        ClientId: "5ua9kmb59lmqks0echkc261dgh",  
         Username: email  
       });  
       await cognitoClient.send(command);  

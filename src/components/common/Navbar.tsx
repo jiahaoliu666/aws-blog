@@ -4,43 +4,20 @@ import Link from 'next/link';
 import { Menu, MenuItem, View, SwitchField, Message } from '@aws-amplify/ui-react';  
 import { useAppContext } from '../../context/AppContext';  
 import { useAuthContext } from '../../context/AuthContext';  
-import { useUserContext } from '../../context/UserContext';  // 使用 UserContext  
 
 const Navbar: React.FC = () => {  
-  const {  
-    gridView,  
-    isDarkMode,  
-    showFavorites,  
-    setGridView,  
-    setIsDarkMode,  
-    setShowFavorites,  
-    startDate,  
-    endDate,  
-    setStartDate,  
-    setEndDate,  
-    sortOrder,  
-    setSortOrder,  
-    onDateFilterChange,  
-    filteredArticles,  
-    filteredFavoritesCount,  
-    language,  
-    setLanguage,  
-    toggleShowSummaries,  
-    showSummaries  
-  } = useAppContext();  
+  const { gridView, isDarkMode, showFavorites, setGridView, setIsDarkMode, setShowFavorites, startDate, endDate, setStartDate, setEndDate, sortOrder, setSortOrder, onDateFilterChange, filteredArticles, filteredFavoritesCount, language, setLanguage, toggleShowSummaries, showSummaries } = useAppContext();  
 
   const { user, logoutUser } = useAuthContext();  
-  const { username, setUsername } = useUserContext();  // 取得並設定用戶名  
   const [isLoggedOut, setIsLoggedOut] = useState(false);  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);  
-  const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);  // 新增狀態  
+  const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);  
   const dropdownRef = useRef<HTMLDivElement>(null);  
-  const resourcesDropdownRef = useRef<HTMLDivElement>(null);  // 新增引用  
+  const resourcesDropdownRef = useRef<HTMLDivElement>(null);  
 
   const handleLogout = async () => {  
     try {  
       await logoutUser();  
-      setUsername('');  // 清除用戶名  
       setIsLoggedOut(true);  
     } catch (error) {  
       console.error('Failed to logout:', error);  
@@ -65,7 +42,6 @@ const Navbar: React.FC = () => {
         setIsResourcesDropdownOpen(false);  
       }  
     };  
-
     document.addEventListener('mousedown', handleClickOutside);  
     return () => {  
       document.removeEventListener('mousedown', handleClickOutside);  
@@ -96,7 +72,6 @@ const Navbar: React.FC = () => {
             <Link href="/announcement" className="text-white hover:underline">最新公告</Link>  
             <Link href="/news" className="text-white hover:underline">最新新聞</Link>  
             <Link href="/knowledge" className="text-white hover:underline">知識庫</Link>  
-
             <div className="relative" ref={resourcesDropdownRef}>  
               <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:underline flex items-center">  
                 其他資源  
@@ -114,11 +89,10 @@ const Navbar: React.FC = () => {
                 </div>  
               )}  
             </div>  
-
             {user ? (  
               <div className="relative" ref={dropdownRef}>  
                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="text-white hover:underline flex items-center">  
-                  {username ? `Hi, ${username}` : '用戶'} {/* 顯示用戶名，前面加上 Hi */}  
+                  {`Hi，${user.username}`}  
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />  
                   </svg>  
@@ -137,7 +111,6 @@ const Navbar: React.FC = () => {
             ) : (  
               <Link href="/auth/login" className="text-white hover:underline">登入</Link>  
             )}  
-
             <View className="block lg:hidden" width="16rem">  
               <Menu>  
                 <MenuItem>  
@@ -231,15 +204,13 @@ const Navbar: React.FC = () => {
                     文章數量: {showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
                   </div>  
                 </MenuItem>  
-              </Menu>  
-            </View>  
+            </Menu>  
+          </View>  
           </div>  
         </div>  
-      </nav>  
-    </div>  
+    </nav>  
+  </div>  
   );  
 };  
 
 export default Navbar;
-
-
