@@ -16,19 +16,23 @@ const ForgotPasswordPage: React.FC = () => {
 
   const handleRequestReset = async (e: React.FormEvent) => {  
     e.preventDefault();  
+    console.log("Initiating password reset request for email:", email);  // Log the email being used  
+  
     try {  
       const command = new ForgotPasswordCommand({  
         ClientId: "5ua9kmb59lmqks0echkc261dgh",  
         Username: email,  
       });  
 
-      await cognitoClient.send(command);  
+      const response = await cognitoClient.send(command);  
+      console.log("ForgotPasswordCommand response:", response);  // Log the response from AWS Cognito  
+  
       setSuccess('驗證碼已發送至您的電子郵件。');  
       setError(null);  
       setStep('reset');  
     } catch (err: any) {  
-      console.error("Error:", err);  
-
+      console.error("Error during ForgotPasswordCommand:", err);  // Log any error encountered  
+  
       if (err.name === 'UserNotFoundException' || err.code === 'UserNotFoundException') {  
         setError('此電子郵件尚未註冊。');  
       } else if (err.message.includes('Attempt limit exceeded, please try after some time')) {  
@@ -42,6 +46,9 @@ const ForgotPasswordPage: React.FC = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {  
     e.preventDefault();  
+    console.log("Attempting to reset password for email:", email);  // Log the email being used  
+    console.log("Verification code and new password provided.");  // Ensure both code and password are being captured  
+
     try {  
       const command = new ConfirmForgotPasswordCommand({  
         ClientId: "5ua9kmb59lmqks0echkc261dgh",  
@@ -50,10 +57,14 @@ const ForgotPasswordPage: React.FC = () => {
         Password: newPassword,  
       });  
 
-      await cognitoClient.send(command);  
+      const response = await cognitoClient.send(command);  
+      console.log("ConfirmForgotPasswordCommand response:", response);  // Log the response from AWS Cognito  
+
       setSuccess('密碼重置成功，您的帳戶已驗證。請使用新密碼登入。');  
       setError(null);  
     } catch (err: any) {  
+      console.error("Error during ConfirmForgotPasswordCommand:", err);  // Log any error encountered  
+  
       if (err.message.includes('Password does not conform to policy: Password not long enough')) {  
         setError('密碼長度不足，請輸入至少 8 個字符。');  
       } else if (err.message.includes('Attempt limit exceeded, please try after some time')) {  
@@ -112,7 +123,7 @@ const ForgotPasswordPage: React.FC = () => {
                 onChange={(e) => setVerificationCode(e.target.value)}  
                 required  
                 className="border border-gray-300 p-2 rounded"  
-                style={{ marginTop: '8px' }}
+                style={{ marginTop: '8px' }}  
               />  
             </div>  
           </>  

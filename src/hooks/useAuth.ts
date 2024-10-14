@@ -1,4 +1,4 @@
-// src/hooks/useAuth.ts  
+// src/hooks/useAuth.ts
 import { useState, useEffect } from "react";  
 import {  
   SignUpCommand,  
@@ -9,6 +9,7 @@ import cognitoClient from "../utils/cognitoClient";
 
 interface User {  
   accessToken: string;  
+  username: string; // 新增用戶名屬性  
 }  
 
 export function useAuth() {  
@@ -54,7 +55,10 @@ export function useAuth() {
       const response = await cognitoClient.send(command);  
       const authResult = response.AuthenticationResult;  
       if (authResult && authResult.AccessToken) {  
-        const user = { accessToken: authResult.AccessToken };  
+        const user = {  
+          accessToken: authResult.AccessToken,  
+          username: email, // 假設用戶名是電子郵件  
+        };  
         setUser(user);  
         localStorage.setItem("user", JSON.stringify(user));  
         setError(null);  

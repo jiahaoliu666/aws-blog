@@ -1,9 +1,9 @@
-// src/context/AuthContext.tsx  
+// src/context/AuthContext.tsx
 import React, { createContext, useContext, ReactNode } from 'react';  
 import { useAuth } from '@/hooks/useAuth';  
 
 interface AuthContextType {  
-  user: { accessToken: string } | null;  
+  user: { accessToken: string; username: string } | null;  
   registerUser: (email: string, password: string) => Promise<boolean>;  
   loginUser: (email: string, password: string) => Promise<boolean>;  
   logoutUser: () => Promise<boolean>;  

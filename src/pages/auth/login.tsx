@@ -1,4 +1,4 @@
-// src/pages/auth/login.tsx  
+// src/pages/auth/login.tsx
 import React, { useState, useEffect } from 'react';  
 import { Input, PasswordField } from '@aws-amplify/ui-react';  
 import '@aws-amplify/ui-react/styles.css';  
@@ -7,10 +7,12 @@ import { useRouter } from 'next/router';
 import Navbar from '../../components/common/Navbar';  
 import ErrorMessage from '../../components/common/ErrorMessage';  
 import { useAuthContext } from '../../context/AuthContext';  
+import { useUserContext } from '../../context/UserContext';  
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
   const { loginUser, error, clearError } = useAuthContext();  
+  const { setUsername } = useUserContext();  
   const [email, setEmail] = useState('');  
   const [password, setPassword] = useState('');  
   const [success, setSuccess] = useState<string | null>(null);  
@@ -25,16 +27,16 @@ const LoginPage: React.FC = () => {
     e.preventDefault();  
     setSuccess(null);  
 
-    // Clear any existing error before attempting a new login  
     clearError();  
 
     try {  
       const loginSucceeded = await loginUser(email, password);  
 
       if (loginSucceeded) {  
+        setUsername(email); // 假設用戶名是電子郵件  
         setSuccess('登入成功！');  
         setTimeout(() => {  
-          router.push('/news'); // redirect after a delay  
+          router.push('/news');  
         }, 2500);  
       }  
     } catch (err: any) {  
@@ -42,14 +44,12 @@ const LoginPage: React.FC = () => {
     }  
   };  
 
-  // Function to map technical errors to user-friendly messages  
   const errorMessage = (error: string): string => {  
-    console.log("Processing error:", error); // 調試輸出  
+    console.log("Processing error:", error);  
 
     if (error.includes("User is not confirmed")) {  
       return "您的帳戶尚未確認，請點擊忘記密碼重新驗證。";  
     }  
-    // 可以在這裡添加更多條件來處理不同的錯誤類型  
 
     return "請確認電子郵件或密碼是否輸入正確。";  
   };  

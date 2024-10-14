@@ -30,7 +30,7 @@ const Navbar: React.FC = () => {
   } = useAppContext();  
 
   const { user, logoutUser } = useAuthContext();  
-  const { username } = useUserContext();  // 取得用戶名  
+  const { username, setUsername } = useUserContext();  // 取得並設定用戶名  
   const [isLoggedOut, setIsLoggedOut] = useState(false);  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);  
   const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);  // 新增狀態  
@@ -40,6 +40,7 @@ const Navbar: React.FC = () => {
   const handleLogout = async () => {  
     try {  
       await logoutUser();  
+      setUsername('');  // 清除用戶名  
       setIsLoggedOut(true);  
     } catch (error) {  
       console.error('Failed to logout:', error);  
@@ -117,7 +118,7 @@ const Navbar: React.FC = () => {
             {user ? (  
               <div className="relative" ref={dropdownRef}>  
                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="text-white hover:underline flex items-center">  
-                  {`Hi, ${username}` || '用戶'} {/* 顯示用戶名，前面加上 Hi */}  
+                  {username ? `Hi, ${username}` : '用戶'} {/* 顯示用戶名，前面加上 Hi */}  
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />  
                   </svg>  
@@ -240,3 +241,5 @@ const Navbar: React.FC = () => {
 };  
 
 export default Navbar;
+
+
