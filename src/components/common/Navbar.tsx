@@ -8,7 +8,7 @@ import { useAuthContext } from '../../context/AuthContext';
 const Navbar: React.FC = () => {  
   const { gridView, isDarkMode, showFavorites, setGridView, setIsDarkMode, setShowFavorites, startDate, endDate, setStartDate, setEndDate, sortOrder, setSortOrder, onDateFilterChange, filteredArticles, filteredFavoritesCount, language, setLanguage, toggleShowSummaries, showSummaries } = useAppContext();  
   const { user, logoutUser } = useAuthContext();  
-  const [isLoggedOut, setIsLoggedOut] = useState(false);  
+  const [isLogoutMessageVisible, setIsLogoutMessageVisible] = useState(false);  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);  
   const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);  
   const dropdownRef = useRef<HTMLDivElement>(null);  
@@ -17,20 +17,14 @@ const Navbar: React.FC = () => {
   const handleLogout = async () => {  
     try {  
       await logoutUser();  
-      setIsLoggedOut(true);  
+      setIsLogoutMessageVisible(true); // 設置登出訊息可見
+      setTimeout(() => {
+        setIsLogoutMessageVisible(false); // 5秒後隱藏訊息
+      }, 5000);  
     } catch (error) {  
       console.error('Failed to logout:', error);  
     }  
   };  
-
-  useEffect(() => {  
-    if (isLoggedOut) {  
-      const timer = setTimeout(() => {  
-        setIsLoggedOut(false);  
-      }, 5000);  
-      return () => clearTimeout(timer);  
-    }  
-  }, [isLoggedOut]);  
 
   useEffect(() => {  
     const handleClickOutside = (event: MouseEvent) => {  
@@ -57,7 +51,7 @@ const Navbar: React.FC = () => {
 
   return (  
     <div>  
-      {isLoggedOut && (  
+      {isLogoutMessageVisible && (  
         <Message variation="filled" colorTheme="success" heading="登出成功" className="mb-4">  
           您已成功登出。  
         </Message>  

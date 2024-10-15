@@ -1,5 +1,5 @@
 // src/pages/auth/login.tsx  
-import React, { useState, useEffect } from 'react';  
+import React, { useEffect, useState } from 'react';  
 import { Input, PasswordField } from '@aws-amplify/ui-react';  
 import '@aws-amplify/ui-react/styles.css';  
 import Link from 'next/link';  
@@ -7,13 +7,26 @@ import { useRouter } from 'next/router';
 import Navbar from '../../components/common/Navbar';  
 import ErrorMessage from '../../components/common/ErrorMessage';  
 import { useAuthContext } from '../../context/AuthContext';  
+import Footer from '../../components/common/Footer';
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
-  const { loginUser, error, clearError } = useAuthContext();  
+  const { loginUser, error, clearError, user } = useAuthContext(); // 引入 useAuthContext，獲取用戶狀態
   const [email, setEmail] = useState('');  
   const [password, setPassword] = useState('');  
   const [success, setSuccess] = useState<string | null>(null);  
+  const [showLoginMessage, setShowLoginMessage] = useState(false); // 控制訊息顯示
+
+  // 如果用戶已經登入，就顯示提示訊息並重定向
+  useEffect(() => {  
+    if (user) {  
+      setShowLoginMessage(true); // 顯示訊息
+      const timer = setTimeout(() => {
+        router.push('/news'); // 1 秒後重定向
+      }, 3000); // 設定 3 秒的 timeout
+      return () => clearTimeout(timer); // 清除計時器
+    }  
+  }, [user, router]);  
 
   useEffect(() => {  
     if (error) {  
@@ -24,12 +37,10 @@ const LoginPage: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {  
     e.preventDefault();  
     setSuccess(null);  
-
     clearError();  
 
     try {  
       const loginSucceeded = await loginUser(email, password);  
-
       if (loginSucceeded) {  
         setSuccess('登入成功！');  
         setTimeout(() => {  
@@ -43,11 +54,9 @@ const LoginPage: React.FC = () => {
 
   const errorMessage = (error: string): string => {  
     console.log("Processing error:", error);  
-
     if (error.includes("User is not confirmed")) {  
       return "您的帳戶尚未確認，請點擊忘記密碼重新驗證。";  
     }  
-
     return "請確認電子郵件或密碼是否輸入正確。";  
   };  
 
@@ -55,57 +64,66 @@ const LoginPage: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-gray-200">  
       <Navbar />  
       <div className="flex items-center justify-center flex-grow">  
-        <form className="bg-white p-10 rounded-lg shadow-lg w-96" onSubmit={handleLogin}>  
-          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">登入</h2>  
-          <div className="mb-4">  
-            <label htmlFor="email" className="text-base text-gray-700">電子郵件</label>  
-            <Input  
-              id="email"  
-              name="email"  
-              type="email"  
-              placeholder="@example.com"  
-              value={email}  
-              onChange={(e) => setEmail(e.target.value)}  
-              required  
-              className="border border-gray-300 p-2 rounded"  
-              style={{ marginTop: '8px' }}  
-            />  
-          </div>  
-          <div className="mb-6">  
-            <PasswordField  
-              label="密碼"  
-              id="password"  
-              value={password}  
-              onChange={(e) => setPassword(e.target.value)}  
-              placeholder="輸入密碼"  
-              required  
-              className="border border-gray-300 p-2 rounded mt-1"  
-            />  
-          </div>  
-          {error && <ErrorMessage message={errorMessage(error)} />}  
-          {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
-          <button  
-            type="submit"  
-            className="bg-blue-600 text-white rounded w-full py-3 hover:bg-blue-700 transition duration-150 mb-4"  
-          >  
-            登入  
-          </button>  
-          <div className="mt-0 text-center">  
-            <Link href="/auth/forgot-password">  
-              <span className="text-blue-500 hover:underline cursor-pointer">忘記密碼?</span>  
-            </Link>  
-          </div>  
-          <div className="mt-4 text-center">  
-            <Link href="/auth/register">  
-              <span className="bg-green-600 text-white rounded w-full py-3 inline-block text-center hover:bg-green-700 transition duration-150 cursor-pointer">  
-                註冊  
-              </span>  
-            </Link>  
-          </div>  
-        </form>  
+        {showLoginMessage ? ( // 如果已登入，顯示提示訊息
+          <div className="text-center py-10">
+            <h2 className="text-2xl font-semibold text-red-600">您已登入成功!</h2>
+            <p className="text-lg text-gray-700">您將被重定向至其他頁面...</p>
+          </div>
+        ) : ( // 否則，顯示登錄表單
+          <form className="bg-white p-10 rounded-lg shadow-lg w-96" onSubmit={handleLogin}>  
+            <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">登入</h2>  
+            <div className="mb-4">  
+              <label htmlFor="email" className="text-base text-gray-700">電子郵件</label>  
+              <Input  
+                id="email"  
+                name="email"  
+                type="email"  
+                placeholder="@example.com"  
+                value={email}  
+                onChange={(e) => setEmail(e.target.value)}  
+                required  
+                className="border border-gray-300 p-2 rounded"  
+                style={{ marginTop: '8px' }}  
+              />  
+            </div>  
+            <div className="mb-6">  
+              <PasswordField  
+                label="密碼"  
+                id="password"  
+                value={password}  
+                onChange={(e) => setPassword(e.target.value)}  
+                placeholder="輸入密碼"  
+                required  
+                className="border border-gray-300 p-2 rounded mt-1"  
+              />  
+            </div>  
+            {error && <ErrorMessage message={errorMessage(error)} />}  
+            {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
+            <button  
+              type="submit"  
+              className="bg-blue-600 text-white rounded w-full py-3 hover:bg-blue-700 transition duration-150 mb-4"  
+            >  
+              登入  
+            </button>  
+            <div className="mt-0 text-center">  
+              <Link href="/auth/forgot-password">  
+                <span className="text-blue-500 hover:underline cursor-pointer">忘記密碼?</span>  
+              </Link>  
+            </div>  
+            <div className="mt-4 text-center">  
+              <Link href="/auth/register">  
+                <span className="bg-green-600 text-white rounded w-full py-3 inline-block text-center hover:bg-green-700 transition duration-150 cursor-pointer">  
+                  註冊  
+                </span>  
+              </Link>  
+            </div>  
+          </form>  
+        )}
       </div>  
+      <Footer /> {/* 在這裡使用 Footer */}  
     </div>  
   );  
 };  
 
 export default LoginPage;
+
