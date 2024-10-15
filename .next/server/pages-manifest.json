@@ -3,8 +3,9 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/news": "pages/news.js",
   "/profile": "pages/profile.js",
-  "/api/news": "pages/api/news.js",
-  "/settings": "pages/settings.js"
+  "/auth/login": "pages/auth/login.js",
+  "/news": "pages/news.js",
+  "/settings": "pages/settings.js",
+  "/api/news": "pages/api/news.js"
 }
