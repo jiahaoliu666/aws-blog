@@ -5,7 +5,6 @@
   │     │     ├── Navbar.tsx                // 通用的導航欄組件，顯示應用程序的標題和導航鏈接，使用 AuthContext 獲取用戶信息  
   │     │     ├── Pagination.tsx            // 通用的分頁組件，用於在多頁新聞列表中導航  
   │     │     ├── ErrorMessage.tsx          // 顯示錯誤信息的組件  
-  │     │     └── UserProfile.tsx           // 顯示當前用戶名的組件，現在使用 AuthContext 獲取用戶信息  
   │     ├── /news  
   │     │     ├── NewsCard.tsx              // 顯示單個新聞文章的卡片組件，包含標題、摘要和鏈接  
   │     │     ├── NewsSearch.tsx            // 搜索新聞文章的組件，提供搜索框和按鈕  
@@ -34,6 +33,10 @@
   │     │     └── forgot-password.tsx       // 用於忘記密碼的頁面，提供重置密碼的功能  
   │     ├── /news  
   │     │     └── index.tsx                 // 新聞頁面，顯示新聞文章列表，包含搜索、過濾和分頁功能  
+  │     ├── /profile  
+  │     │     └── index.tsx                 // 用戶個人資料頁面  
+  │     ├── /settings  
+  │     │     └── index.tsx                 // 用戶設定頁面  
   │     └── _app.tsx                        // 自定義 App 組件，負責全局狀態管理和佈局，移除了 UserProvider  
   ├── /styles  
   │     └── globals.css                     // 全局樣式文件，定義應用程序的基本樣式  

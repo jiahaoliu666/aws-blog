@@ -1,4 +1,4 @@
-// src/components/common/Navbar.tsx  
+// src/components/common/Navbar.tsx
 import React, { useState, useEffect, useRef } from 'react';  
 import Link from 'next/link';  
 import { Menu, MenuItem, View, SwitchField, Message } from '@aws-amplify/ui-react';  
@@ -7,7 +7,6 @@ import { useAuthContext } from '../../context/AuthContext';
 
 const Navbar: React.FC = () => {  
   const { gridView, isDarkMode, showFavorites, setGridView, setIsDarkMode, setShowFavorites, startDate, endDate, setStartDate, setEndDate, sortOrder, setSortOrder, onDateFilterChange, filteredArticles, filteredFavoritesCount, language, setLanguage, toggleShowSummaries, showSummaries } = useAppContext();  
-
   const { user, logoutUser } = useAuthContext();  
   const [isLoggedOut, setIsLoggedOut] = useState(false);  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);  
@@ -64,11 +63,11 @@ const Navbar: React.FC = () => {
         </Message>  
       )}  
       <nav className="bg-gray-800 p-4">  
-        <div className="container mx-auto flex justify-between items-center flex-wrap">  
-          <div className="text-white">  
+        <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center">  
+          <div className="text-white mb-4 lg:mb-0">  
             <Link href="/" className="text-3xl font-bold">AWS Blog</Link>  
           </div>  
-          <div className="space-x-4 flex flex-wrap justify-center lg:justify-end w-full lg:w-auto mt-4 lg:mt-0">  
+          <div className="space-x-4 flex flex-col lg:flex-row justify-center lg:justify-end w-full lg:w-auto">  
             <Link href="/announcement" className="text-white hover:underline">最新公告</Link>  
             <Link href="/news" className="text-white hover:underline">最新新聞</Link>  
             <Link href="/knowledge" className="text-white hover:underline">知識庫</Link>  
@@ -88,7 +87,8 @@ const Navbar: React.FC = () => {
                   </div>  
                 </div>  
               )}  
-            </div>  
+            </div>
+
             {user ? (  
               <div className="relative" ref={dropdownRef}>  
                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="text-white hover:underline flex items-center">  
@@ -101,7 +101,7 @@ const Navbar: React.FC = () => {
                   <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-20">  
                     <div className="py-1">  
                       <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">個人資訊</Link>  
-                      <Link href="/library" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">設定</Link>  
+                      <Link href="/settings" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">設定</Link>  
                       <div className="border-t border-gray-600"></div>  
                       <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">登出</button>  
                     </div>  
@@ -111,105 +111,107 @@ const Navbar: React.FC = () => {
             ) : (  
               <Link href="/auth/login" className="text-white hover:underline">登入</Link>  
             )}  
-            <View className="block lg:hidden" width="16rem">  
-              <Menu>  
-                <MenuItem>  
-                  <SwitchField  
-                    isDisabled={false}  
-                    label={<span className={menuItemClasses}>一鍵總結</span>}  
-                    labelPosition="start"  
-                    isChecked={showSummaries}  
-                    onChange={toggleShowSummaries}  
+          </div>  
+
+          {/* 手機顯示的設定選項 */}
+          <View className="block lg:hidden" width="16rem">  
+            <Menu>  
+              <MenuItem>  
+                <SwitchField  
+                  isDisabled={false}  
+                  label={<span className={menuItemClasses}>一鍵總結</span>}  
+                  labelPosition="start"  
+                  isChecked={showSummaries}  
+                  onChange={toggleShowSummaries}  
+                />  
+              </MenuItem>  
+              <MenuItem>  
+                <SwitchField  
+                  isDisabled={false}  
+                  label={<span className={menuItemClasses}>檢視收藏</span>}  
+                  labelPosition="start"  
+                  isChecked={showFavorites}  
+                  onChange={handleToggle(setShowFavorites)}  
+                />  
+              </MenuItem>  
+              <MenuItem>  
+                <SwitchField  
+                  isDisabled={false}  
+                  label={<span className={menuItemClasses}>切換主題</span>}  
+                  labelPosition="start"  
+                  isChecked={isDarkMode}  
+                  onChange={handleToggle(setIsDarkMode)}  
+                />  
+              </MenuItem>  
+              <MenuItem>  
+                <SwitchField  
+                  isDisabled={false}  
+                  label={<span className={menuItemClasses}>切換視圖</span>}  
+                  labelPosition="start"  
+                  isChecked={gridView}  
+                  onChange={handleToggle(setGridView)}  
+                />  
+              </MenuItem>  
+              <MenuItem>  
+                <div className="flex items-center gap-2">  
+                  <label className={menuItemClasses}>日期:</label>  
+                  <input  
+                    type="date"  
+                    value={startDate}  
+                    onChange={(e) => {  
+                      setStartDate(e.target.value);  
+                      onDateFilterChange(e.target.value, endDate);  
+                    }}  
+                    className={inputClasses}  
                   />  
-                </MenuItem>  
-                <MenuItem>  
-                  <SwitchField  
-                    isDisabled={false}  
-                    label={<span className={menuItemClasses}>檢視收藏</span>}  
-                    labelPosition="start"  
-                    isChecked={showFavorites}  
-                    onChange={handleToggle(setShowFavorites)}  
+                  <span className={menuItemClasses}>至</span>  
+                  <input  
+                    type="date"  
+                    value={endDate}  
+                    onChange={(e) => {  
+                      setEndDate(e.target.value);  
+                      onDateFilterChange(startDate, e.target.value);  
+                    }}  
+                    className={inputClasses}  
                   />  
-                </MenuItem>  
-                <MenuItem>  
-                  <SwitchField  
-                    isDisabled={false}  
-                    label={<span className={menuItemClasses}>切換主題</span>}  
-                    labelPosition="start"  
-                    isChecked={isDarkMode}  
-                    onChange={handleToggle(setIsDarkMode)}  
-                  />  
-                </MenuItem>  
-                <MenuItem>  
-                  <SwitchField  
-                    isDisabled={false}  
-                    label={<span className={menuItemClasses}>切換視圖</span>}  
-                    labelPosition="start"  
-                    isChecked={gridView}  
-                    onChange={handleToggle(setGridView)}  
-                  />  
-                </MenuItem>  
-                <MenuItem>  
-                  <div className="flex items-center gap-2">  
-                    <label className={menuItemClasses}>日期:</label>  
-                    <input  
-                      type="date"  
-                      value={startDate}  
-                      onChange={(e) => {  
-                        setStartDate(e.target.value);  
-                        onDateFilterChange(e.target.value, endDate);  
-                      }}  
-                      className={inputClasses}  
-                    />  
-                    <span className={menuItemClasses}>至</span>  
-                    <input  
-                      type="date"  
-                      value={endDate}  
-                      onChange={(e) => {  
-                        setEndDate(e.target.value);  
-                        onDateFilterChange(startDate, e.target.value);  
-                      }}  
-                      className={inputClasses}  
-                    />  
-                  </div>  
-                </MenuItem>  
-                <MenuItem>  
-                  <div className="flex items-center gap-2">  
-                    <label className={menuItemClasses}>排序:</label>  
-                    <select  
-                      value={sortOrder}  
-                      onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}  
-                      className={inputClasses}  
-                    >  
-                      <option value="newest">最新文章</option>  
-                      <option value="oldest">最舊文章</option>  
-                    </select>  
-                  </div>  
-                </MenuItem>  
-                <MenuItem>  
-                  <div className="flex items-center gap-2">  
-                    <label className={menuItemClasses}>語言:</label>  
-                    <select  
-                      value={language}  
-                      onChange={(e) => setLanguage(e.target.value)}  
-                      className={inputClasses}  
-                    >  
-                      <option value="zh-TW">繁體中文</option>  
-                      <option value="en">English</option>  
-                    </select>  
-                  </div>  
-                </MenuItem>  
-                <MenuItem>  
-                  <div className={menuItemClasses}>  
-                    文章數量: {showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
-                  </div>  
-                </MenuItem>  
+                </div>  
+              </MenuItem>  
+              <MenuItem>  
+                <div className="flex items-center gap-2">  
+                  <label className={menuItemClasses}>排序:</label>  
+                  <select  
+                    value={sortOrder}  
+                    onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}  
+                    className={inputClasses}  
+                  >  
+                    <option value="newest">最新文章</option>  
+                    <option value="oldest">最舊文章</option>  
+                  </select>  
+                </div>  
+              </MenuItem>  
+              <MenuItem>  
+                <div className="flex items-center gap-2">  
+                  <label className={menuItemClasses}>語言:</label>  
+                  <select  
+                    value={language}  
+                    onChange={(e) => setLanguage(e.target.value)}  
+                    className={inputClasses}  
+                  >  
+                    <option value="zh-TW">繁體中文</option>  
+                    <option value="en">English</option>  
+                  </select>  
+                </div>  
+              </MenuItem>  
+              <MenuItem>  
+                <div className={menuItemClasses}>  
+                  文章數量: {showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
+                </div>  
+              </MenuItem>  
             </Menu>  
           </View>  
-          </div>  
         </div>  
-    </nav>  
-  </div>  
+      </nav>  
+    </div>  
   );  
 };  
 

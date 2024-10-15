@@ -2,8 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/news": "pages/news.js",
   "/": "pages/index.js",
-  "/auth/login": "pages/auth/login.js",
-  "/api/news": "pages/api/news.js"
+  "/news": "pages/news.js",
+  "/profile": "pages/profile.js",
+  "/api/news": "pages/api/news.js",
+  "/settings": "pages/settings.js"
 }

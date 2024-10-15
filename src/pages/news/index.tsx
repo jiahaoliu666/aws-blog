@@ -8,6 +8,7 @@ import BlogSearch from '../../components/news/NewsSearch';
 import NewsFilters from '../../components/news/NewsFilters';  
 import Pagination from '../../components/common/Pagination';  
 import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';  
+import Footer from '../../components/common/Footer'; // 引入 Footer
 
 const NewsPage: React.FC = () => {  
   const router = useRouter();  
@@ -117,6 +118,7 @@ const NewsPage: React.FC = () => {
           show={currentArticles.length > 0}  
         />  
       </div>  
+      <Footer /> {/* 在這裡使用 Footer */}  
     </div>  
   );  
 };  

@@ -2,6 +2,7 @@
 import React from 'react';  
 import Link from 'next/link';  
 import Navbar from '../components/common/Navbar'; // 確保正確導入 Navbar  
+import Footer from '../components/common/Footer'; // 引入 Footer
 
 const Home: React.FC = () => {  
   return (  
@@ -30,6 +31,7 @@ const Home: React.FC = () => {
           </ul>  
         </div>  
       </div>  
+      <Footer /> {/* 在這裡使用 Footer */}  
     </div>  
   );  
 };  
