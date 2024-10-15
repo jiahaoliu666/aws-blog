@@ -1,143 +1,155 @@
-// src/context/AuthContext.tsx  
-import React, { createContext, useContext, useState, useEffect } from 'react';  
-import {  
-  SignUpCommand,  
-  InitiateAuthCommand,  
-  GlobalSignOutCommand,  
-  GetUserCommand,  
-} from "@aws-sdk/client-cognito-identity-provider";  
-import cognitoClient from "../utils/cognitoClient";  
+// src/context/AuthContext.tsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  SignUpCommand,
+  InitiateAuthCommand,
+  GlobalSignOutCommand,
+  GetUserCommand,
+} from "@aws-sdk/client-cognito-identity-provider";
+import cognitoClient from "../utils/cognitoClient";
+import { ExtendedNews } from "@/types/newsType"; // 引入 ExtendedNews
 
-interface User {  
-  accessToken: string;  
-  username: string;  
-}  
+interface User {
+  accessToken: string;
+  username: string;
+  sub: string; // Cognito 的唯一識別 ID
+  favorites?: ExtendedNews[]; // 可選的收藏列表
+}
 
-interface AuthContextType {  
-  user: User | null;  
-  registerUser: (email: string, password: string, name: string) => Promise<boolean>;  
-  loginUser: (email: string, password: string) => Promise<boolean>;  
-  logoutUser: () => Promise<boolean>;  
-  error: string | null;  
-  clearError: () => void;  
-}  
+interface AuthContextType {
+  user: User | null;
+  registerUser: (email: string, password: string, name: string) => Promise<boolean>;
+  loginUser: (email: string, password: string) => Promise<boolean>;
+  logoutUser: () => Promise<boolean>;
+  error: string | null;
+  clearError: () => void;
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);  
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {  
-  const [user, setUser] = useState<User | null>(null);  
-  const [error, setError] = useState<string | null>(null);  
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || "";  
+  const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || "";
 
-  useEffect(() => {  
-    const storedUser = localStorage.getItem("user");  
-    if (storedUser) {  
-      const parsedUser = JSON.parse(storedUser);  
-      setUser(parsedUser);  
-    }  
-  }, []);  
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser: User = JSON.parse(storedUser);
+      setUser(parsedUser);
+    }
+  }, []);
 
-  const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {  
-    try {  
-      const command = new SignUpCommand({  
-        ClientId: clientId,  
-        Username: email,  
-        Password: password,  
-        UserAttributes: [  
-          { Name: "email", Value: email },  
-          { Name: "name", Value: name },  
-        ],  
-      });  
-      await cognitoClient.send(command);  
-      setError(null);  
-      return true;  
-    } catch (err) {  
-      setError(`註冊失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);  
-      return false;  
-    }  
-  };  
+  const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {
+    try {
+      const command = new SignUpCommand({
+        ClientId: clientId,
+        Username: email,
+        Password: password,
+        UserAttributes: [
+          { Name: "email", Value: email },
+          { Name: "name", Value: name },
+        ],
+      });
+      await cognitoClient.send(command);
+      setError(null);
+      return true;
+    } catch (err) {
+      setError(`註冊失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);
+      return false;
+    }
+  };
 
-  const loginUser = async (email: string, password: string): Promise<boolean> => {  
-    try {  
-      const command = new InitiateAuthCommand({  
-        AuthFlow: "USER_PASSWORD_AUTH",  
-        ClientId: clientId,  
-        AuthParameters: {  
-          USERNAME: email,  
-          PASSWORD: password,  
-        },  
-      });  
-      const response = await cognitoClient.send(command);  
-      const authResult = response.AuthenticationResult;  
-      if (authResult && authResult.AccessToken) {  
-        const accessToken = authResult.AccessToken;  
+  const loginUser = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const command = new InitiateAuthCommand({
+        AuthFlow: "USER_PASSWORD_AUTH",
+        ClientId: clientId,
+        AuthParameters: {
+          USERNAME: email,
+          PASSWORD: password,
+        },
+      });
+      const response = await cognitoClient.send(command);
+      const authResult = response.AuthenticationResult;
 
-        const userCommand = new GetUserCommand({ AccessToken: accessToken });  
-        const userResponse = await cognitoClient.send(userCommand);  
-        const nameAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'name');  
+      if (authResult && authResult.AccessToken) {
+        const accessToken = authResult.AccessToken;
 
-        const username = nameAttribute ? nameAttribute.Value || email : email;  
+        // 獲取用戶資料
+        const userCommand = new GetUserCommand({ AccessToken: accessToken });
+        const userResponse = await cognitoClient.send(userCommand);
 
-        const user = {  
-          accessToken,  
-          username,  
-        };  
-        setUser(user);  
-        localStorage.setItem("user", JSON.stringify(user));  
-        setError(null);  
+        // 提取用戶名稱和 userId
+        const nameAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'name');
+        const userIdAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'sub'); // 獲取 userId
 
-        return true;  
-      } else {  
-        throw new Error("登入失敗：認證結果未定義。");  
-      }  
-    } catch (err) {  
-      const errorMessage = `登入失敗: ${err instanceof Error ? err.message : "未知錯誤"}`;  
-      console.log("設置錯誤信息: ", errorMessage);  
-      setError(errorMessage);  
-      return false;  
-    }  
-  };  
+        const username = nameAttribute ? nameAttribute.Value || email : email;
 
-  const logoutUser = async (): Promise<boolean> => {  
-    try {  
-      if (user) {  
-        const command = new GlobalSignOutCommand({ AccessToken: user.accessToken });  
-        await cognitoClient.send(command);  
-        setUser(null);  
-        localStorage.removeItem("user");  
-        console.log("User logged out and username cleared");  
-        setError(null);  
-        return true;  
-      }  
-      return false;  
-    } catch (err) {  
-      setError(`登出失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);  
-      return false;  
-    }  
-  };  
+        // 如果 userIdAttribute 為 undefined，則拋出錯誤
+        if (!userIdAttribute || !userIdAttribute.Value) {
+          throw new Error("無法獲取用戶的 ID（sub）。");
+        }
+        const userId = userIdAttribute.Value; // 確保這裡是 string 類型
 
-  const clearError = () => {  
-    console.log("Clearing error");  
-    setError(null);  
-  };  
+        // 設置用戶資料
+        const user: User = { accessToken, username, sub: userId, favorites: [] }; // 初始收藏數組
+        setUser(user);
+        localStorage.setItem("user", JSON.stringify(user));
+        setError(null);
 
-  const value = {  
-    user,  
-    registerUser,  
-    loginUser,  
-    logoutUser,  
-    error,  
-    clearError,  
-  };  
+        return true;
+      } else {
+        throw new Error("登入失敗：認證結果未定義。");
+      }
+    } catch (err) {
+      const errorMessage = `登入失敗: ${err instanceof Error ? err.message : "未知錯誤"}`;
+      console.log("設置錯誤信息: ", errorMessage);
+      setError(errorMessage);
+      return false;
+    }
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;  
-};  
+  const logoutUser = async (): Promise<boolean> => {
+    try {
+      if (user) {
+        const command = new GlobalSignOutCommand({ AccessToken: user.accessToken });
+        await cognitoClient.send(command);
+        setUser(null);
+        localStorage.removeItem("user");
+        console.log("User logged out and username cleared");
+        setError(null);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      setError(`登出失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);
+      return false;
+    }
+  };
 
-export const useAuthContext = () => {  
-  const context = useContext(AuthContext);  
-  if (!context) {  
-    throw new Error('useAuthContext 必須在 AuthProvider 中使用');  
-  }  
-  return context;  
+  const clearError = () => {
+    console.log("清除錯誤");
+    setError(null);
+  };
+
+  const value = {
+    user,
+    registerUser,
+    loginUser,
+    logoutUser,
+    error,
+    clearError,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuthContext = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext 必須在 AuthProvider 中使用');
+  }
+  return context;
 };

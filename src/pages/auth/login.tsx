@@ -49,6 +49,7 @@ const LoginPage: React.FC = () => {
       }  
     } catch (err: any) {  
       console.log("Log in failed, error message set", err.message || err);  
+      clearError(); // 可選：每次登入失敗都清除錯誤狀態
     }  
   };  
 
@@ -56,8 +57,11 @@ const LoginPage: React.FC = () => {
     console.log("Processing error:", error);  
     if (error.includes("User is not confirmed")) {  
       return "您的帳戶尚未確認，請點擊忘記密碼重新驗證。";  
-    }  
-    return "請確認電子郵件或密碼是否輸入正確。";  
+    }
+    if (error.includes("Incorrect username or password")) {
+      return "請確認您的電子郵件和密碼是否正確。";
+    }
+    return "登入失敗，請重試。";  
   };  
 
   return (  
@@ -126,4 +130,3 @@ const LoginPage: React.FC = () => {
 };  
 
 export default LoginPage;
-

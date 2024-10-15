@@ -1,6 +1,5 @@
-
-// // src/components/news/NewsFilters.tsx  
-import React from 'react';  // useEffect is removed from the import  
+// src/components/news/NewsFilters.tsx
+import React from 'react';  
 import { SwitchField } from "@aws-amplify/ui-react";  
 import { News } from '@/types/newsType';  
 
@@ -25,6 +24,7 @@ interface NewsFiltersProps {
   setLanguage: (value: string) => void;  
   toggleShowSummaries: () => void;  
   showSummaries: boolean;  
+  setShowSummaries: (value: boolean) => void; // 確保包含 setShowSummaries
 }  
 
 const NewsFilters: React.FC<NewsFiltersProps> = ({  
@@ -46,7 +46,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   language,  
   setLanguage,  
   toggleShowSummaries,  
-  showSummaries  
+  showSummaries,  
+  setShowSummaries  
 }) => {  
 
   return (  
@@ -58,7 +59,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}  
             labelPosition="start"  
             isChecked={showSummaries}  
-            onChange={() => toggleShowSummaries()}  
+            onChange={toggleShowSummaries}  
           />  
           <SwitchField  
             isDisabled={false}  
@@ -140,4 +141,3 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 };  
 
 export default NewsFilters;
-

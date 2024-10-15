@@ -96,11 +96,11 @@ const ProfilePage: React.FC = () => {
               <p><strong>社交媒體:</strong> {formData.socialMedia}</p>
             </div>
             <div className="activity-log bg-white p-4 rounded shadow-md mb-6">
-              <h3 className="text-xl font-bold text-gray-800">過去的活動</h3>
+              <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
               <ul className="list-disc list-inside">
-                <li>活動 1 - 描述</li>
-                <li>活動 2 - 描述</li>
-                <li>活動 3 - 描述</li>
+                <li>觀看紀錄 1 - 描述</li>
+                <li>觀看紀錄 2 - 描述</li>
+                <li>觀看紀錄 3 - 描述</li>
               </ul>
             </div>
             <div className="profile-actions mt-6">

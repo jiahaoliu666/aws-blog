@@ -11,7 +11,7 @@
   │     │     └── NewsFilters.tsx           // 過濾新聞文章的組件，提供過濾選項按鈕  
   ├── /context  
   │     ├── AppContext.tsx                  // 管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
-  │     └── AuthContext.tsx                 // 管理用戶身份驗證狀態，如登錄狀態和用戶信息，合併了原 UserContext 的功能  
+  │     └── AuthContext.tsx                 // 管理用戶身份驗證狀態，如登錄狀態和用戶信息
   ├── /hooks  
   │     ├── /news  
   │     │     ├── useFetchNews.ts           // 自定義 Hook，用於從 API 獲取新聞文章數據  
@@ -24,7 +24,6 @@
   │     │     ├── news  
   │     │     │     ├── index.ts            // API 路由，從 DynamoDB 獲取新聞文章列表  
   │     │     │     ├── summary.ts          // API 路由，從 DynamoDB 獲取單個新聞文章的摘要  
-  │     │     │     ├── favorites.ts        // API 路由，獲取用戶收藏的文章列表  
   │     │     │     ├── addFavorite.ts      // API 路由，將文章添加到收藏  
   │     │     │     └── removeFavorite.ts   // API 路由，從收藏中移除文章  
   │     ├── /auth  
