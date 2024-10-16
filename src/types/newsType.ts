@@ -1,19 +1,20 @@
 // src/types/newsType.ts
 export interface News {
-  article_id: string;
+  article_id: string; 
   title: string;
   published_at: string;
   info: string;
-  description: string; // 新增 description
+  description: string; 
   link: string;
   summary?: string;
-  isFavorite?: boolean; // 可選的，將在 ExtendedNews 覆蓋
+  isFavorite?: boolean; 
   createdAt?: string;
   author?: string;
   translated_title?: string;
   translated_description?: string;
 }
 
+// 定義擴展的新聞信息，isFavorite 為必要屬性
 export type ExtendedNews = Omit<News, 'isFavorite'> & { 
   isFavorite: boolean; 
 };

@@ -14,6 +14,8 @@ function useNewsPageLogic() {
         return fetchedArticles.map(article => ({  
             ...article,  
             isFavorite: !!favorites.find(fav => fav.article_id === article.article_id),  
+            translated_description: article.translated_description || '', // 確保有翻譯描述
+            translated_title: article.translated_title || '', // 確保有翻譯標題
         }));  
     }, [fetchedArticles, favorites]);  
 

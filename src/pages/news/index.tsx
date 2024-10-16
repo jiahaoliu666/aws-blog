@@ -69,7 +69,7 @@ const NewsPage: React.FC = () => {
     };
 
     return (
-        <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-900"} flex flex-col min-h-screen`}>
+        <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen`}>
             <Navbar />
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <h1 className="text-5xl font-bold text-center mb-5">AWS 最新新聞</h1>
@@ -92,9 +92,9 @@ const NewsPage: React.FC = () => {
                     filteredFavoritesCount={filteredFavoritesCount}
                     language={language}
                     setLanguage={setLanguage}
-                    toggleShowSummaries={toggleShowSummaries} // 添加 toggleShowSummaries
+                    toggleShowSummaries={toggleShowSummaries}
                     showSummaries={showSummaries}
-                    setShowSummaries={setShowSummaries} // 確保傳遞 setShowSummaries
+                    setShowSummaries={setShowSummaries}
                 />
 
                 <BlogSearch

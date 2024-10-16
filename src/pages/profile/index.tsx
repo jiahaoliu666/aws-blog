@@ -22,15 +22,13 @@ const ProfilePage: React.FC = () => {
   });
 
   useEffect(() => {
-    // 檢查用戶是否登錄，如果未登錄，顯示訊息並重定向到登錄頁面
-    if (user === null) { // 確保當 user 為 null 時顯示登入訊息
+    if (user === null) {
       setShowLoginMessage(true);
       const timer = setTimeout(() => {
         router.push('/auth/login');
       }, 3000);
       return () => clearTimeout(timer);
     } else if (user) {
-      // 當用戶登入時，可以將用戶資訊更新到表單
       setFormData(prevData => ({
         ...prevData,
         username: user.username,
@@ -54,7 +52,6 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleSaveChanges = () => {
-    // 在這裡實現保存變更的邏輯，可能涉及 API 調用來更新用戶資料
     setIsEditing(false);
   };
 
@@ -64,7 +61,7 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-200">
+    <div className={`${user ? "bg-gray-100 text-gray-900" : "bg-gradient-to-r from-blue-100 to-purple-100"} min-h-screen flex flex-col`}>
       <Navbar />
       <div className="profile-container flex-grow p-5">
         {showLoginMessage ? (
@@ -74,12 +71,12 @@ const ProfilePage: React.FC = () => {
           </div>
         ) : (
           <>
-            <h1 className="text-3xl font-bold mb-4 text-gray-800">個人資料</h1>
+            <h1 className="text-4xl font-bold mb-4 text-gray-800">個人資料</h1>
             <div className="flex items-center mb-6">
               <img
-                src="/path/to/avatar.jpg" // 替換為實際用戶頭像的 URL
+                src="/path/to/avatar.jpg"
                 alt="用戶頭像"
-                className="w-24 h-24 rounded-full border-2 border-blue-500 mr-4"
+                className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
               />
               <div>
                 <h2 className="text-2xl font-semibold text-gray-800">用戶名: {formData.username}</h2>
@@ -89,31 +86,31 @@ const ProfilePage: React.FC = () => {
                 <p className="text-lg text-gray-700">電話: {formData.phone}</p>
               </div>
             </div>
-            <div className="profile-info bg-white p-4 rounded shadow-md mb-6">
+            <div className="profile-info bg-white p-6 rounded-lg shadow-md mb-6">
               <h3 className="text-xl font-bold text-gray-800">額外資訊</h3>
-              <p><strong>個人簡介:</strong> {formData.bio}</p>
-              <p><strong>興趣:</strong> {formData.interests}</p>
-              <p><strong>社交媒體:</strong> {formData.socialMedia}</p>
+              <p className="mt-2"><strong>個人簡介:</strong> {formData.bio}</p>
+              <p className="mt-2"><strong>興趣:</strong> {formData.interests}</p>
+              <p className="mt-2"><strong>社交媒體:</strong> {formData.socialMedia}</p>
             </div>
-            <div className="activity-log bg-white p-4 rounded shadow-md mb-6">
+            <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
               <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
-              <ul className="list-disc list-inside">
+              <ul className="list-disc list-inside mt-2">
                 <li>觀看紀錄 1 - 描述</li>
                 <li>觀看紀錄 2 - 描述</li>
                 <li>觀看紀錄 3 - 描述</li>
               </ul>
             </div>
-            <div className="profile-actions mt-6">
-              <button onClick={handleEditProfile} className="mr-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200">
+            <div className="profile-actions mt-6 flex justify-end">
+              <button onClick={handleEditProfile} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
                 編輯個人資料
               </button>
-              <button onClick={handleLogout} className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-700 transition duration-200">
+              <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
                 登出
               </button>
             </div>
             {isEditing && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white p-4 rounded shadow-md w-1/3">
+                <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
                   <h2 className="text-xl font-bold mb-4">編輯個人資料</h2>
                   <div className="mb-4">
                     <label htmlFor="bio" className="block text-sm font-medium text-gray-700">個人簡介</label>
@@ -147,10 +144,10 @@ const ProfilePage: React.FC = () => {
                     />
                   </div>
                   <div className="flex justify-end">
-                    <button onClick={handleCloseModal} className="mr-4 bg-gray-300 py-2 px-4 rounded">
+                    <button onClick={handleCloseModal} className="mr-4 bg-gray-300 py-2 px-4 rounded-full">
                       取消
                     </button>
-                    <button onClick={handleSaveChanges} className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200">
+                    <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
                       保存變更
                     </button>
                   </div>

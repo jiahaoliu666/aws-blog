@@ -7,11 +7,12 @@ import '@aws-amplify/ui-react/styles.css';
 import Link from 'next/link';  
 import { useRouter } from 'next/router';  
 import Navbar from '@/components/common/Navbar';  
-import { useAuthContext } from '@/context/AuthContext';  // 使用 AuthContext  
+import Footer from '@/components/common/Footer';  // 導入 Footer
+import { useAuthContext } from '@/context/AuthContext';  
 
 const RegisterPage: React.FC = () => {  
   const router = useRouter();  
-  const { registerUser } = useAuthContext();  // 取得 registerUser  
+  const { registerUser } = useAuthContext();  
 
   const [username, setLocalUsername] = useState('');  
   const [email, setEmail] = useState('');  
@@ -39,8 +40,7 @@ const RegisterPage: React.FC = () => {
     }  
 
     try {  
-      const success = await registerUser(email, password, username);  // 使用 registerUser 應用名  
-
+      const success = await registerUser(email, password, username);  
       if (success) {  
         setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
         setError(null);  
@@ -72,15 +72,12 @@ const RegisterPage: React.FC = () => {
         Username: email,  
         ConfirmationCode: verificationCode,  
       });  
-
       await cognitoClient.send(command);  
       setSuccess('驗證成功，請重新登入！');  
       setError(null);  
-
       setTimeout(() => {  
         router.push('/auth/login');  
       }, 3000);  
-
     } catch (err: any) {  
       if (err.message.includes('Invalid verification code provided')) {  
         setError('提供的驗證碼無效，請再試一次。');  
@@ -215,6 +212,7 @@ const RegisterPage: React.FC = () => {
           </div>  
         </form>  
       </div>  
+      <Footer />  {/* 添加 Footer */}
     </>  
   );  
 };  

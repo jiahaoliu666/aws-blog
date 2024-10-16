@@ -30,6 +30,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         setIsSummaryVisible(!isSummaryVisible);
     };
 
+    // 根據用戶的語言選擇標題和描述
     const displayTitle = language === 'zh-TW' ? article.translated_title || article.title : article.title;
     const displayDescription = language === 'zh-TW' ? article.translated_description || article.description : article.description;
 
