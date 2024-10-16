@@ -13,6 +13,8 @@ const puppeteer = require("puppeteer");
 const { v4: uuidv4 } = require("uuid");
 const readline = require("readline");
 const OpenAI = require("openai");
+
+console.log("OpenAI API Key:", process.env.OPENAI_API_KEY); // 應該輸出你的 API 金鑰
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // 使用環境變數
 
 // 初始化 DynamoDB 客戶端

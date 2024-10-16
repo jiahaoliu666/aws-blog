@@ -2,10 +2,10 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/auth/register": "pages/auth/register.js",
-  "/auth/login": "pages/auth/login.js",
-  "/": "pages/index.js",
-  "/news": "pages/news.js",
+  "/api/news/addFavorite": "pages/api/news/addFavorite.js",
   "/api/news": "pages/api/news.js",
-  "/auth/forgot-password": "pages/auth/forgot-password.js"
+  "/api/news/removeFavorite": "pages/api/news/removeFavorite.js",
+  "/news": "pages/news.js",
+  "/": "pages/index.js",
+  "/auth/login": "pages/auth/login.js"
 }
