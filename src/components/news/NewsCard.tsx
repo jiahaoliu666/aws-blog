@@ -1,7 +1,5 @@
-// src/components/news/NewsCard.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ExtendedNews } from '@/types/newsType';
-import { useAuth } from '../../hooks/useAuth';
 
 interface NewsCardProps {
     article: ExtendedNews;
@@ -11,7 +9,7 @@ interface NewsCardProps {
     language: string;
     showSummaries: boolean;
     toggleFavorite: (article: ExtendedNews) => Promise<void>;
-    isFavorited: boolean; // 從父組件傳入
+    isFavorited: boolean;
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({
@@ -22,7 +20,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
     language,
     showSummaries,
     toggleFavorite,
-    isFavorited, // 接收父組件的收藏狀態
+    isFavorited,
 }) => {
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
 
@@ -30,7 +28,6 @@ const NewsCard: React.FC<NewsCardProps> = ({
         setIsSummaryVisible(!isSummaryVisible);
     };
 
-    // 根據用戶的語言選擇標題和描述
     const displayTitle = language === 'zh-TW' ? article.translated_title || article.title : article.title;
     const displayDescription = language === 'zh-TW' ? article.translated_description || article.description : article.description;
 

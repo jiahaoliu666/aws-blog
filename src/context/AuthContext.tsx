@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   SignUpCommand,
@@ -7,13 +6,13 @@ import {
   GetUserCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import cognitoClient from "../utils/cognitoClient";
-import { ExtendedNews } from "@/types/newsType"; // 引入 ExtendedNews
+import { ExtendedNews } from "@/types/newsType";
 
 interface User {
   accessToken: string;
   username: string;
-  sub: string; // Cognito 的唯一識別 ID
-  favorites?: ExtendedNews[]; // 可選的收藏列表
+  sub: string;
+  favorites?: ExtendedNews[];
 }
 
 interface AuthContextType {
@@ -77,24 +76,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (authResult && authResult.AccessToken) {
         const accessToken = authResult.AccessToken;
 
-        // 獲取用戶資料
         const userCommand = new GetUserCommand({ AccessToken: accessToken });
         const userResponse = await cognitoClient.send(userCommand);
 
-        // 提取用戶名稱和 userId
         const nameAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'name');
-        const userIdAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'sub'); // 獲取 userId
+        const userIdAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'sub');
 
         const username = nameAttribute ? nameAttribute.Value || email : email;
 
-        // 如果 userIdAttribute 為 undefined，則拋出錯誤
         if (!userIdAttribute || !userIdAttribute.Value) {
           throw new Error("無法獲取用戶的 ID（sub）。");
         }
-        const userId = userIdAttribute.Value; // 確保這裡是 string 類型
+        const userId = userIdAttribute.Value;
 
-        // 設置用戶資料
-        const user: User = { accessToken, username, sub: userId, favorites: [] }; // 初始收藏數組
+        const user: User = { accessToken, username, sub: userId, favorites: [] };
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         setError(null);

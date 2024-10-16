@@ -1,4 +1,3 @@
-// src/hooks/news/useNewsFavorites.ts
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ExtendedNews } from '@/types/newsType';
@@ -9,13 +8,12 @@ export const useNewsFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedNews[]>([]);
 
-    // 載入使用者的收藏
     useEffect(() => {
         const fetchFavorites = async () => {
             if (user) {
                 try {
                     const response = await axios.get(`/api/news/getFavorites?userId=${user.sub}`);
-                    setFavorites(response.data || []);
+                    setFavorites(response.data.items || []);
                 } catch (error) {
                     console.error('獲取收藏文章失敗:', error);
                 }
@@ -33,7 +31,6 @@ export const useNewsFavorites = () => {
         const articleId = article.article_id;
         const isAlreadyFavorited = favorites.some((fav) => fav.article_id === articleId);
 
-        // 這裡新增 translated_description 和 translated_title
         const params = {
             userId: user.sub,
             articleId,
@@ -41,8 +38,8 @@ export const useNewsFavorites = () => {
             link: article.link,
             description: article.description,
             info: article.info,
-            translated_description: article.translated_description, // 新增翻譯描述
-            translated_title: article.translated_title, // 新增翻譯標題
+            translated_description: article.translated_description,
+            translated_title: article.translated_title,
         };
 
         try {
@@ -73,8 +70,3 @@ export const useNewsFavorites = () => {
 
     return { favorites, toggleFavorite };
 };
-
-
-
-
-
