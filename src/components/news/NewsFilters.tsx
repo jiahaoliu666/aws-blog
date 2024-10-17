@@ -3,7 +3,6 @@ import React from 'react';
 import { SwitchField } from "@aws-amplify/ui-react";  
 import { News } from '@/types/newsType';  
 
-// 定義 NewsFilters 組件的屬性類型  
 interface NewsFiltersProps {  
   gridView: boolean;  
   isDarkMode: boolean;  
@@ -24,7 +23,7 @@ interface NewsFiltersProps {
   setLanguage: (value: string) => void;  
   toggleShowSummaries: () => void;  
   showSummaries: boolean;  
-  setShowSummaries: (value: boolean) => void; // 確保包含 setShowSummaries
+  setShowSummaries: (value: boolean) => void; 
 }  
 
 const NewsFilters: React.FC<NewsFiltersProps> = ({  

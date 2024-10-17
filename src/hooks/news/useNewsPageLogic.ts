@@ -32,11 +32,7 @@ function useNewsPageLogic() {
     const [showSummaries, setShowSummaries] = useState<boolean>(false);  
 
     useEffect(() => {  
-        let updatedArticles: ExtendedNews[] = articles;  
-
-        if (showFavorites) {  
-            updatedArticles = favorites; 
-        }  
+        let updatedArticles: ExtendedNews[] = showFavorites ? favorites : filteredArticles;
 
         if (startDate || endDate) {  
             updatedArticles = updatedArticles.filter(article => {  
@@ -53,8 +49,6 @@ function useNewsPageLogic() {
             return sortOrder === "newest" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();  
         });  
 
-        setFilteredArticles(updatedArticles);  
-
         const newTotalPages = Math.ceil(updatedArticles.length / 12);  
         setTotalPages(newTotalPages);  
 
@@ -65,7 +59,7 @@ function useNewsPageLogic() {
         if (currentPage > newTotalPages && newTotalPages > 0) {  
             setCurrentPage(newTotalPages);  
         }  
-    }, [articles, showFavorites, startDate, endDate, sortOrder, currentPage, favorites]);  
+    }, [filteredArticles, showFavorites, startDate, endDate, sortOrder, currentPage, favorites]);  
 
     const handlePageChange = useCallback((newPageIndex?: number) => {  
         if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {  
@@ -104,6 +98,7 @@ function useNewsPageLogic() {
             setEndDate(end);  
         },  
         favorites, 
+        articles, // 確保這裡返回完整的文章列表
     };  
 }  
 

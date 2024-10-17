@@ -41,6 +41,7 @@ const NewsPage: React.FC = () => {
         filteredArticles,
         favorites,
         handleDateFilterChange,
+        articles, // 確保這裡有完整的文章列表
     } = useNewsPageLogic();
 
     useEffect(() => {
@@ -98,7 +99,7 @@ const NewsPage: React.FC = () => {
                 />
 
                 <BlogSearch
-                    articles={filteredArticles}
+                    articles={articles} // 使用完整的文章列表
                     setFilteredArticles={setFilteredArticles}
                     isDarkMode={isDarkMode}
                 />
