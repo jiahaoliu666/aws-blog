@@ -1,14 +1,14 @@
 // src/components/common/Navbar.tsx
 import React, { useState, useEffect, useRef } from 'react';  
 import Link from 'next/link';  
-import { Message } from '@aws-amplify/ui-react';  
 import { useAppContext } from '../../context/AppContext';  
 import { useAuthContext } from '../../context/AuthContext';  
+import { useNewsFavorites } from '../../hooks/news/useNewsFavorites'; // 引入 useNewsFavorites
 
 const Navbar: React.FC = () => {  
   const { isDarkMode } = useAppContext();  
   const { user, logoutUser } = useAuthContext();  
-  const [isLogoutMessageVisible, setIsLogoutMessageVisible] = useState(false);  
+  const { setFavorites } = useNewsFavorites(); // 使用 setFavorites 來重置收藏狀態
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);  
   const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);  
   const dropdownRef = useRef<HTMLDivElement>(null);  
@@ -17,10 +17,10 @@ const Navbar: React.FC = () => {
   const handleLogout = async () => {  
     try {  
       await logoutUser();  
-      setIsLogoutMessageVisible(true); // 設置登出訊息可見
-      setTimeout(() => {
-        setIsLogoutMessageVisible(false); // 5秒後隱藏訊息
-      }, 5000);  
+      localStorage.clear(); // 清除所有localStorage中的資料
+      setFavorites([]); // 重置收藏狀態
+      alert('您已成功登出!'); // 使用 alert 顯示登出訊息
+      window.location.reload(); // 刷新頁面以重新渲染狀態
     } catch (error) {  
       console.error('Failed to logout:', error);  
     }  
@@ -45,11 +45,6 @@ const Navbar: React.FC = () => {
 
   return (  
     <div>  
-      {isLogoutMessageVisible && (  
-        <Message variation="filled" colorTheme="success" heading="登出成功" className="mb-4">  
-          您已成功登出。  
-        </Message>  
-      )}  
       <nav className="bg-gray-900 p-4 shadow-md">  
         <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">  
           <div className="text-white mb-4 lg:mb-0">  

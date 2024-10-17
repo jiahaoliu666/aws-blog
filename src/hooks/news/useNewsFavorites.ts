@@ -68,5 +68,5 @@ export const useNewsFavorites = () => {
         }
     };
 
-    return { favorites, toggleFavorite };
+    return { favorites, toggleFavorite, setFavorites }; // 確保返回 setFavorites
 };

@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
                 id="email"  
                 name="email"  
                 type="email"  
-                placeholder="@example.com"  
+                placeholder="@metaage.com.tw"  
                 value={email}  
                 onChange={(e) => setEmail(e.target.value)}  
                 required  

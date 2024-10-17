@@ -2,9 +2,11 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/profile": "pages/profile.js",
-  "/api/news/addFavorite": "pages/api/news/addFavorite.js",
   "/": "pages/index.js",
+  "/news": "pages/news.js",
+  "/auth/login": "pages/auth/login.js",
+  "/api/news/getFavorites": "pages/api/news/getFavorites.js",
+  "/profile": "pages/profile.js",
   "/api/news": "pages/api/news.js",
-  "/news": "pages/news.js"
+  "/auth/register": "pages/auth/register.js"
 }
