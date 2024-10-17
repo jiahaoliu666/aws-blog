@@ -52,9 +52,9 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 
   return (  
     <div className="mb-4 p-4">  
-      <div className="flex justify-between items-center">
+      <div className="flex justify-start items-center">
         <button
-          className="md:hidden p-2 border rounded"
+          className="md:hidden p-2 border rounded transform transition duration-300 hover:scale-105"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <svg
@@ -74,7 +74,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      <div className={`flex flex-col gap-4 md:flex-row justify-between ${isMenuOpen ? 'block' : 'hidden'} md:flex`}>
+      <div className={`flex flex-col gap-4 md:flex-row justify-start ${isMenuOpen ? 'block' : 'hidden'} md:flex`}>
         <div className="flex flex-col md:flex-wrap md:flex-row items-center gap-4">
           <SwitchField  
             isDisabled={false}  
@@ -163,3 +163,5 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 };  
 
 export default NewsFilters;
+
+
