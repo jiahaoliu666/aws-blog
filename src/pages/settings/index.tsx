@@ -25,7 +25,7 @@ const SettingsPage: React.FC = () => {
   return (
     <div className={`${user ? "bg-gray-100 text-gray-900" : "bg-gradient-to-r from-blue-100 to-purple-100 text-gray-800"} min-h-screen flex flex-col`}>
       <Navbar />
-      <div className="settings-container flex-grow p-5">
+      <div className="container mx-auto flex-grow p-5"> {/* 使用 container 和 mx-auto 來保持佈局一致 */}
         {showLoginMessage ? (
           <div className="text-center py-10">
             <h2 className="text-3xl font-semibold text-red-600">請先登入!</h2>
