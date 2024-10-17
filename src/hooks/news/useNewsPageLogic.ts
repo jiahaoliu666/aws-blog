@@ -14,8 +14,8 @@ function useNewsPageLogic() {
         return fetchedArticles.map(article => ({  
             ...article,  
             isFavorite: !!favorites.find(fav => fav.article_id === article.article_id),  
-            translated_description: article.translated_description || '', // 確保有翻譯描述
-            translated_title: article.translated_title || '', // 確保有翻譯標題
+            translated_description: article.translated_description || '', 
+            translated_title: article.translated_title || '', 
         }));  
     }, [fetchedArticles, favorites]);  
 
@@ -34,12 +34,10 @@ function useNewsPageLogic() {
     useEffect(() => {  
         let updatedArticles: ExtendedNews[] = articles;  
 
-        // 依據是否顯示收藏過濾文章
         if (showFavorites) {  
             updatedArticles = favorites; 
         }  
 
-        // 根據日期篩選文章
         if (startDate || endDate) {  
             updatedArticles = updatedArticles.filter(article => {  
                 const dateFromInfo = extractDateFromInfo(article.info);  
@@ -49,26 +47,21 @@ function useNewsPageLogic() {
             });  
         }  
 
-        // 排序文章
         updatedArticles.sort((a, b) => {  
             const dateA = new Date(extractDateFromInfo(a.info) || 0);  
             const dateB = new Date(extractDateFromInfo(b.info) || 0);  
             return sortOrder === "newest" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();  
         });  
 
-        // 更新過濾文章
         setFilteredArticles(updatedArticles);  
 
-        // 更新總頁數
         const newTotalPages = Math.ceil(updatedArticles.length / 12);  
         setTotalPages(newTotalPages);  
 
-        // 更新當前文章
         const startIndex = (currentPage - 1) * 12;  
         const newCurrentArticles = updatedArticles.slice(startIndex, startIndex + 12);  
         setCurrentArticles(newCurrentArticles);  
 
-        // 重新設定當前頁碼
         if (currentPage > newTotalPages && newTotalPages > 0) {  
             setCurrentPage(newTotalPages);  
         }  
@@ -84,7 +77,7 @@ function useNewsPageLogic() {
         language,  
         setLanguage,  
         currentArticles,  
-        setFilteredArticles, // 確保返回此方法
+        setFilteredArticles, 
         currentPage,  
         totalPages,  
         gridView,  
@@ -100,7 +93,7 @@ function useNewsPageLogic() {
         setStartDate,  
         setEndDate,  
         showSummaries,  
-        setShowSummaries,  // 確保返回此方法
+        setShowSummaries,  
         toggleShowSummaries: () => setShowSummaries(v => !v),  
         handlePageChange,  
         toggleFavorite,  
@@ -110,7 +103,7 @@ function useNewsPageLogic() {
             setStartDate(start);  
             setEndDate(end);  
         },  
-        favorites, // 添加這行以確保返回 favorites
+        favorites, 
     };  
 }  
 

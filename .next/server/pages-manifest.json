@@ -3,10 +3,8 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
+  "/api/news": "pages/api/news.js",
   "/api/news/getFavorites": "pages/api/news/getFavorites.js",
-  "/auth/login": "pages/auth/login.js",
-  "/api/news/addFavorite": "pages/api/news/addFavorite.js",
-  "/api/news/removeFavorite": "pages/api/news/removeFavorite.js",
   "/news": "pages/news.js",
-  "/api/news": "pages/api/news.js"
+  "/auth/login": "pages/auth/login.js"
 }

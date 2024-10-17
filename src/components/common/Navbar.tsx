@@ -1,3 +1,167 @@
+// // import React, { useState, useEffect, useRef } from 'react';  
+// // import Link from 'next/link';  
+// // import { Message } from '@aws-amplify/ui-react';  
+// // import { useAppContext } from '../../context/AppContext';  
+// // import { useAuthContext } from '../../context/AuthContext';  
+// // import NewsFilters from '../news/NewsFilters'; // 引入 NewsFilters
+
+// // const Navbar: React.FC = () => {  
+// //   const { 
+// //     gridView,
+// //     isDarkMode,
+// //     showFavorites,
+// //     setGridView,
+// //     setIsDarkMode,
+// //     setShowFavorites,
+// //     startDate,
+// //     endDate,
+// //     setStartDate,
+// //     setEndDate,
+// //     sortOrder,
+// //     setSortOrder,
+// //     onDateFilterChange,
+// //     filteredArticles,
+// //     filteredFavoritesCount,
+// //     language,
+// //     setLanguage,
+// //     toggleShowSummaries,
+// //     showSummaries,
+// //     setShowSummaries
+// //   } = useAppContext(); // 從 AppContext 中獲取狀態和函數
+
+// //   const { user, logoutUser } = useAuthContext();  
+// //   const [isLogoutMessageVisible, setIsLogoutMessageVisible] = useState(false);  
+// //   const [isDropdownOpen, setIsDropdownOpen] = useState(false);  
+// //   const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);  
+// //   const dropdownRef = useRef<HTMLDivElement>(null);  
+// //   const resourcesDropdownRef = useRef<HTMLDivElement>(null);  
+
+// //   const handleLogout = async () => {  
+// //     try {  
+// //       await logoutUser();  
+// //       setIsLogoutMessageVisible(true); // 設置登出訊息可見
+// //       setTimeout(() => {
+// //         setIsLogoutMessageVisible(false); // 5秒後隱藏訊息
+// //       }, 5000);  
+// //     } catch (error) {  
+// //       console.error('Failed to logout:', error);  
+// //     }  
+// //   };  
+
+// //   useEffect(() => {  
+// //     const handleClickOutside = (event: MouseEvent) => {  
+// //       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {  
+// //         setIsDropdownOpen(false);  
+// //       }  
+// //       if (resourcesDropdownRef.current && !resourcesDropdownRef.current.contains(event.target as Node)) {  
+// //         setIsResourcesDropdownOpen(false);  
+// //       }  
+// //     };  
+// //     document.addEventListener('mousedown', handleClickOutside);  
+// //     return () => {  
+// //       document.removeEventListener('mousedown', handleClickOutside);  
+// //     };  
+// //   }, []);  
+
+// //   return (  
+// //     <div>  
+// //       {isLogoutMessageVisible && (  
+// //         <Message variation="filled" colorTheme="success" heading="登出成功" className="mb-4">  
+// //           您已成功登出。  
+// //         </Message>  
+// //       )}  
+// //       <nav className="bg-gray-900 p-4 shadow-md">  
+// //         <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center">  
+// //           <div className="text-white mb-4 lg:mb-0">  
+// //             <Link href="/" className="text-3xl font-bold hover:text-gray-400 transition duration-300">AWS Blog</Link>  
+// //           </div>  
+// //           <div className="space-x-4 flex flex-col lg:flex-row justify-center lg:justify-end w-full lg:w-auto">  
+// //             {user && (
+// //               <div className="flex items-center">
+// //                 <svg className="w-6 h-6 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+// //                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z" />
+// //                 </svg>
+// //                 <span className="text-white text-lg">通知</span>
+// //               </div>
+// //             )}
+// //             <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg">最新公告</Link>  
+// //             <Link href="/news" className="text-white hover:text-gray-400 transition duration-300 text-lg">最新新聞</Link>  
+// //             <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg">解決方案</Link>
+// //             <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300 text-lg">知識庫</Link>  
+// //             <Link href="/architecture-diagrams" className="text-white hover:text-gray-400 transition duration-300 text-lg">架構圖</Link>
+// //             <div className="relative" ref={resourcesDropdownRef}>  
+// //               <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
+// //                 其他資源  
+// //                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
+// //                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />  
+// //                 </svg>  
+// //               </button>  
+// //               {isResourcesDropdownOpen && (  
+// //                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-20">  
+// //                   <div className="py-1"> 
+// //                     <Link href="https://docs.aws.amazon.com/" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 官方文檔</Link>    
+// //                     <Link href="https://aws.amazon.com/tw/faqs/?nc1=f_dr" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 常見問答集</Link>                      
+// //                     <Link href="https://status.aws.amazon.com/" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 服務狀態儀表板</Link>                      
+// //                   </div>  
+// //                 </div>  
+// //               )}  
+// //             </div>
+
+// //             {user ? (  
+// //               <div className="relative" ref={dropdownRef}>  
+// //                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
+// //                   {`Hi，${user.username}`}  
+// //                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
+// //                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />  
+// //                   </svg>  
+// //                 </button>  
+// //                 {isDropdownOpen && (  
+// //                   <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-20">  
+// //                     <div className="py-1">  
+// //                       <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">個人資訊</Link>  
+// //                       <Link href="/settings" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">設定</Link>  
+// //                       <div className="border-t border-gray-700"></div>  
+// //                       <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">登出</button>  
+// //                     </div>  
+// //                   </div>  
+// //                 )}  
+// //               </div>  
+// //             ) : (  
+// //               <Link href="/auth/login" className="text-white hover:text-gray-400 transition duration-300 text-lg">登入</Link>  
+// //             )}  
+// //           </div>  
+// //         </div>  
+// //       </nav>  
+// //       {/* 保留 NewsFilters */}
+// //       <NewsFilters 
+// //         gridView={gridView}
+// //         isDarkMode={isDarkMode}
+// //         showFavorites={showFavorites}
+// //         setGridView={setGridView}
+// //         setIsDarkMode={setIsDarkMode}
+// //         setShowFavorites={setShowFavorites}
+// //         startDate={startDate}
+// //         endDate={endDate}
+// //         setStartDate={setStartDate}
+// //         setEndDate={setEndDate}
+// //         sortOrder={sortOrder}
+// //         setSortOrder={setSortOrder}
+// //         onDateFilterChange={onDateFilterChange}
+// //         filteredArticles={filteredArticles}
+// //         filteredFavoritesCount={filteredFavoritesCount}
+// //         language={language}
+// //         setLanguage={setLanguage}
+// //         toggleShowSummaries={toggleShowSummaries}
+// //         showSummaries={showSummaries}
+// //         setShowSummaries={setShowSummaries}
+// //       />
+// //     </div>  
+// //   );  
+// // };  
+
+// // export default Navbar;
+
+
 // src/components/common/Navbar.tsx
 import React, { useState, useEffect, useRef } from 'react';  
 import Link from 'next/link';  
@@ -49,7 +213,7 @@ const Navbar: React.FC = () => {
   const menuItemClasses = `${isDarkMode ? "text-gray-300" : "text-gray-700"}`;  
   const inputClasses = `${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2`;  
 
-  return (  
+    return (  
     <div>  
       {isLogoutMessageVisible && (  
         <Message variation="filled" colorTheme="success" heading="登出成功" className="mb-4">  
@@ -62,11 +226,21 @@ const Navbar: React.FC = () => {
             <Link href="/" className="text-3xl font-bold hover:text-gray-400 transition duration-300">AWS Blog</Link>  
           </div>  
           <div className="space-x-4 flex flex-col lg:flex-row justify-center lg:justify-end w-full lg:w-auto">  
-            <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300">最新公告</Link>  
-            <Link href="/news" className="text-white hover:text-gray-400 transition duration-300">最新新聞</Link>  
-            <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300">知識庫</Link>  
+            {user && (
+              <div className="flex items-center">
+                <svg className="w-6 h-6 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z" />
+                </svg>
+                <span className="text-white text-lg">通知</span>
+              </div>
+            )}
+            <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg">最新公告</Link>  
+            <Link href="/news" className="text-white hover:text-gray-400 transition duration-300 text-lg">最新新聞</Link>  
+            <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg">解決方案</Link>
+            <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300 text-lg">知識庫</Link>  
+            <Link href="/architecture-diagrams" className="text-white hover:text-gray-400 transition duration-300 text-lg">架構圖</Link>
             <div className="relative" ref={resourcesDropdownRef}>  
-              <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center">  
+              <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
                 其他資源  
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />  
@@ -74,18 +248,19 @@ const Navbar: React.FC = () => {
               </button>  
               {isResourcesDropdownOpen && (  
                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-20">  
-                  <div className="py-1">  
-                    <Link href="/resource1" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">資源 1</Link>  
-                    <Link href="/resource2" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">資源 2</Link>  
-                    <Link href="/resource3" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">資源 3</Link>  
+                  <div className="py-1"> 
+                    <Link href="https://docs.aws.amazon.com/" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 官方文檔</Link>    
+                    <Link href="https://aws.amazon.com/tw/faqs/?nc1=f_dr" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 常見問答集</Link>                      
+                    <Link href="https://status.aws.amazon.com/" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 服務狀態儀表板</Link>                      
                   </div>  
                 </div>  
               )}  
             </div>
 
+
             {user ? (  
               <div className="relative" ref={dropdownRef}>  
-                <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center">  
+                <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
                   {`Hi，${user.username}`}  
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />  
@@ -103,7 +278,7 @@ const Navbar: React.FC = () => {
                 )}  
               </div>  
             ) : (  
-              <Link href="/auth/login" className="text-white hover:text-gray-400 transition duration-300">登入</Link>  
+              <Link href="/auth/login" className="text-white hover:text-gray-400 transition duration-300 text-lg">登入</Link>  
             )}  
           </div>  
 

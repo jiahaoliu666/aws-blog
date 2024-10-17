@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ExtendedNews } from '@/types/newsType';
 
 interface NewsCardProps {
@@ -24,9 +24,10 @@ const NewsCard: React.FC<NewsCardProps> = ({
 }) => {
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
 
-    const handleSummaryClick = () => {
-        setIsSummaryVisible(!isSummaryVisible);
-    };
+    // 當 showSummaries 改變時，更新本地狀態
+    useEffect(() => {
+        setIsSummaryVisible(showSummaries);
+    }, [showSummaries]);
 
     const displayTitle = language === 'zh-TW' ? article.translated_title || article.title : article.title;
     const displayDescription = language === 'zh-TW' ? article.translated_description || article.description : article.description;
@@ -37,6 +38,10 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
     const handleToggleFavorite = async () => {
         await toggleFavorite(article);
+    };
+
+    const handleSummaryClick = () => {
+        setIsSummaryVisible(!isSummaryVisible);
     };
 
     return (
