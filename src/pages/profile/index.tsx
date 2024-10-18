@@ -4,6 +4,7 @@ import Footer from '../../components/common/Footer';
 import Navbar from '../../components/common/Navbar';
 import { useAuthContext } from '../../context/AuthContext';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { DynamoDBClient, QueryCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -21,10 +22,19 @@ const ProfilePage: React.FC = () => {
     socialMedia: '[社交媒體連結]',
     address: '[用戶地址]',
     phone: '[電話號碼]',
-    avatar: 'user.png',
+    avatar: 'user.png', // 默認值
     notifications: true,
     privacy: 'public',
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedAvatar = localStorage.getItem('avatarUrl');
+      if (storedAvatar) {
+        setFormData(prevData => ({ ...prevData, avatar: storedAvatar }));
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (user === null) {
@@ -40,14 +50,78 @@ const ProfilePage: React.FC = () => {
         email: user.username,
       }));
       setShowLoginMessage(false);
+
+      const fetchAvatar = async () => {
+        const dynamoClient = new DynamoDBClient({
+          region: 'ap-northeast-1',
+          credentials: {
+            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+          },
+        });
+
+        const queryParams = {
+          TableName: 'AWS_Blog_UserProfiles',
+          KeyConditionExpression: 'userId = :userId',
+          ExpressionAttributeValues: {
+            ':userId': { S: user?.sub || 'default-sub' },
+          },
+        };
+        try {
+          const command = new QueryCommand(queryParams);
+          const response = await dynamoClient.send(command);
+          if (response.Items && response.Items.length > 0) {
+            const avatarUrl = response.Items[0].avatarUrl?.S;
+            if (avatarUrl) {
+              setFormData(prevData => ({ ...prevData, avatar: avatarUrl }));
+              localStorage.setItem('avatarUrl', avatarUrl); // 儲存到 localStorage
+            } else {
+              console.warn('No avatarUrl found in response.');
+            }
+          } else {
+            console.warn('No items found for userId.');
+          }
+        } catch (error) {
+          console.error('Error fetching avatar from DynamoDB:', error);
+        }
+      };
+
+      fetchAvatar();
     }
   }, [user, router]);
 
-  const handleEditProfile = () => {
-    setIsEditing(true);
-  };
+  const handleSaveChanges = async () => {
+    if (tempAvatar) {
+      setFormData({ ...formData, avatar: tempAvatar });
+      localStorage.setItem('avatarUrl', tempAvatar); // 更新 localStorage
 
-  const handleCloseModal = () => {
+      const dynamoClient = new DynamoDBClient({
+        region: 'ap-northeast-1',
+        credentials: {
+          accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+        },
+      });
+
+      const updateParams = {
+        TableName: 'AWS_Blog_UserProfiles',
+        Key: {
+          userId: { S: user?.sub || 'default-sub' },
+        },
+        UpdateExpression: 'SET avatarUrl = :avatarUrl',
+        ExpressionAttributeValues: {
+          ':avatarUrl': { S: tempAvatar },
+        },
+      };
+
+      try {
+        const updateCommand = new UpdateItemCommand(updateParams);
+        await dynamoClient.send(updateCommand);
+        console.log('DynamoDB updated successfully');
+      } catch (error) {
+        console.error('Error updating DynamoDB:', error);
+      }
+    }
     setIsEditing(false);
     setTempAvatar(null);
     setUploadMessage(null);
@@ -63,15 +137,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleSaveChanges = () => {
-    if (tempAvatar) {
-      setFormData({ ...formData, avatar: tempAvatar });
-    }
-    setIsEditing(false);
-    setTempAvatar(null);
-    setUploadMessage(null);
-  };
-
   const handleLogout = async () => {
     await logoutUser();
     router.push('/auth/login');
@@ -81,7 +146,6 @@ const ProfilePage: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      // 檢查檔案類型是否為圖片
       const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
       if (!validImageTypes.includes(file.type)) {
         setUploadMessage('上傳失敗：檔案類型不支援。');
@@ -98,12 +162,11 @@ const ProfilePage: React.FC = () => {
         },
       });
 
-      // 獲取用戶的 sub 屬性
       const userSub = user?.sub || 'default-sub';
 
       const params = {
         Bucket: 'aws-blog-avatar',
-        Key: `avatars/${userSub}-${file.name}`, // 在這裡添加 sub 屬性
+        Key: `avatars/${userSub}-${file.name}`,
         Body: file,
         ContentType: file.type,
       };
@@ -163,7 +226,7 @@ const ProfilePage: React.FC = () => {
               </ul>
             </div>
             <div className="profile-actions mt-6 flex justify-end">
-              <button onClick={handleEditProfile} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
+              <button onClick={() => setIsEditing(true)} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
                 編輯個人資料
               </button>
               <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
@@ -246,7 +309,7 @@ const ProfilePage: React.FC = () => {
                     </select>
                   </div>
                   <div className="flex justify-end">
-                    <button onClick={handleCloseModal} className="mr-4 bg-gray-300 py-2 px-4 rounded-full">
+                    <button onClick={() => setIsEditing(false)} className="mr-4 bg-gray-300 py-2 px-4 rounded-full">
                       取消
                     </button>
                     <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
