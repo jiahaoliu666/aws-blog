@@ -69,7 +69,7 @@ const LoginPage: React.FC = () => {
         {showLoginMessage ? ( 
           <div className="text-center py-10">
             <h2 className="text-2xl font-semibold text-green-600">您已登入成功!</h2>
-            <p className="text-lg text-gray-700">您將被重定向至其他頁面...</p>
+            <p className="text-lg text-gray-700">重新導向至其他頁面...</p>
           </div>
         ) : ( 
           <form className="bg-white p-10 rounded-lg shadow-xl w-96" onSubmit={handleLogin}>  

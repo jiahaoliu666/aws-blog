@@ -29,7 +29,7 @@ const SettingsPage: React.FC = () => {
         {showLoginMessage ? (
           <div className="text-center py-10">
             <h2 className="text-3xl font-semibold text-red-600">請先登入!</h2>
-            <p className="text-lg text-gray-700">您將在幾秒後被重定向至登入頁面...</p>
+            <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
           </div>
         ) : (
           <>
