@@ -106,7 +106,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           />  
         </div>  
 
-        <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="flex flex-col md:flex-row items-center gap-4 ml-auto">
           <div className="flex items-center gap-2">
             <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期:</label>
             <input
@@ -163,5 +163,4 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 };  
 
 export default NewsFilters;
-
 

@@ -204,7 +204,7 @@ const ProfilePage: React.FC = () => {
                 className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
               />
               <div>
-                <h2 className="text-2xl font-semibold text-gray-800">用戶名: {formData.username}</h2>
+                <p className="text-2xl font-semibold text-gray-800">用戶名: {formData.username}</p>
                 <p className="text-lg text-gray-700">電子郵件: {formData.email}</p>
                 <p className="text-lg text-gray-700">註冊日期: {formData.registrationDate}</p>
                 <p className="text-lg text-gray-700">地址: {formData.address}</p>
