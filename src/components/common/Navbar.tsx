@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
   return (  
     <div>  
       <nav className="bg-gray-900 p-4 shadow-md">  
-        <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center">  
+        <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center flex-wrap">  
           <div className="flex items-center w-full lg:w-auto">
             <button onClick={toggleMenu} className="text-white hover:text-gray-200 transition duration-300 transform hover:scale-105 lg:hidden p-2 border rounded mr-4 ml-4">
               <svg
@@ -152,7 +152,7 @@ const Navbar: React.FC = () => {
                     <img
                       src={avatarUrl}
                       alt="用戶頭像"
-                      className="w-8 h-8 rounded-full mr-2"
+                      className="w-8 h-8 rounded-full mr-2 max-w-full"
                     />
                   )}
                   Hi，

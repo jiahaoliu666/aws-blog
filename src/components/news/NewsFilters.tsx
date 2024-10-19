@@ -51,7 +51,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   return (  
-    <div className="mb-4 p-4">  
+    <div className="mb-4 p-4 max-w-full">  
       <div className="flex justify-start items-center">
         <button
           className="md:hidden p-2 border rounded transform transition duration-300 hover:scale-105"
@@ -74,8 +74,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      <div className={`flex flex-col gap-4 md:flex-row justify-start ${isMenuOpen ? 'block' : 'hidden'} md:flex`}>
-        <div className="flex flex-col md:flex-wrap md:flex-row items-center gap-4">
+      <div className={`flex flex-col gap-4 md:flex-row justify-start ${isMenuOpen ? 'block' : 'hidden'} md:flex flex-wrap`}>
+        <div className="flex flex-col md:flex-wrap md:flex-row items-center gap-4 max-w-full">
           <SwitchField  
             isDisabled={false}  
             label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}  
@@ -106,9 +106,9 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           />  
         </div>  
 
-        <div className="flex flex-col md:flex-row items-center gap-4 ml-auto">
+        <div className="flex flex-col md:flex-row items-center gap-4 ml-auto max-w-full">
           <div className="flex items-center gap-2">
-            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期:</label>
+            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
             <input
               type="date"
               value={startDate}
@@ -130,7 +130,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>排序:</label>
+            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>排序：</label>
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
@@ -142,7 +142,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言:</label>
+            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言：</label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
@@ -154,7 +154,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           </div>
 
           <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>  
-            文章數量: {showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
+            文章數量：{showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
           </div>  
         </div>  
       </div>  

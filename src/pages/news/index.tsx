@@ -70,7 +70,7 @@ const NewsPage: React.FC = () => {
     };
 
     return (
-        <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen`}>
+        <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
             <Navbar />
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <h1 className="text-5xl font-bold text-center mb-5">AWS 最新新聞</h1>
@@ -104,7 +104,7 @@ const NewsPage: React.FC = () => {
                     isDarkMode={isDarkMode}
                 />
 
-                <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"}`}>
+                <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
                     {currentArticles.length > 0 ? (
                         currentArticles.map((article: ExtendedNews, index: number) => {
                             const isFavorited = favorites.some((fav: ExtendedNews) => fav.article_id === article.article_id);
