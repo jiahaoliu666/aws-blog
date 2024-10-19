@@ -18,14 +18,8 @@ const ProfilePage: React.FC = () => {
     username: user ? user.username : '',
     email: user ? user.email : '', // 使用從 AuthContext 獲取的 email
     registrationDate: '[註冊日期]',
-    bio: '這裡是用戶的簡單自我介紹或個人簡介。',
-    interests: '標籤1, 標籤2, 標籤3',
-    socialMedia: '[社交媒體連結]',
-    address: '[用戶地址]',
-    phone: '[電話號碼]',
     avatar: 'user.png', // 默認值
     notifications: true,
-    privacy: 'public',
   });
   const cognitoClient = new CognitoIdentityProviderClient({
     region: 'ap-northeast-1',
@@ -133,9 +127,9 @@ const ProfilePage: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援。');
+        setUploadMessage('上傳失敗：檔案類型不支援，確認檔案類型為 jpeg 或 png');
         return;
       }
 
@@ -191,9 +185,9 @@ const ProfilePage: React.FC = () => {
                 className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
               />
               <div>
-                <p className="text-xl text-gray-700">用戶名: {formData.username}</p>
-                <p className="text-xl text-gray-700">電子郵件: {formData.email}</p>
-                <p className="text-xl text-gray-700">註冊日期: {formData.registrationDate}</p>
+                <p className="text-xl text-gray-700 mb-2">用戶名：{formData.username}</p>
+                <p className="text-xl text-gray-700 mb-2">電子郵件：{formData.email}</p>
+                <p className="text-xl text-gray-700">註冊日期：{formData.registrationDate}</p>
               </div>
             </div>
             <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
@@ -232,7 +226,7 @@ const ProfilePage: React.FC = () => {
                     )}
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改姓名</label>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
                     <input
                       id="name"
                       name="name"
@@ -258,11 +252,6 @@ const ProfilePage: React.FC = () => {
                     </button>
                     <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
                       保存變更
-                    </button>
-                  </div>
-                  <div className="mt-6">
-                    <button className="bg-red-600 text-white py-2 px-4 rounded-full hover:bg-red-700 transition duration-200 w-full">
-                      刪除或停用帳戶
                     </button>
                   </div>
                 </div>

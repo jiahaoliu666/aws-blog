@@ -39,13 +39,17 @@ const Navbar: React.FC = () => {
         try {
           const command = new QueryCommand(queryParams);
           const response = await dynamoClient.send(command);
+          let fetchedAvatarUrl = 'user.png'; // 默認頭像
+
           if (response.Items && response.Items.length > 0) {
-            const fetchedAvatarUrl = response.Items[0].avatarUrl?.S;
-            if (fetchedAvatarUrl) {
-              setAvatarUrl(fetchedAvatarUrl);
-              localStorage.setItem('avatarUrl', fetchedAvatarUrl);
+            const avatarFromDB = response.Items[0].avatarUrl?.S;
+            if (avatarFromDB) {
+              fetchedAvatarUrl = avatarFromDB;
             }
           }
+
+          setAvatarUrl(fetchedAvatarUrl);
+          localStorage.setItem('avatarUrl', fetchedAvatarUrl);
         } catch (error) {
           console.error('Error fetching avatar from DynamoDB:', error);
         }
