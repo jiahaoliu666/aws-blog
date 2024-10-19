@@ -47,20 +47,7 @@ const RegisterPage: React.FC = () => {
         setIsVerificationNeeded(true);  
       }  
     } catch (err: any) {  
-      if (err.message.includes('Username should be an email')) {  
-        setError('用戶名必須是有效的電子郵件地址');  
-      } else if (err.message.includes('User already exists')) {  
-        setError('用戶已存在，請嘗試其他電子郵件');  
-      } else if (err.message.includes('Password did not conform with policy')) {  
-        setError(`密碼必須符合以下要求：  
-        - 至少包含 1 個數字  
-        - 至少包含 1 個特殊字元  
-        - 至少包含 1 個大寫字母  
-        - 至少包含 1 個小寫字母`);  
-      } else {  
-        setError(err.message || '註冊失敗');  
-      }  
-      setSuccess(null);  
+      // 處理錯誤
     }  
   };  
 
@@ -171,7 +158,7 @@ const RegisterPage: React.FC = () => {
           {isVerificationNeeded && (  
             <>  
               <div className="mb-4">  
-                <label htmlFor="verificationCode" className="text-base text-gray-700">驗證碼</label>  
+                <label htmlFor="verificationCode" className="text-base text-gray-700">驗碼</label>  
                 <Input  
                   id="verificationCode"  
                   name="verificationCode"  

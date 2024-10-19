@@ -5,6 +5,7 @@ import Navbar from '../../components/common/Navbar';
 import { useAuthContext } from '../../context/AuthContext';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, QueryCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { CognitoIdentityProviderClient, GetUserCommand } from '@aws-sdk/client-cognito-identity-provider';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -15,7 +16,7 @@ const ProfilePage: React.FC = () => {
   const [tempAvatar, setTempAvatar] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     username: user ? user.username : '',
-    email: user ? user.username : '',
+    email: user ? user.email : '', // 使用從 AuthContext 獲取的 email
     registrationDate: '[註冊日期]',
     bio: '這裡是用戶的簡單自我介紹或個人簡介。',
     interests: '標籤1, 標籤2, 標籤3',
@@ -25,6 +26,13 @@ const ProfilePage: React.FC = () => {
     avatar: 'user.png', // 默認值
     notifications: true,
     privacy: 'public',
+  });
+  const cognitoClient = new CognitoIdentityProviderClient({
+    region: 'ap-northeast-1',
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+    },
   });
 
   useEffect(() => {
@@ -47,46 +55,24 @@ const ProfilePage: React.FC = () => {
       setFormData(prevData => ({
         ...prevData,
         username: user.username,
-        email: user.username,
+        email: user.email,
       }));
       setShowLoginMessage(false);
 
-      const fetchAvatar = async () => {
-        const dynamoClient = new DynamoDBClient({
-          region: 'ap-northeast-1',
-          credentials: {
-            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-          },
-        });
+      const fetchUserDetails = async () => {
+        const userCommand = new GetUserCommand({ AccessToken: user.accessToken });
+        const userResponse = await cognitoClient.send(userCommand);
 
-        const queryParams = {
-          TableName: 'AWS_Blog_UserProfiles',
-          KeyConditionExpression: 'userId = :userId',
-          ExpressionAttributeValues: {
-            ':userId': { S: user?.sub || 'default-sub' },
-          },
-        };
-        try {
-          const command = new QueryCommand(queryParams);
-          const response = await dynamoClient.send(command);
-          if (response.Items && response.Items.length > 0) {
-            const avatarUrl = response.Items[0].avatarUrl?.S;
-            if (avatarUrl) {
-              setFormData(prevData => ({ ...prevData, avatar: avatarUrl }));
-              localStorage.setItem('avatarUrl', avatarUrl); // 儲存到 localStorage
-            } else {
-              console.warn('No avatarUrl found in response.');
-            }
-          } else {
-            console.warn('No items found for userId.');
-          }
-        } catch (error) {
-          console.error('Error fetching avatar from DynamoDB:', error);
-        }
+        const registrationDateAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'custom:registrationDate');
+        const registrationDate = registrationDateAttribute ? registrationDateAttribute.Value : '[註冊日期]';
+
+        setFormData(prevData => ({
+          ...prevData,
+          registrationDate: registrationDate || '[註冊日期]', // 確保 registrationDate 總是 string
+        }));
       };
 
-      fetchAvatar();
+      fetchUserDetails();
     }
   }, [user, router]);
 
@@ -181,7 +167,7 @@ const ProfilePage: React.FC = () => {
         setUploadMessage('上傳成功！');
       } catch (error) {
         console.error('Error uploading file:', error);
-        setUploadMessage('���傳失敗：請稍後再試。');
+        setUploadMessage('上傳失敗：請稍後再試。');
       }
     }
   };
@@ -197,7 +183,7 @@ const ProfilePage: React.FC = () => {
           </div>
         ) : (
           <>
-            <h1 className="text-4xl font-bold mb-4 text-gray-800">個人資料</h1>
+            <h1 className="text-4xl font-bold mb-4 text-gray-800">個人資訊</h1>
             <div className="flex items-center mb-6">
               <img
                 src={formData.avatar}
@@ -205,18 +191,10 @@ const ProfilePage: React.FC = () => {
                 className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
               />
               <div>
-                <p className="text-2xl font-semibold text-gray-800">用戶名: {formData.username}</p>
-                <p className="text-lg text-gray-700">電子郵件: {formData.email}</p>
-                <p className="text-lg text-gray-700">註冊日期: {formData.registrationDate}</p>
-                <p className="text-lg text-gray-700">地址: {formData.address}</p>
-                <p className="text-lg text-gray-700">電話: {formData.phone}</p>
+                <p className="text-xl text-gray-700">用戶名: {formData.username}</p>
+                <p className="text-xl text-gray-700">電子郵件: {formData.email}</p>
+                <p className="text-xl text-gray-700">註冊日期: {formData.registrationDate}</p>
               </div>
-            </div>
-            <div className="profile-info bg-white p-6 rounded-lg shadow-md mb-6">
-              <h3 className="text-xl font-bold text-gray-800">額外資訊</h3>
-              <p className="mt-2"><strong>個人簡介:</strong> {formData.bio}</p>
-              <p className="mt-2"><strong>興趣:</strong> {formData.interests}</p>
-              <p className="mt-2"><strong>社交媒體:</strong> {formData.socialMedia}</p>
             </div>
             <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
               <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
@@ -228,7 +206,7 @@ const ProfilePage: React.FC = () => {
             </div>
             <div className="profile-actions mt-6 flex justify-end">
               <button onClick={() => setIsEditing(true)} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
-                編輯個人資料
+                編輯
               </button>
               <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
                 登出
@@ -254,67 +232,37 @@ const ProfilePage: React.FC = () => {
                     )}
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="bio" className="block text-sm font-medium text-gray-700">個人簡介</label>
-                    <textarea
-                      id="bio"
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleChange}
-                      className="mt-1 p-2 border border-gray-300 rounded w-full"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="interests" className="block text-sm font-medium text-gray-700">興趣</label>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改姓名</label>
                     <input
-                      id="interests"
-                      name="interests"
-                      value={formData.interests}
+                      id="name"
+                      name="name"
+                      value={formData.username}
                       onChange={handleChange}
                       className="mt-1 p-2 border border-gray-300 rounded w-full"
                     />
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="socialMedia" className="block text-sm font-medium text-gray-700">社交媒體連結</label>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">修改密碼</label>
                     <input
-                      id="socialMedia"
-                      name="socialMedia"
-                      value={formData.socialMedia}
+                      type="password"
+                      id="password"
+                      name="password"
                       onChange={handleChange}
                       className="mt-1 p-2 border border-gray-300 rounded w-full"
                     />
                   </div>
-                  <div className="mb-4">
-                    <label htmlFor="notifications" className="block text-sm font-medium text-gray-700">通知設置</label>
-                    <input
-                      type="checkbox"
-                      id="notifications"
-                      name="notifications"
-                      checked={formData.notifications}
-                      onChange={handleChange}
-                      className="mt-1"
-                    />
-                    <span className="ml-2 text-gray-700">接收通知</span>
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="privacy" className="block text-sm font-medium text-gray-700">隱私設置</label>
-                    <select
-                      id="privacy"
-                      name="privacy"
-                      value={formData.privacy}
-                      onChange={handleChange}
-                      className="mt-1 p-2 border border-gray-300 rounded w-full"
-                    >
-                      <option value="public">公開</option>
-                      <option value="private">私人</option>
-                    </select>
-                  </div>
+                  
                   <div className="flex justify-end">
                     <button onClick={() => setIsEditing(false)} className="mr-4 bg-gray-300 py-2 px-4 rounded-full">
                       取消
                     </button>
                     <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
                       保存變更
+                    </button>
+                  </div>
+                  <div className="mt-6">
+                    <button className="bg-red-600 text-white py-2 px-4 rounded-full hover:bg-red-700 transition duration-200 w-full">
+                      刪除或停用帳戶
                     </button>
                   </div>
                 </div>

@@ -12,6 +12,7 @@ interface User {
   accessToken: string;
   username: string;
   sub: string;
+  email: string; // 新增 email 屬性
   favorites?: ExtendedNews[];
 }
 
@@ -42,6 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
+      const date = new Date();
+      const registrationDate = date.toISOString().split('T')[0]; // 只取日期部分
       const command = new SignUpCommand({
         ClientId: clientId,
         Username: email,
@@ -49,8 +52,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         UserAttributes: [
           { Name: "email", Value: email },
           { Name: "name", Value: name },
+          { Name: "custom:registrationDate", Value: registrationDate }, // 使用 YYYY-MM-DD 格式
         ],
       });
+
+      console.log("SignUpCommand:", command);
+
       await cognitoClient.send(command);
       setError(null);
       return true;
@@ -89,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         const userId = userIdAttribute.Value;
 
-        const user: User = { accessToken, username, sub: userId, favorites: [] };
+        const user: User = { accessToken, username, sub: userId, email, favorites: [] }; // 設置 email
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         setError(null);
