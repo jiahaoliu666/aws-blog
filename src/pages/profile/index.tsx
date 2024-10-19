@@ -5,7 +5,9 @@ import Navbar from '../../components/common/Navbar';
 import { useAuthContext } from '../../context/AuthContext';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, QueryCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
-import { CognitoIdentityProviderClient, GetUserCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttributesCommand, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { PasswordField, SwitchField } from '@aws-amplify/ui-react'; // 確保導入 PasswordField 和 SwitchField
+import '@aws-amplify/ui-react/styles.css';  
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -17,9 +19,16 @@ const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState({
     username: user ? user.username : '',
     email: user ? user.email : '', // 使用從 AuthContext 獲取的 email
-    registrationDate: '[註冊日期]',
+    registrationDate: '[註期]',
     avatar: 'user.png', // 默認值
     notifications: true,
+    password: '', // 新增 password 屬性
+  });
+  const [oldPassword, setOldPassword] = useState(''); // 新增狀態來存儲舊密碼
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null); // 新增狀態來存儲密碼更新消息
+  const [isEditable, setIsEditable] = useState({
+    username: false,
+    password: false,
   });
   const cognitoClient = new CognitoIdentityProviderClient({
     region: 'ap-northeast-1',
@@ -71,7 +80,36 @@ const ProfilePage: React.FC = () => {
   }, [user, router]);
 
   const handleSaveChanges = async () => {
+    let passwordChanged = false; // 用於追蹤密碼是否嘗試更改
+    let hasError = false; // 用於追蹤是否有錯誤
+    let hasChanges = false; // 用於追蹤是否有任何變更
+    let changesSuccessful = true; // 用於追蹤變更是否成功
+
+    // 檢查用戶名是否為空
+    if (!formData.username.trim()) {
+      setPasswordMessage('用戶名不能為空。');
+      hasError = true;
+    }
+
+    // 檢查密碼欄位
+    if (formData.password && !oldPassword) {
+      setPasswordMessage('請輸入舊密碼以更改密碼。');
+      hasError = true;
+    }
+
+    // 新增檢查：只填入舊密碼而未輸入新密碼
+    if (oldPassword && !formData.password) {
+      setPasswordMessage('請輸入新密碼以更改密碼。');
+      hasError = true;
+    }
+
+    if (hasError) {
+      return; // 如果有錯誤，則停止執行
+    }
+
+    // 檢查頭像是否有變更
     if (tempAvatar) {
+      hasChanges = true;
       setFormData({ ...formData, avatar: tempAvatar });
       localStorage.setItem('avatarUrl', tempAvatar); // 更新 localStorage
 
@@ -98,14 +136,83 @@ const ProfilePage: React.FC = () => {
         const updateCommand = new UpdateItemCommand(updateParams);
         await dynamoClient.send(updateCommand);
         console.log('DynamoDB updated successfully');
-        window.location.reload(); // 刷新頁面
+        setPasswordMessage('頭像已成功更新！');
       } catch (error) {
         console.error('Error updating DynamoDB:', error);
+        setPasswordMessage('更新頭像失敗，請稍後再試。');
+        changesSuccessful = false; // 如果失敗，設置為 false
       }
     }
-    setIsEditing(false);
+
+    // 檢查用戶名是否有變更
+    if (formData.username !== user?.username) {
+      hasChanges = true;
+      try {
+        const updateUserCommand = new AdminUpdateUserAttributesCommand({
+          UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
+          Username: user?.username!,
+          UserAttributes: [
+            {
+              Name: 'name',
+              Value: formData.username,
+            },
+          ],
+        });
+        await cognitoClient.send(updateUserCommand);
+        console.log('用戶名更新成功');
+        setPasswordMessage('用戶名已成功更新！');
+      } catch (error) {
+        console.error('更新用戶名時出錯:', error);
+        setPasswordMessage('更新用戶名失敗，請稍後再試。');
+        changesSuccessful = false; // 如果失敗，設置為 false
+      }
+    }
+
+    // 檢查密碼是否有變更
+    if (formData.password) {
+      hasChanges = true;
+      passwordChanged = true; // 標記嘗試更改密碼
+      try {
+        const changePasswordCommand = new ChangePasswordCommand({
+          PreviousPassword: oldPassword,
+          ProposedPassword: formData.password,
+          AccessToken: user?.accessToken!,
+        });
+        await cognitoClient.send(changePasswordCommand);
+        console.log('密碼更新成功');
+        setPasswordMessage('密碼已成功更');
+      } catch (error) {
+        console.error('更新密碼時出錯:', error as Error);
+        if ((error as Error).name === 'LimitExceededException') {
+          setPasswordMessage('嘗試次數過多，請稍後再試。');
+        } else {
+          setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
+        }
+        changesSuccessful = false; // 如果失敗，設置為 false
+      }
+    }
+
+    if (!hasChanges) {
+      setPasswordMessage('無任何變更項目');
+    }
+
     setTempAvatar(null);
     setUploadMessage(null);
+
+    // 只有在有變更且所有變更都成功時才刷新頁面
+    if (hasChanges && changesSuccessful) {
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000); // 延遲一秒鐘
+    }
+  };
+
+  const handleCancelChanges = () => {
+    setIsEditing(false);
+    setPasswordMessage(null); // 清除消息狀態
+    setOldPassword(''); // 清空舊密碼
+    setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
+    setIsEditable(prev => ({ ...prev, password: false })); // 重置修改密碼的切換按鈕
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -208,47 +315,89 @@ const ProfilePage: React.FC = () => {
             </div>
             {isEditing && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-                  <h2 className="text-xl font-bold mb-4">編輯個人資料</h2>
-                  <div className="mb-4">
-                    <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>
-                    <input
-                      type="file"
-                      id="avatar"
-                      name="avatar"
-                      onChange={handleAvatarChange}
-                      className="mt-1 p-2 border border-gray-300 rounded w-full"
-                    />
-                    {uploadMessage && (
-                      <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
-                        {uploadMessage}
-                      </p>
-                    )}
+                <div className="bg-white p-8 rounded-lg shadow-lg w-1/3">
+                  <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資料</h2>
+                  <hr className="mb-6 mt-6" />
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>  
+                      <input
+                        type="file"
+                        id="avatar"
+                        name="avatar"
+                        onChange={handleAvatarChange}
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                      />
+                      {uploadMessage && (
+                        <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
+                          {uploadMessage}
+                        </p>
+                      )}
+                    </div>
+                    <div className="pt-3"> 
+                      <hr className="mb-6" />
+                      <div className="flex items-center mt-2">
+                        <SwitchField
+                          label="修改用戶名"
+                          isChecked={isEditable.username}
+                          onChange={() => setIsEditable(prev => ({ ...prev, username: !prev.username }))}
+                          className="mr-2"
+                        />
+                        <SwitchField
+                          label="修改密碼"
+                          isChecked={isEditable.password}
+                          onChange={() => setIsEditable(prev => ({ ...prev, password: !prev.password }))}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
+                      <input
+                        id="name"
+                        name="name"
+                        value={formData.username}
+                        onChange={handleChange}
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                        disabled={!isEditable.username}
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <PasswordField
+                        id="oldPassword"
+                        label="舊密碼"
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
+                        placeholder="輸入舊密碼"
+                        required
+                        className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                        disabled={!isEditable.password}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">請輸入舊密碼。</p>
+                    </div>
+                    <div>
+                      <PasswordField
+                        label="修改密碼"
+                        id="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="輸入新密碼"
+                        required
+                        className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-2" // 添加 mb-2
+                        disabled={!isEditable.password}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">請輸入新密碼。</p>
+                    </div>
                   </div>
-                  <div className="mb-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
-                    <input
-                      id="name"
-                      name="name"
-                      value={formData.username}
-                      onChange={handleChange}
-                      className="mt-1 p-2 border border-gray-300 rounded w-full"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">修改密碼</label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      onChange={handleChange}
-                      className="mt-1 p-2 border border-gray-300 rounded w-full"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <button onClick={() => setIsEditing(false)} className="mr-4 bg-gray-300 py-2 px-4 rounded-full">
-                      取消
+
+                  {passwordMessage && (
+                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {passwordMessage}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-4 mt-6">
+                    <button onClick={handleCancelChanges} className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200">
+                      取消變更
                     </button>
                     <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
                       保存變更
