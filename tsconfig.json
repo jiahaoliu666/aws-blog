@@ -1,0 +1,21 @@
+{  
+  "compilerOptions": {  
+    "lib": ["dom", "dom.iterable", "esnext"],  
+    "allowJs": true,  
+    "skipLibCheck": true,  
+    "strict": true,  
+    "noEmit": true,  
+    "esModuleInterop": true,  
+    "module": "esnext",  
+    "moduleResolution": "node", // 修改為 "node" 以確保模塊解析正常  
+    "resolveJsonModule": true,  
+    "isolatedModules": true,  
+    "jsx": "preserve",  
+    "incremental": true,  
+    "paths": {  
+      "@/*": ["./src/*"]  
+    }  
+  },  
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],  
+  "exclude": ["node_modules"]  
+}

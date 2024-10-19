@@ -1,0 +1,49 @@
+/src  
+  ├── /components  
+  │     ├── /common  
+  │     │     ├── Footer.tsx                // 通用的頁腳組件，顯示應用程序的版權信息和其他鏈接  
+  │     │     ├── Navbar.tsx                // 通用的導航欄組件，顯示應用程序的標題和導航鏈接，使用 AuthContext 獲取用戶信息  
+  │     │     ├── Pagination.tsx            // 通用的分頁組件，用於在多頁新聞列表中導航  
+  │     │     ├── ErrorMessage.tsx          // 顯示錯誤信息的組件  
+  │     ├── /news  
+  │     │     ├── NewsCard.tsx              // 顯示單個新聞文章的卡片組件，包含標題、摘要和鏈接  
+  │     │     ├── NewsSearch.tsx            // 搜索新聞文章的組件，提供搜索框和按鈕  
+  │     │     └── NewsFilters.tsx           // 過濾新聞文章的組件，提供過濾選項按鈕  
+  ├── /context  
+  │     ├── AppContext.tsx                  // 管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
+  │     └── AuthContext.tsx                 // 管理用戶身份驗證狀態，如登錄狀態和用戶信息
+  │     └── LanguageContext.tsx             // 新增的語言上下文文件
+  ├── /hooks  
+  │     ├── /news  
+  │     │     ├── useFetchNews.ts           // 自定義 Hook，用於從 API 獲取新聞文章數據  
+  │     │     ├── useNewsPageLogic.ts       // 自定義 Hook，管理新聞頁面的狀態和邏輯，包括過濾、排序和分頁功能  
+  │     │     └── useNewsFavorites.ts       // 自定義 Hook，管理新聞收藏邏輯，提供添加和移除收藏的功能  
+  │     ├── useAppLogic.ts                  // 自定義 Hook，管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
+  │     └── useAuth.ts                      // 自定義 Hook，管理身份驗證邏輯，例如註冊、登錄、登出，使用 AuthContext  
+  ├── /pages  
+  │     ├── /api  
+  │     │     ├── news  
+  │     │     │     ├── index.ts            // API 路由，從 DynamoDB 獲取新聞文章列表  
+  │     │     │     ├── summary.ts          // API 路由，從 DynamoDB 獲取單個新聞文章的摘要  
+  │     │     │     ├── addFavorite.ts      // API 路由，將文章添加到收藏  
+  │     │     │     └── removeFavorite.ts   // API 路由，從收藏中移除文章  
+  │     ├── /auth  
+  │     │     ├── login.tsx                 // 用於用戶登錄的頁面，提供登錄表單和驗證邏輯  
+  │     │     ├── register.tsx              // 用於用戶註冊的頁面，提供註冊表單和驗證邏輯  
+  │     │     └── forgot-password.tsx       // 用於忘記密碼的頁面，提供重置密碼的功能  
+  │     ├── /news  
+  │     │     └── index.tsx                 // 新聞頁面，顯示新聞文章列表，包含搜索、過濾和分頁功能  
+  │     ├── /profile  
+  │     │     └── index.tsx                 // 用戶個人資料頁面  
+  │     ├── /settings  
+  │     │     └── index.tsx                 // 用戶設定頁面  
+  │     └── _app.tsx                        // 自定義 App 組件，負責全局狀態管理和佈局，移除了 UserProvider  
+  ├── /styles  
+  │     └── globals.css                     // 全局樣式文件，定義應用程序的基本樣式  
+  ├── /types  
+  │     ├── newsType.ts                     // 定義新聞文章的 TypeScript 類型，描述新聞數據結構  
+  │     └── userType.ts                     // 定義用戶類型，用於描述用戶數據結構  
+  ├── /utils  
+  │     ├── extractDateFromInfo.ts          // 工具函數，用於從字符串中提取日期，假設格式為 "YYYY年MM月DD日"  
+  │     ├── apiClient.ts                    // 工具函數，用於封裝 API 請求邏輯  
+  │     └── cognitoClient.ts                // 封裝 AWS Cognito 相關的 API 調用邏輯，提供註冊、登錄、登出等功能
