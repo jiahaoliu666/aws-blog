@@ -10,6 +10,8 @@ import { PasswordField, SwitchField } from '@aws-amplify/ui-react'; // 確保導
 import '@aws-amplify/ui-react/styles.css';  
 import { Loader } from '@aws-amplify/ui-react';
 
+
+
 const ProfilePage: React.FC = () => {
   const router = useRouter();
   const { user, logoutUser, updateUser } = useAuthContext();
@@ -40,6 +42,7 @@ const ProfilePage: React.FC = () => {
     },
   });
   const [tempUsername, setTempUsername] = useState(user ? user.username : ''); // 新增一個狀態來存儲臨時用戶名
+  const [recentArticles, setRecentArticles] = useState<string[]>([]); // 新增狀態來存儲最近的觀看紀錄
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -99,6 +102,40 @@ const ProfilePage: React.FC = () => {
       fetchUserDetails();
     }
   }, [user, router]);
+
+  useEffect(() => {
+    const fetchRecentArticles = async () => {
+      if (user) {
+        const dynamoClient = new DynamoDBClient({
+          region: 'ap-northeast-1',
+          credentials: {
+            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+          },
+        });
+
+        const params = {
+          TableName: 'AWS_Blog_UserRecentArticles',
+          KeyConditionExpression: 'userId = :userId',
+          ExpressionAttributeValues: {
+            ':userId': { S: user.sub },
+          },
+          ScanIndexForward: false,
+        };
+
+        try {
+          const command = new QueryCommand(params);
+          const response = await dynamoClient.send(command);
+          const articles = response.Items?.map(item => item.articleId.S).filter((id): id is string => id !== undefined) || [];
+          setRecentArticles(articles);
+        } catch (error) {
+          console.error('Error fetching recent articles:', error);
+        }
+      }
+    };
+
+    fetchRecentArticles();
+  }, [user]);
 
   // Function to refresh access token
   const refreshAccessToken = async (refreshToken: string): Promise<string> => {
@@ -335,7 +372,7 @@ const ProfilePage: React.FC = () => {
     // 模擬一個加載過程
     setTimeout(() => {
       setIsLoading(false);
-    }, 1000); // 這裡��時間可以根據實際情況調整
+    }, 1000); // 這裡時間可以根據實際情況調整
   }, []);
 
   return (
@@ -366,9 +403,9 @@ const ProfilePage: React.FC = () => {
           <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
             <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
             <ul className="list-disc list-inside mt-2">
-              <li>觀看紀錄 1 - 描述</li>
-              <li>觀看紀錄 2 - 描述</li>
-              <li>觀看紀錄 3 - 描述</li>
+              {recentArticles.map((articleId, index) => (
+                <li key={index}>{articleId}</li> // 顯示 article_id
+              ))}
             </ul>
           </div>
           <div className="profile-actions mt-6 flex justify-end">

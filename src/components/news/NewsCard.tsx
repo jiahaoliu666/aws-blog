@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ExtendedNews } from '@/types/newsType';
+import { useAuthContext } from '@/context/AuthContext'; // 引入 useAuthContext
 
 interface NewsCardProps {
     article: ExtendedNews;
@@ -23,6 +24,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
     isFavorited,
 }) => {
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
+    const { user, saveArticleView } = useAuthContext(); // 從 context 中獲取 user 和 saveArticleView 函數
 
     // 當 showSummaries 改變時，更新本地狀態
     useEffect(() => {
@@ -44,10 +46,16 @@ const NewsCard: React.FC<NewsCardProps> = ({
         setIsSummaryVisible(!isSummaryVisible);
     };
 
+    const handleTitleClick = async () => {
+        if (user) {
+            await saveArticleView(article.article_id, user.sub); // 使用 article_id 而不是 title
+        }
+    };
+
     return (
         <div className={`border rounded-lg p-4 transition-shadow duration-300 ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-900'} ${gridView ? 'shadow-md hover:shadow-lg' : 'mb-4'}`}>
             <h2 className="text-xl font-bold mb-2">
-                <a href={article.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-blue-500 transition-colors duration-300">
+                <a href={article.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-blue-500 transition-colors duration-300" onClick={handleTitleClick}>
                     {displayTitle}
                 </a>
             </h2>

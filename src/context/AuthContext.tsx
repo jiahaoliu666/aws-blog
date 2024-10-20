@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import cognitoClient from "../utils/cognitoClient";
 import { ExtendedNews } from "@/types/newsType";
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb'; // 引入 DynamoDBClient 和 PutItemCommand
 
 interface User {
   accessToken: string;
@@ -25,6 +26,7 @@ interface AuthContextType {
   updateUser: (updatedUser: Partial<User>) => void; // 新增 updateUser 函數
   error: string | null;
   clearError: () => void;
+  saveArticleView: (articleId: string, userId: string) => Promise<void>; // 新增 saveArticleView 函數
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -177,12 +179,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
   };
 
+  const saveArticleView = async (articleId: string, userId: string) => {
+    const dynamoClient = new DynamoDBClient({
+        region: 'ap-northeast-1',
+        credentials: {
+            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+        },
+    });
+
+    const timestamp = new Date().toISOString();
+    const params = {
+        TableName: 'AWS_Blog_UserRecentArticles',
+        Item: {
+            userId: { S: userId },
+            timestamp: { S: timestamp },
+            articleId: { S: articleId }, // 使用 articleId 而不是 title
+        },
+    };
+
+    try {
+        const command = new PutItemCommand(params);
+        await dynamoClient.send(command);
+        console.log('Article view saved successfully');
+    } catch (error) {
+        console.error('Error saving article view:', error);
+    }
+  };
+
   const value = {
     user,
     registerUser,
     loginUser,
     logoutUser,
-    updateUser, // 將 updateUser 添加到 context value
+    updateUser,
+    saveArticleView,
     error,
     clearError,
   };
