@@ -129,7 +129,7 @@ const ProfilePage: React.FC = () => {
                 const articleData = response.Items?.map(item => {
                     const articleId = item.articleId?.S;
                     const timestamp = item.timestamp?.S;
-                    const sourcePage = item.sourcePage?.S || '未知來源'; // 如果沒有 sourcePage，設置默認值
+                    const sourcePage = item.sourcePage?.S || '未知來源';
 
                     if (articleId && timestamp) {
                         return { articleId, timestamp, sourcePage };
@@ -137,7 +137,6 @@ const ProfilePage: React.FC = () => {
                     return null;
                 }).filter((data): data is { articleId: string; timestamp: string; sourcePage: string } => data !== null) || [];
 
-                // Fetch translated_title and link for each articleId
                 const articles = await Promise.all(articleData.map(async ({ articleId, timestamp, sourcePage }) => {
                     const newsParams = {
                         TableName: 'AWS_Blog_News',
@@ -153,7 +152,8 @@ const ProfilePage: React.FC = () => {
                     return { translatedTitle, link, timestamp, sourcePage };
                 }));
 
-                setRecentArticles(articles);
+                // 只保留最近的 10 則紀錄
+                setRecentArticles(articles.slice(0, 10));
             } catch (error) {
                 console.error('Error fetching recent articles:', error);
             }
@@ -177,7 +177,7 @@ const ProfilePage: React.FC = () => {
     let hasChanges = false; // 用於追蹤是否有任何變更
     let changesSuccessful = true; // 用於追蹤變更是否成
 
-    // 檢查用戶名是否為空
+    // 檢��用戶名是否為空
     if (!formData.username.trim()) {
       setPasswordMessage('用戶名不能為空。');
       hasError = true;
@@ -405,7 +405,7 @@ const ProfilePage: React.FC = () => {
     <div className="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       <Navbar setCurrentSourcePage={() => {}} />
       {!user && (
-        <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop 以避免重疊 */}
+        <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop ��避免重疊 */}
           <Loader className="mb-4" size="large"/> {/* 保留 Loader 組件 */}
           <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
           <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
@@ -436,7 +436,8 @@ const ProfilePage: React.FC = () => {
                                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
                                 </svg>
-                                [{article.sourcePage}] {article.translatedTitle}
+                                {/* 添加排序號碼 */}
+                                {index + 1}. [{article.sourcePage}] {article.translatedTitle}
                             </a>
                             <span className="text-sm text-gray-500">{new Date(article.timestamp).toLocaleString()}</span>
                         </div>
@@ -515,7 +516,7 @@ const ProfilePage: React.FC = () => {
                   </div>
                   <div>
                     <PasswordField
-                      label="修改密碼"
+                      label="修���密碼"
                       id="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
