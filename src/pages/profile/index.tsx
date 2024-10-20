@@ -122,7 +122,7 @@ const ProfilePage: React.FC = () => {
       hasError = true;
     }
 
-    // 新增檢查：只填入舊密碼而未輸入新密碼
+    // 新增檢查：只填入舊密碼而未輸入新碼
     if (oldPassword && !formData.password) {
       setPasswordMessage('請輸入新密碼以更改密碼。');
       hasError = true;
@@ -173,9 +173,12 @@ const ProfilePage: React.FC = () => {
     if (formData.username !== user?.username) {
       hasChanges = true;
       try {
+        console.log('UserPoolId:', process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID);
+        console.log('Username:', user?.username);
+
         const updateUserCommand = new AdminUpdateUserAttributesCommand({
           UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
-          Username: user?.username!,
+          Username: user?.sub!, // 使用 sub 作為 Username
           UserAttributes: [
             {
               Name: 'name',
@@ -188,8 +191,12 @@ const ProfilePage: React.FC = () => {
         setPasswordMessage('用戶名已成功更新！');
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
+        const err = error as Error; // 將 error 類型斷言為 Error
+        if (err.name === 'UserNotFoundException') {
+          console.error('用戶不存在，請檢查用戶名和用戶池 ID。');
+        }
         setPasswordMessage('更新用戶名失敗，請稍後再試。');
-        changesSuccessful = false; // 如果失敗，設置為 false
+        changesSuccessful = false;
       }
     }
 
@@ -205,7 +212,7 @@ const ProfilePage: React.FC = () => {
         });
         await cognitoClient.send(changePasswordCommand);
         console.log('密碼更新成功');
-        setPasswordMessage('密碼已成功更');
+        setPasswordMessage('密碼成功更');
       } catch (error) {
         console.error('更新密碼時出錯:', error as Error);
         if ((error as Error).name === 'LimitExceededException') {
@@ -317,7 +324,7 @@ const ProfilePage: React.FC = () => {
                 className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
               />
               <div>
-                <p className="text-xl text-gray-700 mb-2">用戶名：{formData.username}</p>
+                <p className="text-xl text-gray-700 mb-2">用戶：{formData.username}</p>
                 <p className="text-xl text-gray-700 mb-2">電子郵件：{formData.email}</p>
                 <p className="text-xl text-gray-700">註冊日期：{formData.registrationDate}</p>
               </div>
@@ -379,11 +386,11 @@ const ProfilePage: React.FC = () => {
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
                       <input
                         id="name"
-                        name="name"
+                        name="username" // 確保這裡的 name 屬性 "username"
                         value={formData.username}
                         onChange={handleChange}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
-                        disabled={!isEditable.username}
+                        disabled={!isEditable.username} // 確保這裡的 disabled 屬性依賴於 isEditable.username
                       />
                     </div>
                     <div className="mt-4">
