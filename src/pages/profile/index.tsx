@@ -8,6 +8,7 @@ import { DynamoDBClient, QueryCommand, UpdateItemCommand } from '@aws-sdk/client
 import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttributesCommand, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { PasswordField, SwitchField } from '@aws-amplify/ui-react'; // 確保導入 PasswordField 和 SwitchField
 import '@aws-amplify/ui-react/styles.css';  
+import { Loader } from '@aws-amplify/ui-react';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -30,6 +31,7 @@ const ProfilePage: React.FC = () => {
     username: false,
     password: false,
   });
+  const [isLoading, setIsLoading] = useState(false); // 新增狀態來追蹤是否正在重整頁面
   const cognitoClient = new CognitoIdentityProviderClient({
     region: 'ap-northeast-1',
     credentials: {
@@ -72,7 +74,7 @@ const ProfilePage: React.FC = () => {
 
           setFormData(prevData => ({
             ...prevData,
-            registrationDate: registrationDate || '[註冊日期]', // 確保 registrationDate 總是 string
+            registrationDate: registrationDate || '[註冊日期]',
           }));
         } catch (error) {
           const err = error as Error; // 將 error 類型斷言為 Error
@@ -89,6 +91,7 @@ const ProfilePage: React.FC = () => {
           } else {
             console.error('Error fetching user details:', error);
           }
+
         }
       };
 
@@ -118,7 +121,7 @@ const ProfilePage: React.FC = () => {
 
     // 檢查密碼欄位
     if (formData.password && !oldPassword) {
-      setPasswordMessage('請輸入舊密碼以更改密碼。');
+      setPasswordMessage('請入舊密碼以更改密碼。');
       hasError = true;
     }
 
@@ -196,12 +199,12 @@ const ProfilePage: React.FC = () => {
         if (err.name === 'UserNotFoundException') {
           console.error('用戶不存在，請檢查用戶名和用戶池 ID。');
         }
-        setPasswordMessage('更新用戶名失敗，請稍後再試。');
+        setPasswordMessage('更新用戶名失敗，請稍再試。');
         changesSuccessful = false;
       }
     }
 
-    // 檢查密碼是否有變更
+    // 檢查密碼是否變��
     if (formData.password) {
       hasChanges = true;
       passwordChanged = true; // 標記嘗試更改密碼
@@ -235,6 +238,7 @@ const ProfilePage: React.FC = () => {
 
     // 只有在有變更且所有變更都成功時才刷新頁面
     if (hasChanges && changesSuccessful) {
+      setIsLoading(true); // 設置為正在重整頁面
       setTimeout(() => {
         window.location.reload();
       }, 1000); // 延遲一秒鐘
@@ -299,7 +303,7 @@ const ProfilePage: React.FC = () => {
         const fileUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
         console.log('File uploaded successfully:', fileUrl);
         setTempAvatar(fileUrl);
-        setUploadMessage('上傳成功！');
+        setUploadMessage('傳成功！');
       } catch (error) {
         console.error('Error uploading file:', error);
         setUploadMessage('上傳失敗：請稍後再試。');
@@ -307,142 +311,151 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    // 假設這裡是您希望在頁面刷新時設 isLoading 的地方
+    setIsLoading(true);
+    // 模擬一個加載過程
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000); // 這裡的時間可以根據實際情況調整
+  }, []);
+
   return (
-    <div className={`${user ? "bg-gray-100 text-gray-900" : "bg-gradient-to-r from-blue-100 to-purple-100"} min-h-screen flex flex-col`}>
+    <div className="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       <Navbar />
-      <div className="container mx-auto flex-grow p-5">
-        {showLoginMessage ? (
-          <div className="text-center py-10">
-            <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
-            <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
+      {!user && (
+        <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop 以避免重疊 */}
+          <Loader className="mb-4" /> {/* 保留 Loader 組件 */}
+          <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
+          <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
+        </div>
+      )}
+      {user && (
+        <div className="container mx-auto flex-grow p-5">
+          <h1 className="text-4xl font-bold mb-4 text-gray-800">個人資訊</h1>
+          <div className="flex items-center mb-6">
+            <img
+              src={formData.avatar}
+              alt="用戶頭像"
+              className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
+            />
+            <div>
+              <p className="text-xl text-gray-700 mb-2">用戶：{formData.username}</p>
+              <p className="text-xl text-gray-700 mb-2">電子郵件：{formData.email}</p>
+              <p className="text-xl text-gray-700">註冊日期：{formData.registrationDate}</p>
+            </div>
           </div>
-        ) : (
-          <>
-            <h1 className="text-4xl font-bold mb-4 text-gray-800">個人資訊</h1>
-            <div className="flex items-center mb-6">
-              <img
-                src={formData.avatar}
-                alt="用戶頭像"
-                className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
-              />
-              <div>
-                <p className="text-xl text-gray-700 mb-2">用戶：{formData.username}</p>
-                <p className="text-xl text-gray-700 mb-2">電子郵件：{formData.email}</p>
-                <p className="text-xl text-gray-700">註冊日期：{formData.registrationDate}</p>
-              </div>
-            </div>
-            <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
-              <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
-              <ul className="list-disc list-inside mt-2">
-                <li>觀看紀錄 1 - 描述</li>
-                <li>觀看紀錄 2 - 描述</li>
-                <li>觀看紀錄 3 - 描述</li>
-              </ul>
-            </div>
-            <div className="profile-actions mt-6 flex justify-end">
-              <button onClick={() => setIsEditing(true)} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
-                編輯
-              </button>
-              <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
-                登出
-              </button>
-            </div>
-            {isEditing && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white p-8 rounded-lg shadow-lg w-1/3">
-                  <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資料</h2>
-                  <hr className="mb-6 mt-6" />
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>  
-                      <input
-                        type="file"
-                        id="avatar"
-                        name="avatar"
-                        onChange={handleAvatarChange}
-                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+          <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
+            <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
+            <ul className="list-disc list-inside mt-2">
+              <li>觀看紀錄 1 - 描述</li>
+              <li>觀看紀錄 2 - 描述</li>
+              <li>觀看紀錄 3 - 描述</li>
+            </ul>
+          </div>
+          <div className="profile-actions mt-6 flex justify-end">
+            <button onClick={() => setIsEditing(true)} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
+              編輯
+            </button>
+            <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
+              登出
+            </button>
+          </div>
+          {isEditing && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white p-8 rounded-lg shadow-lg w-1/3">
+                <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資料</h2>
+                <hr className="mb-6 mt-6" />
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>  
+                    <input
+                      type="file"
+                      id="avatar"
+                      name="avatar"
+                      onChange={handleAvatarChange}
+                      className="mt-2 p-2 border border-gray-300 rounded w-full"
+                    />
+                    {uploadMessage && (
+                      <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
+                        {uploadMessage}
+                      </p>
+                    )}
+                  </div>
+                  <div className="pt-3"> 
+                    <hr className="mb-6" />
+                    <div className="flex items-center mt-2">
+                      <SwitchField
+                        label="修改用戶名"
+                        isChecked={isEditable.username}
+                        onChange={() => setIsEditable(prev => ({ ...prev, username: !prev.username }))}
+                        className="mr-2"
                       />
-                      {uploadMessage && (
-                        <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
-                          {uploadMessage}
-                        </p>
-                      )}
-                    </div>
-                    <div className="pt-3"> 
-                      <hr className="mb-6" />
-                      <div className="flex items-center mt-2">
-                        <SwitchField
-                          label="修改用戶名"
-                          isChecked={isEditable.username}
-                          onChange={() => setIsEditable(prev => ({ ...prev, username: !prev.username }))}
-                          className="mr-2"
-                        />
-                        <SwitchField
-                          label="修改密碼"
-                          isChecked={isEditable.password}
-                          onChange={() => setIsEditable(prev => ({ ...prev, password: !prev.password }))}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
-                      <input
-                        id="name"
-                        name="username" // 確保這裡的 name 屬性 "username"
-                        value={formData.username}
-                        onChange={handleChange}
-                        className="mt-2 p-2 border border-gray-300 rounded w-full"
-                        disabled={!isEditable.username} // 確保這裡的 disabled 屬性依賴於 isEditable.username
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <PasswordField
-                        id="oldPassword"
-                        label="舊密碼"
-                        value={oldPassword}
-                        onChange={(e) => setOldPassword(e.target.value)}
-                        placeholder="輸入舊密碼"
-                        required
-                        className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-                        disabled={!isEditable.password}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">請輸入舊密碼。</p>
-                    </div>
-                    <div>
-                      <PasswordField
+                      <SwitchField
                         label="修改密碼"
-                        id="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        placeholder="輸入新密碼"
-                        required
-                        className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-2" // 添加 mb-2
-                        disabled={!isEditable.password}
+                        isChecked={isEditable.password}
+                        onChange={() => setIsEditable(prev => ({ ...prev, password: !prev.password }))}
                       />
-                      <p className="text-xs text-gray-500 mt-1">請輸入新密碼。</p>
                     </div>
                   </div>
-
-                  {passwordMessage && (
-                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {passwordMessage}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end space-x-4 mt-6">
-                    <button onClick={handleCancelChanges} className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200">
-                      取消變更
-                    </button>
-                    <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
-                      保存變更
-                    </button>
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
+                    <input
+                      id="name"
+                      name="username" // 確保這裡的 name 屬性 "username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      className="mt-2 p-2 border border-gray-300 rounded w-full"
+                      disabled={!isEditable.username} // 確保這裡的 disabled 屬性依賴於 isEditable.username
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <PasswordField
+                      id="oldPassword"
+                      label="舊密碼"
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="輸入舊密碼"
+                      required
+                      className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                      disabled={!isEditable.password}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">請輸入舊密碼。</p>
+                  </div>
+                  <div>
+                    <PasswordField
+                      label="修改密碼"
+                      id="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="輸入新密碼"
+                      required
+                      className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-2" // 添加 mb-2
+                      disabled={!isEditable.password}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">請輸入新密碼。</p>
                   </div>
                 </div>
+
+                {passwordMessage && (
+                  <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {passwordMessage}
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-4 mt-6">
+                  <button onClick={handleCancelChanges} className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200">
+                    取消變更
+                  </button>
+                  <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
+                    保存變更
+                  </button>
+                </div>
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
       <Footer />
     </div>
   );
