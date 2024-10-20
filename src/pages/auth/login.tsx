@@ -7,6 +7,8 @@ import Navbar from '../../components/common/Navbar';
 import ErrorMessage from '../../components/common/ErrorMessage';  
 import { useAuthContext } from '../../context/AuthContext';  
 import Footer from '../../components/common/Footer';
+import { Loader } from '@aws-amplify/ui-react';
+
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
@@ -68,6 +70,7 @@ const LoginPage: React.FC = () => {
       <div className="flex items-center justify-center flex-grow">  
         {showLoginMessage ? ( 
           <div className="text-center py-10">
+            <Loader className="mb-4" size="large"/> {/* 保留 Loader 組件 */}
             <h2 className="text-2xl font-semibold text-green-600">您已登入成功!</h2>
             <p className="text-lg text-gray-700">重新導向至其他頁面...</p>
           </div>
