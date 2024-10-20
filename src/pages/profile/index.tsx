@@ -205,7 +205,7 @@ const ProfilePage: React.FC = () => {
       }
     }
 
-    // 檢查密碼是否變
+    // 檢查密碼是否變更
     if (formData.password) {
       hasChanges = true;
       passwordChanged = true; // 標記嘗試更改密碼
@@ -217,8 +217,13 @@ const ProfilePage: React.FC = () => {
         });
         await cognitoClient.send(changePasswordCommand);
         console.log('密碼更新成功');
-        setPasswordMessage('密碼成功更');
+        setPasswordMessage('密碼變更成功，請重新登入。');
         updateUser({ accessToken: user?.accessToken }); // 更新 AuthContext 中的 accessToken
+
+        // 確保在密碼變更成功後登出
+        setTimeout(() => {
+          handleLogout();
+        }, 2000); // 延遲兩秒鐘後登出
       } catch (error) {
         console.error('更新密碼時出錯:', error as Error);
         if ((error as Error).name === 'LimitExceededException') {
@@ -330,7 +335,7 @@ const ProfilePage: React.FC = () => {
     // 模擬一個加載過程
     setTimeout(() => {
       setIsLoading(false);
-    }, 1000); // 這裡的時間可以根據實際情況調整
+    }, 1000); // 這裡��時間可以根據實際情況調整
   }, []);
 
   return (
