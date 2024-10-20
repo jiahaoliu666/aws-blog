@@ -39,6 +39,7 @@ const ProfilePage: React.FC = () => {
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
     },
   });
+  const [tempUsername, setTempUsername] = useState(user ? user.username : ''); // 新增一個狀態來存儲臨時用戶名
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -173,7 +174,7 @@ const ProfilePage: React.FC = () => {
     }
 
     // 檢查用戶名是否有變更
-    if (formData.username !== user?.username) {
+    if (tempUsername !== user?.username) { // 使用臨時用戶名進行比較
       hasChanges = true;
       try {
         console.log('UserPoolId:', process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID);
@@ -185,14 +186,14 @@ const ProfilePage: React.FC = () => {
           UserAttributes: [
             {
               Name: 'name',
-              Value: formData.username,
+              Value: tempUsername,
             },
           ],
         });
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功');
         setPasswordMessage('用戶名已成功更新！');
-        updateUser({ username: formData.username }); // 更新 AuthContext 中的用戶名
+        updateUser({ username: tempUsername }); // 更新 AuthContext 中的用戶名
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
         const err = error as Error; // 將 error 類型斷言為 Error
@@ -204,7 +205,7 @@ const ProfilePage: React.FC = () => {
       }
     }
 
-    // 檢查密碼是否變��
+    // 檢查密碼是否變
     if (formData.password) {
       hasChanges = true;
       passwordChanged = true; // 標記嘗試更改密碼
@@ -303,12 +304,24 @@ const ProfilePage: React.FC = () => {
         const fileUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
         console.log('File uploaded successfully:', fileUrl);
         setTempAvatar(fileUrl);
-        setUploadMessage('傳成功！');
+        setUploadMessage('上傳成功！');
       } catch (error) {
         console.error('Error uploading file:', error);
         setUploadMessage('上傳失敗：請稍後再試。');
       }
     }
+  };
+
+  const handleEditClick = () => {
+    setTempUsername(user ? user.username : ''); // 初始化臨時用戶名
+    setOldPassword(''); // 清空舊密碼
+    setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
+    setIsEditable({
+      username: false,
+      password: false,
+    });
+    setUploadMessage(null); // 清除頭像更改消息
+    setIsEditing(true);
   };
 
   useEffect(() => {
@@ -354,7 +367,7 @@ const ProfilePage: React.FC = () => {
             </ul>
           </div>
           <div className="profile-actions mt-6 flex justify-end">
-            <button onClick={() => setIsEditing(true)} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
+            <button onClick={handleEditClick} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
               編輯
             </button>
             <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
@@ -402,11 +415,11 @@ const ProfilePage: React.FC = () => {
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
                     <input
                       id="name"
-                      name="username" // 確保這裡的 name 屬性 "username"
-                      value={formData.username}
-                      onChange={handleChange}
+                      name="username"
+                      value={tempUsername} // 使用臨時用戶名
+                      onChange={(e) => setTempUsername(e.target.value)} // 更新臨時用戶名
                       className="mt-2 p-2 border border-gray-300 rounded w-full"
-                      disabled={!isEditable.username} // 確保這裡的 disabled 屬性依賴於 isEditable.username
+                      disabled={!isEditable.username}
                     />
                   </div>
                   <div className="mt-4">

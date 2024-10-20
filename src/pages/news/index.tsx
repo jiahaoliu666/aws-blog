@@ -1,5 +1,5 @@
 // src/pages/news/index.tsx
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '../../components/common/Navbar';
 import { ExtendedNews } from '../../types/newsType';
@@ -9,9 +9,12 @@ import NewsFilters from '../../components/news/NewsFilters';
 import Pagination from '../../components/common/Pagination';
 import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';
 import Footer from '../../components/common/Footer';
+import { Loader } from '@aws-amplify/ui-react'; // 導入 Loader
+import '@aws-amplify/ui-react/styles.css';
 
 const NewsPage: React.FC = () => {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true); // 管理加載狀態
 
     const {
         language,
@@ -41,7 +44,7 @@ const NewsPage: React.FC = () => {
         filteredArticles,
         favorites,
         handleDateFilterChange,
-        articles, // 確保這裡有完整的文章列表
+        articles,
     } = useNewsPageLogic();
 
     useEffect(() => {
@@ -57,6 +60,17 @@ const NewsPage: React.FC = () => {
         };
     }, [router.events]);
 
+    useEffect(() => {
+        // 模擬數據加載過程
+        const loadData = async () => {
+            // 模擬一個 API 請求或其他異步操作
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 模擬 1 秒的加載時間
+            setIsLoading(false); // 加載完成後設置 isLoading 為 false
+        };
+
+        loadData();
+    }, []);
+
     const resetFilters = () => {
         setGridView(false);
         setIsDarkMode(false);
@@ -68,6 +82,18 @@ const NewsPage: React.FC = () => {
         setFilteredArticles([]);
         setShowSummaries(false);
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col min-h-screen bg-gray-100">
+                <Navbar />
+                <div className="flex-grow flex justify-center items-center">
+                    <Loader />
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
     return (
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
@@ -99,7 +125,7 @@ const NewsPage: React.FC = () => {
                 />
 
                 <BlogSearch
-                    articles={articles} // 使用完整的文章列表
+                    articles={articles}
                     setFilteredArticles={setFilteredArticles}
                     isDarkMode={isDarkMode}
                 />
