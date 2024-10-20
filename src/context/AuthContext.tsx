@@ -22,6 +22,7 @@ interface AuthContextType {
   registerUser: (email: string, password: string, name: string) => Promise<boolean>;
   loginUser: (email: string, password: string) => Promise<boolean>;
   logoutUser: () => Promise<boolean>;
+  updateUser: (updatedUser: Partial<User>) => void; // 新增 updateUser 函數
   error: string | null;
   clearError: () => void;
 }
@@ -35,11 +36,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || "";
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser: User = JSON.parse(storedUser);
-      setUser(parsedUser);
-    }
+    const fetchUserFromCognito = async () => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser: User = JSON.parse(storedUser);
+        try {
+          const userCommand = new GetUserCommand({ AccessToken: parsedUser.accessToken });
+          const userResponse = await cognitoClient.send(userCommand);
+
+          const nameAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'name');
+          const userIdAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'sub');
+
+          const username = nameAttribute ? nameAttribute.Value || parsedUser.email : parsedUser.email;
+
+          if (!userIdAttribute || !userIdAttribute.Value) {
+            throw new Error("無法獲取用戶的 ID（sub）。");
+          }
+          const userId = userIdAttribute.Value;
+
+          const updatedUser: User = { 
+            ...parsedUser, 
+            username, 
+            sub: userId 
+          };
+
+          setUser(updatedUser);
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        } catch (err) {
+          console.error("無法從 Cognito 獲取用戶資料: ", err);
+          setUser(null);
+          localStorage.removeItem("user");
+        }
+      }
+    };
+
+    fetchUserFromCognito();
   }, []);
 
   const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {
@@ -133,6 +164,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUser = (updatedUser: Partial<User>) => {
+    if (user) {
+      const newUser = { ...user, ...updatedUser };
+      setUser(newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+    }
+  };
+
   const clearError = () => {
     console.log("清除錯誤");
     setError(null);
@@ -143,6 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     registerUser,
     loginUser,
     logoutUser,
+    updateUser, // 將 updateUser 添加到 context value
     error,
     clearError,
   };

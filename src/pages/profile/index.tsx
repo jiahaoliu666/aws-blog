@@ -11,7 +11,7 @@ import '@aws-amplify/ui-react/styles.css';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
-  const { user, logoutUser } = useAuthContext();
+  const { user, logoutUser, updateUser } = useAuthContext();
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
@@ -189,6 +189,7 @@ const ProfilePage: React.FC = () => {
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功');
         setPasswordMessage('用戶名已成功更新！');
+        updateUser({ username: formData.username }); // 更新 AuthContext 中的用戶名
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
         const err = error as Error; // 將 error 類型斷言為 Error
@@ -213,6 +214,7 @@ const ProfilePage: React.FC = () => {
         await cognitoClient.send(changePasswordCommand);
         console.log('密碼更新成功');
         setPasswordMessage('密碼成功更');
+        updateUser({ accessToken: user?.accessToken }); // 更新 AuthContext 中的 accessToken
       } catch (error) {
         console.error('更新密碼時出錯:', error as Error);
         if ((error as Error).name === 'LimitExceededException') {
