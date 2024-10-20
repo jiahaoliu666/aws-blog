@@ -26,7 +26,7 @@ interface AuthContextType {
   updateUser: (updatedUser: Partial<User>) => void; // 新增 updateUser 函數
   error: string | null;
   clearError: () => void;
-  saveArticleView: (articleId: string, userId: string) => Promise<void>; // 新增 saveArticleView 函數
+  saveArticleView: (articleId: string, userId: string, sourcePage: string) => Promise<void>; // 新增 saveArticleView 函數
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -179,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
   };
 
-  const saveArticleView = async (articleId: string, userId: string) => {
+  const saveArticleView = async (articleId: string, userId: string, sourcePage: string) => {
     const dynamoClient = new DynamoDBClient({
         region: 'ap-northeast-1',
         credentials: {
@@ -190,50 +190,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const timestamp = new Date().toISOString();
 
-    // 先查詢用戶的觀看紀錄數量
-    const queryParams = {
+    const putParams = {
         TableName: 'AWS_Blog_UserRecentArticles',
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: {
-            ':userId': { S: userId },
+        Item: {
+            userId: { S: userId },
+            timestamp: { S: timestamp },
+            articleId: { S: articleId },
+            sourcePage: { S: sourcePage }, // 確保 sourcePage 不為空
         },
-        ScanIndexForward: true, // 按時間順序排序
     };
-
-    try {
-        const queryCommand = new QueryCommand(queryParams);
-        const queryResponse = await dynamoClient.send(queryCommand);
-        const items = queryResponse.Items || [];
-
-        // 如果紀錄超過五則，刪除最舊的紀錄
-        if (items.length >= 5) {
-            const oldestItem = items[0];
-            const deleteParams = {
-                TableName: 'AWS_Blog_UserRecentArticles',
-                Key: {
-                    userId: oldestItem.userId,
-                    timestamp: oldestItem.timestamp,
-                },
-            };
-            const deleteCommand = new DeleteItemCommand(deleteParams);
-            await dynamoClient.send(deleteCommand);
-        }
-
-        // 添加新的觀看紀錄
-        const putParams = {
-            TableName: 'AWS_Blog_UserRecentArticles',
-            Item: {
-                userId: { S: userId },
-                timestamp: { S: timestamp },
-                articleId: { S: articleId },
-            },
-        };
-        const putCommand = new PutItemCommand(putParams);
-        await dynamoClient.send(putCommand);
-        console.log('Article view saved successfully');
-    } catch (error) {
-        console.error('Error saving article view:', error);
-    }
+    const putCommand = new PutItemCommand(putParams);
+    await dynamoClient.send(putCommand);
+    console.log('Article view saved successfully');
   };
 
   const value = {

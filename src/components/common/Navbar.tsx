@@ -6,7 +6,11 @@ import { useAuthContext } from '../../context/AuthContext';
 import { useNewsFavorites } from '../../hooks/news/useNewsFavorites';
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'; // 正確的導入
 
-const Navbar: React.FC = () => {  
+interface NavbarProps {
+  setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選
+}
+
+const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {  
   const { isDarkMode } = useAppContext();  
   const { user, logoutUser } = useAuthContext();  
   const { setFavorites } = useNewsFavorites();
@@ -92,6 +96,12 @@ const Navbar: React.FC = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const handleLinkClick = (sourcePage: string) => {
+    if (setCurrentSourcePage) {
+      setCurrentSourcePage(sourcePage);
+    }
+  };
+
   return (  
     <div>  
       <nav className="bg-gray-900 p-4 shadow-md">  
@@ -124,11 +134,11 @@ const Navbar: React.FC = () => {
                 <span className="text-white text-lg">通知</span>
               </div>
             )}
-            <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0">最新公告</Link>  
-            <Link href="/news" className="text-white hover:text-gray-400 transition duration-300 text-lg">最新新聞</Link>  
-            <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg">解決方案</Link>
-            <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300 text-lg">知識庫</Link>  
-            <Link href="/architecture-diagrams" className="text-white hover:text-gray-400 transition duration-300 text-lg">架構圖</Link>
+            <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0" onClick={() => handleLinkClick('最新公告')}>最新公告</Link>  
+            <Link href="/news" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('最新新聞')}>最新新聞</Link>  
+            <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('解決方案')}>解決方案</Link>
+            <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('知識庫')}>知��庫</Link>  
+            <Link href="/architecture-diagrams" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('架構圖')}>架構圖</Link>
             <div className="relative" ref={resourcesDropdownRef}>  
               <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
                 其他資源  

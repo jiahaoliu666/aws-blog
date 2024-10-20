@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ExtendedNews } from '@/types/newsType';
-import { useAuthContext } from '@/context/AuthContext'; // 引入 useAuthContext
+import { useAuthContext } from '@/context/AuthContext';
 
 interface NewsCardProps {
     article: ExtendedNews;
@@ -11,6 +11,7 @@ interface NewsCardProps {
     showSummaries: boolean;
     toggleFavorite: (article: ExtendedNews) => Promise<void>;
     isFavorited: boolean;
+    sourcePage: string; // 新增 sourcePage prop
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({
@@ -22,11 +23,11 @@ const NewsCard: React.FC<NewsCardProps> = ({
     showSummaries,
     toggleFavorite,
     isFavorited,
+    sourcePage, // 使用 sourcePage prop
 }) => {
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
-    const { user, saveArticleView } = useAuthContext(); // 從 context 中獲取 user 和 saveArticleView 函數
+    const { user, saveArticleView } = useAuthContext();
 
-    // 當 showSummaries 改變時，更新本地狀態
     useEffect(() => {
         setIsSummaryVisible(showSummaries);
     }, [showSummaries]);
@@ -48,7 +49,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
     const handleTitleClick = async () => {
         if (user) {
-            await saveArticleView(article.article_id, user.sub); // 使用 article_id 而不是 title
+            await saveArticleView(article.article_id, user.sub, sourcePage); // 使用傳遞的 sourcePage
         }
     };
 

@@ -42,7 +42,7 @@ const ProfilePage: React.FC = () => {
     },
   });
   const [tempUsername, setTempUsername] = useState(user ? user.username : ''); // 新增一個狀態來存儲臨時用戶名
-  const [recentArticles, setRecentArticles] = useState<{ translatedTitle: string; link: string; timestamp: string }[]>([]); // 新增狀態來存儲最近的觀看紀錄
+  const [recentArticles, setRecentArticles] = useState<{ translatedTitle: string; link: string; timestamp: string; sourcePage: string }[]>([]); // 新增狀態來存儲最近的觀看紀錄
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -126,16 +126,22 @@ const ProfilePage: React.FC = () => {
             try {
                 const command = new QueryCommand(params);
                 const response = await dynamoClient.send(command);
-                const articleData = response.Items?.map(item => ({
-                    articleId: item.articleId.S,
-                    timestamp: item.timestamp.S,
-                })).filter((data): data is { articleId: string; timestamp: string } => data.articleId !== undefined && data.timestamp !== undefined) || [];
+                const articleData = response.Items?.map(item => {
+                    const articleId = item.articleId?.S;
+                    const timestamp = item.timestamp?.S;
+                    const sourcePage = item.sourcePage?.S || '未知來源'; // 如果沒有 sourcePage，設置默認值
+
+                    if (articleId && timestamp) {
+                        return { articleId, timestamp, sourcePage };
+                    }
+                    return null;
+                }).filter((data): data is { articleId: string; timestamp: string; sourcePage: string } => data !== null) || [];
 
                 // Fetch translated_title and link for each articleId
-                const articles = await Promise.all(articleData.map(async ({ articleId, timestamp }) => {
+                const articles = await Promise.all(articleData.map(async ({ articleId, timestamp, sourcePage }) => {
                     const newsParams = {
                         TableName: 'AWS_Blog_News',
-                        KeyConditionExpression: 'article_id = :articleId', // 使用正確的鍵條件
+                        KeyConditionExpression: 'article_id = :articleId',
                         ExpressionAttributeValues: {
                             ':articleId': { S: articleId },
                         },
@@ -144,7 +150,7 @@ const ProfilePage: React.FC = () => {
                     const newsResponse = await dynamoClient.send(newsCommand);
                     const translatedTitle = newsResponse.Items?.[0]?.translated_title?.S || '標題不可用';
                     const link = newsResponse.Items?.[0]?.link?.S || '#';
-                    return { translatedTitle, link, timestamp };
+                    return { translatedTitle, link, timestamp, sourcePage };
                 }));
 
                 setRecentArticles(articles);
@@ -179,7 +185,7 @@ const ProfilePage: React.FC = () => {
 
     // 檢查密碼欄位
     if (formData.password && !oldPassword) {
-      setPasswordMessage('請入舊密碼以更改密碼��');
+      setPasswordMessage('請入舊密碼以更改密碼');
       hasError = true;
     }
 
@@ -397,7 +403,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
-      <Navbar />
+      <Navbar setCurrentSourcePage={() => {}} />
       {!user && (
         <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop 以避免重疊 */}
           <Loader className="mb-4" size="large"/> {/* 保留 Loader 組件 */}
@@ -430,7 +436,7 @@ const ProfilePage: React.FC = () => {
                                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
                                 </svg>
-                                {article.translatedTitle}
+                                [{article.sourcePage}] {article.translatedTitle}
                             </a>
                             <span className="text-sm text-gray-500">{new Date(article.timestamp).toLocaleString()}</span>
                         </div>

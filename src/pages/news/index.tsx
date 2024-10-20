@@ -15,6 +15,7 @@ import '@aws-amplify/ui-react/styles.css';
 const NewsPage: React.FC = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true); // 管理加載狀態
+    const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新新聞'); // 設置默認值
 
     const {
         language,
@@ -71,6 +72,11 @@ const NewsPage: React.FC = () => {
         loadData();
     }, []);
 
+    useEffect(() => {
+        // 在頁面加載時設置 currentSourcePage
+        setCurrentSourcePage('最新新聞');
+    }, []);
+
     const resetFilters = () => {
         setGridView(false);
         setIsDarkMode(false);
@@ -86,7 +92,7 @@ const NewsPage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="flex flex-col min-h-screen bg-gray-100">
-                <Navbar />
+                <Navbar setCurrentSourcePage={setCurrentSourcePage} /> {/* 傳遞 setCurrentSourcePage */}
                 <div className="flex-grow flex justify-center items-center">
                     <Loader />
                 </div>
@@ -97,7 +103,7 @@ const NewsPage: React.FC = () => {
 
     return (
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
-            <Navbar />
+            <Navbar setCurrentSourcePage={setCurrentSourcePage} /> {/* 傳遞 setCurrentSourcePage */}
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <h1 className="text-5xl font-bold text-center mb-5">AWS 最新新聞</h1>
                 
@@ -145,6 +151,7 @@ const NewsPage: React.FC = () => {
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
+                                    sourcePage={currentSourcePage} // 傳遞 sourcePage
                                 />
                             );
                         })
