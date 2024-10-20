@@ -105,33 +105,49 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchRecentArticles = async () => {
-      if (user) {
-        const dynamoClient = new DynamoDBClient({
-          region: 'ap-northeast-1',
-          credentials: {
-            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-          },
-        });
+        if (user) {
+            const dynamoClient = new DynamoDBClient({
+                region: 'ap-northeast-1',
+                credentials: {
+                    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+                    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+                },
+            });
 
-        const params = {
-          TableName: 'AWS_Blog_UserRecentArticles',
-          KeyConditionExpression: 'userId = :userId',
-          ExpressionAttributeValues: {
-            ':userId': { S: user.sub },
-          },
-          ScanIndexForward: false,
-        };
+            const params = {
+                TableName: 'AWS_Blog_UserRecentArticles',
+                KeyConditionExpression: 'userId = :userId',
+                ExpressionAttributeValues: {
+                    ':userId': { S: user.sub },
+                },
+                ScanIndexForward: false,
+            };
 
-        try {
-          const command = new QueryCommand(params);
-          const response = await dynamoClient.send(command);
-          const articles = response.Items?.map(item => item.articleId.S).filter((id): id is string => id !== undefined) || [];
-          setRecentArticles(articles);
-        } catch (error) {
-          console.error('Error fetching recent articles:', error);
+            try {
+                const command = new QueryCommand(params);
+                const response = await dynamoClient.send(command);
+                const articleIds = response.Items?.map(item => item.articleId.S).filter((id): id is string => id !== undefined) || [];
+
+                // Fetch translated_title for each articleId
+                const titles = await Promise.all(articleIds.map(async (articleId) => {
+                    const newsParams = {
+                        TableName: 'AWS_Blog_News',
+                        KeyConditionExpression: 'article_id = :articleId', // 使用正確的鍵條件
+                        ExpressionAttributeValues: {
+                            ':articleId': { S: articleId },
+                        },
+                    };
+                    const newsCommand = new QueryCommand(newsParams);
+                    const newsResponse = await dynamoClient.send(newsCommand);
+                    const translatedTitle = newsResponse.Items?.[0]?.translated_title?.S || '標題不可用';
+                    return translatedTitle;
+                }));
+
+                setRecentArticles(titles);
+            } catch (error) {
+                console.error('Error fetching recent articles:', error);
+            }
         }
-      }
     };
 
     fetchRecentArticles();
@@ -242,7 +258,7 @@ const ProfilePage: React.FC = () => {
       }
     }
 
-    // 檢查密碼是否變更
+    // 檢密碼是否變更
     if (formData.password) {
       hasChanges = true;
       passwordChanged = true; // 標記嘗試更改密碼
@@ -362,7 +378,7 @@ const ProfilePage: React.FC = () => {
       username: false,
       password: false,
     });
-    setUploadMessage(null); // 清除頭像更改消息
+    setUploadMessage(null); // 清除頭像更改消��
     setIsEditing(true);
   };
 
@@ -403,8 +419,8 @@ const ProfilePage: React.FC = () => {
           <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
             <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
             <ul className="list-disc list-inside mt-2">
-              {recentArticles.map((articleId, index) => (
-                <li key={index}>{articleId}</li> // 顯示 article_id
+              {recentArticles.map((title, index) => (
+                <li key={index}>{title}</li> // 顯示 translated_title
               ))}
             </ul>
           </div>
