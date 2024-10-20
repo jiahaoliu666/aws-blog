@@ -5,7 +5,7 @@ import Footer from '../../components/common/Footer';
 import Navbar from '../../components/common/Navbar';
 import { useAuthContext } from '../../context/AuthContext';
 import { Loader } from '@aws-amplify/ui-react';
-
+import '@aws-amplify/ui-react/styles.css';  
 
 const SettingsPage: React.FC = () => {
   const { user } = useAuthContext();
