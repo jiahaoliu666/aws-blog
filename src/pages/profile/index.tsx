@@ -42,7 +42,7 @@ const ProfilePage: React.FC = () => {
     },
   });
   const [tempUsername, setTempUsername] = useState(user ? user.username : ''); // 新增一個狀態來存儲臨時用戶名
-  const [recentArticles, setRecentArticles] = useState<string[]>([]); // 新增狀態來存儲最近的觀看紀錄
+  const [recentArticles, setRecentArticles] = useState<{ translatedTitle: string; link: string; timestamp: string }[]>([]); // 新增狀態來存儲最近的觀看紀錄
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -126,10 +126,13 @@ const ProfilePage: React.FC = () => {
             try {
                 const command = new QueryCommand(params);
                 const response = await dynamoClient.send(command);
-                const articleIds = response.Items?.map(item => item.articleId.S).filter((id): id is string => id !== undefined) || [];
+                const articleData = response.Items?.map(item => ({
+                    articleId: item.articleId.S,
+                    timestamp: item.timestamp.S,
+                })).filter((data): data is { articleId: string; timestamp: string } => data.articleId !== undefined && data.timestamp !== undefined) || [];
 
-                // Fetch translated_title for each articleId
-                const titles = await Promise.all(articleIds.map(async (articleId) => {
+                // Fetch translated_title and link for each articleId
+                const articles = await Promise.all(articleData.map(async ({ articleId, timestamp }) => {
                     const newsParams = {
                         TableName: 'AWS_Blog_News',
                         KeyConditionExpression: 'article_id = :articleId', // 使用正確的鍵條件
@@ -140,10 +143,11 @@ const ProfilePage: React.FC = () => {
                     const newsCommand = new QueryCommand(newsParams);
                     const newsResponse = await dynamoClient.send(newsCommand);
                     const translatedTitle = newsResponse.Items?.[0]?.translated_title?.S || '標題不可用';
-                    return translatedTitle;
+                    const link = newsResponse.Items?.[0]?.link?.S || '#';
+                    return { translatedTitle, link, timestamp };
                 }));
 
-                setRecentArticles(titles);
+                setRecentArticles(articles);
             } catch (error) {
                 console.error('Error fetching recent articles:', error);
             }
@@ -258,7 +262,7 @@ const ProfilePage: React.FC = () => {
       }
     }
 
-    // 檢密碼是否變更
+    // 檢密碼是否變
     if (formData.password) {
       hasChanges = true;
       passwordChanged = true; // 標記嘗試更改密碼
@@ -378,7 +382,7 @@ const ProfilePage: React.FC = () => {
       username: false,
       password: false,
     });
-    setUploadMessage(null); // 清除頭像更改消��
+    setUploadMessage(null); // 清除頭像更改消
     setIsEditing(true);
   };
 
@@ -417,10 +421,15 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
           <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 className="text-xl font-bold text-gray-800">過去的觀看紀錄</h3>
+            <h3 className="text-xl font-bold text-gray-800">最近的觀看紀錄</h3>
             <ul className="list-disc list-inside mt-2">
-              {recentArticles.map((title, index) => (
-                <li key={index}>{title}</li> // 顯示 translated_title
+              {recentArticles.map((article, index) => (
+                <li key={index}>
+                  <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    {article.translatedTitle}
+                  </a>
+                  <span className="text-sm text-gray-500 ml-2">({new Date(article.timestamp).toLocaleString()})</span>
+                </li>
               ))}
             </ul>
           </div>
