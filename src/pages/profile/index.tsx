@@ -325,7 +325,7 @@ const ProfilePage: React.FC = () => {
       <Navbar />
       {!user && (
         <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop 以避免重疊 */}
-          <Loader className="mb-4" /> {/* 保留 Loader 組件 */}
+          <Loader className="mb-4" size="large"/> {/* 保留 Loader 組件 */}
           <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
           <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
         </div>
