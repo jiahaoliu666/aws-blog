@@ -190,18 +190,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const timestamp = new Date().toISOString();
 
+    // 新增觀看紀錄
     const putParams = {
         TableName: 'AWS_Blog_UserRecentArticles',
         Item: {
             userId: { S: userId },
             timestamp: { S: timestamp },
             articleId: { S: articleId },
-            sourcePage: { S: sourcePage }, // 確保 sourcePage 不為空
+            sourcePage: { S: sourcePage },
         },
     };
     const putCommand = new PutItemCommand(putParams);
     await dynamoClient.send(putCommand);
     console.log('Article view saved successfully');
+
+    // 查詢所有觀看紀錄
+    const queryParams = {
+        TableName: 'AWS_Blog_UserRecentArticles',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+            ':userId': { S: userId },
+        },
+        ScanIndexForward: false, // 以時間倒序排列
+    };
+    const queryCommand = new QueryCommand(queryParams);
+    const response = await dynamoClient.send(queryCommand);
+
+    // 如果紀錄超過 10 則，刪除多餘的
+    const items = response.Items || [];
+    if (items.length > 10) {
+        const itemsToDelete = items.slice(10); // 取出多餘的紀錄
+        for (const item of itemsToDelete) {
+            const deleteParams = {
+                TableName: 'AWS_Blog_UserRecentArticles',
+                Key: {
+                    userId: item.userId,
+                    timestamp: item.timestamp,
+                },
+            };
+            const deleteCommand = new DeleteItemCommand(deleteParams);
+            await dynamoClient.send(deleteCommand);
+            console.log('Deleted old article view:', item.articleId.S);
+        }
+    }
   };
 
   const value = {

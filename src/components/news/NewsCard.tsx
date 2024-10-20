@@ -49,7 +49,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
     const handleTitleClick = async () => {
         if (user) {
-            await saveArticleView(article.article_id, user.sub, sourcePage); // 使用傳遞的 sourcePage
+            await saveArticleView(article.article_id, user.sub, sourcePage);
         }
     };
 
