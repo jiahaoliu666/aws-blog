@@ -177,7 +177,7 @@ const ProfilePage: React.FC = () => {
     let hasChanges = false; // 用於追蹤是否有任何變更
     let changesSuccessful = true; // 用於追蹤變更是否成
 
-    // 檢��用戶名是否為空
+    // 檢用戶��是否為空
     if (!formData.username.trim()) {
       setPasswordMessage('用戶名不能為空。');
       hasError = true;
@@ -185,7 +185,7 @@ const ProfilePage: React.FC = () => {
 
     // 檢查密碼欄位
     if (formData.password && !oldPassword) {
-      setPasswordMessage('請入舊密碼以更改密碼');
+      setPasswordMessage('請入��密碼以更改密碼');
       hasError = true;
     }
 
@@ -405,7 +405,7 @@ const ProfilePage: React.FC = () => {
     <div className="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       <Navbar setCurrentSourcePage={() => {}} />
       {!user && (
-        <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop ��避免重疊 */}
+        <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop 避免重疊 */}
           <Loader className="mb-4" size="large"/> {/* 保留 Loader 組件 */}
           <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
           <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
@@ -429,20 +429,23 @@ const ProfilePage: React.FC = () => {
           <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4">最近的觀看紀錄</h3>
             <div className="grid grid-cols-1 gap-4">
-                {recentArticles.map((article, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
-                        <div className="flex justify-between items-center">
-                            <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
-                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
-                                </svg>
-                                {/* 添加排序號碼 */}
-                                {index + 1}. [{article.sourcePage}] {article.translatedTitle}
-                            </a>
-                            <span className="text-sm text-gray-500">{new Date(article.timestamp).toLocaleString()}</span>
+                {recentArticles.length === 0 ? (
+                    <p className="text-gray-500">目前沒有任何觀看紀錄。</p> // 當沒有紀錄時顯示此消息
+                ) : (
+                    recentArticles.map((article, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <div className="flex justify-between items-center">
+                                <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
+                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
+                                    </svg>
+                                    {index + 1}. [{article.sourcePage}] {article.translatedTitle}
+                                </a>
+                                <span className="text-sm text-gray-500">{new Date(article.timestamp).toLocaleString()}</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
           </div>
           <div className="profile-actions mt-6 flex justify-end">
@@ -516,7 +519,7 @@ const ProfilePage: React.FC = () => {
                   </div>
                   <div>
                     <PasswordField
-                      label="修���密碼"
+                      label="修密碼"
                       id="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
