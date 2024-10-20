@@ -179,7 +179,7 @@ const ProfilePage: React.FC = () => {
 
     // 檢查密碼欄位
     if (formData.password && !oldPassword) {
-      setPasswordMessage('請入舊密碼以更改密碼。');
+      setPasswordMessage('請入舊密碼以更改密碼��');
       hasError = true;
     }
 
@@ -421,17 +421,22 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
           <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 className="text-xl font-bold text-gray-800">最近的十則觀看紀錄：</h3>
-            <ul className="list-disc list-inside mt-2">
-              {recentArticles.map((article, index) => (
-                <li key={index}>
-                  <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                    {article.translatedTitle}
-                  </a>
-                  <span className="text-sm text-gray-500 ml-2">({new Date(article.timestamp).toLocaleString()})</span>
-                </li>
-              ))}
-            </ul>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">最近的觀看紀錄</h3>
+            <div className="grid grid-cols-1 gap-4">
+                {recentArticles.map((article, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div className="flex justify-between items-center">
+                            <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
+                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
+                                </svg>
+                                {article.translatedTitle}
+                            </a>
+                            <span className="text-sm text-gray-500">{new Date(article.timestamp).toLocaleString()}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
           </div>
           <div className="profile-actions mt-6 flex justify-end">
             <button onClick={handleEditClick} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
