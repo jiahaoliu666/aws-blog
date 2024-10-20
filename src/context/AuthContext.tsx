@@ -10,6 +10,7 @@ import { ExtendedNews } from "@/types/newsType";
 
 interface User {
   accessToken: string;
+  refreshToken: string; // 新增 refreshToken 屬性
   username: string;
   sub: string;
   email: string; // 新增 email 屬性
@@ -80,8 +81,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await cognitoClient.send(command);
       const authResult = response.AuthenticationResult;
 
-      if (authResult && authResult.AccessToken) {
+      if (authResult && authResult.AccessToken && authResult.RefreshToken) {
         const accessToken = authResult.AccessToken;
+        const refreshToken = authResult.RefreshToken; // 獲取 refreshToken
 
         const userCommand = new GetUserCommand({ AccessToken: accessToken });
         const userResponse = await cognitoClient.send(userCommand);
@@ -96,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         const userId = userIdAttribute.Value;
 
-        const user: User = { accessToken, username, sub: userId, email, favorites: [] }; // 設置 email
+        const user: User = { accessToken, refreshToken, username, sub: userId, email, favorites: [] }; // 設置 refreshToken
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         setError(null);

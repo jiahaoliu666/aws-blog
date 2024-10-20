@@ -63,27 +63,52 @@ const ProfilePage: React.FC = () => {
       setShowLoginMessage(false);
 
       const fetchUserDetails = async () => {
-        const userCommand = new GetUserCommand({ AccessToken: user.accessToken });
-        const userResponse = await cognitoClient.send(userCommand);
+        try {
+          const userCommand = new GetUserCommand({ AccessToken: user.accessToken });
+          const userResponse = await cognitoClient.send(userCommand);
 
-        const registrationDateAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'custom:registrationDate');
-        const registrationDate = registrationDateAttribute ? registrationDateAttribute.Value : '[註冊日期]';
+          const registrationDateAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'custom:registrationDate');
+          const registrationDate = registrationDateAttribute ? registrationDateAttribute.Value : '[註冊日期]';
 
-        setFormData(prevData => ({
-          ...prevData,
-          registrationDate: registrationDate || '[註冊日期]', // 確保 registrationDate 總是 string
-        }));
+          setFormData(prevData => ({
+            ...prevData,
+            registrationDate: registrationDate || '[註冊日期]', // 確保 registrationDate 總是 string
+          }));
+        } catch (error) {
+          const err = error as Error; // 將 error 類型斷言為 Error
+          if (err.name === 'NotAuthorizedException' && err.message.includes('Access Token has expired')) {
+            // Handle token refresh logic here
+            try {
+              const newAccessToken = await refreshAccessToken(user.refreshToken);
+              user.accessToken = newAccessToken; // Update the user's access token
+              fetchUserDetails(); // Retry fetching user details
+            } catch (refreshError) {
+              console.error('Error refreshing access token:', refreshError);
+              router.push('/auth/login'); // Redirect to login if refresh fails
+            }
+          } else {
+            console.error('Error fetching user details:', error);
+          }
+        }
       };
 
       fetchUserDetails();
     }
   }, [user, router]);
 
+  // Function to refresh access token
+  const refreshAccessToken = async (refreshToken: string): Promise<string> => {
+    // 實現刷新訪問令牌的邏輯
+    // 確保返回新的訪問令牌
+    const newAccessToken = 'newAccessToken'; // 假設這是從某個 API 獲取的
+    return newAccessToken;
+  };
+
   const handleSaveChanges = async () => {
     let passwordChanged = false; // 用於追蹤密碼是否嘗試更改
     let hasError = false; // 用於追蹤是否有錯誤
     let hasChanges = false; // 用於追蹤是否有任何變更
-    let changesSuccessful = true; // 用於追蹤變更是否成功
+    let changesSuccessful = true; // 用於追蹤變更是否成
 
     // 檢查用戶名是否為空
     if (!formData.username.trim()) {
@@ -279,7 +304,7 @@ const ProfilePage: React.FC = () => {
       <div className="container mx-auto flex-grow p-5">
         {showLoginMessage ? (
           <div className="text-center py-10">
-            <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
+            <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
             <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
           </div>
         ) : (
