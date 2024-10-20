@@ -421,7 +421,7 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
           <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 className="text-xl font-bold text-gray-800">最近的觀看紀錄</h3>
+            <h3 className="text-xl font-bold text-gray-800">最近的十則觀看紀錄：</h3>
             <ul className="list-disc list-inside mt-2">
               {recentArticles.map((article, index) => (
                 <li key={index}>

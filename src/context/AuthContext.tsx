@@ -7,7 +7,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import cognitoClient from "../utils/cognitoClient";
 import { ExtendedNews } from "@/types/newsType";
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb'; // 引入 DynamoDBClient 和 PutItemCommand
+import { DynamoDBClient, PutItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb'; // 引入 DynamoDBClient 和 PutItemCommand
 
 interface User {
   accessToken: string;
@@ -189,18 +189,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     const timestamp = new Date().toISOString();
-    const params = {
+
+    // 先查詢用戶的觀看紀錄數量
+    const queryParams = {
         TableName: 'AWS_Blog_UserRecentArticles',
-        Item: {
-            userId: { S: userId },
-            timestamp: { S: timestamp },
-            articleId: { S: articleId }, // 使用 articleId 而不是 title
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+            ':userId': { S: userId },
         },
+        ScanIndexForward: true, // 按時間順序排序
     };
 
     try {
-        const command = new PutItemCommand(params);
-        await dynamoClient.send(command);
+        const queryCommand = new QueryCommand(queryParams);
+        const queryResponse = await dynamoClient.send(queryCommand);
+        const items = queryResponse.Items || [];
+
+        // 如果紀錄超過五則，刪除最舊的紀錄
+        if (items.length >= 5) {
+            const oldestItem = items[0];
+            const deleteParams = {
+                TableName: 'AWS_Blog_UserRecentArticles',
+                Key: {
+                    userId: oldestItem.userId,
+                    timestamp: oldestItem.timestamp,
+                },
+            };
+            const deleteCommand = new DeleteItemCommand(deleteParams);
+            await dynamoClient.send(deleteCommand);
+        }
+
+        // 添加新的觀看紀錄
+        const putParams = {
+            TableName: 'AWS_Blog_UserRecentArticles',
+            Item: {
+                userId: { S: userId },
+                timestamp: { S: timestamp },
+                articleId: { S: articleId },
+            },
+        };
+        const putCommand = new PutItemCommand(putParams);
+        await dynamoClient.send(putCommand);
         console.log('Article view saved successfully');
     } catch (error) {
         console.error('Error saving article view:', error);
