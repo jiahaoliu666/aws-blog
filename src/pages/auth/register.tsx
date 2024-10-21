@@ -7,7 +7,7 @@ import '@aws-amplify/ui-react/styles.css';
 import Link from 'next/link';  
 import { useRouter } from 'next/router';  
 import Navbar from '@/components/common/Navbar';  
-import Footer from '@/components/common/Footer';  // 導入 Footer
+import Footer from '@/components/common/Footer';  
 import { useAuthContext } from '@/context/AuthContext';  
 
 const RegisterPage: React.FC = () => {  
@@ -91,11 +91,11 @@ const RegisterPage: React.FC = () => {
   };  
 
   return (  
-    <>  
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">  
       <Navbar />  
-      <div className="flex items-center justify-center min-h-screen bg-gray-200">  
-        <form className="bg-white p-10 rounded-lg shadow-lg w-96" onSubmit={isVerificationNeeded ? handleVerifyCode : handleRegister}>  
-          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">註冊</h2>  
+      <div className="flex items-center justify-center flex-grow px-4 py-8">  
+        <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={isVerificationNeeded ? handleVerifyCode : handleRegister} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
+          <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">註冊</h2>  
 
           <div className="mb-4">  
             <label htmlFor="username" className="text-base text-gray-700">用戶名</label>  
@@ -107,7 +107,7 @@ const RegisterPage: React.FC = () => {
               value={username}  
               onChange={(e) => setLocalUsername(e.target.value)}  
               required  
-              className="border border-gray-300 p-2 rounded"  
+              className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
               disabled={isVerificationNeeded}  
               style={{ marginTop: '8px' }}  
             />  
@@ -123,7 +123,7 @@ const RegisterPage: React.FC = () => {
               value={email}  
               onChange={(e) => setEmail(e.target.value)}  
               required  
-              className="border border-gray-300 p-2 rounded"  
+              className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
               disabled={isVerificationNeeded}  
               style={{ marginTop: '8px' }}  
             />  
@@ -138,7 +138,7 @@ const RegisterPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}  
                   placeholder="輸入密碼"  
                   required  
-                  className="border border-gray-300 p-2 rounded"  
+                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
                 />  
               </div>  
 
@@ -149,7 +149,7 @@ const RegisterPage: React.FC = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}  
                   placeholder="再次輸入密碼"  
                   required  
-                  className="border border-gray-300 p-2 rounded"  
+                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
                 />  
               </div>  
             </>  
@@ -158,7 +158,7 @@ const RegisterPage: React.FC = () => {
           {isVerificationNeeded && (  
             <>  
               <div className="mb-4">  
-                <label htmlFor="verificationCode" className="text-base text-gray-700">驗碼</label>  
+                <label htmlFor="verificationCode" className="text-base text-gray-700">驗證碼</label>  
                 <Input  
                   id="verificationCode"  
                   name="verificationCode"  
@@ -167,7 +167,7 @@ const RegisterPage: React.FC = () => {
                   value={verificationCode}  
                   onChange={(e) => setVerificationCode(e.target.value)}  
                   required  
-                  className="border border-gray-300 p-2 rounded"  
+                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
                   style={{ marginTop: '8px' }}  
                 />  
               </div>  
@@ -181,26 +181,26 @@ const RegisterPage: React.FC = () => {
             </>  
           )}  
 
-          {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded whitespace-pre-line">{error}</div>}  
+          {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded">{error}</div>}  
           {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
 
           <button  
             type="submit"  
-            className="bg-green-600 text-white rounded w-full py-3 hover:bg-green-700 transition duration-150"  
+            className="bg-gradient-to-r from-green-500 to-green-700 text-white rounded-full w-full py-3 hover:from-green-600 hover:to-green-800 transition duration-200 ease-in-out mb-4 shadow-xl transform hover:scale-105"  
           >  
             {isVerificationNeeded ? '確認驗證' : '註冊'}  
           </button>  
 
           <div className="mt-4 text-center">  
             <span className="text-gray-700">已經有帳號了？</span>&nbsp;  
-            <Link href="/auth/login" legacyBehavior>  
-              <a className="text-blue-500 hover:underline">登入</a>  
+            <Link href="/auth/login">  
+              <span className="text-blue-500 hover:underline">登入</span>  
             </Link>  
           </div>  
         </form>  
       </div>  
-      <Footer />  {/* 添加 Footer */}
-    </>  
+      <Footer />  
+    </div>  
   );  
 };  
 

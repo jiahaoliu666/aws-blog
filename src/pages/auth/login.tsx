@@ -9,7 +9,6 @@ import { useAuthContext } from '../../context/AuthContext';
 import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react';
 
-
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
   const { loginUser, error, clearError, user } = useAuthContext();  
@@ -65,18 +64,18 @@ const LoginPage: React.FC = () => {
   };  
 
   return (  
-    <div className="flex flex-col min-h-screen bg-gray-100">  
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">  
       <Navbar />  
-      <div className="flex items-center justify-center flex-grow">  
+      <div className="flex items-center justify-center flex-grow px-4 py-8">  
         {showLoginMessage ? ( 
           <div className="text-center py-10">
-            <Loader className="mb-4" size="large"/> {/* 保留 Loader 組件 */}
+            <Loader className="mb-4" size="large"/> 
             <h2 className="text-2xl font-semibold text-green-600">您已登入成功!</h2>
             <p className="text-lg text-gray-700">重新導向至其他頁面...</p>
           </div>
         ) : ( 
-          <form className="bg-white p-10 rounded-lg shadow-xl w-96" onSubmit={handleLogin}>  
-            <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">登入</h2>  
+          <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={handleLogin} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
+            <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">登入</h2>  
             <div className="mb-4">  
               <label htmlFor="email" className="text-base text-gray-700">電子郵件</label>  
               <Input  
@@ -87,7 +86,7 @@ const LoginPage: React.FC = () => {
                 value={email}  
                 onChange={(e) => setEmail(e.target.value)}  
                 required  
-                className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
+                className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out"  
                 style={{ marginTop: '8px' }}  
               />  
             </div>  
@@ -99,14 +98,14 @@ const LoginPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}  
                 placeholder="輸入密碼"  
                 required  
-                className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
+                className="border border-gray-300 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out"  
               />  
             </div>  
             {error && <ErrorMessage message={errorMessage(error)} />}  
-            {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
+            {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded-lg">{success}</div>}  
             <button  
               type="submit"  
-              className="bg-blue-600 text-white rounded w-full py-3 hover:bg-blue-700 transition duration-150 mb-4 shadow-md"  
+              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full w-full py-3 hover:from-blue-600 hover:to-blue-800 transition duration-200 ease-in-out mb-4 shadow-xl transform hover:scale-105"  
             >  
               登入  
             </button>  
@@ -117,7 +116,7 @@ const LoginPage: React.FC = () => {
             </div>  
             <div className="mt-4 text-center">  
               <Link href="/auth/register">  
-                <span className="bg-green-600 text-white rounded w-full py-3 inline-block text-center hover:bg-green-700 transition duration-150 cursor-pointer shadow-md">  
+                <span className="bg-green-600 text-white rounded-full w-full py-3 inline-block text-center hover:bg-green-700 transition duration-200 ease-in-out cursor-pointer shadow-lg transform hover:scale-105">  
                   註冊  
                 </span>  
               </Link>  

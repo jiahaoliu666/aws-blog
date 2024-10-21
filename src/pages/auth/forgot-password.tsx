@@ -53,7 +53,7 @@ const ForgotPasswordPage: React.FC = () => {
       });  
       const response = await cognitoClient.send(command);  
       console.log("ConfirmForgotPasswordCommand response:", response);  
-      setSuccess('密碼重置成功，您的帳戶已驗證。請使用新密碼登入。');  
+      setSuccess('密碼重置成功，您的帳戶已驗證。請用新密碼登入。');  
       setError(null);  
     } catch (err: any) {  
       console.error("Error during ConfirmForgotPasswordCommand:", err);  
@@ -67,11 +67,11 @@ const ForgotPasswordPage: React.FC = () => {
   };  
 
   return (  
-    <div className="flex flex-col min-h-screen bg-gray-100">  
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">  
       <Navbar />  {/* 使用 Navbar */}
-      <div className="flex items-center justify-center flex-grow">  
-        <form className="bg-white p-10 rounded-lg shadow-xl w-96" onSubmit={step === 'request' ? handleRequestReset : handleResetPassword}>  
-          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">忘記密碼</h2>  
+      <div className="flex items-center justify-center flex-grow px-4 py-8">  
+        <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={step === 'request' ? handleRequestReset : handleResetPassword} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
+          <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">忘記密碼</h2>  
           <div className="mb-4">  
             <label htmlFor="email" className="text-base text-gray-700 mb-2 block">電子郵件</label>  
             <input  
@@ -82,7 +82,7 @@ const ForgotPasswordPage: React.FC = () => {
               value={email}  
               onChange={(e) => setEmail(e.target.value)}  
               required  
-              className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
+              className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
               disabled={step === 'reset'}  
             />  
           </div>  
@@ -99,7 +99,7 @@ const ForgotPasswordPage: React.FC = () => {
                   value={newPassword}  
                   onChange={(e) => setNewPassword(e.target.value)}  
                   required  
-                  className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
+                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
                 />  
               </div>  
               <div className="mb-4">  
@@ -112,7 +112,7 @@ const ForgotPasswordPage: React.FC = () => {
                   value={verificationCode}  
                   onChange={(e) => setVerificationCode(e.target.value)}  
                   required  
-                  className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
+                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
                 />  
               </div>  
             </>  
@@ -121,12 +121,14 @@ const ForgotPasswordPage: React.FC = () => {
           {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded">{error}</div>}  
           {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
 
-          <button  
-            type="submit"  
-            className="bg-blue-600 text-white rounded w-full py-3 hover:bg-blue-700 transition duration-150"  
-          >  
-            {step === 'request' ? '發送驗證碼' : '重置密碼'}  
-          </button>  
+          <div className="mt-6">  {/* 添加間距 */}
+            <button  
+              type="submit"  
+              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full w-full py-3 hover:from-blue-600 hover:to-blue-800 transition duration-200 ease-in-out mb-4 shadow-xl transform hover:scale-105"  
+            >  
+              {step === 'request' ? '發送驗證碼' : '重置密碼'}  
+            </button>  
+          </div>
 
           <div className="mt-4 text-center">  
             <Link href="/auth/login">  

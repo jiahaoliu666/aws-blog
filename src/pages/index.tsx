@@ -1,10 +1,9 @@
 // src/pages/index.tsx  
-import React from 'react';  
+import React, { useEffect } from 'react';  
 import Link from 'next/link';  
 import Navbar from '../components/common/Navbar'; // 確保正確導入 Navbar  
 import Footer from '../components/common/Footer'; // 引入 Footer
 import '@aws-amplify/ui-react/styles.css'; // 確保樣式被正確導入
-import { useEffect } from 'react'; // 引入 useEffect
 
 const Home: React.FC = () => {
   useEffect(() => {
@@ -48,4 +47,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
