@@ -18,6 +18,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');  
   const [success, setSuccess] = useState<string | null>(null);  
   const [showLoginMessage, setShowLoginMessage] = useState(false);  
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {  
     if (user) {  
@@ -95,15 +96,30 @@ const LoginPage: React.FC = () => {
               <input
                 placeholder="密碼"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+              >
+                {showPassword ? "隱藏" : "顯示"}
+              </button>
             </div>
-            {error && <ErrorMessage message={errorMessage(error)} />}  
-            {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded-lg">{success}</div>}  
+            {error && (
+              <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${errorMessage(error).includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {errorMessage(error)}
+              </div>
+            )}
+            {success && (
+              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-green-100 text-green-800">
+                {success}
+              </div>
+            )}
             <button  
               type="submit"  
               className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full w-full py-3 hover:from-blue-600 hover:to-blue-800 transition duration-200 ease-in-out mb-4 shadow-xl transform hover:scale-105"  
