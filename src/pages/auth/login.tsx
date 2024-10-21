@@ -8,6 +8,8 @@ import ErrorMessage from '../../components/common/ErrorMessage';
 import { useAuthContext } from '../../context/AuthContext';  
 import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faLock } from '@fortawesome/free-solid-svg-icons';
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
@@ -76,31 +78,30 @@ const LoginPage: React.FC = () => {
         ) : ( 
           <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={handleLogin} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
             <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">登入</h2>  
-            <div className="mb-4">  
-              <label htmlFor="email" className="text-base text-gray-700">電子郵件</label>  
-              <Input  
-                id="email"  
-                name="email"  
-                type="email"  
-                placeholder="@metaage.com.tw"  
-                value={email}  
-                onChange={(e) => setEmail(e.target.value)}  
-                required  
-                className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out"  
-                style={{ marginTop: '8px' }}  
-              />  
-            </div>  
-            <div className="mb-6">  
-              <PasswordField  
-                label="密碼"  
-                id="password"  
-                value={password}  
-                onChange={(e) => setPassword(e.target.value)}  
-                placeholder="輸入密碼"  
-                required  
-                className="border border-gray-300 p-3 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out"  
-              />  
-            </div>  
+            <div className="mb-4 relative">
+              <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <input
+                placeholder="電子郵件地址"
+                name="username"
+                type="text"
+                className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-6 relative">
+              <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <input
+                placeholder="密碼"
+                name="password"
+                type="password"
+                className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
             {error && <ErrorMessage message={errorMessage(error)} />}  
             {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded-lg">{success}</div>}  
             <button  
