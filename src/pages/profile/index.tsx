@@ -504,11 +504,6 @@ const ProfilePage: React.FC = () => {
                         onChange={() => setIsEditable(prev => ({ ...prev, username: !prev.username }))}
                         className="mr-2"
                       />
-                      <SwitchField
-                        label="修改密碼"
-                        isChecked={isEditable.password}
-                        onChange={() => setIsEditable(prev => ({ ...prev, password: !prev.password }))}
-                      />
                     </div>
                   </div>
                   <div>
@@ -521,32 +516,6 @@ const ProfilePage: React.FC = () => {
                       className="mt-2 p-2 border border-gray-300 rounded w-full"
                       disabled={!isEditable.username}
                     />
-                  </div>
-                  <div className="mt-4">
-                    <PasswordField
-                      id="oldPassword"
-                      label="舊密碼"
-                      value={oldPassword}
-                      onChange={(e) => setOldPassword(e.target.value)}
-                      placeholder="輸入舊密碼"
-                      required
-                      className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-                      disabled={!isEditable.password}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">請輸入舊密碼。</p>
-                  </div>
-                  <div>
-                    <PasswordField
-                      label="修密碼"
-                      id="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="輸入新密碼"
-                      required
-                      className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-2" // 添加 mb-2
-                      disabled={!isEditable.password}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">請輸入新密碼。</p>
                   </div>
                 </div>
 
