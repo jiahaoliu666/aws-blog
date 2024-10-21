@@ -172,7 +172,7 @@ const ProfilePage: React.FC = () => {
   const refreshAccessToken = async (refreshToken: string): Promise<string> => {
     // 實現刷新訪問令牌的邏輯
     // 確保返回新的訪問令牌
-    const newAccessToken = 'newAccessToken'; // 假設這是從某個 API 獲取的
+    const newAccessToken = 'newAccessToken'; // 假設這��某個 API 獲取的
     return newAccessToken;
   };
 
@@ -290,6 +290,7 @@ const ProfilePage: React.FC = () => {
 
         // 確保在密碼變更成功後登出
         setTimeout(() => {
+          console.log('準備登出...');
           handleLogout();
         }, 2000); // 延遲兩秒鐘後登出
       } catch (error) {
@@ -338,6 +339,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    console.log('Logging out...');
     await logoutUser();
     router.push('/auth/login');
   };
