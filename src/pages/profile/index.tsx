@@ -43,6 +43,7 @@ const ProfilePage: React.FC = () => {
   });
   const [tempUsername, setTempUsername] = useState(user ? user.username : ''); // 新增一個狀態來存儲臨時用戶名
   const [recentArticles, setRecentArticles] = useState<{ translatedTitle: string; link: string; timestamp: string; sourcePage: string }[]>([]); // 新增狀態來存儲最近的觀看紀錄
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false); // 新增狀態來控制密碼模態框的顯示
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -177,7 +178,7 @@ const ProfilePage: React.FC = () => {
     let hasChanges = false; // 用於追蹤是否有任何變更
     let changesSuccessful = true; // 用於追蹤變更是否成
 
-    // 檢用戶��是否為空
+    // 檢用戶是否為空
     if (!formData.username.trim()) {
       setPasswordMessage('用戶名不能為空。');
       hasError = true;
@@ -185,7 +186,7 @@ const ProfilePage: React.FC = () => {
 
     // 檢查密碼欄位
     if (formData.password && !oldPassword) {
-      setPasswordMessage('請入��密碼以更改密碼');
+      setPasswordMessage('請入密碼以更改密碼');
       hasError = true;
     }
 
@@ -392,8 +393,21 @@ const ProfilePage: React.FC = () => {
     setIsEditing(true);
   };
 
+  // 打開密碼修改模態框
+  const handleOpenPasswordModal = () => {
+    setIsPasswordModalOpen(true);
+  };
+
+  // 關閉密碼修改模態框
+  const handleClosePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+    setOldPassword(''); // 清空舊密碼
+    setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
+    setPasswordMessage(null); // 清除消息狀態
+  };
+
   useEffect(() => {
-    // 假設這裡是您希望在頁面刷新時設 isLoading 的地方
+    // ��設這裡是您��望在頁面刷新時設 isLoading 的地方
     setIsLoading(true);
     // 模擬一個加載過程
     setTimeout(() => {
@@ -449,9 +463,13 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
           <div className="profile-actions mt-6 flex justify-end">
+          <button onClick={handleOpenPasswordModal} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
+              修改密碼
+            </button>
             <button onClick={handleEditClick} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
               編輯
             </button>
+           
             <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
               登出
             </button>
@@ -549,6 +567,47 @@ const ProfilePage: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+      {/* 密碼修改模態框 */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg w-1/3">
+            <h2 className="text-2xl font-bold mb-6 text-center">修改密碼</h2>
+            <div className="space-y-4">
+              <PasswordField
+                id="oldPassword"
+                label="舊密碼"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                placeholder="輸入舊密碼"
+                required
+                className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              />
+              <PasswordField
+                label="新密碼"
+                id="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="輸入新密碼"
+                required
+                className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-2"
+              />
+            </div>
+            {passwordMessage && (
+              <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {passwordMessage}
+              </div>
+            )}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button onClick={handleClosePasswordModal} className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200">
+                取消
+              </button>
+              <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
+                {isLoading ? '保存中...' : '保存變更'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
       <Footer />
