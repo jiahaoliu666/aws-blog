@@ -3,8 +3,8 @@ import { CognitoIdentityProviderClient, ForgotPasswordCommand, ConfirmForgotPass
 import cognitoClient from '@/utils/cognitoClient';  
 import '@aws-amplify/ui-react/styles.css';  
 import Link from 'next/link';  
-import Navbar from '@/components/common/Navbar';  // 導入 Navbar
-import Footer from '@/components/common/Footer';  // 導入 Footer
+import Navbar from '@/components/common/Navbar';  
+import Footer from '@/components/common/Footer';  
 
 const ForgotPasswordPage: React.FC = () => {  
   const [email, setEmail] = useState('');  
@@ -68,7 +68,7 @@ const ForgotPasswordPage: React.FC = () => {
 
   return (  
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">  
-      <Navbar />  {/* 使用 Navbar */}
+      <Navbar />  
       <div className="flex items-center justify-center flex-grow px-4 py-8">  
         <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={step === 'request' ? handleRequestReset : handleResetPassword} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
           <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">忘記密碼</h2>  
@@ -121,7 +121,7 @@ const ForgotPasswordPage: React.FC = () => {
           {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded">{error}</div>}  
           {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
 
-          <div className="mt-6">  {/* 添加間距 */}
+          <div className="mt-6">  
             <button  
               type="submit"  
               className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full w-full py-3 hover:from-blue-600 hover:to-blue-800 transition duration-200 ease-in-out mb-4 shadow-xl transform hover:scale-105"  
@@ -137,7 +137,7 @@ const ForgotPasswordPage: React.FC = () => {
           </div>  
         </form>  
       </div>  
-      <Footer />  {/* 使用 Footer */}
+      <Footer />  
     </div>  
   );  
 };  
