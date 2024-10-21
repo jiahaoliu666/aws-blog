@@ -21,6 +21,13 @@ const ForgotPasswordPage: React.FC = () => {
     e.preventDefault();  
     console.log("Initiating password reset request for email:", email);  
 
+    // 新增檢查條件
+    if (!email.endsWith('@metaage.com.tw')) {
+      setError('僅限 @metaage.com.tw 電子郵件地址。');
+      setSuccess(null);
+      return;
+    }
+
     try {  
       const command = new ForgotPasswordCommand({  
         ClientId: "5ua9kmb59lmqks0echkc261dgh",  
