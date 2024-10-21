@@ -9,6 +9,8 @@
   │     │     ├── NewsCard.tsx              // 顯示單個新聞文章的卡片組件，包含標題、摘要和鏈接  
   │     │     ├── NewsSearch.tsx            // 搜索新聞文章的組件，提供搜索框和按鈕  
   │     │     └── NewsFilters.tsx           // 過濾新聞文章的組件，提供過濾選項按鈕  
+  │     ├── /profile  
+  │     │     └── ProfileUI.tsx             // 新增的 UI 組件，負責用戶個人資料頁面的 UI 顯示
   ├── /context  
   │     ├── AppContext.tsx                  // 管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
   │     └── AuthContext.tsx                 // 管理用戶身份驗證狀態，如登錄狀態和用戶信息
@@ -18,6 +20,8 @@
   │     │     ├── useFetchNews.ts           // 自定義 Hook，用於從 API 獲取新聞文章數據  
   │     │     ├── useNewsPageLogic.ts       // 自定義 Hook，管理新聞頁面的狀態和邏輯，包括過濾、排序和分頁功能  
   │     │     └── useNewsFavorites.ts       // 自定義 Hook，管理新聞收藏邏輯，提供添加和移除收藏的功能  
+  │     ├── /profile  
+  │     │     └── useProfileLogic.ts        // 新增的邏輯文件，負責用戶個人資料頁面的邏輯處理
   │     ├── useAppLogic.ts                  // 自定義 Hook，管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
   │     └── useAuth.ts                      // 自定義 Hook，管理身份驗證邏輯，例如註冊、登錄、登出，使用 AuthContext  
   ├── /pages  
@@ -34,7 +38,7 @@
   │     ├── /news  
   │     │     └── index.tsx                 // 新聞頁面，顯示新聞文章列表，包含搜索、過濾和分頁功能  
   │     ├── /profile  
-  │     │     └── index.tsx                 // 用戶個人資料頁面  
+  │     │     └── index.tsx                 // 用戶個人資料頁面，使用 ProfileUI 和 useProfileLogic 分離 UI 和邏輯
   │     ├── /settings  
   │     │     └── index.tsx                 // 用戶設定頁面  
   │     └── _app.tsx                        // 自定義 App 組件，負責全局狀態管理和佈局，移除了 UserProvider  
