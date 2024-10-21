@@ -19,6 +19,7 @@ const LoginPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);  
   const [showLoginMessage, setShowLoginMessage] = useState(false);  
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(true); // 新增 loading 狀態
 
   useEffect(() => {  
     if (user) {  
@@ -27,7 +28,9 @@ const LoginPage: React.FC = () => {
         router.push('/news');  
       }, 3000);  
       return () => clearTimeout(timer);  
-    }  
+    } else {
+      setLoading(false); // 如果未登入，停止 loading
+    }
   }, [user, router]);  
 
   useEffect(() => {  
@@ -70,7 +73,9 @@ const LoginPage: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">  
       <Navbar />  
       <div className="flex items-center justify-center flex-grow px-4 py-8">  
-        {showLoginMessage ? ( 
+        {loading ? (
+          <Loader className="mb-4" size="large" />
+        ) : showLoginMessage ? ( 
           <div className="text-center py-10">
             <Loader className="mb-4" size="large"/> 
             <h2 className="text-2xl font-semibold text-green-600">您已登入成功!</h2>
