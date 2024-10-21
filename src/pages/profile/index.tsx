@@ -9,6 +9,8 @@ import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttribute
 import { PasswordField, SwitchField } from '@aws-amplify/ui-react'; // 確保導入 PasswordField 和 SwitchField
 import '@aws-amplify/ui-react/styles.css';  
 import { Loader } from '@aws-amplify/ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faLock } from '@fortawesome/free-solid-svg-icons';
 
 
 
@@ -44,6 +46,8 @@ const ProfilePage: React.FC = () => {
   const [tempUsername, setTempUsername] = useState(user ? user.username : ''); // 新增一個狀態來存儲臨時用戶名
   const [recentArticles, setRecentArticles] = useState<{ translatedTitle: string; link: string; timestamp: string; sourcePage: string }[]>([]); // 新增狀態來存儲最近的觀看紀錄
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false); // 新增狀態來控制密碼模態框的顯示
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -255,7 +259,7 @@ const ProfilePage: React.FC = () => {
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        console.log('用戶名更新成功');
+        console.log('用名更新成功');
         setPasswordMessage('用戶名已成功更新！');
         updateUser({ username: tempUsername }); // 更新 AuthContext 中的用戶名
       } catch (error) {
@@ -293,7 +297,7 @@ const ProfilePage: React.FC = () => {
         if ((error as Error).name === 'LimitExceededException') {
           setPasswordMessage('嘗試次數過多，請稍後再試。');
         } else {
-          setPasswordMessage('更新密碼失敗，請確認舊密碼是否��確並重試。');
+          setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
         }
         changesSuccessful = false; // 如果失敗，設置為 false
       }
@@ -566,24 +570,46 @@ const ProfilePage: React.FC = () => {
           <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
             <h2 className="text-2xl font-bold mb-6 text-center">修改密碼</h2>
             <div className="space-y-4">
-              <PasswordField
-                id="oldPassword"
-                label="舊密碼"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                placeholder="輸入舊密碼"
-                required
-                className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-              />
-              <PasswordField
-                label="新密碼"
-                id="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="輸入新密碼"
-                required
-                className="border border-gray-300 p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full mb-2"
-              />
+              <div className="mb-4 relative">
+                <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  id="oldPassword"
+                  name="oldPassword"
+                  type={showOldPassword ? "text" : "password"}
+                  placeholder="輸入舊密碼"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  required
+                  className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOldPassword(!showOldPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showOldPassword ? "隱藏" : "顯示"}
+                </button>
+              </div>
+              <div className="mb-4 relative">
+                <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  id="newPassword"
+                  name="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="輸入新密碼"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showNewPassword ? "隱藏" : "顯示"}
+                </button>
+              </div>
             </div>
             {passwordMessage && (
               <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

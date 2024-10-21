@@ -9,6 +9,8 @@ import { useRouter } from 'next/router';
 import Navbar from '@/components/common/Navbar';  
 import Footer from '@/components/common/Footer';  
 import { useAuthContext } from '@/context/AuthContext';  
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const RegisterPage: React.FC = () => {  
   const router = useRouter();  
@@ -22,6 +24,8 @@ const RegisterPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);  
   const [success, setSuccess] = useState<string | null>(null);  
   const [isVerificationNeeded, setIsVerificationNeeded] = useState(false);  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {  
     e.preventDefault();  
@@ -97,92 +101,118 @@ const RegisterPage: React.FC = () => {
         <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={isVerificationNeeded ? handleVerifyCode : handleRegister} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
           <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">註冊</h2>  
 
-          <div className="mb-4">  
-            <label htmlFor="username" className="text-base text-gray-700">用戶名</label>  
-            <Input  
-              id="username"  
-              name="username"  
-              type="text"  
-              placeholder="輸入用戶名"  
-              value={username}  
-              onChange={(e) => setLocalUsername(e.target.value)}  
-              required  
-              className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
-              disabled={isVerificationNeeded}  
-              style={{ marginTop: '8px' }}  
-            />  
+          <div className="mb-4 relative">
+            <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/3 text-gray-500" />
+            <input
+              id="username"
+              name="username"
+              type="text"
+              placeholder="輸入用戶名"
+              value={username}
+              onChange={(e) => setLocalUsername(e.target.value)}
+              required
+              className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+              disabled={isVerificationNeeded}
+              style={{ marginTop: '8px' }}
+            />
           </div>  
 
-          <div className="mb-4">  
-            <label htmlFor="email" className="text-base text-gray-700">電子郵件</label>  
-            <Input  
-              id="email"  
-              name="email"  
-              type="email"  
-              placeholder="@metaage.com.tw"  
-              value={email}  
-              onChange={(e) => setEmail(e.target.value)}  
-              required  
-              className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
-              disabled={isVerificationNeeded}  
-              style={{ marginTop: '8px' }}  
-            />  
+          <div className="mb-4 relative">
+            <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-1/2 transform -translate-y-1/4 text-gray-500" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="@metaage.com.tw"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+              disabled={isVerificationNeeded}
+              style={{ marginTop: '8px' }}
+            />
           </div>  
 
           {!isVerificationNeeded && (  
-            <>  
-              <div className="mb-4">  
-                <PasswordField  
-                  label="密碼"  
-                  value={password}  
-                  onChange={(e) => setPassword(e.target.value)}  
-                  placeholder="輸入密碼"  
-                  required  
-                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
-                />  
-              </div>  
+            <>
+              <div className="mb-4 relative">
+                <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  placeholder="輸入密碼"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showPassword ? "隱藏" : "顯示"}
+                </button>
+              </div>
 
-              <div className="mb-6">  
-                <PasswordField  
-                  label="確認密碼"  
-                  value={confirmPassword}  
-                  onChange={(e) => setConfirmPassword(e.target.value)}  
-                  placeholder="再次輸入密碼"  
-                  required  
-                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
-                />  
-              </div>  
-            </>  
+              <div className="mb-6 relative">
+                <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  placeholder="再次輸入密碼"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showConfirmPassword ? "隱藏" : "顯示"}
+                </button>
+              </div>
+            </>
           )}  
 
           {isVerificationNeeded && (  
-            <>  
-              <div className="mb-4">  
-                <label htmlFor="verificationCode" className="text-base text-gray-700">驗證碼</label>  
-                <Input  
-                  id="verificationCode"  
-                  name="verificationCode"  
-                  type="text"  
-                  placeholder="輸入驗證碼"  
-                  value={verificationCode}  
-                  onChange={(e) => setVerificationCode(e.target.value)}  
-                  required  
-                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
-                  style={{ marginTop: '8px' }}  
-                />  
-              </div>  
-              <button  
-                type="button"  
-                className="text-blue-500 hover:underline mb-4"  
-                onClick={handleResendCode}  
-              >  
-                重新發送驗證碼  
-              </button>  
-            </>  
+            <>
+              <div className="mb-4 relative">
+                <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  id="verificationCode"
+                  name="verificationCode"
+                  type="text"
+                  placeholder="輸入驗證碼"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  required
+                  className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                  style={{ marginTop: '8px' }}
+                />
+              </div>
+              <button
+                type="button"
+                className="text-blue-500 hover:underline mb-4"
+                onClick={handleResendCode}
+              >
+                重新發送驗證碼
+              </button>
+            </>
           )}  
 
-          {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded">{error}</div>}  
-          {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
+          {error && (
+            <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${error.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-green-100 text-green-800">
+              {success}
+            </div>
+          )}
 
           <button  
             type="submit"  

@@ -9,7 +9,7 @@ import { useAuthContext } from '../../context/AuthContext';
 import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
           <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={handleLogin} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
             <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">登入</h2>  
             <div className="mb-4 relative">
-              <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <input
                 placeholder="電子郵件地址"
                 name="username"

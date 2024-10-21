@@ -5,6 +5,8 @@ import '@aws-amplify/ui-react/styles.css';
 import Link from 'next/link';  
 import Navbar from '@/components/common/Navbar';  
 import Footer from '@/components/common/Footer';  
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const ForgotPasswordPage: React.FC = () => {  
   const [email, setEmail] = useState('');  
@@ -13,6 +15,7 @@ const ForgotPasswordPage: React.FC = () => {
   const [step, setStep] = useState<'request' | 'reset'>('request');  
   const [error, setError] = useState<string | null>(null);  
   const [success, setSuccess] = useState<string | null>(null);  
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRequestReset = async (e: React.FormEvent) => {  
     e.preventDefault();  
@@ -72,8 +75,8 @@ const ForgotPasswordPage: React.FC = () => {
       <div className="flex items-center justify-center flex-grow px-4 py-8">  
         <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={step === 'request' ? handleRequestReset : handleResetPassword} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
           <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">忘記密碼</h2>  
-          <div className="mb-4">  
-            <label htmlFor="email" className="text-base text-gray-700 mb-2 block">電子郵件</label>  
+          <div className="mb-4 relative">  
+            <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input  
               id="email"  
               name="email"  
@@ -82,25 +85,32 @@ const ForgotPasswordPage: React.FC = () => {
               value={email}  
               onChange={(e) => setEmail(e.target.value)}  
               required  
-              className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
+              className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"  
               disabled={step === 'reset'}  
             />  
           </div>  
 
           {step === 'reset' && (  
             <>  
-              <div className="mb-4">  
-                <label htmlFor="newPassword" className="text-base text-gray-700 mb-2 block">新密碼</label>  
+              <div className="mb-4 relative">  
+                <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                 <input  
                   id="newPassword"  
                   name="newPassword"  
-                  type="password"  
+                  type={showPassword ? "text" : "password"}  
                   placeholder="輸入新密碼"  
                   value={newPassword}  
                   onChange={(e) => setNewPassword(e.target.value)}  
                   required  
-                  className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"  
+                  className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"  
                 />  
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showPassword ? "隱藏" : "顯示"}
+                </button>
               </div>  
               <div className="mb-4">  
                 <label htmlFor="verificationCode" className="text-base text-gray-700 mb-2 block">驗證碼</label>  
@@ -118,8 +128,16 @@ const ForgotPasswordPage: React.FC = () => {
             </>  
           )}  
 
-          {error && <div className="text-red-500 mb-5 bg-red-100 p-2 rounded">{error}</div>}  
-          {success && <div className="text-green-500 mb-5 bg-green-100 p-2 rounded">{success}</div>}  
+          {error && (
+            <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${error.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-green-100 text-green-800">
+              {success}
+            </div>
+          )}
 
           <div className="mt-6">  
             <button  
