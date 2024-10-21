@@ -293,7 +293,7 @@ const ProfilePage: React.FC = () => {
         if ((error as Error).name === 'LimitExceededException') {
           setPasswordMessage('嘗試次數過多，請稍後再試。');
         } else {
-          setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
+          setPasswordMessage('更新密碼失敗，請確認舊密碼是否��確並重試。');
         }
         changesSuccessful = false; // 如果失敗，設置為 false
       }
@@ -317,7 +317,7 @@ const ProfilePage: React.FC = () => {
 
   const handleCancelChanges = () => {
     setIsEditing(false);
-    setPasswordMessage(null); // 清除消息狀態
+    setPasswordMessage(null); // 清除息狀態
     setOldPassword(''); // 清空舊密碼
     setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
     setIsEditable(prev => ({ ...prev, password: false })); // 重置修改密碼的切換按鈕
@@ -407,7 +407,7 @@ const ProfilePage: React.FC = () => {
   };
 
   useEffect(() => {
-    // ��設這裡是您��望在頁面刷新時設 isLoading 的地方
+    // 這裡是您望頁面刷新時設 isLoading 的地方
     setIsLoading(true);
     // 模擬一個加載過程
     setTimeout(() => {
@@ -419,8 +419,8 @@ const ProfilePage: React.FC = () => {
     <div className="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       <Navbar setCurrentSourcePage={() => {}} />
       {!user && (
-        <div className="flex-grow flex flex-col justify-center items-center bg-gray-100" style={{ marginTop: '40px' }}> {/* 調整 marginTop 避免重疊 */}
-          <Loader className="mb-4" size="large"/> {/* 保留 Loader 組件 */}
+        <div className="flex-grow flex flex-col justify-center items-center bg-gray-100 mt-10">
+          <Loader className="mb-4" size="large" />
           <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
           <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
         </div>
@@ -428,13 +428,13 @@ const ProfilePage: React.FC = () => {
       {user && (
         <div className="container mx-auto flex-grow p-5">
           <h1 className="text-4xl font-bold mb-4 text-gray-800">個人資訊</h1>
-          <div className="flex items-center mb-6">
+          <div className="flex flex-col md:flex-row items-center mb-6">
             <img
               src={formData.avatar}
               alt="用戶頭像"
               className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
             />
-            <div>
+            <div className="mt-4 md:mt-0">
               <p className="text-xl text-gray-700 mb-2">用戶名：{formData.username}</p>
               <p className="text-xl text-gray-700 mb-2">電子郵件：{formData.email}</p>
               <p className="text-xl text-gray-700">註冊日期：{formData.registrationDate}</p>
@@ -443,45 +443,68 @@ const ProfilePage: React.FC = () => {
           <div className="activity-log bg-white p-6 rounded-lg shadow-md mb-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4">最近的觀看紀錄</h3>
             <div className="grid grid-cols-1 gap-4">
-                {recentArticles.length === 0 ? (
-                    <p className="text-gray-500">目前沒有任何觀看紀錄。</p> // 當沒有紀錄時顯示此消息
-                ) : (
-                    recentArticles.map((article, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
-                            <div className="flex justify-between items-center">
-                                <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
-                                    </svg>
-                                    {index + 1}. [{article.sourcePage}] {article.translatedTitle}
-                                </a>
-                                <span className="text-sm text-gray-500">{new Date(article.timestamp).toLocaleString()}</span>
-                            </div>
-                        </div>
-                    ))
-                )}
+              {recentArticles.length === 0 ? (
+                <p className="text-gray-500">目前沒有任何觀看紀錄。</p>
+              ) : (
+                recentArticles.map((article, index) => (
+                  <div
+                    key={index}
+                    className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                      <a
+                        href={article.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline flex items-center mb-2 sm:mb-0"
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
+                        </svg>
+                        {index + 1}. [{article.sourcePage}] {article.translatedTitle}
+                      </a>
+                      <span className="text-sm text-gray-500 mt-1 sm:mt-0">
+                        {new Date(article.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-          <div className="profile-actions mt-6 flex justify-end">
-          <button onClick={handleOpenPasswordModal} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
+          <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
+            <button 
+              onClick={handleOpenPasswordModal} 
+              className="bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md w-full md:w-auto"
+            >
               修改密碼
             </button>
-            <button onClick={handleEditClick} className="mr-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md">
+            <button 
+              onClick={handleEditClick} 
+              className="bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md w-full md:w-auto"
+            >
               編輯
             </button>
-           
-            <button onClick={handleLogout} className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md">
+            <button 
+              onClick={handleLogout} 
+              className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md w-full md:w-auto"
+            >
               登出
             </button>
           </div>
           {isEditing && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white p-8 rounded-lg shadow-lg w-1/3">
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                 <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資料</h2>
                 <hr className="mb-6 mt-6" />
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>  
+                    <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>
                     <input
                       type="file"
                       id="avatar"
@@ -495,7 +518,7 @@ const ProfilePage: React.FC = () => {
                       </p>
                     )}
                   </div>
-                  <div className="pt-3"> 
+                  <div className="pt-3">
                     <hr className="mb-6" />
                     <div className="flex items-center mt-2">
                       <SwitchField
@@ -511,8 +534,8 @@ const ProfilePage: React.FC = () => {
                     <input
                       id="name"
                       name="username"
-                      value={tempUsername} // 使用臨時用戶名
-                      onChange={(e) => setTempUsername(e.target.value)} // 更新臨時用戶名
+                      value={tempUsername}
+                      onChange={(e) => setTempUsername(e.target.value)}
                       className="mt-2 p-2 border border-gray-300 rounded w-full"
                       disabled={!isEditable.username}
                     />
@@ -538,10 +561,9 @@ const ProfilePage: React.FC = () => {
           )}
         </div>
       )}
-      {/* 密碼修改模態框 */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg w-1/3">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
             <h2 className="text-2xl font-bold mb-6 text-center">修改密碼</h2>
             <div className="space-y-4">
               <PasswordField
