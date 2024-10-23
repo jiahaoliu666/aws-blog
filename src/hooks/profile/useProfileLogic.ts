@@ -18,7 +18,7 @@ export const useProfileLogic = () => {
     registrationDate: '[註冊日期]',
     avatar: 'user.png',
     notifications: true,
-    password: '',
+    password: '', // 確保這裡有初始化 password
   });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -245,7 +245,7 @@ export const useProfileLogic = () => {
         if (err.name === 'UserNotFoundException') {
           console.error('用戶不存在，請檢查用戶名和用戶池 ID。');
         }
-        setPasswordMessage('更新用戶名失敗，請稍後再試。');
+        setPasswordMessage('更新戶名失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }
@@ -297,8 +297,8 @@ export const useProfileLogic = () => {
   const handleCancelChanges = () => {
     setIsEditing(false);
     setPasswordMessage(null);
-    setOldPassword('');
-    setFormData(prevData => ({ ...prevData, password: '' }));
+    setOldPassword(''); // 清空舊密碼
+    setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
     setIsEditable(prev => ({ ...prev, password: false }));
   };
 
@@ -308,7 +308,7 @@ export const useProfileLogic = () => {
       const target = e.target as HTMLInputElement;
       setFormData({ ...formData, [name]: target.checked });
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData({ ...formData, [name]: value }); // 確保這裡能更新 password
     }
   };
 
@@ -379,9 +379,14 @@ export const useProfileLogic = () => {
 
   const handleClosePasswordModal = () => {
     setIsPasswordModalOpen(false);
+    setOldPassword(''); // 清空舊密碼
+    setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
+    setPasswordMessage(null);
+  };
+
+  const resetPasswordFields = () => {
     setOldPassword('');
     setFormData(prevData => ({ ...prevData, password: '' }));
-    setPasswordMessage(null);
   };
 
   useEffect(() => {
@@ -418,5 +423,6 @@ export const useProfileLogic = () => {
     handleClosePasswordModal,
     handleCancelChanges,
     handleChange,
+    resetPasswordFields,
   };
 };

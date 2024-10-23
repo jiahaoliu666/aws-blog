@@ -35,6 +35,7 @@ type ProfileUIProps = {
   handleCancelChanges: () => void;
   handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   setIsEditable: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
+  resetPasswordFields: () => void; // 新增這個 prop
 };
 
 // 定義 isEditable 的類型
@@ -72,60 +73,40 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   handleCancelChanges,
   handleChange,
   setIsEditable,
+  resetPasswordFields, // 新增這個 prop
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
 
   return (
-    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row">
-      <div className="w-full md:w-1/4 bg-gray-100 p-4 rounded-lg shadow-md mb-4 md:mb-0">
+    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-4 md:space-y-0">
+      <div className="w-full md:w-1/4 bg-gray-100 p-4 rounded-lg shadow-lg mb-4 md:mb-0">
         <ul className="space-y-2">
-          <li
-            className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${activeTab === 'profile' ? 'bg-blue-600 text-white' : 'hover:bg-blue-100'}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            個人資訊
-          </li>
-          <li
-            className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${activeTab === 'activity' ? 'bg-blue-600 text-white' : 'hover:bg-blue-100'}`}
-            onClick={() => setActiveTab('activity')}
-          >
-            觀看紀錄
-          </li>
-          <li
-            className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${activeTab === 'history' ? 'bg-blue-600 text-white' : 'hover:bg-blue-100'}`}
-            onClick={() => setActiveTab('history')}
-          >
-            版本歷史
-          </li>
-          <li
-            className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${activeTab === 'settings' ? 'bg-blue-600 text-white' : 'hover:bg-blue-100'}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            設定
-          </li>
-          <li
-            className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${activeTab === 'edit' ? 'bg-blue-600 text-white' : 'hover:bg-blue-100'}`}
-            onClick={() => setActiveTab('edit')}
-          >
-            編輯
-          </li>
-          <li
-            className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${activeTab === 'changePassword' ? 'bg-blue-600 text-white' : 'hover:bg-blue-100'}`}
-            onClick={() => setActiveTab('changePassword')}
-          >
-            修改密碼
-          </li>
+          {['profile', 'activity', 'history', 'settings', 'edit', 'changePassword'].map((tab) => (
+            <li
+              key={tab}
+              className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${
+                activeTab === tab ? 'bg-blue-500 text-white' : 'bg-white text-gray-800 hover:bg-gray-300'
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'profile' && '個人資訊'}
+              {tab === 'activity' && '觀看紀錄'}
+              {tab === 'history' && '版本歷史'}
+              {tab === 'settings' && '設定'}
+              {tab === 'edit' && '編輯'}
+              {tab === 'changePassword' && '修改密碼'}
+            </li>
+          ))}
         </ul>
       </div>
-      <div className="w-full md:w-3/4 p-4 bg-white rounded-lg shadow-md">
-        {!user && (
+      <div className="w-full md:w-3/4 p-6 bg-white rounded-lg shadow-lg">
+        {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
             <Loader className="mb-4" size="large" />
             <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
             <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
           </div>
-        )}
-        {user && (
+        ) : (
           <>
             {activeTab === 'profile' && (
               <div>
@@ -285,10 +266,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                     <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                     <input
                       id="newPassword"
-                      name="newPassword"
+                      name="password" // 確保這裡的 name 是 "password"
                       type={showNewPassword ? "text" : "password"}
                       placeholder="輸入新密碼"
-                      value={formData.password}
+                      value={formData.password} // 確保這裡綁定到 formData.password
                       onChange={handleChange}
                       required
                       className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
@@ -308,7 +289,13 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   </div>
                 )}
                 <div className="flex justify-end space-x-4 mt-6">
-                  <button onClick={handleClosePasswordModal} className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200">
+                  <button 
+                    onClick={() => {
+                      handleClosePasswordModal();
+                      resetPasswordFields(); // 在這裡調用重置密碼欄位的方法
+                    }} 
+                    className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
+                  >
                     取消
                   </button>
                   <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
