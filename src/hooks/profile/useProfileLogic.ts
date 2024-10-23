@@ -161,28 +161,12 @@ export const useProfileLogic = () => {
     return newAccessToken;
   };
 
-  const handleSaveChanges = async () => {
-    let passwordChanged = false;
-    let hasError = false;
+  const handleSaveProfileChanges = async () => {
     let hasChanges = false;
     let changesSuccessful = true;
 
     if (!formData.username.trim()) {
       setPasswordMessage('用戶名不能為空。');
-      hasError = true;
-    }
-
-    if (formData.password && !oldPassword) {
-      setPasswordMessage('請輸入舊密碼以更改密碼');
-      hasError = true;
-    }
-
-    if (oldPassword && !formData.password) {
-      setPasswordMessage('請輸入新密碼以更改密碼。');
-      hasError = true;
-    }
-
-    if (hasError) {
       return;
     }
 
@@ -214,10 +198,10 @@ export const useProfileLogic = () => {
         const updateCommand = new UpdateItemCommand(updateParams);
         await dynamoClient.send(updateCommand);
         console.log('DynamoDB updated successfully');
-        setPasswordMessage('頭像已成功更新！');
+        setUploadMessage('頭像已成功更新！');
       } catch (error) {
         console.error('Error updating DynamoDB:', error);
-        setPasswordMessage('更新頭像失敗，請稍後再試。');
+        setUploadMessage('更新頭像失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }
@@ -237,7 +221,7 @@ export const useProfileLogic = () => {
         });
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功');
-        setPasswordMessage('用戶名已成功更新！');
+        setUploadMessage('用戶名已成功更新！');
         updateUser({ username: tempUsername });
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
@@ -245,52 +229,53 @@ export const useProfileLogic = () => {
         if (err.name === 'UserNotFoundException') {
           console.error('用戶不存在，請檢查用戶名和用戶池 ID。');
         }
-        setPasswordMessage('更新戶名失敗，請稍後再試。');
-        changesSuccessful = false;
-      }
-    }
-
-    if (formData.password) {
-      hasChanges = true;
-      passwordChanged = true;
-      try {
-        const changePasswordCommand = new ChangePasswordCommand({
-          PreviousPassword: oldPassword,
-          ProposedPassword: formData.password,
-          AccessToken: user?.accessToken!,
-        });
-        await cognitoClient.send(changePasswordCommand);
-        console.log('密碼更新成功');
-        setPasswordMessage('密碼變更成功，請重新登入。');
-        updateUser({ accessToken: user?.accessToken });
-
-        setTimeout(() => {
-          console.log('準備登出...');
-          handleLogout();
-        }, 2000);
-      } catch (error) {
-        console.error('更新密碼時出錯:', error as Error);
-        if ((error as Error).name === 'LimitExceededException') {
-          setPasswordMessage('嘗試次數過多，請稍後再試。');
-        } else {
-          setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
-        }
+        setUploadMessage('更新戶名失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }
 
     if (!hasChanges) {
-      setPasswordMessage('無任何變更項目');
+      setUploadMessage('無任何變更項目');
     }
 
     setTempAvatar(null);
-    setUploadMessage(null);
 
     if (hasChanges && changesSuccessful) {
       setIsLoading(true);
       setTimeout(() => {
         window.location.reload();
       }, 1000);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!oldPassword || !formData.password) {
+      setPasswordMessage('請輸入舊密碼和新密碼。');
+      return;
+    }
+
+    try {
+      const changePasswordCommand = new ChangePasswordCommand({
+        PreviousPassword: oldPassword,
+        ProposedPassword: formData.password,
+        AccessToken: user?.accessToken!,
+      });
+      await cognitoClient.send(changePasswordCommand);
+      console.log('密碼更新成功');
+      setPasswordMessage('密碼變更成功，請重新登入。');
+      updateUser({ accessToken: user?.accessToken });
+
+      setTimeout(() => {
+        console.log('準備登出...');
+        handleLogout();
+      }, 2000);
+    } catch (error) {
+      console.error('更新密碼時出錯:', error as Error);
+      if ((error as Error).name === 'LimitExceededException') {
+        setPasswordMessage('嘗試次數過多，請稍後再試。');
+      } else {
+        setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
+      }
     }
   };
 
@@ -415,7 +400,8 @@ export const useProfileLogic = () => {
     setIsPasswordModalOpen,
     setShowOldPassword,
     setShowNewPassword,
-    handleSaveChanges,
+    handleSaveProfileChanges,
+    handleChangePassword,
     handleLogout,
     handleAvatarChange,
     handleEditClick,

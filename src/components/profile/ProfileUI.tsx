@@ -26,7 +26,8 @@ type ProfileUIProps = {
   setIsPasswordModalOpen: (value: boolean) => void;
   setShowOldPassword: (value: boolean) => void;
   setShowNewPassword: (value: boolean) => void;
-  handleSaveChanges: () => void;
+  handleSaveProfileChanges: () => void;
+  handleChangePassword: () => void;
   handleLogout: () => void;
   handleAvatarChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleEditClick: () => void;
@@ -41,6 +42,7 @@ type ProfileUIProps = {
 // 定義 isEditable 的類型
 type EditableFields = {
   username: boolean;
+  password: boolean;
   // 如果有其他屬性，請在這裡添加
 };
 
@@ -64,7 +66,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   setIsPasswordModalOpen,
   setShowOldPassword,
   setShowNewPassword,
-  handleSaveChanges,
+  handleSaveProfileChanges,
+  handleChangePassword,
   handleLogout,
   handleAvatarChange,
   handleEditClick,
@@ -222,9 +225,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   </div>
                 </div>
 
-                {passwordMessage && (
-                  <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {passwordMessage}
+                {uploadMessage && (
+                  <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {uploadMessage}
                   </div>
                 )}
 
@@ -232,8 +235,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <button onClick={handleCancelChanges} className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200">
                     取消變更
                   </button>
-                  <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
-                    保存變更
+                  <button onClick={handleSaveProfileChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
+                    保存個人資料變更
                   </button>
                 </div>
               </>
@@ -292,14 +295,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <button 
                     onClick={() => {
                       handleClosePasswordModal();
-                      resetPasswordFields(); // 在這裡調用重置密碼欄位的方法
+                      resetPasswordFields();
                     }} 
                     className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
                   >
                     取消
                   </button>
-                  <button onClick={handleSaveChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
-                    {isLoading ? '保存中...' : '保存變更'}
+                  <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
+                    {isLoading ? '保存中...' : '保存密碼變更'}
                   </button>
                 </div>
               </>
