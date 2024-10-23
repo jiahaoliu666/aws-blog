@@ -84,6 +84,15 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-4 md:space-y-0">
       <div className="w-full md:w-1/4 bg-gray-100 p-4 rounded-lg shadow-lg mb-4 md:mb-0">
+        <div className="flex flex-col items-center mb-6">
+          <img
+            src={formData.avatar}
+            alt="用戶頭像"
+            className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg mb-2"
+          />
+          <p className="text-lg font-semibold text-gray-800">{formData.username}</p>
+          <p className="text-sm text-gray-600">{formData.email}</p>
+        </div>
         <ul className="space-y-2">
           {['profile', 'activity', 'history', 'settings', 'edit', 'changePassword'].map((tab) => (
             <li
@@ -184,7 +193,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
             )}
             {activeTab === 'edit' && (
               <>
-                <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資��</h2>
+                <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資</h2>
                 <hr className="mb-6 mt-6" />
                 <div className="space-y-4">
                   <div>
@@ -319,4 +328,3 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
-
