@@ -5,6 +5,11 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, QueryCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttributesCommand, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
 
+interface EditableFields {
+  username: boolean;
+  password: boolean;
+}
+
 export const useProfileLogic = () => {
   const router = useRouter();
   const { user, logoutUser, updateUser } = useAuthContext();
@@ -22,7 +27,7 @@ export const useProfileLogic = () => {
   });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
-  const [isEditable, setIsEditable] = useState({
+  const [isEditable, setIsEditable] = useState<EditableFields>({
     username: false,
     password: false,
   });
@@ -201,7 +206,7 @@ export const useProfileLogic = () => {
         setUploadMessage('頭像已成功更新！');
       } catch (error) {
         console.error('Error updating DynamoDB:', error);
-        setUploadMessage('更新頭像失敗，請稍後再試。');
+        setUploadMessage('更新頭像失敗，請稍後試。');
         changesSuccessful = false;
       }
     }
@@ -215,14 +220,14 @@ export const useProfileLogic = () => {
           UserAttributes: [
             {
               Name: 'name',
-              Value: tempUsername,
+              Value: formData.username, // 使用 formData.username 而不是 tempUsername
             },
           ],
         });
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功');
         setUploadMessage('用戶名已成功更新！');
-        updateUser({ username: tempUsername });
+        updateUser({ username: formData.username }); // 更新本地用戶名
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
         const err = error as Error;
@@ -381,6 +386,11 @@ export const useProfileLogic = () => {
     }, 1000);
   }, []);
 
+  // 確保 setIsEditable 函數能正確更新狀態
+  const toggleEditableField = (field: keyof EditableFields) => {
+    setIsEditable(prev => ({ ...prev, [field]: !prev[field] }));
+  };
+
   return {
     user,
     formData,
@@ -410,5 +420,6 @@ export const useProfileLogic = () => {
     handleCancelChanges,
     handleChange,
     resetPasswordFields,
+    toggleEditableField,
   };
 };

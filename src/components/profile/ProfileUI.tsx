@@ -37,6 +37,7 @@ type ProfileUIProps = {
   handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   setIsEditable: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
   resetPasswordFields: () => void; // 新增這個 prop
+  toggleEditableField: (field: keyof EditableFields) => void; // 確保這個 prop 被傳遞
 };
 
 // 定義 isEditable 的類型
@@ -45,7 +46,6 @@ type EditableFields = {
   password: boolean;
   // 如果有其他屬性，請在這裡添加
 };
-
 
 const ProfileUI: React.FC<ProfileUIProps> = ({
   user,
@@ -77,6 +77,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   handleChange,
   setIsEditable,
   resetPasswordFields, // 新增這個 prop
+  toggleEditableField, // 確保這個 prop 被傳遞
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
 
@@ -183,7 +184,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
             )}
             {activeTab === 'edit' && (
               <>
-                <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資料</h2>
+                <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資��</h2>
                 <hr className="mb-6 mt-6" />
                 <div className="space-y-4">
                   <div>
@@ -207,7 +208,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       <SwitchField
                         label="修改用戶名"
                         isChecked={isEditable.username}
-                        onChange={() => setIsEditable((prev: EditableFields) => ({ ...prev, username: !prev.username }))}
+                        onChange={() => toggleEditableField('username')} // 使用 toggleEditableField 函數
                         className="mr-2"
                       />
                     </div>
@@ -220,7 +221,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       value={formData.username}
                       onChange={handleChange}
                       className="mt-2 p-2 border border-gray-300 rounded w-full"
-                      disabled={!isEditable.username}
+                      disabled={!isEditable.username} // 根據 isEditable.username 控制可編輯性
                     />
                   </div>
                 </div>
@@ -315,3 +316,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
 };
 
 export default ProfileUI;
+function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
+  throw new Error('Function not implemented.');
+}
+
