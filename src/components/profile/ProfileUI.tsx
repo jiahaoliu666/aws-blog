@@ -82,23 +82,23 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   const [activeTab, setActiveTab] = useState('profile');
 
   return (
-    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-4 md:space-y-0">
-      <div className="w-full md:w-1/4 bg-gray-100 p-4 rounded-lg shadow-lg mb-4 md:mb-0">
-        <div className="flex flex-col items-center mb-6">
+    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-6 md:space-y-0">
+      <div className="w-full md:w-1/4 bg-gray-900 p-6 rounded-lg shadow-lg mb-6 md:mb-0">
+        <div className="flex flex-col items-center mb-8">
           <img
             src={formData.avatar}
             alt="用戶頭像"
-            className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg mb-2"
+            className="w-24 h-24 rounded-full border-4 border-white shadow-lg mb-3"
           />
-          <p className="text-lg font-semibold text-gray-800">{formData.username}</p>
-          <p className="text-sm text-gray-600">{formData.email}</p>
+          <p className="text-xl font-semibold text-white">{formData.username}</p>
+          <p className="text-sm text-gray-400">{formData.email}</p>
         </div>
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {['profile', 'activity', 'history', 'settings', 'edit', 'changePassword'].map((tab) => (
             <li
               key={tab}
-              className={`p-3 cursor-pointer rounded-lg transition-colors duration-200 ${
-                activeTab === tab ? 'bg-blue-500 text-white' : 'bg-white text-gray-800 hover:bg-gray-300'
+              className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 ${
+                activeTab === tab ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300 hover:bg-gray-700'
               }`}
               onClick={() => setActiveTab(tab)}
             >
@@ -112,7 +112,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
           ))}
         </ul>
       </div>
-      <div className="w-full md:w-3/4 p-6 bg-white rounded-lg shadow-lg">
+      <div className="w-full md:w-3/4 p-8 bg-gray-100 rounded-lg shadow-lg">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
             <Loader className="mb-4" size="large" />
@@ -188,7 +188,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
             {activeTab === 'settings' && (
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-4">設定</h3>
-                {/* 這裡可以放其他設定內容 */}
+                {/* 這裡可以放其他設定內 */}
               </div>
             )}
             {activeTab === 'edit' && (
@@ -328,3 +328,4 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
+
