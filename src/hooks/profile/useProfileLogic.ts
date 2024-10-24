@@ -203,7 +203,7 @@ export const useProfileLogic = () => {
         const updateCommand = new UpdateItemCommand(updateParams);
         await dynamoClient.send(updateCommand);
         console.log('DynamoDB updated successfully');
-        setUploadMessage('頭像已成功更新！');
+        setUploadMessage('頭像已成功更新，頁面刷新中...');
       } catch (error) {
         console.error('Error updating DynamoDB:', error);
         setUploadMessage('更新頭像失敗，請再次嘗試。');
@@ -267,7 +267,7 @@ export const useProfileLogic = () => {
       });
       await cognitoClient.send(changePasswordCommand);
       console.log('密碼更新成功');
-      setPasswordMessage('密碼變更成功，請重新登入。');
+      setPasswordMessage('密碼變更成功，重新登入。');
       updateUser({ accessToken: user?.accessToken });
 
       setTimeout(() => {
@@ -343,7 +343,43 @@ export const useProfileLogic = () => {
         const fileUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
         console.log('File uploaded successfully:', fileUrl);
         setTempAvatar(fileUrl);
-        setUploadMessage('上傳成功！');
+        setFormData(prevData => ({ ...prevData, avatar: fileUrl }));
+        localStorage.setItem('avatarUrl', fileUrl); // 確保本地存儲立即更新
+        setUploadMessage('頭像更換成功，頁面刷新中...');
+
+        // 更新 DynamoDB 中的 avatarUrl
+        const dynamoClient = new DynamoDBClient({
+          region: 'ap-northeast-1',
+          credentials: {
+            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+          },
+        });
+
+        const updateParams = {
+          TableName: 'AWS_Blog_UserProfiles',
+          Key: {
+            userId: { S: user?.sub || 'default-sub' },
+          },
+          UpdateExpression: 'SET avatarUrl = :avatarUrl',
+          ExpressionAttributeValues: {
+            ':avatarUrl': { S: fileUrl },
+          },
+        };
+
+        try {
+          const updateCommand = new UpdateItemCommand(updateParams);
+          await dynamoClient.send(updateCommand);
+          console.log('DynamoDB updated successfully');
+          
+          // 顯示通知消息 3 秒鐘後刷新頁面
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        } catch (error) {
+          console.error('Error updating DynamoDB:', error);
+          setUploadMessage('更新頭像失敗，請再次嘗試。');
+        }
       } catch (error) {
         console.error('Error uploading file:', error);
         setUploadMessage('上傳失敗：請稍後再試。');

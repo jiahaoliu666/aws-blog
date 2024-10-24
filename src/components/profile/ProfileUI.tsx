@@ -83,15 +83,13 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   const [localUploadMessage, setLocalUploadMessage] = useState(uploadMessage);
 
   useEffect(() => {
-    if (uploadMessage) {
-      setLocalUploadMessage(uploadMessage);
-      const timer = setTimeout(() => {
-        setLocalUploadMessage('');
-      }, 5000); // 5秒後清除消息
+    setLocalUploadMessage(uploadMessage);
+    const timer = setTimeout(() => {
+      setLocalUploadMessage('');
+    }, 5000);
 
-      return () => clearTimeout(timer); // 清除計時器
-    }
-  }, [uploadMessage]);
+    return () => clearTimeout(timer);
+  }, [uploadMessage, formData.avatar]); // 添加 formData.avatar 作為依賴
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-6 md:space-y-0">
@@ -143,7 +141,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <div className="flex flex-col md:flex-row items-center mb-2">
                     <div className="flex flex-col items-center">
                       <img
-                        src={formData.avatar}
+                        src={formData.avatar} // 確保這裡使用最新的 formData.avatar
                         alt="用戶頭像"
                         className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mb-2"
                       />
