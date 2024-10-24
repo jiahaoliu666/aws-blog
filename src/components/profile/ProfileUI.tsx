@@ -343,7 +343,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
             </div>
           </div>
         </>
-      )}
+      )
+    }
     </div>
   );
 };
