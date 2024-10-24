@@ -106,7 +106,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
           <p className="text-sm text-gray-300">{formData.email}</p>
         </div>
         <ul className="space-y-3">
-          {['profile', 'activity', 'history', 'settings', 'changePassword', 'feedback', 'activityLog', 'notificationSettings','edit'].map((tab) => (
+          {['profile', 'activity', 'settings', 'changePassword', 'feedback', 'activityLog', 'notificationSettings', 'history' ].map((tab) => (
             <li
               key={tab}
               className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 ${
@@ -174,7 +174,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       <hr className="mb-6" />
                       <div className="flex items-center mt-2">
                         <SwitchField
-                          label="修改用戶名"
+                          label="允許編輯用戶名"
                           isChecked={isEditable.username}
                           onChange={() => toggleEditableField('username')}
                           className="mr-2"
@@ -257,69 +257,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <h3 className="text-xl font-bold text-gray-800 mb-4">設定</h3>
                   {/* 這裡可以放其他設定內 */}
                 </div>
-              )}
-              {activeTab === 'edit' && (
-                <>
-                  <h2 className="text-2xl font-bold mb-6 text-center">編輯個人資</h2>
-                  <hr className="mb-6 mt-6" />
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>
-                      <input
-                        type="file"
-                        id="avatar"
-                        name="avatar"
-                        onChange={handleAvatarChange}
-                        className="hidden" // 隱藏 input
-                      />
-                      <button
-                        onClick={() => document.getElementById('avatar')?.click()}
-                        className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
-                      >
-                        更換頭像
-                      </button>
-                      {localUploadMessage && (
-                        <p className={`mt-2 text-sm ${localUploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
-                          {localUploadMessage}
-                        </p>
-                      )}
-                    </div>
-                    <div className="pt-3">
-                      <hr className="mb-6" />
-                      <div className="flex items-center mt-2">
-                        <SwitchField
-                          label="修改用戶名"
-                          isChecked={isEditable.username}
-                          onChange={() => toggleEditableField('username')} // 使用 toggleEditableField 函數
-                          className="mr-2"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
-                      <input
-                        id="name"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleChange}
-                        className="mt-2 p-2 border border-gray-300 rounded w-full"
-                        disabled={!isEditable.username} // 根據 isEditable.username 控制可編輯性
-                      />
-                    </div>
-                  </div>
-
-                  {localUploadMessage && (
-                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${localUploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {localUploadMessage}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end space-x-4 mt-6">
-                    <button onClick={handleSaveProfileChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
-                      保存個人資料變更
-                    </button>
-                  </div>
-                </>
               )}
               {activeTab === 'changePassword' && (
                 <>

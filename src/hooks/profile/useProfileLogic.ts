@@ -206,7 +206,7 @@ export const useProfileLogic = () => {
         setUploadMessage('頭像已成功更新！');
       } catch (error) {
         console.error('Error updating DynamoDB:', error);
-        setUploadMessage('更新頭像失敗，請稍後試。');
+        setUploadMessage('更新頭像失敗，請再次嘗試。');
         changesSuccessful = false;
       }
     }
