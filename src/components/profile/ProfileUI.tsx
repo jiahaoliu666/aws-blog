@@ -91,6 +91,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
     return () => clearTimeout(timer);
   }, [uploadMessage, formData.avatar]); // 添加 formData.avatar 作為依賴
 
+  useEffect(() => {
+    if (uploadMessage || passwordMessage) {
+      const timer = setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [uploadMessage, passwordMessage]);
+
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-6 md:space-y-0">
       {!user ? (
@@ -317,7 +327,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       取消
                     </button>
                     <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
-                      {isLoading ? '保存中...' : '保存密碼變��'}
+                      {isLoading ? '保存中...' : '保存變更'}
                     </button>
                   </div>
                 </>

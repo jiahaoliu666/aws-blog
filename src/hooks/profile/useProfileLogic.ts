@@ -225,8 +225,8 @@ export const useProfileLogic = () => {
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        console.log('用戶名更新成功');
-        setUploadMessage('用戶名已成功更新！');
+        console.log('用戶名更新成功，頁面刷新中...');
+        setUploadMessage('用戶名更新成功，頁面刷新中...');
         updateUser({ username: formData.username }); // 更新本地用戶名
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
@@ -314,7 +314,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，確認檔案類型為 jpeg 或 png');
+        setUploadMessage('上傳失敗：檔案類型不支援，確認檔案類型為 jpeg 或 png，頁面刷新中...');
         return;
       }
 
