@@ -94,7 +94,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
           <p className="text-sm text-gray-300">{formData.email}</p>
         </div>
         <ul className="space-y-3">
-          {['profile', 'activity', 'history', 'settings', 'edit', 'changePassword', 'feedback', 'activityLog', 'notificationSettings'].map((tab) => (
+          {['profile', 'activity', 'history', 'settings', 'changePassword', 'feedback', 'activityLog', 'notificationSettings','edit'].map((tab) => (
             <li
               key={tab}
               className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 ${
@@ -106,11 +106,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {tab === 'activity' && '觀看紀錄'}
               {tab === 'history' && '版本歷史'}
               {tab === 'settings' && '帳戶設定'}
-              {tab === 'edit' && '編輯'}
               {tab === 'changePassword' && '修改密碼'}
               {tab === 'feedback' && '用戶反饋'}
               {tab === 'activityLog' && '活動日誌'}
               {tab === 'notificationSettings' && '通知設置'}
+              {tab === 'edit' && '編輯'}
             </li>
           ))}
         </ul>
@@ -138,6 +138,51 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       <p className="text-xl mb-2">用戶名：{formData.username}</p>
                       <p className="text-xl mb-2">電子郵件：{formData.email}</p>
                       <p className="text-xl">註冊日期：{formData.registrationDate}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">更改頭像</label>
+                      <input
+                        type="file"
+                        id="avatar"
+                        name="avatar"
+                        onChange={handleAvatarChange}
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                      />
+                      <button
+                        onClick={() => document.getElementById('avatar')?.click()}
+                        className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
+                      >
+                        更換頭像
+                      </button>
+                      {uploadMessage && (
+                        <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
+                          {uploadMessage}
+                        </p>
+                      )}
+                    </div>
+                    <div className="pt-3">
+                      <hr className="mb-6" />
+                      <div className="flex items-center mt-2">
+                        <SwitchField
+                          label="修改用戶名"
+                          isChecked={isEditable.username}
+                          onChange={() => toggleEditableField('username')}
+                          className="mr-2"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
+                      <input
+                        id="name"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                        disabled={!isEditable.username}
+                      />
                     </div>
                   </div>
                   <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
@@ -209,6 +254,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         onChange={handleAvatarChange}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                       />
+                      <button
+                        onClick={() => document.getElementById('avatar')?.click()}
+                        className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
+                      >
+                        更換頭像
+                      </button>
                       {uploadMessage && (
                         <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
                           {uploadMessage}
