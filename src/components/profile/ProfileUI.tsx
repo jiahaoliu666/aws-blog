@@ -128,19 +128,21 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {activeTab === 'profile' && (
                 <div>
                   <h1 className="text-4xl font-bold mb-4">個人資訊</h1>
-                  <div className="flex flex-col md:flex-row items-center mb-6">
-                    <img
-                      src={formData.avatar}
-                      alt="用戶頭像"
-                      className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mr-4"
-                    />
-                    <button
-                      onClick={() => document.getElementById('avatar')?.click()}
-                      className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
-                    >
-                      更換頭像
-                    </button>
-                    <div className="mt-4 md:mt-0">
+                  <div className="flex flex-col md:flex-row items-center mb-2">
+                    <div className="flex flex-col items-center">
+                      <img
+                        src={formData.avatar}
+                        alt="用戶頭像"
+                        className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mb-2"
+                      />
+                      <button
+                        onClick={() => document.getElementById('avatar')?.click()}
+                        className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200 mb-4"
+                      >
+                        更換頭像
+                      </button>
+                    </div>
+                    <div className="text-center md:text-left md:ml-6 -mt-16">
                       <p className="text-xl mb-2">用戶名：{formData.username}</p>
                       <p className="text-xl mb-2">電子郵件：{formData.email}</p>
                       <p className="text-xl">註冊日期：{formData.registrationDate}</p>
@@ -155,11 +157,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         onChange={handleAvatarChange}
                         className="hidden" // 隱藏 input
                       />
-                      {uploadMessage && (
-                        <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
-                          {uploadMessage}
-                        </p>
-                      )}
                     </div>
                     <div className="pt-3">
                       <hr className="mb-6" />
