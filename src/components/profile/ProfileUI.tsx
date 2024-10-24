@@ -94,7 +94,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
           <p className="text-sm text-gray-300">{formData.email}</p>
         </div>
         <ul className="space-y-3">
-          {['profile', 'activity', 'history', 'settings', 'edit', 'changePassword'].map((tab) => (
+          {['profile', 'activity', 'history', 'settings', 'edit', 'changePassword', 'feedback', 'activityLog', 'notificationSettings'].map((tab) => (
             <li
               key={tab}
               className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 ${
@@ -105,14 +105,17 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {tab === 'profile' && '個人資訊'}
               {tab === 'activity' && '觀看紀錄'}
               {tab === 'history' && '版本歷史'}
-              {tab === 'settings' && '設定'}
+              {tab === 'settings' && '帳戶設定'}
               {tab === 'edit' && '編輯'}
               {tab === 'changePassword' && '修改密碼'}
+              {tab === 'feedback' && '用戶反饋'}
+              {tab === 'activityLog' && '活動日誌'}
+              {tab === 'notificationSettings' && '通知設置'}
             </li>
           ))}
         </ul>
       </div>
-      <div className="w-full md:w-3/4 p-8 bg-gray-100 rounded-lg shadow-lg">
+      <div className="w-full md:w-3/4 p-8 bg-gray-10 rounded-lg shadow-lg">
         <div className="text-gray-800">
           {!user ? (
             <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
@@ -317,6 +320,24 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                     </button>
                   </div>
                 </>
+              )}
+              {activeTab === 'feedback' && (
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">用戶反饋</h3>
+                  {/* 在這裡添加用戶反饋表單或內容 */}
+                </div>
+              )}
+              {activeTab === 'activityLog' && (
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">活動日誌</h3>
+                  {/* 在這裡添加活動日誌內容 */}
+                </div>
+              )}
+              {activeTab === 'notificationSettings' && (
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">通知設置</h3>
+                  {/* 在這裡添加通知設置內容 */}
+                </div>
               )}
             </>
           )}
