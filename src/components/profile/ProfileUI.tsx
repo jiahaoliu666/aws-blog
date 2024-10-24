@@ -122,7 +122,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               <p className="text-sm text-gray-300">{formData.email}</p>
             </div>
             <ul className="space-y-3">
-              {['profile', 'activity', 'settings', 'changePassword', 'feedback', 'activityLog', 'notificationSettings', 'history' ].map((tab) => (
+              {['profile', 'activity', 'changePassword', 'notificationSettings', 'activityLog' , 'feedback', 'history', 'settings'].map((tab) => (
                 <li
                   key={tab}
                   className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 text-xl leading-relaxed ${
