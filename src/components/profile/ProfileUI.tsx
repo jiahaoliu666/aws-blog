@@ -143,7 +143,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               ))}
             </ul>
           </div>
-          <div className="w-full md:w-3/4 p-4 bg-gray-10 rounded-lg shadow-lg shadow-gray-400">
+          <div className="w-full md:w-3/4 p-4 bg-gray-10 border border-gray-600 rounded-lg shadow-lg shadow-gray-400">
             <div className="text-gray-800">
               {activeTab === 'profile' && (
                 <div>
@@ -231,7 +231,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       recentArticles.map((article, index) => (
                         <div
                           key={index}
-                          className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300"
+                          className="border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300"
                         >
                           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                             <a
