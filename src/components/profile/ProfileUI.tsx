@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
@@ -80,6 +80,18 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   toggleEditableField, // 確保這個 prop 被傳遞
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
+  const [localUploadMessage, setLocalUploadMessage] = useState(uploadMessage);
+
+  useEffect(() => {
+    if (uploadMessage) {
+      setLocalUploadMessage(uploadMessage);
+      const timer = setTimeout(() => {
+        setLocalUploadMessage('');
+      }, 5000); // 5秒後清除消息
+
+      return () => clearTimeout(timer); // 清除計時器
+    }
+  }, [uploadMessage]);
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-6 md:space-y-0">
@@ -182,19 +194,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                     </div>
                   </div>
 
-                  {uploadMessage && (
-                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {uploadMessage}
+                  {localUploadMessage && (
+                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${localUploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {localUploadMessage}
                     </div>
                   )}
 
                   <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
                     <button onClick={handleSaveProfileChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
-                      保存個人資料變更
+                      保存變更
                     </button>
-                  </div>
-
-                  <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
                     <button 
                       onClick={handleLogout} 
                       className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md w-full md:w-auto"
@@ -269,9 +278,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       >
                         更換頭像
                       </button>
-                      {uploadMessage && (
-                        <p className={`mt-2 text-sm ${uploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
-                          {uploadMessage}
+                      {localUploadMessage && (
+                        <p className={`mt-2 text-sm ${localUploadMessage.includes('成功') ? 'text-green-600' : 'text-red-600'}`}>
+                          {localUploadMessage}
                         </p>
                       )}
                     </div>
@@ -299,9 +308,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                     </div>
                   </div>
 
-                  {uploadMessage && (
-                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {uploadMessage}
+                  {localUploadMessage && (
+                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${localUploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {localUploadMessage}
                     </div>
                   )}
 
