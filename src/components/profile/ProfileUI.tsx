@@ -93,48 +93,48 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-6 md:space-y-0">
-      <div className="w-full md:w-1/4 bg-gray-500 p-6 rounded-lg shadow-lg mb-6 md:mb-0">
-        <div className="flex flex-col items-center mb-8">
-          <img
-            src={formData.avatar}
-            alt="用戶頭像"
-            className="w-24 h-24 rounded-full border-4 border-white shadow-lg mb-3"
-          />
-          <p className="text-xl font-semibold text-white">{formData.username}</p>
-          <p className="text-sm text-gray-300">{formData.email}</p>
+      {!user ? (
+        <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
+          <Loader className="mb-4" size="large" />
+          <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
+          <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
         </div>
-        <ul className="space-y-3">
-          {['profile', 'activity', 'settings', 'changePassword', 'feedback', 'activityLog', 'notificationSettings', 'history' ].map((tab) => (
-            <li
-              key={tab}
-              className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 ${
-                activeTab === tab ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300 hover:bg-gray-600'
-              }`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab === 'profile' && '個人資訊'}
-              {tab === 'activity' && '觀看紀錄'}
-              {tab === 'history' && '版本歷史'}
-              {tab === 'settings' && '帳戶設定'}
-              {tab === 'changePassword' && '修改密碼'}
-              {tab === 'feedback' && '用戶反饋'}
-              {tab === 'activityLog' && '活動日誌'}
-              {tab === 'notificationSettings' && '通知設置'}
-              {tab === 'edit' && '編輯'}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="w-full md:w-3/4 p-8 bg-gray-10 rounded-lg shadow-lg">
-        <div className="text-gray-800">
-          {!user ? (
-            <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
-              <Loader className="mb-4" size="large" />
-              <h2 className="text-2xl font-semibold text-red-600">請登入!</h2>
-              <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
+      ) : (
+        <>
+          <div className="w-full md:w-1/4 bg-gray-500 p-6 rounded-lg shadow-lg mb-6 md:mb-0">
+            <div className="flex flex-col items-center mb-8">
+              <img
+                src={formData.avatar}
+                alt="用戶頭像"
+                className="w-24 h-24 rounded-full border-4 border-white shadow-lg mb-3"
+              />
+              <p className="text-xl font-semibold text-white">{formData.username}</p>
+              <p className="text-sm text-gray-300">{formData.email}</p>
             </div>
-          ) : (
-            <>
+            <ul className="space-y-3">
+              {['profile', 'activity', 'settings', 'changePassword', 'feedback', 'activityLog', 'notificationSettings', 'history' ].map((tab) => (
+                <li
+                  key={tab}
+                  className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 ${
+                    activeTab === tab ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300 hover:bg-gray-600'
+                  }`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab === 'profile' && '個人資訊'}
+                  {tab === 'activity' && '觀看紀錄'}
+                  {tab === 'history' && '版本歷史'}
+                  {tab === 'settings' && '帳戶設定'}
+                  {tab === 'changePassword' && '修改密碼'}
+                  {tab === 'feedback' && '用戶反饋'}
+                  {tab === 'activityLog' && '活動日誌'}
+                  {tab === 'notificationSettings' && '通知設置'}
+                  {tab === 'edit' && '編輯'}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="w-full md:w-3/4 p-8 bg-gray-10 rounded-lg shadow-lg">
+            <div className="text-gray-800">
               {activeTab === 'profile' && (
                 <div>
                   <h1 className="text-4xl font-bold mb-4">個人資訊</h1>
@@ -317,7 +317,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       取消
                     </button>
                     <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
-                      {isLoading ? '保存中...' : '保存密碼變更'}
+                      {isLoading ? '保存中...' : '保存密碼變��'}
                     </button>
                   </div>
                 </>
@@ -340,10 +340,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   {/* 在這裡添加通知設置內容 */}
                 </div>
               )}
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
