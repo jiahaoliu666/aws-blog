@@ -102,7 +102,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   }, [uploadMessage, passwordMessage]);
 
   return (
-    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-6 md:space-y-0">
+    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6">
       {!user ? (
         <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
           <Loader className="mb-4" size="large" />
@@ -125,7 +125,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {['profile', 'activity', 'settings', 'changePassword', 'feedback', 'activityLog', 'notificationSettings', 'history' ].map((tab) => (
                 <li
                   key={tab}
-                  className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 ${
+                  className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 text-xl leading-relaxed ${
                     activeTab === tab ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300 hover:bg-gray-600'
                   }`}
                   onClick={() => setActiveTab(tab)}
@@ -151,7 +151,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <div className="flex flex-col md:flex-row items-center mb-2">
                     <div className="flex flex-col items-center">
                       <img
-                        src={formData.avatar} // 確保這裡使用最新的 formData.avatar
+                        src={formData.avatar} // 保這裡使用最新的 formData.avatar
                         alt="用戶頭像"
                         className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mb-2"
                       />
