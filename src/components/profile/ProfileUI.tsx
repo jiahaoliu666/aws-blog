@@ -143,7 +143,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               ))}
             </ul>
           </div>
-          <div className="w-full md:w-3/4 p-8 bg-gray-10 rounded-lg shadow-lg">
+          <div className="w-full md:w-3/4 p-4 bg-gray-10 rounded-lg shadow-lg shadow-gray-400">
             <div className="text-gray-800">
               {activeTab === 'profile' && (
                 <div>
@@ -223,7 +223,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               )}
               {activeTab === 'activity' && (
                 <>
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">最近的觀看紀錄</h3>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">最近的觀看紀錄</h3>
                   <div className="grid grid-cols-1 gap-4">
                     {recentArticles.length === 0 ? (
                       <p className="text-gray-500">目前沒有任何觀看紀錄。</p>
