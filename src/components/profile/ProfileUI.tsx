@@ -83,7 +83,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row space-y-6 md:space-y-0">
-      <div className="w-full md:w-1/4 bg-gradient-to-b from-gray-800 to-gray-700 p-6 rounded-lg shadow-lg mb-6 md:mb-0">
+      <div className="w-full md:w-1/4 bg-gray-500 p-6 rounded-lg shadow-lg mb-6 md:mb-0">
         <div className="flex flex-col items-center mb-8">
           <img
             src={formData.avatar}
@@ -112,8 +112,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
           ))}
         </ul>
       </div>
-      <div className="w-full md:w-3/4 p-8 bg-white rounded-lg shadow-lg">
-        {/* 統一字體樣式和顏色 */}
+      <div className="w-full md:w-3/4 p-8 bg-gray-100 rounded-lg shadow-lg">
         <div className="text-gray-800">
           {!user ? (
             <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
