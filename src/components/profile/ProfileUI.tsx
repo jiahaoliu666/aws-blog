@@ -196,19 +196,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         className="hidden" // 隱藏 input
                       />
                     </div>
-                    <div className="pt-3">
-                      <hr className="mb-6" />
-                      <div className="flex items-center mt-2">
-                        <SwitchField
-                          label="允許編輯用戶名"
-                          isChecked={isEditable.username}
-                          onChange={() => toggleEditableField('username')}
-                          className="mr-2"
-                        />
-                      </div>
-                    </div>
+                    
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">修改用戶名</label>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">用戶名</label>
                       <input
                         id="name"
                         name="username"
@@ -217,6 +207,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                         disabled={!isEditable.username}
                       />
+                    </div>
+                    <div className="pt-0">
+                      <div className="flex items-center mt-2">
+                        <SwitchField
+                          label="編輯用戶名"
+                          isChecked={isEditable.username}
+                          onChange={() => toggleEditableField('username')}
+                          className="mr-2"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -229,12 +229,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
                     <button onClick={handleSaveProfileChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
                       保存變更
-                    </button>
-                    <button 
-                      onClick={handleLogout} 
-                      className="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-200 shadow-md w-full md:w-auto"
-                    >
-                      登出
                     </button>
                   </div>
                 </div>
