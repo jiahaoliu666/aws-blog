@@ -38,6 +38,8 @@ type ProfileUIProps = {
   setIsEditable: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
   resetPasswordFields: () => void; // 新增這個 prop
   toggleEditableField: (field: keyof EditableFields) => void; // 確保這個 prop 被傳遞
+  activityLog: { date: string; action: string; details: string; }[]; // 添加這行
+  setActivityLog: (value: { date: string; action: string; details: string; }[]) => void; // 添加這行
 };
 
 // 定義 isEditable 的類型
@@ -78,6 +80,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   setIsEditable,
   resetPasswordFields, // 新增這個 prop
   toggleEditableField, // 確保這個 prop 被傳遞
+  activityLog, // 添加這行
+  setActivityLog, // 添加這行
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [localUploadMessage, setLocalUploadMessage] = useState(uploadMessage);
@@ -100,6 +104,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
       return () => clearTimeout(timer);
     }
   }, [uploadMessage, passwordMessage]);
+
+  useEffect(() => {
+    const fetchActivityLog = async () => {
+      try {
+        const response = await fetch('/api/profile/activity-log?userId=' + user?.sub);
+        const data = await response.json();
+        setActivityLog(data);
+      } catch (error) {
+        console.error('Error fetching activity log:', error);
+      }
+    };
+
+    fetchActivityLog();
+  }, [user]);
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6">
@@ -340,8 +358,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               )}
               {activeTab === 'activityLog' && (
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">活動日誌</h3>
-                  {/* 在這裡添加活動日誌內容 */}
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">活動日誌</h3>
+                  <div className="space-y-4">
+                    {activityLog.slice(0, 5).map((log, index) => ( // 只顯示前 5 筆
+                      <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
+                        <p className="text-sm text-gray-500">{log.date}</p>
+                        <h4 className="text-lg font-semibold mt-2">{log.action}</h4>
+                        <p className="text-sm text-gray-700">{log.details}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               {activeTab === 'notificationSettings' && (
