@@ -204,7 +204,7 @@ export const useProfileLogic = () => {
         const updateCommand = new UpdateItemCommand(updateParams);
         await dynamoClient.send(updateCommand);
         console.log('DynamoDB updated successfully');
-        setUploadMessage('頭像已功更新，頁面刷新中...');
+        setUploadMessage('頭像已功更新，頁面新中...');
       } catch (error) {
         console.error('Error updating DynamoDB:', error);
         setUploadMessage('更新頭像失敗，請再次嘗試。');
@@ -348,7 +348,7 @@ export const useProfileLogic = () => {
         localStorage.setItem('avatarUrl', fileUrl); // 確保本地存儲立即更新
         setUploadMessage('頭像更換成功，頁面刷新中...');
 
-        // ��新 DynamoDB 中的 avatarUrl
+        //  DynamoDB 中的 avatarUrl
         const dynamoClient = new DynamoDBClient({
           region: 'ap-northeast-1',
           credentials: {
@@ -438,7 +438,7 @@ export const useProfileLogic = () => {
     ]);
   }, []);
 
-  const logActivity = async (action: string, details: string) => {
+  const logActivity = async (action: string) => {
     try {
       const dynamoClient = new DynamoDBClient({
         region: 'ap-northeast-1',
@@ -448,7 +448,6 @@ export const useProfileLogic = () => {
         },
       });
 
-      // 格式化日期
       const formatDate = (date: Date) => {
         return date.toLocaleString('zh-TW', {
           year: 'numeric',
@@ -463,46 +462,43 @@ export const useProfileLogic = () => {
 
       const timestamp = formatDate(new Date());
 
-      // 獲取現有的活動日誌
-      const params = {
-        TableName: 'AWS_Blog_UserActivityLog',
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: {
-          ':userId': { S: user?.sub || 'default-sub' },
-        },
-        ScanIndexForward: true, // 以升序獲取，最舊的在前
-      };
-
-      const command = new QueryCommand(params);
-      const response = await dynamoClient.send(command);
-      const logs = response.Items || [];
-
-      // 如果已有 5 筆，刪除最舊的一筆
-      if (logs.length >= 5) {
-        const oldestLog = logs[0]; // 取第一筆作為最舊的
-        const deleteParams = {
-          TableName: 'AWS_Blog_UserActivityLog',
-          Key: {
-            userId: { S: user?.sub || 'default-sub' },
-            timestamp: { S: oldestLog.timestamp.S || '' }, // 確保 timestamp 不為 undefined
-          },
-        };
-        const deleteCommand = new DeleteItemCommand(deleteParams);
-        await dynamoClient.send(deleteCommand);
-      }
-
-      // 添加新的活動日誌
       const putParams = {
         TableName: 'AWS_Blog_UserActivityLog',
         Item: {
           userId: { S: user?.sub || 'default-sub' },
           timestamp: { S: timestamp },
           action: { S: action },
-          details: { S: details },
+          // 移除 details
         },
       };
       const putCommand = new PutItemCommand(putParams);
       await dynamoClient.send(putCommand);
+
+      // 確保只保留最新的 6 筆
+      const queryParams = {
+        TableName: 'AWS_Blog_UserActivityLog',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': { S: user?.sub || 'default-sub' },
+        },
+        ScanIndexForward: true, // 獲取最舊的
+      };
+
+      const queryCommand = new QueryCommand(queryParams);
+      const queryResponse = await dynamoClient.send(queryCommand);
+
+      if (queryResponse.Items && queryResponse.Items.length > 6) {
+        const oldestItem = queryResponse.Items[0];
+        const deleteParams = {
+          TableName: 'AWS_Blog_UserActivityLog',
+          Key: {
+            userId: { S: user?.sub || 'default-sub' },
+            timestamp: { S: oldestItem.timestamp.S || '' }, // 確保 timestamp 不為 undefined
+          },
+        };
+        const deleteCommand = new DeleteItemCommand(deleteParams);
+        await dynamoClient.send(deleteCommand);
+      }
     } catch (error) {
       console.error('Error logging activity:', error);
     }
@@ -511,7 +507,7 @@ export const useProfileLogic = () => {
   // 在需要記錄活動的地方調用 logActivity
   useEffect(() => {
     if (user) {
-      logActivity('登入系統', 'IP: 192.168.1.1');
+      logActivity('登入系統'); // 移除 details
     }
   }, [user]);
 
@@ -533,7 +529,7 @@ export const useProfileLogic = () => {
             ':userId': { S: user.sub },
           },
           ScanIndexForward: false,
-          Limit: 5, // 只獲取最新的 5 筆
+          Limit: 6, // 修改為獲取最新的 6 筆
         };
 
         try {
@@ -542,7 +538,7 @@ export const useProfileLogic = () => {
           const logs = response.Items?.map(item => ({
             date: item.timestamp?.S || '',
             action: item.action?.S || '',
-            details: item.details?.S || '',
+            details: '', // 添加默認的 details 屬性
           })) || [];
 
           setActivityLog(logs);

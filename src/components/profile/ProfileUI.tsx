@@ -38,8 +38,8 @@ type ProfileUIProps = {
   setIsEditable: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
   resetPasswordFields: () => void; // 新增這個 prop
   toggleEditableField: (field: keyof EditableFields) => void; // 確保這個 prop 被傳遞
-  activityLog: { date: string; action: string; details: string; }[]; // 添加這行
-  setActivityLog: (value: { date: string; action: string; details: string; }[]) => void; // 添加這行
+  activityLog: { date: string; action: string; }[]; // 添加這行
+  setActivityLog: (value: { date: string; action: string; }[]) => void; // 添加這行
 };
 
 // 定義 isEditable 的類型
@@ -360,11 +360,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                 <div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">活動日誌</h3>
                   <div className="space-y-4">
-                    {activityLog.slice(0, 5).map((log, index) => ( // 只顯示前 5 筆
+                    {activityLog.slice(0, 6).map((log, index) => ( // 修改為顯示 6 筆
                       <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
                         <p className="text-sm text-gray-500">{log.date}</p>
                         <h4 className="text-lg font-semibold mt-2">{log.action}</h4>
-                        <p className="text-sm text-gray-700">{log.details}</p>
+                        {/* 移除 details 顯示 */}
                       </div>
                     ))}
                   </div>
