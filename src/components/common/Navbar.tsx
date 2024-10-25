@@ -71,11 +71,6 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
       setFavorites([]);
       alert('您已成功登出!');
       window.location.reload();
-
-      // 移除這行，因為登出活動已在 AuthContext 中記錄
-      // if (user) {
-      //   await logActivity(user.sub, '登出系統');
-      // }
     } catch (error) {  
       console.error('Failed to logout:', error);  
     }  
@@ -181,6 +176,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                   <div className="flex flex-col mt-2 space-y-2 lg:absolute lg:right-0 lg:mt-2 lg:w-48 lg:bg-gray-800 lg:rounded-md lg:shadow-lg lg:z-20 lg:py-1">  
                     <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">個人資訊</Link>
                     <Link href="/bookmark" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">收藏文章</Link>   
+                    <Link href="/history" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">版本歷史</Link>   
                     <Link href="/settings" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">設定</Link>  
                     <div className="border-t border-gray-700"></div>  
                     <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">登出</button>  
