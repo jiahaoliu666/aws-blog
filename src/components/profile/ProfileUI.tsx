@@ -374,7 +374,46 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {activeTab === 'feedback' && (
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-4">用戶反饋</h3>
-                  {/* 在這裡添加用戶反饋表單或內容 */}
+                  <form className="space-y-4">
+                    <div>
+                      <label htmlFor="feedbackName" className="block text-sm font-medium text-gray-700">用戶名</label>
+                      <input
+                        id="feedbackName"
+                        name="feedbackName"
+                        type="text"
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                        placeholder="輸入您的用戶名"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
+                      <input
+                        id="feedbackEmail"
+                        name="feedbackEmail"
+                        type="email"
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                        placeholder="輸入您的電子郵件"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="feedbackContent" className="block text-sm font-medium text-gray-700">反饋內容</label>
+                      <textarea
+                        id="feedbackContent"
+                        name="feedbackContent"
+                        rows={4}
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                        placeholder="請輸入您的反饋"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
+                      >
+                        提交反饋
+                      </button>
+                    </div>
+                  </form>
                 </div>
               )}
               {activeTab === 'activityLog' && (
@@ -413,6 +452,7 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
+
 
 
 
