@@ -310,10 +310,30 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       <input
                         id="newPassword"
-                        name="password" // 確保這裡的 name 是 "password"
+                        name="password"
                         type={showNewPassword ? "text" : "password"}
                         placeholder="輸入新密碼"
-                        value={formData.password} // 確保這裡綁定到 formData.password
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                      >
+                        {showNewPassword ? "隱藏" : "顯示"}
+                      </button>
+                    </div>
+                    <div className="mb-4 relative">
+                      <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      <input
+                        id="confirmNewPassword"
+                        name="confirmPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="再次輸入新密碼"
+                        value={formData.confirmPassword}
                         onChange={handleChange}
                         required
                         className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
@@ -340,7 +360,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       }} 
                       className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
                     >
-                      取消
+                      取消更改
                     </button>
                     <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
                       {isLoading ? '保存中...' : '保存更改'}
