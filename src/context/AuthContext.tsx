@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (authResult && authResult.AccessToken && authResult.RefreshToken) {
         const accessToken = authResult.AccessToken;
-        const refreshToken = authResult.RefreshToken; // 獲取 refreshToken
+        const refreshToken = authResult.RefreshToken;
 
         const userCommand = new GetUserCommand({ AccessToken: accessToken });
         const userResponse = await cognitoClient.send(userCommand);
@@ -131,21 +131,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         const userId = userIdAttribute.Value;
 
-        const user: User = { accessToken, refreshToken, username, sub: userId, email, favorites: [] }; // 設置 refreshToken
+        const user: User = { accessToken, refreshToken, username, sub: userId, email, favorites: [] };
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
-        setError(null);
+
+        // 記錄登入活動
+        await logActivity(userId, '登入系統'); // 確保這裡傳入 userId 而不是 userResponse.Username
 
         return true;
-      } else {
-        throw new Error("登入失敗：認證結果未定義。");
       }
     } catch (err) {
-      const errorMessage = `登入失敗: ${err instanceof Error ? err.message : "未知錯誤"}`;
-      console.log("設置錯誤信息: ", errorMessage);
-      setError(errorMessage);
+      setError(`登入失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);
       return false;
     }
+    return false; // 確保函數在所有情況下都有返回值
   };
 
   const logoutUser = async (): Promise<boolean> => {
@@ -255,4 +254,40 @@ export const useAuthContext = () => {
     throw new Error('useAuthContext 必須在 AuthProvider 中使用');
   }
   return context;
+};
+
+// 新增 logActivity 函數
+const logActivity = async (userId: string, action: string) => {
+  const dynamoClient = new DynamoDBClient({
+    region: 'ap-northeast-1',
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }).replace(/\//g, '-');
+  };
+
+  const timestamp = formatDate(new Date());
+
+  const putParams = {
+    TableName: 'AWS_Blog_UserActivityLog',
+    Item: {
+      userId: { S: userId },
+      timestamp: { S: timestamp },
+      action: { S: action },
+    },
+  };
+  const putCommand = new PutItemCommand(putParams);
+  await dynamoClient.send(putCommand);
 };

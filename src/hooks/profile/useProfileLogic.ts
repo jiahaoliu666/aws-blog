@@ -44,7 +44,7 @@ export const useProfileLogic = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [activityLog, setActivityLog] = useState<{ date: string; action: string; details: string }[]>([]);
+  const [activityLog, setActivityLog] = useState<{ date: string; action: string; }[]>([]); // 移除 details
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -373,7 +373,7 @@ export const useProfileLogic = () => {
           await dynamoClient.send(updateCommand);
           console.log('DynamoDB updated successfully');
           
-          // 顯示通知消息 3 秒鐘後刷新頁面
+          // 顯示通知消 3 秒鐘後刷新頁面
           setTimeout(() => {
             window.location.reload();
           }, 3000);
@@ -428,15 +428,6 @@ export const useProfileLogic = () => {
     setIsEditable(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
-  // 模擬活動日誌數據
-  useEffect(() => {
-    setActivityLog([
-      { date: '2023-10-24', action: '登入系統', details: 'IP: 192.168.1.1' },
-      { date: '2023-10-23', action: '更新個人資料', details: '修改了用戶名' },
-      { date: '2023-10-22', action: '密碼變更', details: '成功更改密碼' },
-      { date: '2023-10-21', action: '新增裝置', details: '新的 iPhone 裝置登入' },
-    ]);
-  }, []);
 
   const logActivity = async (action: string) => {
     try {
@@ -507,7 +498,8 @@ export const useProfileLogic = () => {
   // 在需要記錄活動的地方調用 logActivity
   useEffect(() => {
     if (user) {
-      logActivity('登入系統'); // 移除 details
+      // 移除這行，因為我們不想在每次頁面刷新時記錄登入活動
+      // logActivity('登入系統');
     }
   }, [user]);
 
@@ -529,7 +521,7 @@ export const useProfileLogic = () => {
             ':userId': { S: user.sub },
           },
           ScanIndexForward: false,
-          Limit: 6, // 修改為獲取最新的 6 筆
+          Limit: 6, // 獲取最新的 6 筆
         };
 
         try {
@@ -538,7 +530,7 @@ export const useProfileLogic = () => {
           const logs = response.Items?.map(item => ({
             date: item.timestamp?.S || '',
             action: item.action?.S || '',
-            details: '', // 添加默認的 details 屬性
+            // 移除 details
           })) || [];
 
           setActivityLog(logs);
