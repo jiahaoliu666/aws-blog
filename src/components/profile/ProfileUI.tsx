@@ -360,7 +360,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">活動日誌</h3>
                   <div className="space-y-4">
                     {activityLog.slice(0, 6).map((log, index) => (
-                      <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
+                      <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-lg border-2 border-gray-300">
                         <p className="text-sm text-gray-500">{log.date}</p>
                         <h4 className="text-lg font-semibold mt-2">{log.action}</h4> {/* 顯示完整的 action */}
                       </div>
