@@ -201,7 +201,7 @@ export const useProfileLogic = () => {
         if (err.name === 'UserNotFoundException') {
           console.error('用戶不存在，請檢查用戶名和用戶池 ID。');
         }
-        setUploadMessage('更新戶名失敗，請��後再試。');
+        setUploadMessage('更新用戶名失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }
@@ -286,7 +286,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，確認檔案類型為 jpeg 或 png');
+        setUploadMessage('上傳失敗：檔案類型不支援，請重新確認檔案類型是否為 jpeg 或 png。');
         return;
       }
 
@@ -344,7 +344,7 @@ export const useProfileLogic = () => {
           await dynamoClient.send(updateCommand);
           console.log('DynamoDB updated successfully');
           
-          // 顯示通知消 3 秒鐘��刷新頁面
+          // 顯示通知消 3 秒鐘刷新頁面
           setTimeout(() => {
             window.location.reload();
           }, 3000);
@@ -513,6 +513,16 @@ export const useProfileLogic = () => {
 
     fetchActivityLog();
   }, [user]);
+
+  useEffect(() => {
+    if (uploadMessage) {
+      const timer = setTimeout(() => {
+        window.location.reload();
+      }, 3000); // 3秒後刷新頁面
+
+      return () => clearTimeout(timer); // 清除定時器
+    }
+  }, [uploadMessage]);
 
   return {
     user,

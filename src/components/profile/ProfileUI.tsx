@@ -388,4 +388,3 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
-
