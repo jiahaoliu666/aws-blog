@@ -241,7 +241,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {activeTab === 'activity' && (
                 <>
                   <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">最近的觀看紀錄</h3>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 gap-3">
                     {recentArticles.length === 0 ? (
                       <p className="text-gray-500">目前沒有任何觀看紀錄。</p>
                     ) : (
@@ -359,12 +359,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                 <div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">活動日誌</h3>
                   <div className="space-y-4">
-                    {activityLog.slice(0, 6).map((log, index) => (
-                      <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-lg border-2 border-gray-300">
-                        <p className="text-sm text-gray-500">{log.date}</p>
-                        <h4 className="text-lg font-semibold mt-2">{log.action}</h4> {/* 顯示完整的 action */}
-                      </div>
-                    ))}
+                    {activityLog.length === 0 ? (
+                      <p className="text-gray-500">目前沒有任何活動日誌。</p> // 新增這行
+                    ) : (
+                      activityLog.slice(0, 6).map((log, index) => (
+                        <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-lg border-2 border-gray-300">
+                          <p className="text-sm text-gray-500">{log.date}</p>
+                          <h4 className="text-lg font-semibold mt-2">{log.action}</h4>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
