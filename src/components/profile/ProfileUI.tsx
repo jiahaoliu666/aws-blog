@@ -391,8 +391,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         id="feedbackEmail"
                         name="feedbackEmail"
                         type="email"
+                        value={formData.email} // 使用 formData.email 作為默認值
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                         placeholder="輸入您的電子郵件"
+                        disabled // 設置為不可編輯
                       />
                     </div>
                     <div>
@@ -452,6 +454,7 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
+
 
 
 
