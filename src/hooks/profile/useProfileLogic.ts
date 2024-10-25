@@ -201,7 +201,7 @@ export const useProfileLogic = () => {
         if (err.name === 'UserNotFoundException') {
           console.error('用戶不存在，請檢查用戶名和用戶池 ID。');
         }
-        setUploadMessage('更新戶名失敗，請稍後再試。');
+        setUploadMessage('更新戶名失敗，請��後再試。');
         changesSuccessful = false;
       }
     }
@@ -254,10 +254,9 @@ export const useProfileLogic = () => {
 
   const handleCancelChanges = () => {
     setIsEditing(false);
-    setPasswordMessage(null);
-    setOldPassword(''); // 清空舊密碼
-    setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
-    setIsEditable(prev => ({ ...prev, password: false }));
+    setTempUsername(user ? user.username : ''); // 重置臨時用戶名
+    setIsEditable(prev => ({ ...prev, username: false })); // 重置編輯狀態
+    setFormData(prevData => ({ ...prevData, username: user ? user.username : '' })); // 重置用戶名
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -345,7 +344,7 @@ export const useProfileLogic = () => {
           await dynamoClient.send(updateCommand);
           console.log('DynamoDB updated successfully');
           
-          // 顯示通知消 3 秒鐘後刷新頁面
+          // 顯示通知消 3 秒鐘��刷新頁面
           setTimeout(() => {
             window.location.reload();
           }, 3000);
@@ -378,7 +377,7 @@ export const useProfileLogic = () => {
 
   const handleClosePasswordModal = () => {
     setIsPasswordModalOpen(false);
-    setOldPassword(''); // 清空舊密碼
+    setOldPassword(''); // 清空密碼
     setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
     setPasswordMessage(null);
   };

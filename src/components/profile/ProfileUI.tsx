@@ -223,6 +223,15 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   )}
 
                   <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
+                    <button 
+                      onClick={() => {
+                        handleCancelChanges();
+                        setLocalUsername(formData.username); // 重置 localUsername
+                      }} 
+                      className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
+                    >
+                      取消更改
+                    </button>
                     <button onClick={() => handleSaveProfileChanges(localUsername)} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
                       保存更改
                     </button>
