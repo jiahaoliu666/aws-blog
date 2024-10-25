@@ -22,7 +22,6 @@ type ProfileUIProps = {
   setIsEditing: (value: boolean) => void;
   setTempAvatar: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
   setFormData: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
-  setOldPassword: (value: string) => void;
   setIsPasswordModalOpen: (value: boolean) => void;
   setShowOldPassword: (value: boolean) => void;
   setShowNewPassword: (value: boolean) => void;
@@ -40,6 +39,8 @@ type ProfileUIProps = {
   toggleEditableField: (field: keyof EditableFields) => void; // 確保這個 prop 被傳遞
   activityLog: { date: string; action: string; }[]; // 移除 details
   setActivityLog: (value: { date: string; action: string; }[]) => void; // 移除 details
+  oldPassword: string; // 確保這行存在
+  setOldPassword: (value: string) => void;
 };
 
 // 定義 isEditable 的類型
@@ -64,7 +65,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   setIsEditing,
   setTempAvatar,
   setFormData,
-  setOldPassword,
   setIsPasswordModalOpen,
   setShowOldPassword,
   setShowNewPassword,
@@ -78,14 +78,18 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   handleCancelChanges,
   handleChange,
   setIsEditable,
-  resetPasswordFields, // 新增這個 prop
-  toggleEditableField, // 確保這個 prop 被傳遞
-  activityLog, // 添加這行
-  setActivityLog, // 添加這行
+  resetPasswordFields,
+  toggleEditableField,
+  activityLog,
+  setActivityLog,
+  oldPassword, // 確保這行存在
+  setOldPassword,
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [localUploadMessage, setLocalUploadMessage] = useState(uploadMessage);
-  const [localUsername, setLocalUsername] = useState(formData.username); // 新增本地狀態
+  const [localUsername, setLocalUsername] = useState(formData.username);
+  // 移除本地的 oldPassword 狀態
+  // const [oldPassword, setOldPassword] = useState(''); // 移除這行
 
   useEffect(() => {
     setLocalUploadMessage(uploadMessage);
@@ -94,9 +98,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [uploadMessage, formData.avatar]); // 添加 formData.avatar 作為依賴
+  }, [uploadMessage, formData.avatar]);
 
-  // 確保 localUsername 在 formData.username 改變時同步更新
   useEffect(() => {
     setLocalUsername(formData.username);
   }, [formData.username]);
@@ -113,7 +116,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
     };
 
     fetchActivityLog();
-  }, [user, uploadMessage]); // 添加 uploadMessage 作為依賴，以便在用戶名變更後重新獲取活動日誌
+  }, [user, uploadMessage]);
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6">
@@ -293,8 +296,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         name="oldPassword"
                         type={showOldPassword ? "text" : "password"}
                         placeholder="輸入舊密碼"
-                        value={formData.oldPassword}
-                        onChange={handleChange}
+                        value={oldPassword} // 確保這裡使用 oldPassword
+                        onChange={(e) => setOldPassword(e.target.value)} // 更新 oldPassword
                         required
                         className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
                       />
@@ -355,8 +358,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <div className="flex justify-end space-x-4 mt-6">
                     <button 
                       onClick={() => {
-                        handleClosePasswordModal();
-                        resetPasswordFields();
+                        handleClosePasswordModal(); // 調用此函數以重置密碼欄位
+                        resetPasswordFields(); // 確保這行被調用以重置密碼欄位
                       }} 
                       className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
                     >
@@ -410,4 +413,16 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
+
+
+
+
+
+
+
+
+
+
+
+
 

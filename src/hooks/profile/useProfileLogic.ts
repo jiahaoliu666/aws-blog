@@ -357,7 +357,7 @@ export const useProfileLogic = () => {
           await dynamoClient.send(updateCommand);
           console.log('DynamoDB updated successfully');
 
-          // 記錄 "更換頭像" 活動
+          // 記錄 "更換頭像" 
           await logActivity('更換頭像');
 
           // 顯示通知消 3 秒鐘刷新頁面
@@ -393,14 +393,14 @@ export const useProfileLogic = () => {
 
   const handleClosePasswordModal = () => {
     setIsPasswordModalOpen(false);
-    setOldPassword(''); // 清空密碼
+    setOldPassword(''); // 清空舊密碼
     setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
     setPasswordMessage(null);
   };
 
   const resetPasswordFields = () => {
-    setOldPassword('');
-    setFormData(prevData => ({ ...prevData, password: '' }));
+    setOldPassword(''); // 確保這行存在
+    setFormData(prevData => ({ ...prevData, password: '', confirmPassword: '' })); // 確保 confirmPassword 也被重置
   };
 
   useEffect(() => {
@@ -571,5 +571,6 @@ export const useProfileLogic = () => {
     resetPasswordFields,
     toggleEditableField,
     activityLog,
+    oldPassword, // 確保這行存在
   };
 };
