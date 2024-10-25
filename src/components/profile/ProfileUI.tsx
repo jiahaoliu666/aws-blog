@@ -376,16 +376,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <h3 className="text-xl font-bold text-gray-800 mb-4">用戶反饋</h3>
                   <form className="space-y-4">
                     <div>
-                      <label htmlFor="feedbackName" className="block text-sm font-medium text-gray-700">用戶名</label>
-                      <input
-                        id="feedbackName"
-                        name="feedbackName"
-                        type="text"
-                        className="mt-2 p-2 border border-gray-300 rounded w-full"
-                        placeholder="輸入您的用戶名"
-                      />
-                    </div>
-                    <div>
                       <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
                       <input
                         id="feedbackEmail"
@@ -398,13 +388,23 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       />
                     </div>
                     <div>
+                      <label htmlFor="feedbackTitle" className="block text-sm font-medium text-gray-700">標題</label>
+                      <input
+                        id="feedbackTitle"
+                        name="feedbackTitle"
+                        type="text"
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                        placeholder="輸入標題"
+                      />
+                    </div>
+                    <div>
                       <label htmlFor="feedbackContent" className="block text-sm font-medium text-gray-700">反饋內容</label>
                       <textarea
                         id="feedbackContent"
                         name="feedbackContent"
                         rows={4}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
-                        placeholder="請輸入您的反饋"
+                        placeholder="請輸入您的問題、意見或建議"
                       />
                     </div>
                     <div className="flex justify-end">
@@ -454,6 +454,7 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
+
 
 
 
