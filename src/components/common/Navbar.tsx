@@ -5,6 +5,7 @@ import { useAppContext } from '../../context/AppContext';
 import { useAuthContext } from '../../context/AuthContext';  
 import { useNewsFavorites } from '../../hooks/news/useNewsFavorites';
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'; // 正確的導入
+import { logActivity } from '../../context/AuthContext'; // 確保導入 logActivity
 
 interface NavbarProps {
   setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選
@@ -70,6 +71,11 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
       setFavorites([]);
       alert('您已成功登出!');
       window.location.reload();
+
+      // 移除這行，因為登出活動已在 AuthContext 中記錄
+      // if (user) {
+      //   await logActivity(user.sub, '登出系統');
+      // }
     } catch (error) {  
       console.error('Failed to logout:', error);  
     }  

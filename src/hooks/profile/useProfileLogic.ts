@@ -305,6 +305,7 @@ export const useProfileLogic = () => {
 
   const handleLogout = async () => {
     console.log('Logging out...');
+    await logActivity('登出系統'); // 添加這行
     await logoutUser();
     router.push('/auth/login');
   };

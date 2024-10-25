@@ -156,13 +156,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem("user");
         console.log("User logged out and username cleared");
         setError(null);
+
+        // 記錄登出活動
+        if (user) {
+          await logActivity(user.sub, '登出系統');
+        }
+
         return true;
       }
-      return false;
     } catch (err) {
       setError(`登出失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);
       return false;
     }
+    return false; // 確保函數在所有情況下都有返回值
   };
 
   const updateUser = (updatedUser: Partial<User>) => {
@@ -210,12 +216,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ExpressionAttributeValues: {
             ':userId': { S: userId },
         },
-        ScanIndexForward: false, // 以時間倒序排列
+        ScanIndexForward: false, // 以時間倒序列
     };
     const queryCommand = new QueryCommand(queryParams);
     const response = await dynamoClient.send(queryCommand);
 
-    // 如果紀錄超過 10 則，刪除多餘的
+    // 如果紀錄超過 10 則刪除多餘的
     const items = response.Items || [];
     if (items.length > 10) {
         const itemsToDelete = items.slice(10); // 取出多餘的紀錄
@@ -257,7 +263,7 @@ export const useAuthContext = () => {
 };
 
 // 新增 logActivity 函數
-const logActivity = async (userId: string, action: string) => {
+export const logActivity = async (userId: string, action: string) => {
   const dynamoClient = new DynamoDBClient({
     region: 'ap-northeast-1',
     credentials: {
