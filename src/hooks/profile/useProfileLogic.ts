@@ -204,7 +204,7 @@ export const useProfileLogic = () => {
           },
           body: JSON.stringify({
             userId: user?.sub,
-            action: '變更用戶名',
+            action: `變更用戶名為：${localUsername}`, // 添加具體的用戶名變更
           }),
         });
 

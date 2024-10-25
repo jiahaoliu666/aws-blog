@@ -362,7 +362,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                     {activityLog.slice(0, 6).map((log, index) => (
                       <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
                         <p className="text-sm text-gray-500">{log.date}</p>
-                        <h4 className="text-lg font-semibold mt-2">{log.action}</h4>
+                        <h4 className="text-lg font-semibold mt-2">{log.action}</h4> {/* 顯示完整的 action */}
                       </div>
                     ))}
                   </div>
