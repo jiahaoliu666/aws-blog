@@ -6,6 +6,8 @@ import { AppProvider } from '../context/AppContext';
 import { LanguageProvider } from '../context/LanguageContext'; // 引入 LanguageProvider
 import Head from 'next/head';
 import '../styles/globals.css'; // 導入全局樣式
+import 'dotenv/config'; // 確保在其他導入之前加載
+
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
