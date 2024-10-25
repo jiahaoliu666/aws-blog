@@ -104,7 +104,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6">
       {!user ? (
-        <div className="flex-grow flex flex-col justify-center items-center bg-gray-50 mt-10 p-6 rounded-lg shadow-inner">
+        <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
           <Loader className="mb-4" size="large" />
           <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
           <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
