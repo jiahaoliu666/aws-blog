@@ -201,7 +201,7 @@ const RegisterPage: React.FC = () => {
             {isVerificationNeeded && (  
               <>
                 <div className="mb-4 relative">
-                  <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                  <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/3 text-gray-500" />
                   <input
                     id="verificationCode"
                     name="verificationCode"
