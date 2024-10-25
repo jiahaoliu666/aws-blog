@@ -26,7 +26,7 @@ type ProfileUIProps = {
   setIsPasswordModalOpen: (value: boolean) => void;
   setShowOldPassword: (value: boolean) => void;
   setShowNewPassword: (value: boolean) => void;
-  handleSaveProfileChanges: () => void;
+  handleSaveProfileChanges: (localUsername: string) => void;
   handleChangePassword: () => void;
   handleLogout: () => void;
   handleAvatarChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -85,6 +85,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [localUploadMessage, setLocalUploadMessage] = useState(uploadMessage);
+  const [localUsername, setLocalUsername] = useState(formData.username); // 新增本地狀態
 
   useEffect(() => {
     setLocalUploadMessage(uploadMessage);
@@ -94,6 +95,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
 
     return () => clearTimeout(timer);
   }, [uploadMessage, formData.avatar]); // 添加 formData.avatar 作為依賴
+
+  // 確保 localUsername 在 formData.username 改變時同步更新
+  useEffect(() => {
+    setLocalUsername(formData.username);
+  }, [formData.username]);
 
   useEffect(() => {
     const fetchActivityLog = async () => {
@@ -192,8 +198,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       <input
                         id="name"
                         name="username"
-                        value={formData.username}
-                        onChange={handleChange}
+                        value={localUsername} // 使用 localUsername
+                        onChange={(e) => setLocalUsername(e.target.value)} // 更新 localUsername
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                         disabled={!isEditable.username}
                       />
@@ -217,7 +223,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   )}
 
                   <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
-                    <button onClick={handleSaveProfileChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
+                    <button onClick={() => handleSaveProfileChanges(localUsername)} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
                       保存更改
                     </button>
                   </div>

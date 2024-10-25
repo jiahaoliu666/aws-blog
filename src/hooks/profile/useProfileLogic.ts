@@ -167,17 +167,17 @@ export const useProfileLogic = () => {
     return newAccessToken;
   };
 
-  const handleSaveProfileChanges = async () => {
+  const handleSaveProfileChanges = async (localUsername: string) => {
     let hasChanges = false;
     let changesSuccessful = true;
 
-    if (!formData.username.trim()) {
+    if (!localUsername.trim()) {
       setPasswordMessage('用戶名不能為空。');
       return;
     }
 
     // 檢查用戶名是否有變更
-    if (formData.username !== user?.username) {
+    if (localUsername !== user?.username) {
       hasChanges = true;
       try {
         const updateUserCommand = new AdminUpdateUserAttributesCommand({
@@ -186,14 +186,15 @@ export const useProfileLogic = () => {
           UserAttributes: [
             {
               Name: 'name',
-              Value: formData.username, // 使用 formData.username 而不是 tempUsername
+              Value: localUsername, // 使用 localUsername
             },
           ],
         });
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功，頁面刷新中...');
         setUploadMessage('用戶名更新成功，頁面刷新中...');
-        updateUser({ username: formData.username }); // 更新本地用戶名
+        updateUser({ username: localUsername }); // 更新本地用戶名
+        setFormData(prevData => ({ ...prevData, username: localUsername })); // 更新 formData.username
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
         const err = error as Error;
@@ -265,7 +266,11 @@ export const useProfileLogic = () => {
       const target = e.target as HTMLInputElement;
       setFormData({ ...formData, [name]: target.checked });
     } else {
-      setFormData({ ...formData, [name]: value }); // 確保這裡能更新 password
+      if (name === 'username') {
+        setTempUsername(value); // 更新臨時用戶名
+      } else {
+        setFormData({ ...formData, [name]: value });
+      }
     }
   };
 
