@@ -286,7 +286,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，確認檔案類型為 jpeg 或 png，頁面刷新中...');
+        setUploadMessage('上傳失敗：檔案類型不支援，確認檔案類型為 jpeg 或 png');
         return;
       }
 
