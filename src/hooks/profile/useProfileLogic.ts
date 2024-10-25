@@ -195,6 +195,19 @@ export const useProfileLogic = () => {
         setUploadMessage('用戶名更新成功，頁面刷新中...');
         updateUser({ username: localUsername }); // 更新本地用戶名
         setFormData(prevData => ({ ...prevData, username: localUsername })); // 更新 formData.username
+
+        // 新增活動記錄
+        await fetch('/api/profile/activity-log', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user?.sub,
+            action: '變更用戶名',
+          }),
+        });
+
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
         const err = error as Error;
@@ -316,10 +329,10 @@ export const useProfileLogic = () => {
         console.log('File uploaded successfully:', fileUrl);
         setTempAvatar(fileUrl);
         setFormData(prevData => ({ ...prevData, avatar: fileUrl }));
-        localStorage.setItem('avatarUrl', fileUrl); // 確保本地存儲立即更新
+        localStorage.setItem('avatarUrl', fileUrl);
         setUploadMessage('頭像更換成功，頁面刷新中...');
 
-        //  DynamoDB 中的 avatarUrl
+        // 更新 DynamoDB 中的 avatarUrl
         const dynamoClient = new DynamoDBClient({
           region: 'ap-northeast-1',
           credentials: {
@@ -343,7 +356,10 @@ export const useProfileLogic = () => {
           const updateCommand = new UpdateItemCommand(updateParams);
           await dynamoClient.send(updateCommand);
           console.log('DynamoDB updated successfully');
-          
+
+          // 記錄 "更換頭像" 活動
+          await logActivity('更換頭像');
+
           // 顯示通知消 3 秒鐘刷新頁面
           setTimeout(() => {
             window.location.reload();

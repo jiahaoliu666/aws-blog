@@ -113,7 +113,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
     };
 
     fetchActivityLog();
-  }, [user]);
+  }, [user, uploadMessage]); // 添加 uploadMessage 作為依賴，以便在用戶名變更後重新獲取活動日誌
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6">
@@ -363,7 +363,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
                         <p className="text-sm text-gray-500">{log.date}</p>
                         <h4 className="text-lg font-semibold mt-2">{log.action}</h4>
-                        {/* 移除 details 顯示 */}
                       </div>
                     ))}
                   </div>
@@ -388,3 +387,4 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
+

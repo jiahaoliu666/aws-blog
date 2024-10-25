@@ -6,11 +6,7 @@ const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
-    const { userId, action } = req.body; // 確保這裡能接收 action
-
-    // 移除獲取用戶 IP 地址的代碼
-    // const forwardedFor = req.headers['x-forwarded-for'];
-    // const ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor?.split(',')[0] || req.connection.remoteAddress;
+    const { userId, action } = req.body;
 
     // 格式化日期
     const formatDate = (date: Date) => {
@@ -32,8 +28,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       Item: {
         userId: { S: userId },
         timestamp: { S: timestamp },
-        action: { S: action }, // 確保這裡能記錄 action
-        // 移除 details
+        action: { S: action },
       },
     };
 
