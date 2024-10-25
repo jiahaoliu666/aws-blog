@@ -176,43 +176,8 @@ export const useProfileLogic = () => {
       return;
     }
 
-    if (tempAvatar) {
-      hasChanges = true;
-      setFormData({ ...formData, avatar: tempAvatar });
-      localStorage.setItem('avatarUrl', tempAvatar);
-
-      const dynamoClient = new DynamoDBClient({
-        region: 'ap-northeast-1',
-        credentials: {
-          accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-        },
-      });
-
-      const updateParams = {
-        TableName: 'AWS_Blog_UserProfiles',
-        Key: {
-          userId: { S: user?.sub || 'default-sub' },
-        },
-        UpdateExpression: 'SET avatarUrl = :avatarUrl',
-        ExpressionAttributeValues: {
-          ':avatarUrl': { S: tempAvatar },
-        },
-      };
-
-      try {
-        const updateCommand = new UpdateItemCommand(updateParams);
-        await dynamoClient.send(updateCommand);
-        console.log('DynamoDB updated successfully');
-        setUploadMessage('頭像已功更新，頁面新中...');
-      } catch (error) {
-        console.error('Error updating DynamoDB:', error);
-        setUploadMessage('更新頭像失敗，請再次嘗試。');
-        changesSuccessful = false;
-      }
-    }
-
-    if (tempUsername !== user?.username) {
+    // 檢查用戶名是否有變更
+    if (formData.username !== user?.username) {
       hasChanges = true;
       try {
         const updateUserCommand = new AdminUpdateUserAttributesCommand({
@@ -240,6 +205,7 @@ export const useProfileLogic = () => {
       }
     }
 
+    // 如果沒有任何變更
     if (!hasChanges) {
       setUploadMessage('無任何變更項目');
     }

@@ -96,16 +96,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
   }, [uploadMessage, formData.avatar]); // 添加 formData.avatar 作為依賴
 
   useEffect(() => {
-    if (uploadMessage || passwordMessage) {
-      const timer = setTimeout(() => {
-        window.location.reload();
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [uploadMessage, passwordMessage]);
-
-  useEffect(() => {
     const fetchActivityLog = async () => {
       try {
         const response = await fetch('/api/profile/activity-log?userId=' + user?.sub);
@@ -228,7 +218,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
 
                   <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
                     <button onClick={handleSaveProfileChanges} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
-                      保存變更
+                      保存更改
                     </button>
                   </div>
                 </div>
@@ -339,7 +329,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       取消
                     </button>
                     <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
-                      {isLoading ? '保存中...' : '保存變更'}
+                      {isLoading ? '保存中...' : '保存更改'}
                     </button>
                   </div>
                 </>
