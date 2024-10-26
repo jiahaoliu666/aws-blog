@@ -104,7 +104,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   };
 
   return (  
-    <div>  
+    <div id="navbar">  
       <nav className="bg-gray-900 p-4 shadow-md">  
         <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center flex-wrap">  
           <div className="flex items-center w-full lg:w-auto">

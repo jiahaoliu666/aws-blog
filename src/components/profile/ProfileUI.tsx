@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
 import { SwitchField } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
+import Navbar from '../common/Navbar'; 
+import Footer from '../common/Footer'; 
 
 const ProfileUI: React.FC = () => {
   const {
@@ -52,7 +54,8 @@ const ProfileUI: React.FC = () => {
   }, [formData.username]);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
       <div className="flex-grow container mx-auto p-4 flex flex-col lg:flex-row gap-4 overflow-y-auto">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
@@ -299,7 +302,7 @@ const ProfileUI: React.FC = () => {
                             style={{ width: `${calculatePasswordStrength(formData.password) * 20}%` }}
                           ></div>
                         </div>
-                        <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字和特殊字符來增強密碼安全性</p>
+                        <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字、特殊字符來增強密碼安全性</p>
                       </div>
 
                       {/* 雙重認證 */}
@@ -442,6 +445,7 @@ const ProfileUI: React.FC = () => {
           </>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
