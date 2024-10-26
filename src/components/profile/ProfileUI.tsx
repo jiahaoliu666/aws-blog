@@ -45,6 +45,7 @@ const ProfileUI: React.FC = () => {
 
   const [activeTab, setActiveTab] = React.useState('profile');
   const [localUsername, setLocalUsername] = React.useState(formData.username);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     setLocalUsername(formData.username);
@@ -61,16 +62,25 @@ const ProfileUI: React.FC = () => {
       ) : (
         <>
           <div className="w-full md:w-1/4 bg-gray-500 p-6 rounded-lg shadow-lg mb-6 md:mb-0 overflow-hidden">
-            <div className="flex flex-col items-center mb-8">
+            <div className="flex flex-col items-center mb-4">
               <img
                 src={formData.avatar}
                 alt="用戶頭像"
-                className="w-24 h-24 rounded-full border-4 border-white shadow-lg mb-3"
+                className="w-24 h-24 rounded-full border-4 border-blue-500 shadow-lg mb-2"
               />
-              <p className="text-xl font-semibold text-white">{formData.username}</p>
-              <p className="text-sm text-gray-300">{formData.email}</p>
+              <p className="text-white text-lg">{formData.username}</p>
+              <p className="text-gray-300 text-sm">{formData.email}</p>
             </div>
-            <ul className="space-y-3">
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg md:hidden"
+            >
+              個人資訊選單
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <ul className={`space-y-3 ${isProfileMenuOpen ? 'block' : 'hidden'} md:block`}>
               {['profile', 'activity', 'changePassword', 'notificationSettings', 'activityLog', 'feedback', 'settings'].map((tab) => (
                 <li
                   key={tab}
@@ -350,7 +360,7 @@ const ProfileUI: React.FC = () => {
                         type="email"
                         value={formData.email}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
-                        placeholder="輸入您的電子郵件"
+                        placeholder="輸入您電子郵件"
                         disabled
                       />
                     </div>
