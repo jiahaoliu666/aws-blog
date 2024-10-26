@@ -149,7 +149,7 @@ const ProfileUI: React.FC = () => {
                   </div>
 
                   {uploadMessage && (
-                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('���功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {uploadMessage}
                     </div>
                   )}
@@ -217,68 +217,101 @@ const ProfileUI: React.FC = () => {
               {activeTab === 'changePassword' && (
                 <>
                   <h2 className="text-2xl font-bold mb-6 text-center">修改密碼</h2>
+                  
+                  <div className="mb-4 relative">
+                    <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                    <input
+                      id="oldPassword"
+                      name="oldPassword"
+                      type={showOldPassword ? "text" : "password"}
+                      placeholder="輸入舊密碼"
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      required
+                      className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {showOldPassword ? "隱藏" : "顯示"}
+                    </button>
+                  </div>
+                  <div className="mb-4 relative">
+                    <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                    <input
+                      id="newPassword"
+                      name="password"
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="輸入新密碼"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {showNewPassword ? "隱藏" : "顯示"}
+                    </button>
+                  </div>
+                  <div className="mb-4 relative">
+                    <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                    <input
+                      id="confirmNewPassword"
+                      name="confirmPassword"
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="再次輸入新密碼"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      required
+                      className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {showNewPassword ? "隱藏" : "顯示"}
+                    </button>
+                  </div>
                   <div className="space-y-4">
-                    <div className="mb-4 relative">
-                      <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                      <input
-                        id="oldPassword"
-                        name="oldPassword"
-                        type={showOldPassword ? "text" : "password"}
-                        placeholder="輸入舊密碼"
-                        value={oldPassword}
-                        onChange={(e) => setOldPassword(e.target.value)}
-                        required
-                        className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowOldPassword(!showOldPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                      >
-                        {showOldPassword ? "隱藏" : "顯示"}
-                      </button>
+                    {/* 密碼強度 */}
+                    <div className="mb-4 mt-6">
+                      <label className="block text-sm font-medium text-gray-700">密碼強度</label>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style={{ width: '30%' }}></div>
+                      </div>
+                      <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字和特殊字符來增強密碼安全性</p>
                     </div>
-                    <div className="mb-4 relative">
-                      <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                      <input
-                        id="newPassword"
-                        name="password"
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="輸入新密碼"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                        className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                      >
-                        {showNewPassword ? "隱藏" : "顯示"}
-                      </button>
+
+                    {/* 雙重認證 */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">雙重認證</label>
+                      <div className="flex items-center mt-2">
+                        <span className="mr-2">啟用雙重認證</span>
+                        <SwitchField
+                          label=""
+                          isChecked={false}
+                          onChange={() => {}}
+                          className="mr-2"
+                        />
+                      </div>
+                      <p className="mt-2 text-sm text-gray-500">啟用後，每次登錄都需要輸入額外的驗證碼</p>
                     </div>
-                    <div className="mb-4 relative">
-                      <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                      <input
-                        id="confirmNewPassword"
-                        name="confirmPassword"
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="再次輸入新密碼"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        required
-                        className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                      >
-                        {showNewPassword ? "隱藏" : "顯示"}
-                      </button>
+
+                    {/* 安全提示 */}
+                    <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
+                      <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
+                      <p className="mt-2 text-sm text-gray-500">
+                        定期更改密碼並避免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
+                      </p>
                     </div>
                   </div>
+                  
                   {passwordMessage && (
                     <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {passwordMessage}
