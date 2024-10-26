@@ -5,26 +5,23 @@ const {
   PutItemCommand,
   ScanCommand,
 } = require("@aws-sdk/client-dynamodb");
-const {
-  TranslateClient,
-  TranslateTextCommand,
-} = require("@aws-sdk/client-translate"); // 引入 Translate 客戶端
 const puppeteer = require("puppeteer");
 const { v4: uuidv4 } = require("uuid");
 const readline = require("readline");
 const OpenAI = require("openai");
+const deepl = require("deepl-node"); // 引入 DeepL 客戶端
 
-console.log("OpenAI API Key:", process.env.OPENAI_API_KEY); // 應該輸出你的 API 金鑰
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // 使用環境變數
+if (!process.env.DEEPL_API_KEY) {
+  throw new Error(
+    "DeepL API Key is missing or empty. Please check your .env.local file."
+  );
+}
+const translator = new deepl.Translator(process.env.DEEPL_API_KEY); // 使用環境變數初始化 DeepL 客戶端
 
 // 初始化 DynamoDB 客戶端
 const dbClient = new DynamoDBClient({
-  region: "ap-northeast-1", // 替換成您的AWS區域，例如 'us-west-2'
-});
-
-// 初始化 Amazon Translate 客戶端
-const translateClient = new TranslateClient({
-  region: "ap-northeast-1", // 替換成您的AWS區域
+  region: "ap-northeast-1",
 });
 
 let insertedCount = 0;
@@ -102,19 +99,12 @@ async function summarizeArticle(url) {
 }
 
 // 翻譯函數
-async function translateText(text, sourceLang, targetLang) {
+async function translateText(text) {
   console.log(`開始翻譯文本`);
-  const params = {
-    Text: text,
-    SourceLanguageCode: sourceLang,
-    TargetLanguageCode: targetLang,
-  };
-
   try {
-    const command = new TranslateTextCommand(params);
-    const response = await translateClient.send(command);
+    const result = await translator.translateText(text, "EN", "ZH-HANT"); // 設置源語言為英文，目標語言為繁體中文
     console.log(`翻譯成功`);
-    return response.TranslatedText;
+    return result.text;
   } catch (error) {
     console.error("翻譯時發生錯誤:", error);
     return text; // 如果翻譯失敗，返回原始文本
@@ -133,12 +123,8 @@ async function saveToDynamoDB(article) {
 
   const summary = await summarizeArticle(article.link);
 
-  const translatedTitle = await translateText(article.title, "en", "zh-TW");
-  const translatedDescription = await translateText(
-    article.description,
-    "en",
-    "zh-TW"
-  );
+  const translatedTitle = await translateText(article.title);
+  const translatedDescription = await translateText(article.description);
 
   const params = {
     TableName: "AWS_Blog_News",
@@ -252,7 +238,7 @@ async function scrapeAWSBlog(targetNumberOfArticles) {
   }
 }
 
-// 啟動交互詢問
+// 動交互詢問
 rl.question("請輸入需要爬取的文章數量: ", async (answer) => {
   const numberOfArticles = parseInt(answer);
   if (isNaN(numberOfArticles) || numberOfArticles <= 0) {
