@@ -92,7 +92,7 @@ export const useProfileLogic = () => {
           const userResponse = await cognitoClient.send(userCommand);
 
           const registrationDateAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'custom:registrationDate');
-          const registrationDate = registrationDateAttribute ? registrationDateAttribute.Value : '[註冊日期]';
+          const registrationDate = registrationDateAttribute ? registrationDateAttribute.Value : '[註]';
 
           setFormData(prevData => ({
             ...prevData,
@@ -208,7 +208,7 @@ export const useProfileLogic = () => {
         });
         await cognitoClient.send(updateUserCommand);
         setUploadMessage('用戶名更新成功，頁面刷新中...');
-        console.log('用戶名更新成功，頁面刷新中...');
+        console.log('用戶名更新成功頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
       } catch (error) {
@@ -233,25 +233,34 @@ export const useProfileLogic = () => {
   };
 
   const handleChangePassword = async () => {
+    console.log('handleChangePassword called');
     const passwordRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
 
     if (!oldPassword || !formData.password) {
       setPasswordMessage('請輸入舊密碼和新密碼。');
+      console.log('Missing old or new password');
+      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
     if (!passwordRegex.test(formData.password)) {
       setPasswordMessage('密碼只能包含特殊符號、英文和數字。');
+      console.log('Password format invalid');
+      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
     if (formData.password === oldPassword) {
       setPasswordMessage('新密碼不能與舊密碼相同。');
+      console.log('New password is the same as old password');
+      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setPasswordMessage('新密碼和確認密碼不一致。');
+      console.log('Password and confirm password do not match');
+      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
@@ -262,22 +271,23 @@ export const useProfileLogic = () => {
         AccessToken: user?.accessToken!,
       });
       await cognitoClient.send(changePasswordCommand);
-      console.log('密碼更新成功');
+      console.log('Password changed successfully');
       setPasswordMessage('密碼變更成功，請重新登入。');
       updateUser({ accessToken: user?.accessToken });
 
       setTimeout(() => {
-        console.log('準備登出...');
+        console.log('Logging out...');
         handleLogout();
       }, 3000);
     } catch (error) {
-      console.error('更新密碼時出錯:', error as Error);
+      console.error('Error changing password:', error);
       if ((error as Error).name === 'LimitExceededException') {
         setPasswordMessage('嘗試次數過多，請稍後再試。');
       } else {
         setPasswordMessage('更新密碼失敗請確認舊密碼是否正確並重試。');
       }
     }
+    console.log('Password change attempt completed');
   };
 
   const handleCancelChanges = () => {
@@ -315,7 +325,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，請重新確認檔案型是否為 jpeg 或 png。');
+        setUploadMessage('上失敗：檔案類型不支援，請重新確認檔案型是否為 jpeg 或 png。');
         return;
       }
 

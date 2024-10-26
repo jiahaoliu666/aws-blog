@@ -60,6 +60,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
     initializeTabState();
   }, [activeTab]);
 
+  React.useEffect(() => {
+    console.log('Password message updated:', passwordMessage);
+  }, [passwordMessage]);
+
+  React.useEffect(() => {
+    console.log('Upload message updated:', uploadMessage);
+  }, [uploadMessage]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -198,7 +206,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
                 )}
                 {activeTab === 'activity' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">最近的觀看紀��</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">最近的觀看紀</h3>
                     <div className="grid grid-cols-1 gap-3">
                       {recentArticles.length === 0 ? (
                         <p className="text-gray-500">目前沒有任何觀看紀錄。</p>
@@ -329,7 +337,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
                             className="mr-2"
                           />
                         </div>
-                        <p className="mt-2 text-sm text-gray-500">啟用後，每次登錄都需要輸入驗證碼</p>
+                        <p className="mt-2 text-sm text-gray-500">啟用後，每次登錄都需要輸入證碼</p>
                       </div>
 
                       {/* 安全提示 */}
@@ -341,11 +349,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
                       </div>
                     </div>
                     
-                    {passwordMessage && (
-                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {passwordMessage}
-                      </div>
-                    )}
                     <div className="flex justify-end space-x-4 mt-6">
                       <button 
                         onClick={() => {
@@ -360,6 +363,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
                         {isLoading ? '保存中...' : '更改密碼'}
                       </button>
                     </div>
+                    {passwordMessage && (
+                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {passwordMessage}
+                      </div>
+                    )}
                   </>
                 )}
                 {activeTab === 'feedback' && (
