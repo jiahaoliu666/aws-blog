@@ -143,10 +143,11 @@ const RegisterPage: React.FC = () => {
   const checkUserConfirmationStatus = async (email: string) => {
     try {
       const command = new AdminGetUserCommand({
-        UserPoolId: "your_user_pool_id",
+        UserPoolId: "ap-northeast-1_SDMioGwSr", // 確保這裡的 UserPoolId 是正確的
         Username: email
       });
       const response = await cognitoClient.send(command);
+      console.log('UserStatus:', response.UserStatus); // 添加這行以檢查 response 的結構
       return response.UserStatus === "CONFIRMED";
     } catch (err) {
       console.error('檢查用戶確認狀態失敗:', err);
