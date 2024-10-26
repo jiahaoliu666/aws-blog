@@ -1,6 +1,6 @@
 // src/pages/auth/register.tsx  
 import React, { useState, useEffect } from 'react';  
-import { ConfirmSignUpCommand, ResendConfirmationCodeCommand } from "@aws-sdk/client-cognito-identity-provider";  
+import { ConfirmSignUpCommand, ResendConfirmationCodeCommand, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";  
 import cognitoClient from '@/utils/cognitoClient';  
 import { PasswordField, Input } from '@aws-amplify/ui-react';  
 import '@aws-amplify/ui-react/styles.css';  
@@ -62,14 +62,34 @@ const RegisterPage: React.FC = () => {
     }  
 
     try {  
-      const success = await registerUser(email, password, username);  
-      if (success) {  
-        setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
-        setError(null);  
-        setIsVerificationNeeded(true);  
-      }  
+      const command = new SignUpCommand({
+        ClientId: "5ua9kmb59lmqks0echkc261dgh",
+        Username: email,
+        Password: password,
+        UserAttributes: [
+          {
+            Name: "email",
+            Value: email
+          }
+        ]
+      });
+      await cognitoClient.send(command);
+      setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
+      setError(null);  
+      setIsVerificationNeeded(true);  
     } catch (err: any) {  
-      // 處理錯誤
+      console.log('進入 catch 區塊'); // 確認是否進入 catch 區塊
+      console.error('註冊失敗:', err); // 確保這行被執行
+      if (err.name === 'UsernameExistsException') {
+        setError(`電子郵件 ${email} 已被註冊，請使用其他電子郵件。`);
+      } else if (err.name === 'InvalidPasswordException') {
+        setError('密碼不符合要求，請選擇更強的密碼。');
+      } else if (err.name === 'InvalidParameterException') {
+        setError('提供的參數無效，請檢查您的輸入。');
+      } else {
+        setError(err.message || '註冊失敗，請稍後再試。');
+      }
+      setSuccess(null);  
     }  
   };  
 
@@ -225,7 +245,7 @@ const RegisterPage: React.FC = () => {
             )}  
 
             {error && (
-              <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${error.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-red-100 text-red-800">
                 {error}
               </div>
             )}
