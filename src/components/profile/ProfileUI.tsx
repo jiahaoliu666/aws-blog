@@ -332,7 +332,7 @@ const ProfileUI: React.FC = () => {
                       取消更改
                     </button>
                     <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
-                      {isLoading ? '保存中...' : '保存更改'}
+                      {isLoading ? '保存中...' : '更改密碼'}
                     </button>
                   </div>
                 </>
