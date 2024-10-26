@@ -52,8 +52,8 @@ const ProfileUI: React.FC = () => {
   }, [formData.username]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-grow container mx-auto p-5 flex flex-col lg:flex-row gap-6 overflow-hidden">
+    <div className="min-h-screen flex flex-col justify-between overflow-hidden">
+      <div className="flex-grow container mx-auto p-5 flex flex-col lg:flex-row gap-6">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
