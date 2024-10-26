@@ -243,8 +243,20 @@ export const useProfileLogic = () => {
   };
 
   const handleChangePassword = async () => {
+    const passwordRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
+
     if (!oldPassword || !formData.password) {
       setPasswordMessage('請輸入舊密碼和新密碼。');
+      return;
+    }
+
+    if (!passwordRegex.test(formData.password)) {
+      setPasswordMessage('密碼只能包含特殊符號、英文和數字。');
+      return;
+    }
+
+    if (formData.password === oldPassword) {
+      setPasswordMessage('新密碼不能與舊密碼相同。');
       return;
     }
 
@@ -261,13 +273,13 @@ export const useProfileLogic = () => {
       });
       await cognitoClient.send(changePasswordCommand);
       console.log('密碼更新成功');
-      setPasswordMessage('密碼變更成功，重新登入。');
+      setPasswordMessage('密碼變更成功，請重新登入。');
       updateUser({ accessToken: user?.accessToken });
 
       setTimeout(() => {
         console.log('準備登出...');
         handleLogout();
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error('更新密碼時出錯:', error as Error);
       if ((error as Error).name === 'LimitExceededException') {
@@ -287,6 +299,7 @@ export const useProfileLogic = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+
     if (type === 'checkbox') {
       const target = e.target as HTMLInputElement;
       setFormData({ ...formData, [name]: target.checked });

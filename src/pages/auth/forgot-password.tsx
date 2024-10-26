@@ -92,7 +92,7 @@ const ForgotPasswordPage: React.FC = () => {
     } catch (err: any) {  
       console.error("Error during ConfirmForgotPasswordCommand:", err);  
       if (err.message.includes('Password does not conform to policy: Password not long enough')) {  
-        setError('密碼不���合政策要求：密碼長度不足。');  
+        setError('密碼不符合政策要求：密碼長度不足。');  
       } else if (err.message.includes('Invalid verification code provided, please try again.')) {
         setError('請提供正確的驗證碼。');
       } else if (err.message.includes('Invalid code provided, please request a code again.')) {
