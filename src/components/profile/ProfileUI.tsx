@@ -73,7 +73,7 @@ const ProfileUI: React.FC = () => {
                 <li
                   key={tab}
                   className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 text-xl leading-relaxed ${
-                    activeTab === tab ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300 hover:bg-gray-600'
+                    activeTab === tab ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                   onClick={() => setActiveTab(tab)}
                 >
@@ -149,7 +149,7 @@ const ProfileUI: React.FC = () => {
                   </div>
 
                   {uploadMessage && (
-                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('���功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {uploadMessage}
                     </div>
                   )}
