@@ -56,7 +56,7 @@ const RegisterPage: React.FC = () => {
     }  
 
     if (password !== confirmPassword) {  
-      setError('密碼不匹配');  
+      setError('密碼不匹配，請重新輸入');  
       setSuccess(null);  
       return;  
     }  
@@ -85,7 +85,10 @@ const RegisterPage: React.FC = () => {
         // 新增檢查用戶是否已驗證
         const userConfirmed = await checkUserConfirmationStatus(email);
         if (userConfirmed) {
-          setError(`電子郵件 ${email} 已被註冊且已驗證。`);
+          setError(`電子郵件 ${email} 已被註冊且已驗證，導向到登入頁面...`);
+          setTimeout(() => {
+            router.push('/auth/login');
+          }, 3000); // 3秒後重定向
         } else {
           setError(`電子郵件 ${email} 已被註冊但未驗證。`);
         }
