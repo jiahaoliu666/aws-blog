@@ -31,6 +31,7 @@ const LoginPage: React.FC = () => {
     } else {
       setLoading(false); // 如果未登入，停止 loading
     }
+    clearError(); // 在頁面加載時清除錯誤
   }, [user, router]);  
 
   useEffect(() => {  

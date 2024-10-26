@@ -82,15 +82,15 @@ const RegisterPage: React.FC = () => {
       console.error('註冊失敗:', err); // 確保這行被執行
       if (err.name === 'UsernameExistsException') {
         setError(`電子郵件 ${email} 已被註冊，請使用其他電子郵件。`);
-        // 新增檢查用戶是否已驗證
         const userConfirmed = await checkUserConfirmationStatus(email);
         if (userConfirmed) {
           setError(`電子郵件 ${email} 已被註冊且已驗證，導向到登入頁面...`);
           setTimeout(() => {
             router.push('/auth/login');
-          }, 3000); // 3秒後重定向
+          }, 3000);
         } else {
-          setError(`電子郵件 ${email} 已被註冊但未驗證。`);
+          setError(`電子郵件 ${email} 已被註冊但未驗證。請點擊重新發送驗證碼按鈕進行驗證。`);
+          setIsVerificationNeeded(true); // 啟用驗證碼輸入
         }
       } else if (err.name === 'InvalidPasswordException') {
         setError('密碼不符合要求，請選擇更強的密碼。');
