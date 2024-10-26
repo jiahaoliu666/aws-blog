@@ -39,6 +39,7 @@ const ProfileUI: React.FC = () => {
     toggleEditableField,
     activityLog,
     oldPassword,
+    calculatePasswordStrength,
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -283,7 +284,10 @@ const ProfileUI: React.FC = () => {
                     <div className="mb-4 mt-6">
                       <label className="block text-sm font-medium text-gray-700">密碼強度</label>
                       <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style={{ width: '30%' }}></div>
+                        <div
+                          className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                          style={{ width: `${calculatePasswordStrength(formData.password) * 20}%` }}
+                        ></div>
                       </div>
                       <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字和特殊字符來增強密碼安全性</p>
                     </div>
