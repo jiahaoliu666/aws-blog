@@ -40,6 +40,7 @@ const ProfileUI: React.FC = () => {
     activityLog,
     oldPassword,
     calculatePasswordStrength,
+    resetFeedbackForm,
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -359,6 +360,8 @@ const ProfileUI: React.FC = () => {
                         id="feedbackTitle"
                         name="feedbackTitle"
                         type="text"
+                        value={formData.feedbackTitle}
+                        onChange={handleChange}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                         placeholder="輸入標題"
                       />
@@ -369,6 +372,8 @@ const ProfileUI: React.FC = () => {
                         id="feedbackContent"
                         name="feedbackContent"
                         rows={4}
+                        value={formData.feedbackContent}
+                        onChange={handleChange}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                         placeholder="請輸入您的問題、意見或建議"
                       />
@@ -383,7 +388,14 @@ const ProfileUI: React.FC = () => {
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                       />
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end space-x-4">
+                      <button
+                        type="button"
+                        onClick={resetFeedbackForm}
+                        className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
+                      >
+                        取消提交
+                      </button>
                       <button
                         type="submit"
                         className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"

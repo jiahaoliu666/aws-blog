@@ -18,6 +18,8 @@ interface FormData {
   notifications: boolean;
   password: string;
   confirmPassword: string; 
+  feedbackTitle: string;
+  feedbackContent: string; // 新增這一行
 }
 
 export const useProfileLogic = () => {
@@ -35,6 +37,8 @@ export const useProfileLogic = () => {
     notifications: true,
     password: '',
     confirmPassword: '', // 新增這一行
+    feedbackTitle: '',
+    feedbackContent: '', // 新增這一行
   });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -202,7 +206,7 @@ export const useProfileLogic = () => {
         });
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功，頁面刷新中...');
-        setUploadMessage('用戶名更新成功，頁面刷新中...');
+        setUploadMessage('用戶名更新成功，頁面��新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
@@ -560,6 +564,14 @@ export const useProfileLogic = () => {
     return strength;
   };
 
+  const resetFeedbackForm = () => {
+    setFormData(prevData => ({
+      ...prevData,
+      feedbackTitle: '',
+      feedbackContent: '',
+    }));
+  };
+
   return {
     user,
     formData,
@@ -593,5 +605,6 @@ export const useProfileLogic = () => {
     activityLog,
     oldPassword,
     calculatePasswordStrength,
+    resetFeedbackForm,
   };
 };
