@@ -96,7 +96,7 @@ export const useProfileLogic = () => {
 
           setFormData(prevData => ({
             ...prevData,
-            registrationDate: registrationDate || '[註冊日期]',
+            registrationDate: registrationDate || '[註日期]',
           }));
         } catch (error) {
           const err = error as Error;
@@ -188,7 +188,8 @@ export const useProfileLogic = () => {
     let changesSuccessful = true;
 
     if (!localUsername.trim()) {
-      setPasswordMessage('用戶名不能為空。');
+      setUploadMessage('用戶名不能為空。');
+      console.log('用戶名不能為空。');
       return;
     }
 
@@ -206,44 +207,28 @@ export const useProfileLogic = () => {
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        console.log('用戶名更新成功��頁面刷新中...');
         setUploadMessage('用戶名更新成功，頁面刷新中...');
+        console.log('用戶名更新成功，頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
-
-        await fetch('/api/profile/activity-log', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: user?.sub,
-            action: `變更用戶名為：${localUsername}`,
-          }),
-        });
-
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
-        const err = error as Error;
-        if (err.name === 'UserNotFoundException') {
-          console.error('用戶不存在，請檢查用戶名和用戶池 ID。');
-        }
         setUploadMessage('更新用戶名失敗，請稍後再試。');
+        console.log('更新用戶名失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }
 
     if (!hasChanges) {
       setUploadMessage('無任何變更項目');
+      console.log('無任何變更項目');
     }
-
-    setTempAvatar(null);
 
     if (hasChanges && changesSuccessful) {
       setIsLoading(true);
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 3000);
     }
   };
 
