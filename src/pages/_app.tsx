@@ -14,10 +14,10 @@ function MyApp({ Component, pageProps }: AppProps) {
     <AuthProvider>
       <AppProvider>
         <LanguageProvider>
-          <Head>
-            <title>AWS Blog</title> {/* 在這裡添加標題 */}
-          </Head>
-          <Component {...pageProps} />
+            <Head>
+              <title>AWS Blog</title> {/* 在這裡添加標題 */}
+            </Head>
+            <Component {...pageProps} />
         </LanguageProvider>
       </AppProvider>
     </AuthProvider>

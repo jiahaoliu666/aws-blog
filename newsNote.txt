@@ -15,6 +15,7 @@
   │     ├── AppContext.tsx                  // 管理應用程序的全局狀態和邏輯，包括主題、語言和顯示選項  
   │     └── AuthContext.tsx                 // 管理用戶身份驗證狀態，如登錄狀態和用戶信息
   │     └── LanguageContext.tsx             // 新增的語言上下文文件
+  │     └── MessageContext.tsx              // 新增的消息上下文文件
   ├── /hooks  
   │     ├── /news  
   │     │     ├── useFetchNews.ts           // 自定義 Hook，用於從 API 獲取新聞文章數據  
