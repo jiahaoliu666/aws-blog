@@ -52,7 +52,7 @@ const ProfileUI: React.FC = () => {
   }, [formData.username]);
 
   return (
-    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6 overflow-hidden">
+    <div className="container mx-auto p-5 flex flex-col md:flex-row gap-6 overflow-hidden">
       {!user ? (
         <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
           <Loader className="mb-4" size="large" />
@@ -61,7 +61,7 @@ const ProfileUI: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="w-full md:w-1/4 bg-gray-500 p-6 rounded-lg shadow-lg mb-6 md:mb-0 overflow-hidden">
+          <div className="w-full md:w-1/4 bg-gray-700 p-6 rounded-lg shadow-lg mb-6 md:mb-0">
             <div className="flex flex-col items-center mb-4">
               <img
                 src={formData.avatar}
@@ -96,12 +96,11 @@ const ProfileUI: React.FC = () => {
                   {tab === 'feedback' && '意見反饋'}
                   {tab === 'activityLog' && '活動日誌'}
                   {tab === 'notificationSettings' && '通知設置'}
-                  {tab === 'edit' && '編輯'}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="w-full md:w-3/4 p-4 bg-gray-10 border border-gray-600 rounded-lg shadow-lg shadow-gray-400 overflow-hidden">
+          <div className="w-full md:w-3/4 p-4 bg-white border border-gray-300 rounded-lg shadow-lg">
             <div className="text-gray-800">
               {activeTab === 'profile' && (
                 <div>
@@ -120,7 +119,7 @@ const ProfileUI: React.FC = () => {
                         更換頭像
                       </button>
                     </div>
-                    <div className="text-center md:text-left md:ml-6 -mt-16">
+                    <div className="text-center md:text-left md:ml-6 mt-4 md:mt-0">
                       <p className="text-xl mb-2">用戶名：{formData.username}</p>
                       <p className="text-xl mb-2">電子郵件：{formData.email}</p>
                       <p className="text-xl">註冊日期：{formData.registrationDate}</p>
@@ -136,7 +135,6 @@ const ProfileUI: React.FC = () => {
                         className="hidden"
                       />
                     </div>
-                    
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700">用戶名</label>
                       <input
