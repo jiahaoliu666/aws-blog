@@ -442,9 +442,6 @@ const ProfileUI: React.FC = () => {
           </>
         )}
       </div>
-      <footer className="bg-gray-800 text-white text-center py-4">
-        © 2024 AWS Blog All Rights Reserved.
-      </footer>
     </div>
   );
 };
