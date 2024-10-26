@@ -51,6 +51,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
     initializeTabState,
     localUsername,
     setLocalUsername,
+    resetUsername, // 新增這一行
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -162,7 +163,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
                           <SwitchField
                             label="編輯用戶名"
                             isChecked={isEditable.username}
-                            onChange={() => toggleEditableField('username')}
+                            onChange={() => {
+                              toggleEditableField('username');
+                              if (isEditable.username) {
+                                resetUsername(); // 當開關關閉時重置用戶名
+                              }
+                            }}
                             className="mr-2"
                           />
                         </div>

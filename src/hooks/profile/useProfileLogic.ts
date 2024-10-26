@@ -206,7 +206,7 @@ export const useProfileLogic = () => {
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        console.log('用戶名更新成功，頁面刷新中...');
+        console.log('用戶名更新成功��頁面刷新中...');
         setUploadMessage('用戶名更新成功，頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
@@ -598,6 +598,10 @@ export const useProfileLogic = () => {
     }
   }, [user]);
 
+  const resetUsername = () => {
+    setLocalUsername(user ? user.username : '');
+  };
+
   return {
     user,
     formData,
@@ -635,5 +639,6 @@ export const useProfileLogic = () => {
     initializeTabState,
     localUsername,
     setLocalUsername,
+    resetUsername,
   };
 };
