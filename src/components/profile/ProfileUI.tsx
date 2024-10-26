@@ -407,6 +407,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         placeholder="請輸入您的問題、意見或建議"
                       />
                     </div>
+                    <div>
+                      <label htmlFor="feedbackImage" className="block text-sm font-medium text-gray-700">上傳圖片</label>
+                      <input
+                        id="feedbackImage"
+                        name="feedbackImage"
+                        type="file"
+                        accept="image/*"
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                      />
+                    </div>
                     <div className="flex justify-end">
                       <button
                         type="submit"
@@ -454,6 +464,7 @@ export default ProfileUI;
 function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
   throw new Error('Function not implemented.');
 }
+
 
 
 

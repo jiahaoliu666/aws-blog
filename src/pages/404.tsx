@@ -4,7 +4,7 @@ import Link from 'next/link';
 const Custom404: React.FC = () => {
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300 items-center justify-center">
-            <img src="/kuku.png" alt="可愛圖示" className="mb-6 w-48 h-48" />
+            <img src="/kuku.png" alt="哭哭圖" className="mb-6 w-48 h-48" />
             <h1 className="text-5xl font-extrabold text-center mb-6 text-gray-900 drop-shadow-lg">
                 404 - 找不到頁面
             </h1>
