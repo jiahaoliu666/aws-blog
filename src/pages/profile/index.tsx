@@ -11,7 +11,7 @@ const ProfilePage: React.FC = () => {
         {...profileLogic} 
         uploadMessage={profileLogic.uploadMessage || ''} 
         passwordMessage={profileLogic.passwordMessage || ''} 
-        setIsEditable={() => {}} // 添加這行
+        setIsEditable={() => {}} 
       />
     </div>
   );

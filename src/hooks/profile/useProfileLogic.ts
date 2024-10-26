@@ -206,7 +206,7 @@ export const useProfileLogic = () => {
         });
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功，頁面刷新中...');
-        setUploadMessage('用戶名更新成功，頁面��新中...');
+        setUploadMessage('用戶名更新成功，頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
@@ -289,7 +289,7 @@ export const useProfileLogic = () => {
       if ((error as Error).name === 'LimitExceededException') {
         setPasswordMessage('嘗試次數過多，請稍後再試。');
       } else {
-        setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
+        setPasswordMessage('更新密碼失敗���請確認舊密碼是否正確並重試。');
       }
     }
   };
@@ -329,7 +329,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，請重新確認檔案類型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗：檔案類型不支援，請重新確認檔案���型是否為 jpeg 或 png。');
         return;
       }
 
@@ -572,6 +572,24 @@ export const useProfileLogic = () => {
     }));
   };
 
+  const initializeTabState = () => {
+    setIsEditing(false);
+    setTempUsername(user ? user.username : '');
+    setIsEditable({
+      username: false,
+      password: false,
+    });
+    setFormData(prevData => ({
+      ...prevData,
+      password: '',
+      confirmPassword: '',
+      feedbackTitle: '',
+      feedbackContent: '',
+    }));
+    setUploadMessage(null);
+    setPasswordMessage(null);
+  };
+
   return {
     user,
     formData,
@@ -606,5 +624,6 @@ export const useProfileLogic = () => {
     oldPassword,
     calculatePasswordStrength,
     resetFeedbackForm,
+    initializeTabState,
   };
 };

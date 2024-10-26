@@ -8,7 +8,14 @@ import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 import Navbar from '../common/Navbar'; 
 import Footer from '../common/Footer'; 
 
-const ProfileUI: React.FC = () => {
+interface ProfileUIProps {
+  uploadMessage: string;
+  passwordMessage: string;
+  setIsEditable: () => void;
+  // ... 其他屬性 ...
+}
+
+const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, setIsEditable, ...props }) => {
   const {
     user,
     formData,
@@ -17,8 +24,6 @@ const ProfileUI: React.FC = () => {
     isPasswordModalOpen,
     showOldPassword,
     showNewPassword,
-    uploadMessage,
-    passwordMessage,
     isLoading,
     isEditable,
     setIsEditing,
@@ -43,11 +48,16 @@ const ProfileUI: React.FC = () => {
     oldPassword,
     calculatePasswordStrength,
     resetFeedbackForm,
+    initializeTabState,
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
   const [localUsername, setLocalUsername] = React.useState(formData.username);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    initializeTabState();
+  }, [activeTab]);
 
   React.useEffect(() => {
     setLocalUsername(formData.username);
