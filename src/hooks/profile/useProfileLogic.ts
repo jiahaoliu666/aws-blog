@@ -10,6 +10,16 @@ interface EditableFields {
   password: boolean;
 }
 
+interface FormData {
+  username: string;
+  email: string;
+  registrationDate: string;
+  avatar: string;
+  notifications: boolean;
+  password: string;
+  confirmPassword: string; 
+}
+
 export const useProfileLogic = () => {
   const router = useRouter();
   const { user, logoutUser, updateUser } = useAuthContext();
@@ -17,13 +27,14 @@ export const useProfileLogic = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [tempAvatar, setTempAvatar] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     username: user ? user.username : '',
     email: user ? user.email : '',
     registrationDate: '[註冊日期]',
     avatar: 'user.png',
     notifications: true,
-    password: '', // 確保這裡有初始化 password
+    password: '',
+    confirmPassword: '', // 新增這一行
   });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -44,7 +55,7 @@ export const useProfileLogic = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [activityLog, setActivityLog] = useState<{ date: string; action: string; }[]>([]); // 移除 details
+  const [activityLog, setActivityLog] = useState<{ date: string; action: string; }[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -176,7 +187,6 @@ export const useProfileLogic = () => {
       return;
     }
 
-    // 檢查用戶名是否有變更
     if (localUsername !== user?.username) {
       hasChanges = true;
       try {
@@ -186,17 +196,16 @@ export const useProfileLogic = () => {
           UserAttributes: [
             {
               Name: 'name',
-              Value: localUsername, // 使用 localUsername
+              Value: localUsername,
             },
           ],
         });
         await cognitoClient.send(updateUserCommand);
         console.log('用戶名更新成功，頁面刷新中...');
         setUploadMessage('用戶名更新成功，頁面刷新中...');
-        updateUser({ username: localUsername }); // 更新本地用戶名
-        setFormData(prevData => ({ ...prevData, username: localUsername })); // 更新 formData.username
+        updateUser({ username: localUsername });
+        setFormData(prevData => ({ ...prevData, username: localUsername }));
 
-        // 新增活動記錄
         await fetch('/api/profile/activity-log', {
           method: 'POST',
           headers: {
@@ -204,7 +213,7 @@ export const useProfileLogic = () => {
           },
           body: JSON.stringify({
             userId: user?.sub,
-            action: `變更用戶名為：${localUsername}`, // 添加具體的用戶名變更
+            action: `變更用戶名為：${localUsername}`,
           }),
         });
 
@@ -219,7 +228,6 @@ export const useProfileLogic = () => {
       }
     }
 
-    // 如果沒有任何變更
     if (!hasChanges) {
       setUploadMessage('無任何變更項目');
     }
@@ -267,9 +275,9 @@ export const useProfileLogic = () => {
 
   const handleCancelChanges = () => {
     setIsEditing(false);
-    setTempUsername(user ? user.username : ''); // 重置臨時用戶名
-    setIsEditable(prev => ({ ...prev, username: false })); // 重置編輯狀態
-    setFormData(prevData => ({ ...prevData, username: user ? user.username : '' })); // 重置用戶名
+    setTempUsername(user ? user.username : '');
+    setIsEditable(prev => ({ ...prev, username: false }));
+    setFormData(prevData => ({ ...prevData, username: user ? user.username : '' }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -279,7 +287,7 @@ export const useProfileLogic = () => {
       setFormData({ ...formData, [name]: target.checked });
     } else {
       if (name === 'username') {
-        setTempUsername(value); // 更新臨時用戶名
+        setTempUsername(value);
       } else {
         setFormData({ ...formData, [name]: value });
       }
@@ -288,7 +296,7 @@ export const useProfileLogic = () => {
 
   const handleLogout = async () => {
     console.log('Logging out...');
-    await logActivity('登出系統'); // 添加這行
+    await logActivity('登出系統');
     await logoutUser();
     router.push('/auth/login');
   };
@@ -332,7 +340,6 @@ export const useProfileLogic = () => {
         localStorage.setItem('avatarUrl', fileUrl);
         setUploadMessage('頭像更換成功，頁面刷新中...');
 
-        // 更新 DynamoDB 中的 avatarUrl
         const dynamoClient = new DynamoDBClient({
           region: 'ap-northeast-1',
           credentials: {
@@ -357,10 +364,8 @@ export const useProfileLogic = () => {
           await dynamoClient.send(updateCommand);
           console.log('DynamoDB updated successfully');
 
-          // 記錄 "更換頭像" 
           await logActivity('更換頭像');
 
-          // 顯示通知消 3 秒鐘刷新頁面
           setTimeout(() => {
             window.location.reload();
           }, 3000);
@@ -393,14 +398,14 @@ export const useProfileLogic = () => {
 
   const handleClosePasswordModal = () => {
     setIsPasswordModalOpen(false);
-    setOldPassword(''); // 清空舊密碼
-    setFormData(prevData => ({ ...prevData, password: '' })); // 清空新密碼
+    setOldPassword('');
+    setFormData(prevData => ({ ...prevData, password: '' }));
     setPasswordMessage(null);
   };
 
   const resetPasswordFields = () => {
-    setOldPassword(''); // 確保這行存在
-    setFormData(prevData => ({ ...prevData, password: '', confirmPassword: '' })); // 確保 confirmPassword 也被重置
+    setOldPassword('');
+    setFormData(prevData => ({ ...prevData, password: '', confirmPassword: '' }));
   };
 
   useEffect(() => {
@@ -410,11 +415,9 @@ export const useProfileLogic = () => {
     }, 1000);
   }, []);
 
-  // 確保 setIsEditable 函數能正確更新狀態
   const toggleEditableField = (field: keyof EditableFields) => {
     setIsEditable(prev => ({ ...prev, [field]: !prev[field] }));
   };
-
 
   const logActivity = async (action: string) => {
     try {
@@ -446,20 +449,18 @@ export const useProfileLogic = () => {
           userId: { S: user?.sub || 'default-sub' },
           timestamp: { S: timestamp },
           action: { S: action },
-          // 移除 details
         },
       };
       const putCommand = new PutItemCommand(putParams);
       await dynamoClient.send(putCommand);
 
-      // 確保只保留最新的 6 筆
       const queryParams = {
         TableName: 'AWS_Blog_UserActivityLog',
         KeyConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: {
           ':userId': { S: user?.sub || 'default-sub' },
         },
-        ScanIndexForward: true, // 獲取最舊的
+        ScanIndexForward: true,
       };
 
       const queryCommand = new QueryCommand(queryParams);
@@ -471,7 +472,7 @@ export const useProfileLogic = () => {
           TableName: 'AWS_Blog_UserActivityLog',
           Key: {
             userId: { S: user?.sub || 'default-sub' },
-            timestamp: { S: oldestItem.timestamp.S || '' }, // 確保 timestamp 不為 undefined
+            timestamp: { S: oldestItem.timestamp.S || '' },
           },
         };
         const deleteCommand = new DeleteItemCommand(deleteParams);
@@ -481,14 +482,6 @@ export const useProfileLogic = () => {
       console.error('Error logging activity:', error);
     }
   };
-
-  // 在需要記錄活動的地方調用 logActivity
-  useEffect(() => {
-    if (user) {
-      // 移除這行，因為我們不想在每次頁面刷新時記錄登入活動
-      // logActivity('登入系統');
-    }
-  }, [user]);
 
   useEffect(() => {
     const fetchActivityLog = async () => {
@@ -508,7 +501,7 @@ export const useProfileLogic = () => {
             ':userId': { S: user.sub },
           },
           ScanIndexForward: false,
-          Limit: 6, // 獲取最新的 6 筆
+          Limit: 6,
         };
 
         try {
@@ -517,7 +510,6 @@ export const useProfileLogic = () => {
           const logs = response.Items?.map(item => ({
             date: item.timestamp?.S || '',
             action: item.action?.S || '',
-            // 移除 details
           })) || [];
 
           setActivityLog(logs);
@@ -534,9 +526,9 @@ export const useProfileLogic = () => {
     if (uploadMessage) {
       const timer = setTimeout(() => {
         window.location.reload();
-      }, 3000); // 3秒後刷新頁面
+      }, 3000);
 
-      return () => clearTimeout(timer); // 清除定時器
+      return () => clearTimeout(timer);
     }
   }, [uploadMessage]);
 
@@ -571,6 +563,6 @@ export const useProfileLogic = () => {
     resetPasswordFields,
     toggleEditableField,
     activityLog,
-    oldPassword, // 確保這行存在
+    oldPassword,
   };
 };

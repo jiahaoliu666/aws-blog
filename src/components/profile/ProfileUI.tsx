@@ -1,122 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
-import { SwitchField } from '@aws-amplify/ui-react'; 
-import '@aws-amplify/ui-react/styles.css';  
+import { SwitchField } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
+import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 
+const ProfileUI: React.FC = () => {
+  const {
+    user,
+    formData,
+    recentArticles,
+    isEditing,
+    isPasswordModalOpen,
+    showOldPassword,
+    showNewPassword,
+    uploadMessage,
+    passwordMessage,
+    isLoading,
+    isEditable,
+    setIsEditing,
+    setTempAvatar,
+    setFormData,
+    setOldPassword,
+    setIsPasswordModalOpen,
+    setShowOldPassword,
+    setShowNewPassword,
+    handleSaveProfileChanges,
+    handleChangePassword,
+    handleLogout,
+    handleAvatarChange,
+    handleEditClick,
+    handleOpenPasswordModal,
+    handleClosePasswordModal,
+    handleCancelChanges,
+    handleChange,
+    resetPasswordFields,
+    toggleEditableField,
+    activityLog,
+    oldPassword,
+  } = useProfileLogic();
 
+  const [activeTab, setActiveTab] = React.useState('profile');
+  const [localUsername, setLocalUsername] = React.useState(formData.username);
 
-type ProfileUIProps = {
-  user: any; // 根據需要替換 'any' 為更具體的類型
-  formData: any; // 根據需要替換 'any' 為更具體的類型
-  recentArticles: any[]; // 根據需要替換 'any' 為更具體的類型
-  isEditing: boolean;
-  isPasswordModalOpen: boolean;
-  showOldPassword: boolean;
-  showNewPassword: boolean;
-  uploadMessage: string;
-  passwordMessage: string;
-  isLoading: boolean;
-  isEditable: any; // 根據需要替換 'any' 為更具體的類型
-  setIsEditing: (value: boolean) => void;
-  setTempAvatar: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
-  setFormData: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
-  setIsPasswordModalOpen: (value: boolean) => void;
-  setShowOldPassword: (value: boolean) => void;
-  setShowNewPassword: (value: boolean) => void;
-  handleSaveProfileChanges: (localUsername: string) => void;
-  handleChangePassword: () => void;
-  handleLogout: () => void;
-  handleAvatarChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleEditClick: () => void;
-  handleOpenPasswordModal: () => void;
-  handleClosePasswordModal: () => void;
-  handleCancelChanges: () => void;
-  handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  setIsEditable: (value: any) => void; // 根據需要替換 'any' 為更具體的類型
-  resetPasswordFields: () => void; // 新增這個 prop
-  toggleEditableField: (field: keyof EditableFields) => void; // 確保這個 prop 被傳遞
-  activityLog: { date: string; action: string; }[]; // 移除 details
-  setActivityLog: (value: { date: string; action: string; }[]) => void; // 移除 details
-  oldPassword: string; // 確保這行存在
-  setOldPassword: (value: string) => void;
-};
-
-// 定義 isEditable 的類型
-type EditableFields = {
-  username: boolean;
-  password: boolean;
-  // 如果有其他屬性，請在這裡添加
-};
-
-const ProfileUI: React.FC<ProfileUIProps> = ({
-  user,
-  formData,
-  recentArticles,
-  isEditing,
-  isPasswordModalOpen,
-  showOldPassword,
-  showNewPassword,
-  uploadMessage,
-  passwordMessage,
-  isLoading,
-  isEditable,
-  setIsEditing,
-  setTempAvatar,
-  setFormData,
-  setIsPasswordModalOpen,
-  setShowOldPassword,
-  setShowNewPassword,
-  handleSaveProfileChanges,
-  handleChangePassword,
-  handleLogout,
-  handleAvatarChange,
-  handleEditClick,
-  handleOpenPasswordModal,
-  handleClosePasswordModal,
-  handleCancelChanges,
-  handleChange,
-  setIsEditable,
-  resetPasswordFields,
-  toggleEditableField,
-  activityLog,
-  setActivityLog,
-  oldPassword, // 確保這行存在
-  setOldPassword,
-}) => {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [localUploadMessage, setLocalUploadMessage] = useState(uploadMessage);
-  const [localUsername, setLocalUsername] = useState(formData.username);
-  // 移除本地的 oldPassword 狀態
-  // const [oldPassword, setOldPassword] = useState(''); // 移除這行
-
-  useEffect(() => {
-    setLocalUploadMessage(uploadMessage);
-    const timer = setTimeout(() => {
-      setLocalUploadMessage('');
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [uploadMessage, formData.avatar]);
-
-  useEffect(() => {
+  React.useEffect(() => {
     setLocalUsername(formData.username);
   }, [formData.username]);
-
-  useEffect(() => {
-    const fetchActivityLog = async () => {
-      try {
-        const response = await fetch('/api/profile/activity-log?userId=' + user?.sub);
-        const data = await response.json();
-        setActivityLog(data);
-      } catch (error) {
-        console.error('Error fetching activity log:', error);
-      }
-    };
-
-    fetchActivityLog();
-  }, [user, uploadMessage]);
 
   return (
     <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6">
@@ -139,7 +69,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               <p className="text-sm text-gray-300">{formData.email}</p>
             </div>
             <ul className="space-y-3">
-              {['profile', 'activity', 'changePassword', 'notificationSettings', 'activityLog' , 'feedback' , 'settings'].map((tab) => (
+              {['profile', 'activity', 'changePassword', 'notificationSettings', 'activityLog', 'feedback', 'settings'].map((tab) => (
                 <li
                   key={tab}
                   className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 text-xl leading-relaxed ${
@@ -167,7 +97,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <div className="flex flex-col md:flex-row items-center mb-2">
                     <div className="flex flex-col items-center">
                       <img
-                        src={formData.avatar} // 保這裡使用最新的 formData.avatar
+                        src={formData.avatar}
                         alt="用戶頭像"
                         className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mb-2"
                       />
@@ -191,7 +121,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         id="avatar"
                         name="avatar"
                         onChange={handleAvatarChange}
-                        className="hidden" // 隱藏 input
+                        className="hidden"
                       />
                     </div>
                     
@@ -200,8 +130,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                       <input
                         id="name"
                         name="username"
-                        value={localUsername} // 使用 localUsername
-                        onChange={(e) => setLocalUsername(e.target.value)} // 更新 localUsername
+                        value={localUsername}
+                        onChange={(e) => setLocalUsername(e.target.value)}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                         disabled={!isEditable.username}
                       />
@@ -218,9 +148,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                     </div>
                   </div>
 
-                  {localUploadMessage && (
-                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${localUploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {localUploadMessage}
+                  {uploadMessage && (
+                    <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {uploadMessage}
                     </div>
                   )}
 
@@ -228,7 +158,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                     <button 
                       onClick={() => {
                         handleCancelChanges();
-                        setLocalUsername(formData.username); // 重置 localUsername
+                        setLocalUsername(formData.username);
                       }} 
                       className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
                     >
@@ -282,7 +212,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {activeTab === 'settings' && (
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-4">設定</h3>
-                  {/* 這裡可以放其他設定內 */}
                 </div>
               )}
               {activeTab === 'changePassword' && (
@@ -296,8 +225,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         name="oldPassword"
                         type={showOldPassword ? "text" : "password"}
                         placeholder="輸入舊密碼"
-                        value={oldPassword} // 確保這裡使用 oldPassword
-                        onChange={(e) => setOldPassword(e.target.value)} // 更新 oldPassword
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
                         required
                         className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
                       />
@@ -358,8 +287,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <div className="flex justify-end space-x-4 mt-6">
                     <button 
                       onClick={() => {
-                        handleClosePasswordModal(); // 調用此函數以重置密碼欄位
-                        resetPasswordFields(); // 確保這行被調用以重置密碼欄位
+                        handleClosePasswordModal();
+                        resetPasswordFields();
                       }} 
                       className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
                     >
@@ -381,10 +310,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                         id="feedbackEmail"
                         name="feedbackEmail"
                         type="email"
-                        value={formData.email} // 使用 formData.email 作為默認值
+                        value={formData.email}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                         placeholder="輸入您的電子郵件"
-                        disabled // 設置為不可編輯
+                        disabled
                       />
                     </div>
                     <div>
@@ -433,7 +362,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">活動日誌</h3>
                   <div className="space-y-4">
                     {activityLog.length === 0 ? (
-                      <p className="text-gray-500">目前沒有任何活動日誌。</p> // 新增這行
+                      <p className="text-gray-500">目前沒有任何活動日誌。</p>
                     ) : (
                       activityLog.slice(0, 6).map((log, index) => (
                         <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-lg border-2 border-gray-300">
@@ -448,36 +377,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({
               {activeTab === 'notificationSettings' && (
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-4">通知設置</h3>
-                  {/* 在這裡添加通知設置內容 */}
                 </div>
               )}
             </div>
           </div>
         </>
-      )
-    }
+      )}
     </div>
   );
 };
 
 export default ProfileUI;
-function setIsEditable(arg0: (prevState: EditableFields) => { username: boolean; password: boolean; }) {
-  throw new Error('Function not implemented.');
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
