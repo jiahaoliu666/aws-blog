@@ -52,8 +52,8 @@ const ProfileUI: React.FC = () => {
   }, [formData.username]);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between overflow-hidden">
-      <div className="flex-grow container mx-auto p-5 flex flex-col lg:flex-row gap-6">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <div className="flex-grow container mx-auto p-4 flex flex-col lg:flex-row gap-4 overflow-y-auto">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
@@ -62,7 +62,7 @@ const ProfileUI: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="w-full lg:w-1/4 bg-gray-700 p-6 rounded-lg shadow-lg mb-6 lg:mb-0">
+            <div className="w-full lg:w-1/4 bg-gray-700 p-4 rounded-lg shadow-lg mb-4 lg:mb-0">
               <div className="flex flex-col items-center mb-4">
                 <img
                   src={formData.avatar}
@@ -101,7 +101,7 @@ const ProfileUI: React.FC = () => {
                 ))}
               </ul>
             </div>
-            <div className="w-full lg:w-3/4 p-4 bg-white border border-gray-300 rounded-lg shadow-lg">
+            <div className="w-full lg:w-3/4 p-3 bg-white border border-gray-300 rounded-lg shadow-lg flex-grow">
               <div className="text-gray-800">
                 {activeTab === 'profile' && (
                   <div>
@@ -314,7 +314,7 @@ const ProfileUI: React.FC = () => {
                             className="mr-2"
                           />
                         </div>
-                        <p className="mt-2 text-sm text-gray-500">啟用後，每次登錄都需要輸入額外的驗證碼</p>
+                        <p className="mt-2 text-sm text-gray-500">啟用後，每次登錄都需要輸入驗證碼</p>
                       </div>
 
                       {/* 安全提示 */}
