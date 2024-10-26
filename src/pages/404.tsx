@@ -9,7 +9,7 @@ const Custom404: React.FC = () => {
                 404 - 找不到頁面
             </h1>
             <p className="text-xl text-center mb-6 text-gray-800 max-w-2xl leading-relaxed">
-                抱歉，我們無法找到您要查找的頁面。
+                抱歉，無法找到您要查找的頁面。
             </p>
             <Link href="/" legacyBehavior>
                 <a className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105 hover:bg-blue-700">
