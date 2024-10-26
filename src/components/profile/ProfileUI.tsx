@@ -81,7 +81,7 @@ const ProfileUI: React.FC = () => {
                   {tab === 'activity' && '觀看紀錄'}
                   {tab === 'settings' && '帳戶設定'}
                   {tab === 'changePassword' && '修改密碼'}
-                  {tab === 'feedback' && '用戶反饋'}
+                  {tab === 'feedback' && '意見反饋'}
                   {tab === 'activityLog' && '活動日誌'}
                   {tab === 'notificationSettings' && '通知設置'}
                   {tab === 'edit' && '編輯'}
@@ -302,7 +302,7 @@ const ProfileUI: React.FC = () => {
               )}
               {activeTab === 'feedback' && (
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">用戶反饋</h3>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">意見反饋</h3>
                   <form className="space-y-4">
                     <div>
                       <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
