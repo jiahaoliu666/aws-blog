@@ -60,6 +60,7 @@ export const useProfileLogic = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [activityLog, setActivityLog] = useState<{ date: string; action: string; }[]>([]);
+  const [localUsername, setLocalUsername] = useState(user ? user.username : '');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -289,7 +290,7 @@ export const useProfileLogic = () => {
       if ((error as Error).name === 'LimitExceededException') {
         setPasswordMessage('嘗試次數過多，請稍後再試。');
       } else {
-        setPasswordMessage('更新密碼失敗���請確認舊密碼是否正確並重試。');
+        setPasswordMessage('更新密碼失敗請確認舊密碼是否正確並重試。');
       }
     }
   };
@@ -329,7 +330,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，請重新確認檔案���型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗：檔案類型不支援，請重新確認檔案型是否為 jpeg 或 png。');
         return;
       }
 
@@ -575,6 +576,7 @@ export const useProfileLogic = () => {
   const initializeTabState = () => {
     setIsEditing(false);
     setTempUsername(user ? user.username : '');
+    setLocalUsername(user ? user.username : ''); // 重置 localUsername
     setIsEditable({
       username: false,
       password: false,
@@ -589,6 +591,12 @@ export const useProfileLogic = () => {
     setUploadMessage(null);
     setPasswordMessage(null);
   };
+
+  useEffect(() => {
+    if (user) {
+      setLocalUsername(user.username);
+    }
+  }, [user]);
 
   return {
     user,
@@ -625,5 +633,7 @@ export const useProfileLogic = () => {
     calculatePasswordStrength,
     resetFeedbackForm,
     initializeTabState,
+    localUsername,
+    setLocalUsername,
   };
 };

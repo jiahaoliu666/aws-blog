@@ -49,19 +49,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
     calculatePasswordStrength,
     resetFeedbackForm,
     initializeTabState,
+    localUsername,
+    setLocalUsername,
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
-  const [localUsername, setLocalUsername] = React.useState(formData.username);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     initializeTabState();
   }, [activeTab]);
-
-  React.useEffect(() => {
-    setLocalUsername(formData.username);
-  }, [formData.username]);
 
   return (
     <div className="flex flex-col min-h-screen">
