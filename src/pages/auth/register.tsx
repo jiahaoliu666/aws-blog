@@ -1,6 +1,6 @@
 // src/pages/auth/register.tsx  
 import React, { useState, useEffect } from 'react';  
-import { ConfirmSignUpCommand, ResendConfirmationCodeCommand, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";  
+import { ConfirmSignUpCommand, ResendConfirmationCodeCommand, SignUpCommand, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";  
 import cognitoClient from '@/utils/cognitoClient';  
 import { PasswordField, Input } from '@aws-amplify/ui-react';  
 import '@aws-amplify/ui-react/styles.css';  
@@ -82,6 +82,13 @@ const RegisterPage: React.FC = () => {
       console.error('註冊失敗:', err); // 確保這行被執行
       if (err.name === 'UsernameExistsException') {
         setError(`電子郵件 ${email} 已被註冊，請使用其他電子郵件。`);
+        // 新增檢查用戶是否已驗證
+        const userConfirmed = await checkUserConfirmationStatus(email);
+        if (userConfirmed) {
+          setError(`電子郵件 ${email} 已被註冊且已驗證。`);
+        } else {
+          setError(`電子郵件 ${email} 已被註冊但未驗證。`);
+        }
       } else if (err.name === 'InvalidPasswordException') {
         setError('密碼不符合要求，請選擇更強的密碼。');
       } else if (err.name === 'InvalidParameterException') {
@@ -131,6 +138,21 @@ const RegisterPage: React.FC = () => {
       setSuccess(null);  
     }  
   };  
+
+  // 新增檢查用戶確認狀態的函數
+  const checkUserConfirmationStatus = async (email: string) => {
+    try {
+      const command = new AdminGetUserCommand({
+        UserPoolId: "your_user_pool_id",
+        Username: email
+      });
+      const response = await cognitoClient.send(command);
+      return response.UserStatus === "CONFIRMED";
+    } catch (err) {
+      console.error('檢查用戶確認狀態失敗:', err);
+      return false;
+    }
+  };
 
   return (  
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">  
