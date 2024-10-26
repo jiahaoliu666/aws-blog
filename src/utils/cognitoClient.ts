@@ -4,9 +4,6 @@ import dotenv from 'dotenv';
 
 dotenv.config(); // 加載 .env 文件中的環境變量
 
-console.log("AWS_ACCESS_KEY_ID:", process.env.AWS_ACCESS_KEY_ID); // 僅用於開發調試
-console.log("AWS_SECRET_ACCESS_KEY:", process.env.AWS_SECRET_ACCESS_KEY); // 僅用於開發調試
-
 const cognitoClient = new CognitoIdentityProviderClient({  
   region: "ap-northeast-1", // 確保這裡的區域是正確的
   credentials: {

@@ -44,6 +44,7 @@
   │     ├── /settings  
   │     │     └── index.tsx                 // 用戶設定頁面  
   │     └── _app.tsx                        // 自定義 App 組件，負責全局狀態管理和佈局，移除了 UserProvider  
+  │     └── 404.tsx                         // 自定義的 404 錯誤頁面
   ├── /styles  
   │     └── globals.css                     // 全局樣式文件，定義應用程序的基本樣式  
   ├── /types  
