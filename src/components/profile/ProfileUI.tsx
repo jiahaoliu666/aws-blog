@@ -51,7 +51,7 @@ const ProfileUI: React.FC = () => {
   }, [formData.username]);
 
   return (
-    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6">
+    <div className="container mx-auto flex-grow p-5 flex flex-col md:flex-row gap-y-6 md:gap-x-6 overflow-hidden">
       {!user ? (
         <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
           <Loader className="mb-4" size="large" />
@@ -60,7 +60,7 @@ const ProfileUI: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="w-full md:w-1/4 bg-gray-500 p-6 rounded-lg shadow-lg mb-6 md:mb-0">
+          <div className="w-full md:w-1/4 bg-gray-500 p-6 rounded-lg shadow-lg mb-6 md:mb-0 overflow-hidden">
             <div className="flex flex-col items-center mb-8">
               <img
                 src={formData.avatar}
@@ -91,7 +91,7 @@ const ProfileUI: React.FC = () => {
               ))}
             </ul>
           </div>
-          <div className="w-full md:w-3/4 p-4 bg-gray-10 border border-gray-600 rounded-lg shadow-lg shadow-gray-400">
+          <div className="w-full md:w-3/4 p-4 bg-gray-10 border border-gray-600 rounded-lg shadow-lg shadow-gray-400 overflow-hidden">
             <div className="text-gray-800">
               {activeTab === 'profile' && (
                 <div>
