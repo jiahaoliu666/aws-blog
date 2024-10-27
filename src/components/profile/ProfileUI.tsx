@@ -51,6 +51,7 @@ const ProfileUI: React.FC = () => {
 
   const [activeTab, setActiveTab] = React.useState('profile');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
+  const [isCompactLayout, setIsCompactLayout] = React.useState(false);
 
   React.useEffect(() => {
     initializeTabState();
@@ -202,34 +203,34 @@ const ProfileUI: React.FC = () => {
                 )}
                 {activeTab === 'activity' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">最近的觀看紀錄</h3>
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-2xl font-bold text-gray-800">最近的觀看紀錄</h3>
+                      <button
+                        onClick={() => setIsCompactLayout(!isCompactLayout)}
+                        className="bg-blue-600 text-white py-1 px-3 rounded-full hover:bg-blue-700 transition duration-200"
+                      >
+                        切換佈局
+                      </button>
+                    </div>
+                    <div className={`grid ${isCompactLayout ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
                       {recentArticles.length === 0 ? (
-                        <p className="text-gray-500">目前沒有任何觀看紀錄。</p>
+                        <p className="text-lg text-gray-500">目前沒有任何觀看紀錄。</p>
                       ) : (
                         recentArticles.map((article, index) => (
                           <div
                             key={index}
-                            className="border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300"
+                            className={`border border-gray-300 rounded-lg ${isCompactLayout ? 'p-6' : 'p-4'} shadow-md hover:shadow-lg transition-shadow duration-300`}
                           >
-                            <div className="grid grid-cols-1 gap-2">
-                              <span className="text-sm text-gray-500">
+                            <div className="flex flex-col gap-2">
+                              <span className="text-sm text-gray-600">
                                 {new Date(article.timestamp).toLocaleString()}
                               </span>
                               <a
                                 href={article.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline flex items-center mb-2"
+                                className="text-base text-blue-600 hover:underline"
                               >
-                                <svg
-                                  className="w-5 h-5 mr-2"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l8-8zM11 5.414L5.414 11 7 12.586 12.586 7 11 5.414z"></path>
-                                </svg>
                                 {index + 1}. [{article.sourcePage}] {article.translatedTitle}
                               </a>
                             </div>
@@ -378,7 +379,7 @@ const ProfileUI: React.FC = () => {
                           type="email"
                           value={formData.email}
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="輸入您電子郵件"
+                          placeholder="輸入您電子郵"
                           disabled
                         />
                       </div>
