@@ -372,7 +372,7 @@ const ProfileUI: React.FC = () => {
                     <h3 className="text-xl font-bold text-gray-800 mb-4">意見反饋</h3>
                     <form className="space-y-4">
                       <div>
-                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子��</label>
+                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子</label>
                         <input
                           id="feedbackEmail"
                           name="feedbackEmail"
@@ -442,7 +442,7 @@ const ProfileUI: React.FC = () => {
                       {activityLog.length === 0 ? (
                         <p className="text-gray-500">目前沒有任何活動日誌。</p>
                       ) : (
-                        activityLog.slice(0, 12).map((log, index) => ( // 確保顯示12筆
+                        activityLog.slice(0, 12).map((log, index) => (
                           <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-lg border-2 border-gray-300">
                             <p className="text-sm text-gray-500">{log.date}</p>
                             <h4 className="text-lg font-semibold mt-2">{log.action}</h4>

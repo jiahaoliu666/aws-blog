@@ -1,73 +1,38 @@
 // pages/api/profile/activity-log.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import { DynamoDBClient, PutItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
-    const { userId, action } = req.body;
+    const { userId, articleId, link, sourcePage } = req.body;
 
-    const formatDate = (date: Date) => {
-      return date.toLocaleString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-      }).replace(/\//g, '-');
-    };
+    if (!userId || !articleId || !link || !sourcePage) {
+      return res.status(400).json({ error: 'Missing required fields in request body' });
+    }
 
-    const timestamp = formatDate(new Date());
+    const timestamp = new Date().toISOString();
 
     const params = {
-      TableName: 'AWS_Blog_UserActivityLog',
+      TableName: 'AWS_Blog_UserRecentArticles',
       Item: {
         userId: { S: userId },
+        articleId: { S: articleId },
         timestamp: { S: timestamp },
-        action: { S: action },
+        link: { S: link },
+        sourcePage: { S: sourcePage },
       },
     };
 
     try {
       const command = new PutItemCommand(params);
       await dynamoClient.send(command);
-
-      // 確保只保留12筆記錄
-      const queryParams = {
-        TableName: 'AWS_Blog_UserActivityLog',
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: {
-          ':userId': { S: userId },
-        },
-        ScanIndexForward: true,
-      };
-
-      const queryCommand = new QueryCommand(queryParams);
-      const queryResponse = await dynamoClient.send(queryCommand);
-      console.log('Current activity log count:', queryResponse.Items?.length); // 添加日誌輸出
-
-      if (queryResponse.Items && queryResponse.Items.length > 12) {
-        const itemsToDelete = queryResponse.Items.slice(0, queryResponse.Items.length - 12);
-        for (const item of itemsToDelete) {
-          const deleteParams = {
-            TableName: 'AWS_Blog_UserActivityLog',
-            Key: {
-              userId: { S: userId },
-              timestamp: { S: item.timestamp.S || '' },
-            },
-          };
-          const deleteCommand = new DeleteItemCommand(deleteParams);
-          await dynamoClient.send(deleteCommand);
-        }
-      }
-
-      res.status(200).json({ message: 'Activity log saved successfully' });
+      console.log(`Recent article saved: ${articleId} for user: ${userId} at ${timestamp}`);
+      res.status(200).json({ message: 'Recent article saved successfully' });
     } catch (error) {
-      console.error('Error saving activity log:', error);
-      res.status(500).json({ error: 'Error saving activity log' });
+      console.error('Error saving recent article:', error);
+      res.status(500).json({ error: 'Error saving recent article' });
     }
   } else {
     res.setHeader('Allow', ['POST']);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ExtendedNews } from '@/types/newsType';
 import { useAuthContext } from '@/context/AuthContext';
+import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 
 interface NewsCardProps {
     article: ExtendedNews;
@@ -11,7 +12,7 @@ interface NewsCardProps {
     showSummaries: boolean;
     toggleFavorite: (article: ExtendedNews) => Promise<void>;
     isFavorited: boolean;
-    sourcePage: string; // 新增 sourcePage prop
+    sourcePage: string;
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({
@@ -23,10 +24,11 @@ const NewsCard: React.FC<NewsCardProps> = ({
     showSummaries,
     toggleFavorite,
     isFavorited,
-    sourcePage, // 使用 sourcePage prop
+    sourcePage,
 }) => {
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
-    const { user, saveArticleView } = useAuthContext();
+    const { user } = useAuthContext();
+    const { logActivity, logRecentArticle } = useProfileLogic();
 
     useEffect(() => {
         setIsSummaryVisible(showSummaries);
@@ -49,7 +51,10 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
     const handleTitleClick = async () => {
         if (user) {
-            await saveArticleView(article.article_id, user.sub, sourcePage);
+            console.log(`User ${user.username} clicked on article: ${article.article_id}`);
+            await logRecentArticle(article.article_id, article.link, sourcePage);
+        } else {
+            console.log('User not logged in, cannot log activity.');
         }
     };
 

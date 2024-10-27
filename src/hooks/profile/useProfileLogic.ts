@@ -453,31 +453,7 @@ export const useProfileLogic = () => {
       };
       const putCommand = new PutItemCommand(putParams);
       await dynamoClient.send(putCommand);
-
-      const queryParams = {
-        TableName: 'AWS_Blog_UserActivityLog',
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: {
-          ':userId': { S: user?.sub || 'default-sub' },
-        },
-        ScanIndexForward: true,
-      };
-
-      const queryCommand = new QueryCommand(queryParams);
-      const queryResponse = await dynamoClient.send(queryCommand);
-
-      if (queryResponse.Items && queryResponse.Items.length > 12) { // 將6改為12
-        const oldestItem = queryResponse.Items[0];
-        const deleteParams = {
-          TableName: 'AWS_Blog_UserActivityLog',
-          Key: {
-            userId: { S: user?.sub || 'default-sub' },
-            timestamp: { S: oldestItem.timestamp.S || '' },
-          },
-        };
-        const deleteCommand = new DeleteItemCommand(deleteParams);
-        await dynamoClient.send(deleteCommand);
-      }
+      console.log(`Activity logged: ${action} at ${timestamp}`);
     } catch (error) {
       console.error('Error logging activity:', error);
     }
@@ -580,6 +556,36 @@ export const useProfileLogic = () => {
     setLocalUsername(user ? user.username : '');
   };
 
+  const logRecentArticle = async (articleId: string, link: string, sourcePage: string) => {
+    try {
+        const dynamoClient = new DynamoDBClient({
+            region: 'ap-northeast-1',
+            credentials: {
+                accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+                secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+            },
+        });
+
+        const timestamp = new Date().toISOString();
+
+        const putParams = {
+            TableName: 'AWS_Blog_UserRecentArticles',
+            Item: {
+                userId: { S: user?.sub || 'default-sub' },
+                articleId: { S: articleId },
+                timestamp: { S: timestamp },
+                link: { S: link },
+                sourcePage: { S: sourcePage },
+            },
+        };
+        const putCommand = new PutItemCommand(putParams);
+        await dynamoClient.send(putCommand);
+        console.log(`Recent article logged: ${articleId} at ${timestamp}`);
+    } catch (error) {
+        console.error('Error logging recent article:', error);
+    }
+  };
+
   return {
     user,
     formData,
@@ -618,5 +624,7 @@ export const useProfileLogic = () => {
     localUsername,
     setLocalUsername,
     resetUsername,
+    logActivity,
+    logRecentArticle,
   };
 };
