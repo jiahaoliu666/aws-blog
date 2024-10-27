@@ -87,7 +87,7 @@ const ProfileUI: React.FC = () => {
         ) : (
           <>
             <div className="w-full lg:w-1/4 bg-gray-700 p-4 rounded-lg shadow-lg mb-4 lg:mb-0">
-              <div className="flex flex-col items-center mb-4">
+              <div className="flex flex-col items-center mb-6">
                 <img
                   src={formData.avatar}
                   alt="用戶頭像"
@@ -105,7 +105,7 @@ const ProfileUI: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <ul className={`space-y-3 ${isProfileMenuOpen ? 'block mt-4' : 'hidden'} lg:block`}>
+              <ul className={`space-y-3 ${isProfileMenuOpen ? 'block mt-8' : 'hidden'} lg:block`}>
                 {['profile', 'activity', 'changePassword', 'notificationSettings', 'activityLog', 'feedback', 'settings'].map((tab) => (
                   <li
                     key={tab}
@@ -139,12 +139,12 @@ const ProfileUI: React.FC = () => {
                         />
                         <button
                           onClick={() => document.getElementById('avatar')?.click()}
-                          className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200 mb-4"
+                          className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
                         >
                           更換頭像
                         </button>
                       </div>
-                      <div className="text-center md:text-left md:ml-6 mt-4 md:mt--20">
+                      <div className="text-center md:text-left md:ml-6 mt-4 mb-14 md:mt-0">
                         <p className="text-xl mb-2">用戶名：{formData.username}</p>
                         <p className="text-xl mb-2">電子郵件：{formData.email}</p>
                         <p className="text-xl">註冊日期：{formData.registrationDate}</p>
