@@ -74,8 +74,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      <div className={`flex flex-col gap-4 lg:flex-row justify-start ${isMenuOpen ? 'block' : 'hidden'} lg:flex flex-wrap`}>
-        <div className="flex flex-col md:flex-wrap md:flex-row items-center gap-4 max-w-full">
+      <div className={`flex flex-col gap-4 ${isMenuOpen ? 'flex-wrap' : 'hidden'} lg:flex`}>
+        <div className="flex flex-col items-center gap-4 max-w-full">
           <SwitchField  
             isDisabled={false}  
             label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}  
@@ -97,32 +97,9 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             isChecked={isDarkMode}  
             onChange={(e) => setIsDarkMode(e.target.checked)}  
           />  
-          {/* 在大屏幕上始終顯示切換視圖的功能 */}
-          <div className="hidden lg:block">
-            <SwitchField  
-              isDisabled={false}  
-              label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}  
-              labelPosition="start"  
-              isChecked={gridView}  
-              onChange={(e) => setGridView(e.target.checked)}  
-            />
-          </div>
         </div>  
 
-        {/* 在小屏幕且非菜單欄模式下顯示切換視圖的功能 */}
-        {!isMenuOpen && (
-          <div className="flex flex-col md:flex-wrap md:flex-row items-center gap-4 max-w-full lg:hidden">
-            <SwitchField  
-              isDisabled={false}  
-              label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}  
-              labelPosition="start"  
-              isChecked={gridView}  
-              onChange={(e) => setGridView(e.target.checked)}  
-            />
-          </div>
-        )}
-
-        <div className="flex flex-col md:flex-row items-center gap-4 ml-auto max-w-full">
+        <div className="flex flex-col items-center gap-4 max-w-full">
           <div className="flex items-center gap-2">
             <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
             <input
