@@ -239,28 +239,21 @@ export const useProfileLogic = () => {
     if (!oldPassword || !formData.password) {
       setPasswordMessage('請輸入舊密碼和新密碼。');
       console.log('Missing old or new password');
-      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
     if (!passwordRegex.test(formData.password)) {
       setPasswordMessage('密碼只能包含特殊符號、英文和數字。');
-      console.log('Password format invalid');
-      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
     if (formData.password === oldPassword) {
       setPasswordMessage('新密碼不能與舊密碼相同。');
-      console.log('New password is the same as old password');
-      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setPasswordMessage('新密碼和確認密碼不一致。');
-      console.log('Password and confirm password do not match');
-      console.log('Password message:', passwordMessage); // 新增這一行
       return;
     }
 
@@ -271,23 +264,11 @@ export const useProfileLogic = () => {
         AccessToken: user?.accessToken!,
       });
       await cognitoClient.send(changePasswordCommand);
-      console.log('Password changed successfully');
       setPasswordMessage('密碼變更成功，請重新登入。');
-      updateUser({ accessToken: user?.accessToken });
-
-      setTimeout(() => {
-        console.log('Logging out...');
-        handleLogout();
-      }, 3000);
     } catch (error) {
       console.error('Error changing password:', error);
-      if ((error as Error).name === 'LimitExceededException') {
-        setPasswordMessage('嘗試次數過多，請稍後再試。');
-      } else {
-        setPasswordMessage('更新密碼失敗請確認舊密碼是否正確並重試。');
-      }
+      setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
     }
-    console.log('Password change attempt completed');
   };
 
   const handleCancelChanges = () => {
@@ -325,7 +306,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上失敗：檔案類型不支援，請重新確認檔案型是否為 jpeg 或 png。');
+        setUploadMessage('上失敗：檔案類型不支援��請重新確認檔案型是否為 jpeg 或 png。');
         return;
       }
 

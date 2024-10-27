@@ -8,13 +8,7 @@ import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 import Navbar from '../common/Navbar'; 
 import Footer from '../common/Footer'; 
 
-interface ProfileUIProps {
-  uploadMessage: string;
-  passwordMessage: string;
-  setIsEditable: () => void;
-}
-
-const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, setIsEditable, ...props }) => {
+const ProfileUI: React.FC = () => {
   const {
     user,
     formData,
@@ -50,7 +44,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
     initializeTabState,
     localUsername,
     setLocalUsername,
-    resetUsername, // 新增這一行
+    resetUsername,
+    uploadMessage, // 確保這些狀態直接從 useProfileLogic 中獲取
+    passwordMessage,
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -322,7 +318,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
                             style={{ width: `${calculatePasswordStrength(formData.password) * 20}%` }}
                           ></div>
                         </div>
-                        <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字、特殊字符來增強密碼安全性</p>
+                        <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字、特殊字符來增強密碼安性</p>
                       </div>
 
                       {/* 雙重認證 */}
