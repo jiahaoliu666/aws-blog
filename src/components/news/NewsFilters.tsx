@@ -74,81 +74,78 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      <div className={`flex ${isMenuOpen ? 'flex-col' : 'hidden'} lg:flex lg:flex-row gap-4`}>
-        <div className="flex flex-col items-center gap-4 max-w-full">
-          <SwitchField
-            isDisabled={false}
-            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
-            labelPosition="start"
-            isChecked={showSummaries}
-            onChange={toggleShowSummaries}
+      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full`}>
+        <SwitchField
+          isDisabled={false}
+          label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
+          labelPosition="start"
+          isChecked={showSummaries}
+          onChange={toggleShowSummaries}
+        />
+        <SwitchField
+          isDisabled={false}
+          label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}
+          labelPosition="start"
+          isChecked={showFavorites}
+          onChange={(e) => setShowFavorites(e.target.checked)}
+        />
+        <SwitchField
+          isDisabled={false}
+          label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}
+          labelPosition="start"
+          isChecked={isDarkMode}
+          onChange={(e) => setIsDarkMode(e.target.checked)}
+        />
+      </div>
+      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full`}>
+        <div className="flex items-center gap-2">
+          <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              onDateFilterChange(e.target.value, endDate);
+            }}
+            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}
           />
-          <SwitchField
-            isDisabled={false}
-            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}
-            labelPosition="start"
-            isChecked={showFavorites}
-            onChange={(e) => setShowFavorites(e.target.checked)}
-          />
-          <SwitchField
-            isDisabled={false}
-            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}
-            labelPosition="start"
-            isChecked={isDarkMode}
-            onChange={(e) => setIsDarkMode(e.target.checked)}
+          <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>至</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              onDateFilterChange(startDate, e.target.value);
+            }}
+            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}
           />
         </div>
+        <div className="flex items-center gap-2">
+          <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>排序：</label>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}
+          >
+            <option value="newest">最新文章</option>
+            <option value="oldest">最舊文章</option>
+          </select>
+        </div>
 
-        <div className="flex flex-col items-center gap-4 max-w-full">
-          <div className="flex items-center gap-2">
-            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                onDateFilterChange(e.target.value, endDate);
-              }}
-              className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}
-            />
-            <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>至</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                onDateFilterChange(startDate, e.target.value);
-              }}
-              className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>排序：</label>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
-              className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}
-            >
-              <option value="newest">最新文章</option>
-              <option value="oldest">最舊文章</option>
-            </select>
-          </div>
+        <div className="flex items-center gap-2">
+          <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言：</label>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}
+          >
+            <option value="zh-TW">繁體中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言：</label>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}
-            >
-              <option value="zh-TW">繁體中文</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-
-          <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
-            文章數量：{showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}
-          </div>
+        <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+          文章數量：{showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}
         </div>
       </div>
     </div>
