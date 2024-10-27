@@ -74,7 +74,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full`}>
+      {/* 新增的部分，根據 isMenuOpen 狀態控制顯示 */}
+      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:block`}>
         <SwitchField
           isDisabled={false}
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
@@ -97,7 +98,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           onChange={(e) => setIsDarkMode(e.target.checked)}
         />
       </div>
-      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full`}>
+
+      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:block`}>
         <div className="flex items-center gap-2">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
           <input
