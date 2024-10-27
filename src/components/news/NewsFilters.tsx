@@ -47,14 +47,14 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   toggleShowSummaries,  
   showSummaries,  
   setShowSummaries  
-}) => {  
+}) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  return (  
-    <div className="mb-4 p-4 max-w-full">  
-      <div className="flex justify-start items-center">
+  return (
+    <div className="mb-4 p-4 max-w-full">
+      <div className="flex justify-start items-center lg:hidden">
         <button
-          className="lg:hidden p-2 border rounded transform transition duration-300 hover:scale-105"
+          className="p-2 border rounded transform transition duration-300 hover:scale-105"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <svg
@@ -74,30 +74,30 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      <div className={`flex flex-col gap-4 ${isMenuOpen ? 'block' : 'hidden'} lg:flex flex-wrap`}>
+      <div className={`flex ${isMenuOpen ? 'flex-col' : 'hidden'} lg:flex lg:flex-row gap-4`}>
         <div className="flex flex-col items-center gap-4 max-w-full">
-          <SwitchField  
-            isDisabled={false}  
-            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}  
-            labelPosition="start"  
-            isChecked={showSummaries}  
-            onChange={toggleShowSummaries}  
-          />  
-          <SwitchField  
-            isDisabled={false}  
-            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}  
-            labelPosition="start"  
-            isChecked={showFavorites}  
-            onChange={(e) => setShowFavorites(e.target.checked)}  
-          />  
-          <SwitchField  
-            isDisabled={false}  
-            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}  
-            labelPosition="start"  
-            isChecked={isDarkMode}  
-            onChange={(e) => setIsDarkMode(e.target.checked)}  
-          />  
-        </div>  
+          <SwitchField
+            isDisabled={false}
+            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
+            labelPosition="start"
+            isChecked={showSummaries}
+            onChange={toggleShowSummaries}
+          />
+          <SwitchField
+            isDisabled={false}
+            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}
+            labelPosition="start"
+            isChecked={showFavorites}
+            onChange={(e) => setShowFavorites(e.target.checked)}
+          />
+          <SwitchField
+            isDisabled={false}
+            label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}
+            labelPosition="start"
+            isChecked={isDarkMode}
+            onChange={(e) => setIsDarkMode(e.target.checked)}
+          />
+        </div>
 
         <div className="flex flex-col items-center gap-4 max-w-full">
           <div className="flex items-center gap-2">
@@ -146,24 +146,13 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             </select>
           </div>
 
-          <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>  
-            文章數量：{showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}  
-          </div>  
-        </div>  
-      </div>  
-
-      {/* 當 isMenuOpen 為 false 時，橫向排列 */}
-      <div className={`flex ${isMenuOpen ? 'hidden' : 'flex-row'} gap-4 lg:hidden`}>
-        <div className="flex flex-col items-center gap-4 max-w-full">
-          {/* 第一個大 div 的內容 */}
-        </div>
-
-        <div className="flex flex-col items-center gap-4 max-w-full">
-          {/* 第二個大 div 的內容 */}
+          <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+            文章數量：{showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}
+          </div>
         </div>
       </div>
-    </div>  
-  );  
-};  
+    </div>
+  );
+};
 
 export default NewsFilters;
