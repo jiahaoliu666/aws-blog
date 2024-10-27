@@ -74,8 +74,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      {/* 新增的部分，根據 isMenuOpen 狀態控制顯示 */}
-      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:block`}>
+      {/* 更新的部分，將 flex-wrap 設為 nowrap */}
+      <div className={`flex flex-col lg:flex-row lg:flex-nowrap items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:block`}>
         <SwitchField
           isDisabled={false}
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
@@ -97,9 +97,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           isChecked={isDarkMode}
           onChange={(e) => setIsDarkMode(e.target.checked)}
         />
-      </div>
-
-      <div className={`flex flex-col lg:flex-row items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:block`}>
         <div className="flex items-center gap-2">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
           <input
@@ -133,7 +130,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             <option value="oldest">最舊文章</option>
           </select>
         </div>
-
         <div className="flex items-center gap-2">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言：</label>
           <select
@@ -145,7 +141,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             <option value="en">English</option>
           </select>
         </div>
-
         <div className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
           文章數量：{showFavorites ? filteredFavoritesCount : (filteredArticles?.length || 0)}
         </div>
