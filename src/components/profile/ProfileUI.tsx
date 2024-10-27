@@ -208,7 +208,7 @@ const ProfileUI: React.FC = () => {
                       <h3 className="text-2xl font-bold text-gray-800">最近的觀看紀錄</h3>
                       <button
                         onClick={() => setIsCompactLayout(!isCompactLayout)}
-                        className="bg-blue-600 text-white py-1 px-3 rounded-full hover:bg-blue-700 transition duration-200"
+                        className="bg-blue-600 text-white py-1 px-3 rounded-full hover:bg-blue-700 transition duration-200 hidden md:block"
                       >
                         切換佈局
                       </button>
