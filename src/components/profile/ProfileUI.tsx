@@ -136,7 +136,7 @@ const ProfileUI: React.FC = () => {
                           更換頭像
                         </button>
                       </div>
-                      <div className="text-center md:text-left md:ml-6 -mt-14">
+                      <div className="text-center md:text-left md:ml-6 mt-4 md:mt-0">
                         <p className="text-xl mb-2">用戶名：{formData.username}</p>
                         <p className="text-xl mb-2">電子郵件：{formData.email}</p>
                         <p className="text-xl">註冊日期：{formData.registrationDate}</p>
@@ -171,7 +171,7 @@ const ProfileUI: React.FC = () => {
                             onChange={() => {
                               toggleEditableField('username');
                               if (isEditable.username) {
-                                resetUsername(); // ���開關關閉時用戶名
+                                resetUsername(); // 開關關閉時用戶名
                               }
                             }}
                             className="mr-2"
