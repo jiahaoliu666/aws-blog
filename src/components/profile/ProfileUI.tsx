@@ -69,7 +69,7 @@ const ProfileUI: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <div className="flex-grow container mx-auto p-4 flex flex-col lg:flex-row gap-4 overflow-y-auto">
+      <div className="flex-grow container mx-auto p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 overflow-y-auto">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
@@ -90,14 +90,14 @@ const ProfileUI: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg lg:hidden"
+                className="text-white hover:text-gray-400 transition duration-300 flex items-center text-xl lg:hidden"
               >
                 個人資訊選單
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <ul className={`space-y-3 ${isProfileMenuOpen ? 'block' : 'hidden'} lg:block`}>
+              <ul className={`space-y-3 ${isProfileMenuOpen ? 'block mt-4' : 'hidden'} lg:block`}>
                 {['profile', 'activity', 'changePassword', 'notificationSettings', 'activityLog', 'feedback', 'settings'].map((tab) => (
                   <li
                     key={tab}
@@ -342,7 +342,7 @@ const ProfileUI: React.FC = () => {
 
                       {/* 安全提示 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
+                        <h4 className="text-sm font-medium text-gray-700">安全提��</h4>
                         <p className="mt-2 text-sm text-gray-500">
                           定期更改密碼並避免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
                         </p>
