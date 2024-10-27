@@ -74,8 +74,8 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      {/* 更新的部分，將 flex-wrap 設為 nowrap */}
-      <div className={`flex flex-col lg:flex-row lg:flex-nowrap items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:flex`}>
+      {/* 使用響應式類別來控制佈局 */}
+      <div className={`flex flex-col lg:flex-row lg:flex-wrap items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:flex`}>
         <SwitchField
           isDisabled={false}
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
@@ -97,7 +97,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           isChecked={isDarkMode}
           onChange={(e) => setIsDarkMode(e.target.checked)}
         />
-        <div className="flex-row items-center gap-2">
+        <div className="flex flex-col md:flex-row items-center gap-2">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
           <input
             type="date"
@@ -119,7 +119,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-40`}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row items-center gap-2">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>排序：</label>
           <select
             value={sortOrder}
@@ -130,7 +130,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
             <option value="oldest">最舊文章</option>
           </select>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row items-center gap-2">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言：</label>
           <select
             value={language}
