@@ -206,7 +206,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ uploadMessage, passwordMessage, s
                 )}
                 {activeTab === 'activity' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">最近的觀看紀</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">最近的觀看紀錄</h3>
                     <div className="grid grid-cols-1 gap-3">
                       {recentArticles.length === 0 ? (
                         <p className="text-gray-500">目前沒有任何觀看紀錄。</p>
