@@ -375,7 +375,7 @@ export const useProfileLogic = () => {
         }
       } catch (error) {
         console.error('Error uploading file:', error);
-        setUploadMessage('上傳失敗：請稍後再試。');
+        setUploadMessage('上傳失敗：請稍後試。');
       }
     }
   };
@@ -581,6 +581,37 @@ export const useProfileLogic = () => {
         const putCommand = new PutItemCommand(putParams);
         await dynamoClient.send(putCommand);
         console.log(`Recent article logged: ${articleId} at ${timestamp}`);
+
+        // Fetch all articles to check the count
+        const queryParams = {
+            TableName: 'AWS_Blog_UserRecentArticles',
+            KeyConditionExpression: 'userId = :userId',
+            ExpressionAttributeValues: {
+                ':userId': { S: user?.sub || 'default-sub' },
+            },
+            ScanIndexForward: true, // Ascending order to get the oldest first
+        };
+        const queryCommand = new QueryCommand(queryParams);
+        const response = await dynamoClient.send(queryCommand);
+
+        if (response.Items && response.Items.length > 12) {
+            // Delete the oldest article
+            const oldestArticle = response.Items[0];
+            if (oldestArticle.timestamp.S) {
+                const deleteParams = {
+                    TableName: 'AWS_Blog_UserRecentArticles',
+                    Key: {
+                        userId: { S: user?.sub || 'default-sub' },
+                        timestamp: { S: oldestArticle.timestamp.S },
+                    },
+                };
+                const deleteCommand = new DeleteItemCommand(deleteParams);
+                await dynamoClient.send(deleteCommand);
+                console.log(`Oldest article deleted with timestamp: ${oldestArticle.timestamp.S}`);
+            } else {
+                console.error('Error: timestamp is undefined');
+            }
+        }
     } catch (error) {
         console.error('Error logging recent article:', error);
     }
