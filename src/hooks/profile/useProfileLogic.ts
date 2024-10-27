@@ -266,6 +266,9 @@ export const useProfileLogic = () => {
       });
       await cognitoClient.send(changePasswordCommand);
       setPasswordMessage('密碼變更成功，請重新登入。');
+      setTimeout(() => {
+        handleLogout(); // 在這裡調用登出函數
+      }, 3000); // 3秒後登出
     } catch (error) {
       console.error('Error changing password:', error);
       setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');

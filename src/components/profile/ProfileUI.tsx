@@ -66,6 +66,14 @@ const ProfileUI: React.FC = () => {
     console.log('Upload message updated:', uploadMessage);
   }, [uploadMessage]);
 
+  React.useEffect(() => {
+    if (passwordMessage && passwordMessage.includes('密碼變更成功')) {
+      setTimeout(() => {
+        handleLogout(); // 3秒後登出
+      }, 3000);
+    }
+  }, [passwordMessage]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -136,7 +144,7 @@ const ProfileUI: React.FC = () => {
                           更換頭像
                         </button>
                       </div>
-                      <div className="text-center md:text-left md:ml-6 mt-4 md:mt-0">
+                      <div className="text-center md:text-left md:ml-6 mt-4 md:mt--20">
                         <p className="text-xl mb-2">用戶名：{formData.username}</p>
                         <p className="text-xl mb-2">電子郵件：{formData.email}</p>
                         <p className="text-xl">註冊日期：{formData.registrationDate}</p>
