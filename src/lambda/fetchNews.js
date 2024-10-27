@@ -1,3 +1,4 @@
+// Microsoft 翻譯 + openai 總結
 require("dotenv").config({ path: ".env.local" }); // 加載環境變數
 
 const {
@@ -9,15 +10,14 @@ const puppeteer = require("puppeteer");
 const { v4: uuidv4 } = require("uuid");
 const readline = require("readline");
 const OpenAI = require("openai");
-const deepl = require("deepl-node"); // 引入 DeepL 客戶端
+const axios = require("axios").default; // 引入 axios 用於 HTTP 請求
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // 使用環境變數
-if (!process.env.DEEPL_API_KEY) {
+if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
   throw new Error(
-    "DeepL API Key is missing or empty. Please check your .env.local file."
+    "Microsoft Translator API Key is missing or empty. Please check your .env.local file."
   );
 }
-const translator = new deepl.Translator(process.env.DEEPL_API_KEY); // 使用環境變數初始化 DeepL 客戶端
 
 // 初始化 DynamoDB 客戶端
 const dbClient = new DynamoDBClient({
@@ -101,12 +101,42 @@ async function summarizeArticle(url) {
 // 翻譯函數
 async function translateText(text) {
   console.log(`開始翻譯文本`);
+  const endpoint = "https://api.cognitive.microsofttranslator.com";
+  const subscriptionKey = process.env.MICROSOFT_TRANSLATOR_API_KEY;
+  const location = process.env.MICROSOFT_TRANSLATOR_REGION; // 確保在 .env.local 中設置此值
+
   try {
-    const result = await translator.translateText(text, "EN", "ZH-HANT"); // 設置源語言為英文，目標語言為繁體中文
+    const response = await axios({
+      baseURL: endpoint,
+      url: "/translate",
+      method: "post",
+      headers: {
+        "Ocp-Apim-Subscription-Key": subscriptionKey,
+        "Ocp-Apim-Subscription-Region": location,
+        "Content-type": "application/json",
+        "X-ClientTraceId": uuidv4().toString(),
+      },
+      params: {
+        "api-version": "3.0",
+        from: "en",
+        to: "zh-Hant", // 確保這裡是正確的語言代碼
+      },
+      data: [
+        {
+          text: text,
+        },
+      ],
+      responseType: "json",
+    });
+
+    const translatedText = response.data[0].translations[0].text;
     console.log(`翻譯成功`);
-    return result.text;
+    return translatedText;
   } catch (error) {
-    console.error("翻譯時發生錯誤:", error);
+    console.error(
+      "翻譯時發生錯誤:",
+      error.response ? error.response.data : error.message
+    );
     return text; // 如果翻譯失敗，返回原始文本
   }
 }
