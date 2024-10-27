@@ -137,6 +137,7 @@ export const useProfileLogic = () => {
             ':userId': { S: user.sub },
           },
           ScanIndexForward: false,
+          Limit: 12, // 確保限制為12筆
         };
 
         try {
@@ -168,7 +169,7 @@ export const useProfileLogic = () => {
             return { translatedTitle, link, timestamp, sourcePage };
           }));
 
-          setRecentArticles(articles.slice(0, 10));
+          setRecentArticles(articles.slice(0, 12)); // 確保顯示12筆
         } catch (error) {
           console.error('Error fetching recent articles:', error);
         }
@@ -306,7 +307,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上失敗：檔案類型不支援��請重新確認檔案型是否為 jpeg 或 png。');
+        setUploadMessage('上失敗：檔案類型不支援請重新確認檔案型是否為 jpeg 或 png。');
         return;
       }
 
@@ -465,7 +466,7 @@ export const useProfileLogic = () => {
       const queryCommand = new QueryCommand(queryParams);
       const queryResponse = await dynamoClient.send(queryCommand);
 
-      if (queryResponse.Items && queryResponse.Items.length > 6) {
+      if (queryResponse.Items && queryResponse.Items.length > 12) { // 將6改為12
         const oldestItem = queryResponse.Items[0];
         const deleteParams = {
           TableName: 'AWS_Blog_UserActivityLog',
@@ -500,12 +501,13 @@ export const useProfileLogic = () => {
             ':userId': { S: user.sub },
           },
           ScanIndexForward: false,
-          Limit: 6,
+          Limit: 12, // 確保限制為12筆
         };
 
         try {
           const command = new QueryCommand(params);
           const response = await dynamoClient.send(command);
+          console.log('Fetched activity log:', response.Items); // 添加日誌輸出
           const logs = response.Items?.map(item => ({
             date: item.timestamp?.S || '',
             action: item.action?.S || '',

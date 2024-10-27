@@ -220,11 +220,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     const queryCommand = new QueryCommand(queryParams);
     const response = await dynamoClient.send(queryCommand);
+    console.log('Current article view count:', response.Items?.length); // 添加日誌輸出
 
-    // 如果紀錄超過 10 則刪除多餘的
+    // 如果紀錄超過12則刪除多餘的
     const items = response.Items || [];
-    if (items.length > 10) {
-        const itemsToDelete = items.slice(10); // 取出多餘的紀錄
+    if (items.length > 12) { // 修改為12
+        const itemsToDelete = items.slice(12); // 取出多餘的紀錄
         for (const item of itemsToDelete) {
             const deleteParams = {
                 TableName: 'AWS_Blog_UserRecentArticles',
@@ -235,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
             const deleteCommand = new DeleteItemCommand(deleteParams);
             await dynamoClient.send(deleteCommand);
-            console.log('Deleted old article view:', item.articleId.S);
+            console.log('Deleted old article view:', item.articleId.S); // 添加日誌輸出
         }
     }
   };
