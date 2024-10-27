@@ -212,14 +212,14 @@ const ProfileUI: React.FC = () => {
                         切換佈局
                       </button>
                     </div>
-                    <div className={`grid ${isCompactLayout ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
+                    <div className={`grid ${isCompactLayout ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
                       {recentArticles.length === 0 ? (
                         <p className="text-lg text-gray-500">目前沒有任何觀看紀錄。</p>
                       ) : (
                         recentArticles.map((article, index) => (
                           <div
                             key={index}
-                            className={`border border-gray-300 rounded-lg ${isCompactLayout ? 'p-6' : 'p-4'} shadow-md hover:shadow-lg transition-shadow duration-300`}
+                            className={`border border-gray-300 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow duration-300`}
                           >
                             <div className="flex flex-col gap-2">
                               <span className="text-sm text-gray-600">
