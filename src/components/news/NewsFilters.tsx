@@ -74,7 +74,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      <div className={`flex flex-col gap-4 ${isMenuOpen ? 'flex-wrap' : 'hidden'} lg:flex`}>
+      <div className={`flex flex-col gap-4 ${isMenuOpen ? 'block' : 'hidden'} lg:flex flex-wrap`}>
         <div className="flex flex-col items-center gap-4 max-w-full">
           <SwitchField  
             isDisabled={false}  
@@ -151,6 +151,17 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           </div>  
         </div>  
       </div>  
+
+      {/* 當 isMenuOpen 為 false 時，橫向排列 */}
+      <div className={`flex ${isMenuOpen ? 'hidden' : 'flex-row'} gap-4 lg:hidden`}>
+        <div className="flex flex-col items-center gap-4 max-w-full">
+          {/* 第一個大 div 的內容 */}
+        </div>
+
+        <div className="flex flex-col items-center gap-4 max-w-full">
+          {/* 第二個大 div 的內容 */}
+        </div>
+      </div>
     </div>  
   );  
 };  
