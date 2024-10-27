@@ -117,8 +117,8 @@ const ProfileUI: React.FC = () => {
                 ))}
               </ul>
             </div>
-            <div className="w-full lg:w-3/4 p-3 bg-white border border-gray-300 rounded-lg shadow-lg flex-grow">
-              <div className="text-gray-800">
+            <div className="w-full lg:w-3/4 p-3 bg-white border border-gray-300 rounded-lg shadow-lg flex-grow mt-0">
+              <div className="text-gray-800 ">
                 {activeTab === 'profile' && (
                   <div>
                     <h1 className="text-4xl font-bold mb-4">個人資訊</h1>
