@@ -97,7 +97,15 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           isChecked={isDarkMode}
           onChange={(e) => setIsDarkMode(e.target.checked)}
         />
-        <div className="flex flex-col md:flex-row items-center gap-2">
+        <SwitchField
+          className="hidden lg:block"
+          isDisabled={false}
+          label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}
+          labelPosition="start"
+          isChecked={gridView}
+          onChange={(e) => setGridView(e.target.checked)}
+        />
+        <div className="flex flex-col md:flex-row items-center gap-2 ">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
           <input
             type="date"
