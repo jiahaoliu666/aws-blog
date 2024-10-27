@@ -171,7 +171,7 @@ const ProfileUI: React.FC = () => {
                             onChange={() => {
                               toggleEditableField('username');
                               if (isEditable.username) {
-                                resetUsername(); // 當開關關閉時用戶名
+                                resetUsername(); // ���開關關閉時用戶名
                               }
                             }}
                             className="mr-2"
@@ -342,7 +342,7 @@ const ProfileUI: React.FC = () => {
 
                       {/* 安全提示 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700">安全提��</h4>
+                        <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
                         <p className="mt-2 text-sm text-gray-500">
                           定期更改密碼並避免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
                         </p>
