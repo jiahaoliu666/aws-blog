@@ -33,7 +33,8 @@
   │     │     │     ├── addFavorite.ts      // API 路由，將文章添加到收藏  
   │     │     │     └── removeFavorite.ts   // API 路由，從收藏中移除文章  
   │     │     ├── /profile  
-  │     │     │     └── activity-log.ts  // 後端 API，用於處理活動日誌的存儲
+  │     │     │     ├── activity-log.ts     // 後端 API，用於處理活動日誌的存儲
+  │     │     │     └── recent-log.ts       // 後端 API，用於記錄用戶最近的文章活動
   │     ├── /auth  
   │     │     ├── login.tsx                 // 用於用戶登錄的頁面，提供登錄表單和驗證邏輯  
   │     │     ├── register.tsx              // 用於用戶註冊的頁面，提供註冊表單和驗證邏輯  

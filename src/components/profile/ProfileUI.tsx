@@ -47,6 +47,7 @@ const ProfileUI: React.FC = () => {
     resetUsername,
     uploadMessage, // 確保這些狀態直接從 useProfileLogic 中獲取
     passwordMessage,
+    logRecentArticle, // 確保這些狀態直接從 useProfileLogic 中獲取
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -170,7 +171,7 @@ const ProfileUI: React.FC = () => {
                             onChange={() => {
                               toggleEditableField('username');
                               if (isEditable.username) {
-                                resetUsername(); // 當開關關閉時重置用戶名
+                                resetUsername(); // 當開關關閉時置用戶名
                               }
                             }}
                             className="mr-2"
@@ -214,7 +215,9 @@ const ProfileUI: React.FC = () => {
                     </div>
                     <div className={`grid ${isCompactLayout ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
                       {recentArticles.length === 0 ? (
-                        <p className="text-lg text-gray-500">目前沒有任何觀看紀錄。</p>
+                        <div className="flex flex-col">
+                          <p className="text-lg text-gray-500 text-left">目前沒有任何觀看紀錄。</p>
+                        </div>
                       ) : (
                         recentArticles.map((article, index) => (
                           <div
@@ -357,7 +360,7 @@ const ProfileUI: React.FC = () => {
                         取消更改
                       </button>
                       <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
-                        {isLoading ? '保存中...' : '更改密碼'}
+                        {isLoading ? '保存...' : '更改密碼'}
                       </button>
                     </div>
                     {passwordMessage && (
