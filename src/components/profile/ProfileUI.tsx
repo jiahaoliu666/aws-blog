@@ -212,12 +212,15 @@ const ProfileUI: React.FC = () => {
                             key={index}
                             className="border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300"
                           >
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                            <div className="grid grid-cols-1 gap-2">
+                              <span className="text-sm text-gray-500">
+                                {new Date(article.timestamp).toLocaleString()}
+                              </span>
                               <a
                                 href={article.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline flex items-center mb-2 sm:mb-0"
+                                className="text-blue-500 hover:underline flex items-center mb-2"
                               >
                                 <svg
                                   className="w-5 h-5 mr-2"
@@ -229,9 +232,6 @@ const ProfileUI: React.FC = () => {
                                 </svg>
                                 {index + 1}. [{article.sourcePage}] {article.translatedTitle}
                               </a>
-                              <span className="text-sm text-gray-500 mt-1 sm:mt-0">
-                                {new Date(article.timestamp).toLocaleString()}
-                              </span>
                             </div>
                           </div>
                         ))
