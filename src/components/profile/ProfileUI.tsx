@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faUser, faBell, faShieldAlt, faGlobe, faCog, faClock, faCommentDots, faHistory, faEye, faEnvelope, faQuestionCircle, faBolt, faBookmark, faShareAlt, faFile } from '@fortawesome/free-solid-svg-icons';
 import { SwitchField } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
@@ -115,7 +115,16 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 </svg>
               </button>
               <ul className={`space-y-3 ${isProfileMenuOpen ? 'block mt-8' : 'hidden'} lg:block`}>
-                {['profile', 'activity', 'changePassword', 'notificationSettings', 'activityLog', 'feedback', 'settings'].map((tab) => (
+                {[
+                  { tab: 'profile', label: '個人資訊', icon: faUser },
+                  { tab: 'activity', label: '觀看紀錄', icon: faEye },
+                  { tab: 'changePassword', label: '修改密碼', icon: faLock },
+                  { tab: 'feedback', label: '意見反饋', icon: faCommentDots },
+                  { tab: 'activityLog', label: '活動日誌', icon: faClock },
+                  { tab: 'notificationSettings', label: '通知設定', icon: faBell },
+                  { tab: 'settings', label: '帳戶設定', icon: faCog }, // 移到最下面
+                  // 添加其他選項
+                ].map(({ tab, label, icon }) => (
                   <li
                     key={tab}
                     className={`p-3 cursor-pointer rounded-lg transition-colors duration-300 text-xl leading-relaxed ${
@@ -123,13 +132,8 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     }`}
                     onClick={() => setActiveTab(tab)}
                   >
-                    {tab === 'profile' && '個人資訊'}
-                    {tab === 'activity' && '觀看紀錄'}
-                    {tab === 'settings' && '帳戶設定'}
-                    {tab === 'changePassword' && '修改密碼'}
-                    {tab === 'feedback' && '意見反饋'}
-                    {tab === 'activityLog' && '活動日誌'}
-                    {tab === 'notificationSettings' && '通知訂閱'}
+                    <FontAwesomeIcon icon={icon} className="mr-3" /> {/* 調整間距 */}
+                    {label}
                   </li>
                 ))}
               </ul>
