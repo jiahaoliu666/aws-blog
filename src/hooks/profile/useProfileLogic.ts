@@ -20,9 +20,10 @@ interface FormData {
     email: boolean;
   };
   password: string;
-  confirmPassword: string; 
+  confirmPassword: string;
   feedbackTitle: string;
-  feedbackContent: string; // 新增這一行
+  feedbackContent: string;
+  feedbackImage?: File; // 新增這一行
 }
 
 export const useProfileLogic = () => {
@@ -42,9 +43,10 @@ export const useProfileLogic = () => {
       email: false,
     },
     password: '',
-    confirmPassword: '', // 新增這一行
+    confirmPassword: '',
     feedbackTitle: '',
-    feedbackContent: '', // 新增這一行
+    feedbackContent: '',
+    feedbackImage: undefined, // 新增這一行
   });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -651,6 +653,43 @@ export const useProfileLogic = () => {
     }
   };
 
+  const sendFeedback = async () => {
+    try {
+      let imageBase64 = '';
+      if (formData.feedbackImage) {
+        const reader = new FileReader();
+        reader.readAsDataURL(formData.feedbackImage);
+        imageBase64 = await new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+        });
+      }
+
+      const feedbackData = {
+        title: formData.feedbackTitle,
+        content: formData.feedbackContent,
+        email: formData.email,
+        image: imageBase64,
+      };
+
+      const response = await fetch('/api/sendFeedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedbackData),
+      });
+
+      if (response.ok) {
+        console.log('反饋已成功發送');
+        resetFeedbackForm();
+      } else {
+        console.error('發送反饋時出錯');
+      }
+    } catch (error) {
+      console.error('發送反饋時發生錯誤:', error);
+    }
+  };
+
   return {
     user,
     formData,
@@ -693,5 +732,6 @@ export const useProfileLogic = () => {
     logRecentArticle,
     toggleNotification,
     handleSaveNotificationSettings,
+    sendFeedback,
   };
 };

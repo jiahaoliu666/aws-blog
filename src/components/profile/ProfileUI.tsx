@@ -128,7 +128,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     {tab === 'settings' && '帳戶設定'}
                     {tab === 'changePassword' && '修改密碼'}
                     {tab === 'feedback' && '意見反饋'}
-                    {tab === 'activityLog' && '動日誌'}
+                    {tab === 'activityLog' && '活動日誌'}
                     {tab === 'notificationSettings' && '通知訂閱'}
                   </li>
                 ))}
@@ -411,16 +411,20 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           placeholder="請輸入您的問題、意見或建議"
                         />
                       </div>
-                      <div>
-                        <label htmlFor="feedbackImage" className="block text-sm font-medium text-gray-700">上傳圖片</label>
-                        <input
-                          id="feedbackImage"
-                          name="feedbackImage"
-                          type="file"
-                          accept="image/*"
-                          className="mt-2 p-2 border border-gray-300 rounded w-full"
-                        />
-                      </div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">上傳圖片</label>
+                      <input
+                        id="feedbackImage1"
+                        name="feedbackImage1"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const files = e.target?.files;
+                          if (files && files[0]) {
+                            setFormData(prevData => ({ ...prevData, feedbackImage1: files[0] }));
+                          }
+                        }}
+                        className="mt-2 p-2 border border-gray-300 rounded w-full"
+                      />
                       <div className="flex justify-end space-x-4">
                         <button
                           type="button"
