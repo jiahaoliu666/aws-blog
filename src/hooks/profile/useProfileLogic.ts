@@ -285,7 +285,7 @@ export const useProfileLogic = () => {
       }, 3000); // 3秒後登出
     } catch (error) {
       console.error('Error changing password:', error);
-      setPasswordMessage('更新密碼失敗，請確認舊密���是否正確並重試。');
+      setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
     }
   };
 
@@ -324,7 +324,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上失敗：檔案類型不支援請重新確認檔案型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗：檔案類型不支援請重新確認檔案型是否為 jpeg 或 png。');
         return;
       }
 
@@ -654,7 +654,12 @@ export const useProfileLogic = () => {
     }
   };
 
-  const sendFeedback = async () => {
+  const sendFeedback = async (onSuccess?: () => void) => {
+    if (!formData.feedbackTitle.trim() || !formData.feedbackContent.trim()) {
+      setFeedbackMessage('請填寫反饋標題和內容。');
+      return;
+    }
+
     try {
       let imageBase64 = '';
       if (formData.feedbackImage) {
@@ -690,13 +695,12 @@ export const useProfileLogic = () => {
         console.log('反饋已成功發送');
         setFeedbackMessage('已將反饋成功提交，感謝您寶貴的意見！');
         resetFeedbackForm();
+        await logActivity('成功提交意見反饋');
+        if (onSuccess) onSuccess();
       } else {
-        const errorData = await response.json();
-        console.error('發送反饋時出錯:', errorData);
         setFeedbackMessage('發送反饋時出錯');
       }
     } catch (error) {
-      console.error('發送反饋時發生錯誤:', error);
       setFeedbackMessage('發送反饋時發生錯誤');
     }
   };

@@ -86,6 +86,20 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     }
   }, [passwordMessage]);
 
+  React.useEffect(() => {
+    if (feedbackMessage) {
+      const timer = setTimeout(() => {
+        resetUploadState(); // 清除消息並重置上傳狀態
+        const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
+        if (feedbackImageInput) {
+          feedbackImageInput.value = ''; // 清空選擇的檔案
+        }
+      }, 5000);
+
+      return () => clearTimeout(timer); // 清除計時器
+    }
+  }, [feedbackMessage, resetUploadState]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -269,7 +283,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 )}
                 {activeTab === 'settings' && (
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">設定</h3>
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">帳戶設定</h3>
                   </div>
                 )}
                 {activeTab === 'changePassword' && (
@@ -383,7 +397,12 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     <h3 className="text-xl font-bold text-gray-800 mb-4">意見反饋</h3>
                     <form className="space-y-4" onSubmit={(e) => {
                       e.preventDefault();
-                      sendFeedback();
+                      sendFeedback(() => {
+                        const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
+                        if (feedbackImageInput) {
+                          feedbackImageInput.value = ''; // 清空選擇的檔案
+                        }
+                      });
                     }}>
                       <div>
                         <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
