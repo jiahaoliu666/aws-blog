@@ -57,6 +57,8 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     logRecentArticle, // 確保這些狀態直接從 useProfileLogic 中獲取
     toggleNotification, // 移除這行
     handleSaveNotificationSettings, // 移除這行
+    sendFeedback, // 確保調用 sendFeedback
+    feedbackMessage, // 新增這行
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -378,7 +380,10 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 {activeTab === 'feedback' && (
                   <div>
                     <h3 className="text-xl font-bold text-gray-800 mb-4">意見反饋</h3>
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={(e) => {
+                      e.preventDefault();
+                      sendFeedback();
+                    }}>
                       <div>
                         <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
                         <input
@@ -445,6 +450,11 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         </button>
                       </div>
                     </form>
+                    {feedbackMessage && (
+                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${feedbackMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {feedbackMessage}
+                      </div>
+                    )}
                   </div>
                 )}
                 {activeTab === 'activityLog' && (

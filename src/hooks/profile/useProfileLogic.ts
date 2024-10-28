@@ -69,6 +69,7 @@ export const useProfileLogic = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [activityLog, setActivityLog] = useState<{ date: string; action: string; }[]>([]);
   const [localUsername, setLocalUsername] = useState(user ? user.username : '');
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -257,7 +258,7 @@ export const useProfileLogic = () => {
     }
 
     if (!passwordRegex.test(formData.password)) {
-      setPasswordMessage('密碼只能包含特殊符號、英文和數字。');
+      setPasswordMessage('密碼只能包含殊符號、英文和數字。');
       return;
     }
 
@@ -659,8 +660,9 @@ export const useProfileLogic = () => {
       if (formData.feedbackImage) {
         const reader = new FileReader();
         reader.readAsDataURL(formData.feedbackImage);
-        imageBase64 = await new Promise<string>((resolve) => {
+        imageBase64 = await new Promise<string>((resolve, reject) => {
           reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject('Error reading file');
         });
       }
 
@@ -671,7 +673,7 @@ export const useProfileLogic = () => {
         image: imageBase64,
       };
 
-      const response = await fetch('/api/sendFeedback', {
+      const response = await fetch('/api/profile/sendFeedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -681,12 +683,16 @@ export const useProfileLogic = () => {
 
       if (response.ok) {
         console.log('反饋已成功發送');
+        setFeedbackMessage('反饋已成功發送');
         resetFeedbackForm();
       } else {
-        console.error('發送反饋時出錯');
+        const errorData = await response.json();
+        console.error('發送反饋時出錯:', errorData);
+        setFeedbackMessage('發送反饋時出錯');
       }
     } catch (error) {
       console.error('發送反饋時發生錯誤:', error);
+      setFeedbackMessage('發送反饋時發生錯誤');
     }
   };
 
@@ -733,5 +739,6 @@ export const useProfileLogic = () => {
     toggleNotification,
     handleSaveNotificationSettings,
     sendFeedback,
+    feedbackMessage,
   };
 };
