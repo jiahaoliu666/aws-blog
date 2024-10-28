@@ -55,8 +55,8 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     uploadMessage, // 確保這些狀態直接從 useProfileLogic 中獲取
     passwordMessage,
     logRecentArticle, // 確保這些狀態直接從 useProfileLogic 中獲取
-    toggleNotification, // 確保從 useProfileLogic 中解構出來
-    handleSaveNotificationSettings, // 新增這行
+    toggleNotification, // 移除這行
+    handleSaveNotificationSettings, // 移除這行
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -128,7 +128,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     {tab === 'settings' && '帳戶設定'}
                     {tab === 'changePassword' && '修改密碼'}
                     {tab === 'feedback' && '意見反饋'}
-                    {tab === 'activityLog' && '活動日誌'}
+                    {tab === 'activityLog' && '動日誌'}
                     {tab === 'notificationSettings' && '通知訂閱'}
                   </li>
                 ))}
@@ -462,44 +462,47 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     <p className="text-sm text-gray-600 mb-6">管理您的帳戶信息和偏好設置</p>
                     
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <SwitchField
+                          label=""
+                          isChecked={false}
+                          onChange={() => {}}
+                        />
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">電子郵件通知</h4>
                           <p className="text-sm text-gray-600">接收重要更新和公告</p>
                         </div>
-                        <SwitchField
-                          isChecked={formData.notifications.email}
-                          onChange={() => toggleNotification('email')}
-                        />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <SwitchField
+                          label=""
+                          isChecked={false}
+                          onChange={() => {}}
+                        />
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-800">推送通知</h4>
-                          <p className="text-sm text-gray-600">在設備上接收即時通知</p>
+                          <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
+                          <p className="text-sm text-gray-600">在Line接收即時通知</p>
                         </div>
-                        <SwitchField
-                          isChecked={formData.notifications.push}
-                          onChange={() => toggleNotification('push')}
-                        />
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <SwitchField
+                          label=""
+                          isChecked={false}
+                          onChange={() => {}}
+                        />
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-800">短信通知</h4>
+                          <h4 className="text-lg font-semibold text-gray-800">導覽列通知</h4>
                           <p className="text-sm text-gray-600">接收緊急和重要的短信提醒</p>
                         </div>
-                        <SwitchField
-                          isChecked={formData.notifications.sms}
-                          onChange={() => toggleNotification('sms')}
-                        />
                       </div>
                       <div className="mt-6">
                         <label className="block text-sm font-medium text-gray-700">通知頻率</label>
                         <select
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          value={formData.notificationFrequency}
-                          onChange={(e) => setFormData({ ...formData, notificationFrequency: e.target.value })}
+                          value="daily"
+                          onChange={() => {}}
                         >
                           <option value="hourly">每小時通知一次</option>
                           <option value="daily">每日通知一次</option>
@@ -509,7 +512,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
 
                       <div className="flex justify-end mt-6">
                         <button
-                          onClick={handleSaveNotificationSettings}
+                          onClick={() => {}}
                           className="bg-black text-white py-2 px-4 rounded-full hover:bg-gray-800 transition duration-200"
                         >
                           保存更改
