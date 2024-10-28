@@ -55,6 +55,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
             await logRecentArticle(article.article_id, article.link, sourcePage);
         } else {
             console.log('User not logged in, cannot log activity.');
+            // 檢查是否有其他地方會觸發跳轉
         }
     };
 

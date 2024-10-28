@@ -5,7 +5,6 @@ import { useAppContext } from '../../context/AppContext';
 import { useAuthContext } from '../../context/AuthContext';  
 import { useNewsFavorites } from '../../hooks/news/useNewsFavorites';
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'; // 正確的導入
-import { logActivity } from '../../context/AuthContext'; // 確保導入 logActivity
 
 interface NavbarProps {
   setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選

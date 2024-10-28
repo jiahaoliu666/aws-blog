@@ -8,7 +8,14 @@ import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 import Navbar from '../common/Navbar'; 
 import Footer from '../common/Footer'; 
 
-const ProfileUI: React.FC = () => {
+interface ProfileUIProps {
+    uploadMessage: string;
+    passwordMessage: string;
+    setIsEditable: () => void;
+    // ... 其他屬性 ...
+}
+
+const ProfileUI: React.FC<ProfileUIProps> = (props) => {
   const {
     user,
     formData,

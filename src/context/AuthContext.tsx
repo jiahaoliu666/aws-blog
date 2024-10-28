@@ -38,6 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUserFromCognito = async () => {
       const storedUser = localStorage.getItem("user");
+      console.log('Checking stored user:', storedUser);
       if (storedUser) {
         const parsedUser: User = JSON.parse(storedUser);
         try {

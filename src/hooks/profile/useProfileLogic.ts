@@ -72,7 +72,12 @@ export const useProfileLogic = () => {
   }, []);
 
   useEffect(() => {
-    if (user === null) {
+    // 獲取當前路徑
+    const currentPath = router.pathname;
+
+    // 僅在訪問 /profile 頁面時執行重定向
+    if (user === null && currentPath === '/profile') {
+      console.log('User is null, redirecting to login from profile page...');
       setShowLoginMessage(true);
       const timer = setTimeout(() => {
         router.push('/auth/login');
