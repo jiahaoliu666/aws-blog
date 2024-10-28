@@ -351,7 +351,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
                         <p className="mt-2 text-sm text-gray-500">
-                          定期更改密碼並避免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
+                          定期更改密碼並���免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
                         </p>
                       </div>
                     </div>
@@ -434,6 +434,11 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         }}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
                       />
+                      {feedbackMessage && (
+                        <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${feedbackMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {feedbackMessage}
+                        </div>
+                      )}
                       <div className="flex justify-end space-x-4">
                         <button
                           type="button"
@@ -450,11 +455,6 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         </button>
                       </div>
                     </form>
-                    {feedbackMessage && (
-                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${feedbackMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {feedbackMessage}
-                      </div>
-                    )}
                   </div>
                 )}
                 {activeTab === 'activityLog' && (

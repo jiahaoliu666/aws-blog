@@ -658,6 +658,11 @@ export const useProfileLogic = () => {
     try {
       let imageBase64 = '';
       if (formData.feedbackImage) {
+        const validImageTypes = ['image/jpeg', 'image/png'];
+        if (!validImageTypes.includes(formData.feedbackImage.type)) {
+          setFeedbackMessage('上傳失敗：檔案類型不支援，請確認檔案類型是否為 jpeg 或 png。');
+          return;
+        }
         const reader = new FileReader();
         reader.readAsDataURL(formData.feedbackImage);
         imageBase64 = await new Promise<string>((resolve, reject) => {
@@ -683,7 +688,7 @@ export const useProfileLogic = () => {
 
       if (response.ok) {
         console.log('反饋已成功發送');
-        setFeedbackMessage('反饋已成功發送');
+        setFeedbackMessage('已將反饋成功提交，感謝您寶貴的意見！');
         resetFeedbackForm();
       } else {
         const errorData = await response.json();
