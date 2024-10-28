@@ -429,7 +429,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         onChange={(e) => {
                           const files = e.target?.files;
                           if (files && files[0]) {
-                            setFormData(prevData => ({ ...prevData, feedbackImage1: files[0] }));
+                            setFormData(prevData => ({ ...prevData, feedbackImage: files[0] }));
                           }
                         }}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"

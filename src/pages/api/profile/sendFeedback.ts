@@ -21,6 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (image) {
+      console.log('Received image for upload');
+      // 確保 image 是 base64 格式，並且去掉前綴
       const buffer = Buffer.from(image.split(',')[1], 'base64');
       console.log('Image buffer length:', buffer.length);
       const params = {
@@ -31,12 +33,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
       const command = new PutObjectCommand(params);
       try {
+        console.log('Attempting to upload image to S3');
+        console.log('S3 upload parameters:', params);
         await s3Client.send(command);
         imageUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
+        console.log('Image uploaded successfully:', imageUrl);
       } catch (s3Error) {
         console.error('S3 upload error:', s3Error);
         throw new Error('Failed to upload image to S3');
       }
+    } else {
+      console.log('No image provided for upload');
     }
   } catch (error) {
     console.error('Image processing error:', error);
