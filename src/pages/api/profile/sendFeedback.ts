@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log('Image buffer length:', buffer.length);
       const params = {
         Bucket: 'aws-blog-feedback',
-        Key: `feedback-images/${Date.now()}.png`,
+        Key: `feedback-images/${email}-${Date.now()}.png`,
         Body: buffer,
         ContentType: 'image/png',
       };
