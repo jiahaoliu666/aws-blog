@@ -15,7 +15,10 @@ interface FormData {
   email: string;
   registrationDate: string;
   avatar: string;
-  notifications: boolean;
+  notifications: {
+    line: boolean;
+    email: boolean;
+  };
   password: string;
   confirmPassword: string; 
   feedbackTitle: string;
@@ -34,7 +37,10 @@ export const useProfileLogic = () => {
     email: user ? user.email : '',
     registrationDate: '[註冊日期]',
     avatar: 'user.png',
-    notifications: true,
+    notifications: {
+      line: false,
+      email: false,
+    },
     password: '',
     confirmPassword: '', // 新增這一行
     feedbackTitle: '',
@@ -625,6 +631,26 @@ export const useProfileLogic = () => {
     }
   };
 
+  const toggleNotification = (type: 'line' | 'email') => {
+    setFormData(prevData => ({
+      ...prevData,
+      notifications: {
+        ...prevData.notifications,
+        [type]: !prevData.notifications[type],
+      },
+    }));
+  };
+
+  const handleSaveNotificationSettings = async () => {
+    try {
+      // 在這裡添加代碼來更新後端的用戶設置
+      console.log('通知設置已保存:', formData.notifications);
+      // 例如，調用 API 來保存設置
+    } catch (error) {
+      console.error('保存通知設置時發生錯誤:', error);
+    }
+  };
+
   return {
     user,
     formData,
@@ -665,5 +691,7 @@ export const useProfileLogic = () => {
     resetUsername,
     logActivity,
     logRecentArticle,
+    toggleNotification,
+    handleSaveNotificationSettings,
   };
 };

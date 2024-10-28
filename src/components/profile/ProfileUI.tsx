@@ -55,6 +55,8 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     uploadMessage, // 確保這些狀態直接從 useProfileLogic 中獲取
     passwordMessage,
     logRecentArticle, // 確保這些狀態直接從 useProfileLogic 中獲取
+    toggleNotification, // 確保從 useProfileLogic 中解構出來
+    handleSaveNotificationSettings, // 新增這行
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -89,7 +91,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
             <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
-            <p className="text-lg text-gray-700">您將被重新導向至登入頁面...</p>
+            <p className="text-lg text-gray-700">您將重新導向至登入頁面...</p>
           </div>
         ) : (
           <>
@@ -127,7 +129,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     {tab === 'changePassword' && '修改密碼'}
                     {tab === 'feedback' && '意見反饋'}
                     {tab === 'activityLog' && '活動日誌'}
-                    {tab === 'notificationSettings' && '通知設置'}
+                    {tab === 'notificationSettings' && '通知訂閱'}
                   </li>
                 ))}
               </ul>
@@ -455,9 +457,66 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                   </div>
                 )}
                 {activeTab === 'notificationSettings' && (
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">通知設置</h3>
-                  </div>
+                  <>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">個人資料設置</h3>
+                    <p className="text-sm text-gray-600 mb-6">管理您的帳戶信息和偏好設置</p>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-800">電子郵件通知</h4>
+                          <p className="text-sm text-gray-600">接收重要更新和公告</p>
+                        </div>
+                        <SwitchField
+                          isChecked={formData.notifications.email}
+                          onChange={() => toggleNotification('email')}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-800">推送通知</h4>
+                          <p className="text-sm text-gray-600">在設備上接收即時通知</p>
+                        </div>
+                        <SwitchField
+                          isChecked={formData.notifications.push}
+                          onChange={() => toggleNotification('push')}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-800">短信通知</h4>
+                          <p className="text-sm text-gray-600">接收緊急和重要的短信提醒</p>
+                        </div>
+                        <SwitchField
+                          isChecked={formData.notifications.sms}
+                          onChange={() => toggleNotification('sms')}
+                        />
+                      </div>
+                      <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-700">通知頻率</label>
+                        <select
+                          className="mt-2 p-2 border border-gray-300 rounded w-full"
+                          value={formData.notificationFrequency}
+                          onChange={(e) => setFormData({ ...formData, notificationFrequency: e.target.value })}
+                        >
+                          <option value="hourly">每小時通知一次</option>
+                          <option value="daily">每日通知一次</option>
+                          <option value="weekly">每週通知一次</option>
+                        </select>
+                      </div>
+
+                      <div className="flex justify-end mt-6">
+                        <button
+                          onClick={handleSaveNotificationSettings}
+                          className="bg-black text-white py-2 px-4 rounded-full hover:bg-gray-800 transition duration-200"
+                        >
+                          保存更改
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
