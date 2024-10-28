@@ -329,7 +329,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     </div>
                     <div className="space-y-4">
                       {/* 密碼強度 */}
-                      <div className="mb-4 mt-6">
+                      <div className="mb-8 mt-8">
                         <label className="block text-sm font-medium text-gray-700">密碼強度</label>
                         <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                           <div
@@ -339,22 +339,6 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         </div>
                         <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字、特殊字符來增強密碼安性</p>
                       </div>
-
-                      {/* 雙重認證 */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700">雙重認證</label>
-                        <div className="flex items-center mt-2">
-                          <span className="mr-2">啟用雙重認證</span>
-                          <SwitchField
-                            label=""
-                            isChecked={false}
-                            onChange={() => {}}
-                            className="mr-2"
-                          />
-                        </div>
-                        <p className="mt-2 text-sm text-gray-500">啟用後，每次登錄都需要輸入證碼</p>
-                      </div>
-
                       {/* 安全提示 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
@@ -390,14 +374,14 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                     <h3 className="text-xl font-bold text-gray-800 mb-4">意見反饋</h3>
                     <form className="space-y-4">
                       <div>
-                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子</label>
+                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
                         <input
                           id="feedbackEmail"
                           name="feedbackEmail"
                           type="email"
                           value={formData.email}
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="輸入您電子郵"
+                          placeholder="輸入您的電子郵件"
                           disabled
                         />
                       </div>
