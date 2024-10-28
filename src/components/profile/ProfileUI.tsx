@@ -59,6 +59,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     handleSaveNotificationSettings, // 移除這行
     sendFeedback, // 確保調用 sendFeedback
     feedbackMessage, // 新增這行
+    resetUploadState, // 新增這行
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -351,7 +352,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
                         <p className="mt-2 text-sm text-gray-500">
-                          定期更改密碼並���免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
+                          定期更改密碼並免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
                         </p>
                       </div>
                     </div>
@@ -442,7 +443,14 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <div className="flex justify-end space-x-4">
                         <button
                           type="button"
-                          onClick={resetFeedbackForm}
+                          onClick={() => {
+                            resetFeedbackForm(); // 重置反饋表單
+                            resetUploadState(); // 重置上傳狀態
+                            const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
+                            if (feedbackImageInput) {
+                              feedbackImageInput.value = ''; // 清空選擇的檔案
+                            }
+                          }}
                           className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
                         >
                           取消提交

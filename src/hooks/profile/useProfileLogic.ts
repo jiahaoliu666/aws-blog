@@ -285,7 +285,7 @@ export const useProfileLogic = () => {
       }, 3000); // 3秒後登出
     } catch (error) {
       console.error('Error changing password:', error);
-      setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
+      setPasswordMessage('更新密碼失敗，請確認舊密���是否正確並重試。');
     }
   };
 
@@ -701,6 +701,14 @@ export const useProfileLogic = () => {
     }
   };
 
+  const resetUploadState = () => {
+    setFormData(prevData => ({
+      ...prevData,
+      feedbackImage: undefined, // 重置上傳的圖片
+    }));
+    setFeedbackMessage(null); // 隱藏消息通知
+  };
+
   return {
     user,
     formData,
@@ -745,5 +753,6 @@ export const useProfileLogic = () => {
     handleSaveNotificationSettings,
     sendFeedback,
     feedbackMessage,
+    resetUploadState,
   };
 };
