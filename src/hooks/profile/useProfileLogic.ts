@@ -204,7 +204,7 @@ export const useProfileLogic = () => {
     let changesSuccessful = true;
 
     if (!localUsername.trim()) {
-      setUploadMessage('用戶名不能為空。');
+      setUploadMessage('用戶名��能為空。');
       console.log('用戶名不能為空。');
       return;
     }
@@ -229,11 +229,11 @@ export const useProfileLogic = () => {
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
         // Log the activity
-        await logActivity(user?.sub || 'default-sub', '變更用戶名');
+        await logActivity(user?.sub || 'default-sub', `變更用戶名：${localUsername}`);
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
         setUploadMessage('更新用戶名失敗，稍後再試。');
-        console.log('更新用��名失敗，請稍後再試。');
+        console.log('更新用戶名失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }

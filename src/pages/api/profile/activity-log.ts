@@ -1,6 +1,6 @@
 // pages/api/profile/activity-log.ts
 
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, PutItemCommand, QueryCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
 
 const logActivity = async (userId: string, action: string) => {
   try {
@@ -37,6 +37,37 @@ const logActivity = async (userId: string, action: string) => {
     const putCommand = new PutItemCommand(putParams);
     await dynamoClient.send(putCommand);
     console.log(`Activity logged: ${action} at ${timestamp}`);
+
+    // Fetch all activities to check the count
+    const queryParams = {
+      TableName: 'AWS_Blog_UserActivityLog',
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': { S: userId },
+      },
+      ScanIndexForward: true, // Ascending order to get the oldest first
+    };
+    const queryCommand = new QueryCommand(queryParams);
+    const response = await dynamoClient.send(queryCommand);
+
+    if (response.Items && response.Items.length > 12) {
+      // Delete the oldest activity
+      const oldestActivity = response.Items[0];
+      if (oldestActivity.timestamp.S) {
+        const deleteParams = {
+          TableName: 'AWS_Blog_UserActivityLog',
+          Key: {
+            userId: { S: userId },
+            timestamp: { S: oldestActivity.timestamp.S },
+          },
+        };
+        const deleteCommand = new DeleteItemCommand(deleteParams);
+        await dynamoClient.send(deleteCommand);
+        console.log(`Oldest activity deleted with timestamp: ${oldestActivity.timestamp.S}`);
+      } else {
+        console.error('Error: timestamp is undefined');
+      }
+    }
   } catch (error) {
     console.error('Error logging activity:', error);
   }
