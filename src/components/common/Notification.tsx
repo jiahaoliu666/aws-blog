@@ -1,14 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface NotificationProps {
-  notifications: Array<{
+  notifications?: Array<{
     title: string;
     date: string;
     content: string;
   }>;
 }
 
-const Notification: React.FC<NotificationProps> = ({ notifications }) => {
+const Notification: React.FC<NotificationProps> = () => {
+  const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
+
+  useEffect(() => {
+    const fetchNewArticles = async () => {
+      try {
+        const response = await fetch('/api/news/updateNews');
+        const data = await response.json();
+        setNewNotifications(data);
+      } catch (error) {
+        console.error("獲取新文章時發生錯誤:", error);
+      }
+    };
+
+    fetchNewArticles();
+    const intervalId = setInterval(fetchNewArticles, 60000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const markAllAsRead = () => {
     console.log("所有通知已標記為已讀");
   };
@@ -21,7 +40,7 @@ const Notification: React.FC<NotificationProps> = ({ notifications }) => {
           全部已讀
         </button>
       </div>
-      {notifications.map((notification, index) => (
+      {newNotifications?.slice(0, 5).map((notification, index) => (
         <div key={index} className="flex p-4 border-b border-gray-300">
           <div>
             <h3 className="text-md font-semibold text-black">{notification.title}</h3>

@@ -24,15 +24,6 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   const resourcesDropdownRef = useRef<HTMLDivElement>(null);  
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
-  const notifications = [
-    {
-      title: '英雄聯盟：激鬥峽谷有新的文章',
-      date: '7小時前',
-      content: '[問題] 個人檔案造型背景音樂',
-    },
-    // ... other notifications ...
-  ];
-
   useEffect(() => {
     const fetchAvatar = async () => {
       if (user) {
@@ -153,7 +144,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                 <button onClick={toggleNotification} className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0">
                   通知
                 </button>
-                {isNotificationOpen && <Notification notifications={notifications} />}
+                {isNotificationOpen && <Notification notifications={[]} />}
               </div>
             )}
             <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0" onClick={() => handleLinkClick('最新公告')}>最新公告</Link>  
