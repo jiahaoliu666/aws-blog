@@ -28,7 +28,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 }) => {
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
     const { user } = useAuthContext();
-    const { logActivity, logRecentArticle } = useProfileLogic();
+    const { logRecentArticle } = useProfileLogic();
 
     useEffect(() => {
         setIsSummaryVisible(showSummaries);

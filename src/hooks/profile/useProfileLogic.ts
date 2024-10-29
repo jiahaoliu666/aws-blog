@@ -227,10 +227,13 @@ export const useProfileLogic = () => {
         console.log('用戶名更新成功頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
+
+        // Log the activity
+        await logActivity(user?.sub || 'default-sub', '變更用戶名');
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
         setUploadMessage('更新用戶名失敗，稍後再試。');
-        console.log('更新用戶名失敗，請稍後再試。');
+        console.log('更新用��名失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }
@@ -281,6 +284,10 @@ export const useProfileLogic = () => {
       });
       await cognitoClient.send(changePasswordCommand);
       setPasswordMessage('密碼變更成功，請重新登入。');
+      
+      // Log the password change activity
+      await logActivity(user?.sub || 'default-sub', '變更密碼');
+
       setTimeout(() => {
         handleLogout(); // 在這裡調用登出函數
       }, 3000); // 3秒後登出
@@ -629,7 +636,7 @@ export const useProfileLogic = () => {
         console.log('反饋已成功發送');
         setFeedbackMessage('已將反饋成功提交，感謝您寶貴的意見！');
         resetFeedbackForm();
-        await logActivity(user?.sub || 'default-sub', '成功提交意見反饋');
+        await logActivity(user?.sub || 'default-sub', '提交意見反饋');
         if (onSuccess) onSuccess();
       } else {
         setFeedbackMessage('發送反饋時出錯');

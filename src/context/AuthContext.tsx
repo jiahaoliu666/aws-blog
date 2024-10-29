@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import cognitoClient from "../utils/cognitoClient";
 import { ExtendedNews } from "@/types/newsType";
+import logActivity from '../pages/api/profile/activity-log'; // 引入 logActivity 函數
 
 interface User {
   accessToken: string;
@@ -131,6 +132,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const user: User = { accessToken, refreshToken, username, sub: userId, email, favorites: [] };
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
+
+        await logActivity(userId, '登入帳戶');
 
         return true;
       }

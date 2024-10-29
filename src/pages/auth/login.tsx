@@ -10,6 +10,7 @@ import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
+import logActivity from '../api/profile/activity-log'; // 引入 logActivity 函數
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
@@ -49,6 +50,9 @@ const LoginPage: React.FC = () => {
       const loginSucceeded = await loginUser(email, password);  
       if (loginSucceeded) {  
         setSuccess('登入成功！');  
+        if (user) { // 檢查 user 是否為 null
+          await logActivity(user.sub, '登入帳戶'); // 使用 id 記錄登入活動
+        }
         setTimeout(() => {  
           router.push('/news');  
         }, 2500);  

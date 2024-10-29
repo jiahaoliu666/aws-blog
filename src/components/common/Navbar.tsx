@@ -5,6 +5,7 @@ import { useAppContext } from '../../context/AppContext';
 import { useAuthContext } from '../../context/AuthContext';  
 import { useNewsFavorites } from '../../hooks/news/useNewsFavorites';
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'; // 正確的導入
+import logActivity from '../../pages/api/profile/activity-log'; // 新增這行
 
 interface NavbarProps {
   setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選
@@ -68,7 +69,10 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
       await logoutUser();  
       localStorage.clear();
       setFavorites([]);
-      alert('您已成功登出!');
+      if (user) {
+        alert('您已成功登出!');
+        await logActivity(user.sub, '登出帳戶');
+      }
       window.location.reload();
     } catch (error) {  
       console.error('Failed to logout:', error);  
