@@ -135,11 +135,11 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
               <ul className={`space-y-3 ${isProfileMenuOpen ? 'block mt-8' : 'hidden'} lg:block`}>
                 {[
                   { tab: 'profile', label: '個人資訊', icon: faUser },
-                  { tab: 'activity', label: '觀看紀錄', icon: faEye },
                   { tab: 'changePassword', label: '修改密碼', icon: faLock },
-                  { tab: 'feedback', label: '意見反饋', icon: faCommentDots },
                   { tab: 'notificationSettings', label: '通知設定', icon: faBell },
                   { tab: 'settings', label: '偏好設定', icon: faCog }, 
+                  { tab: 'activity', label: '觀看紀錄', icon: faEye },
+                  { tab: 'feedback', label: '意見反饋', icon: faCommentDots },
                   { tab: 'activityLog', label: '活動日誌', icon: faClock },
                 ].map(({ tab, label, icon }) => (
                   <li
