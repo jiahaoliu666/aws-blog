@@ -539,7 +539,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         />
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">導覽列通知</h4>
-                          <p className="text-sm text-gray-600">僅在導覽列顯示通知</p>
+                          <p className="text-sm text-gray-600">在導覽列顯示通知</p>
                         </div>
                       </div>
                       <div className="mt-6">
