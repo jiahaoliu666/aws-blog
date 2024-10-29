@@ -57,3 +57,6 @@
   │     ├── extractDateFromInfo.ts          // 工具函數，用於從字符串中提取日期，假設格式為 "YYYY年MM月DD日"  
   │     ├── apiClient.ts                    // 工具函數，用於封裝 API 請求邏輯  
   │     └── cognitoClient.ts                // 封裝 AWS Cognito 相關的 API 調用邏輯，提供註冊、登錄、登出等功能
+  ├── /lambda
+  │     ├── updateNews.js                   // Lambda 函數，用於從 AWS 部落格抓取最新文章並存儲到 DynamoDB
+  │     └── fetchNews.js                    // Lambda 函數，使用 Microsoft 翻譯和 OpenAI 總結從 AWS 部落格抓取的文章
