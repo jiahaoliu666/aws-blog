@@ -47,7 +47,7 @@ export const useProfileLogic = () => {
     confirmPassword: '',
     feedbackTitle: '',
     feedbackContent: '',
-    feedbackImage: undefined, // 新增這一行
+    feedbackImage: undefined, 
   });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
