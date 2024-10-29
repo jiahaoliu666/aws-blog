@@ -43,9 +43,8 @@ const Notification: React.FC<NotificationProps> = () => {
       {newNotifications?.slice(0, 5).map((notification, index) => (
         <div key={index} className="flex p-4 border-b border-gray-300">
           <div>
-            <h3 className="text-md font-semibold text-black">{notification.title}</h3>
             <p className="text-sm text-gray-500">{notification.date}</p>
-            <p className="text-sm text-gray-700">{notification.content}</p>
+            <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: notification.content }}></p>
           </div>
         </div>
       ))}

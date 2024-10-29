@@ -32,9 +32,9 @@ async function getNewArticles() {
   const latestItems = sortedItems.slice(0, 5);
 
   return latestItems.map((item) => ({
-    content: `有新的文章：${item.translated_title.S} - ${timeAgo(
-      item.published_at.N
-    )}`,
+    content: `<a href="/news" class="text-blue-500 hover:underline">[最新新聞]</a> 有新的文章：${
+      item.translated_title.S
+    } - ${timeAgo(item.published_at.N)}`,
   }));
 }
 
