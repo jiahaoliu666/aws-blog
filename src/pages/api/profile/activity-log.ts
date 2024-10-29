@@ -1,41 +1,45 @@
-// // pages/api/profile/activity-log.ts
-// import { NextApiRequest, NextApiResponse } from 'next';
-// import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+// pages/api/profile/activity-log.ts
 
-// const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
-// export default async (req: NextApiRequest, res: NextApiResponse) => {
-//   if (req.method === 'POST') {
-//     const { userId, articleId, link, sourcePage } = req.body;
+const logActivity = async (userId: string, action: string) => {
+  try {
+    const dynamoClient = new DynamoDBClient({
+      region: 'ap-northeast-1',
+      credentials: {
+        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+      },
+    });
 
-//     if (!userId || !articleId || !link || !sourcePage) {
-//       return res.status(400).json({ error: 'Missing required fields in request body' });
-//     }
+    const formatDate = (date: Date) => {
+      return date.toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      }).replace(/\//g, '-');
+    };
 
-//     const timestamp = new Date().toISOString();
+    const timestamp = formatDate(new Date());
 
-//     const params = {
-//       TableName: 'AWS_Blog_UserRecentArticles',
-//       Item: {
-//         userId: { S: userId },
-//         articleId: { S: articleId },
-//         timestamp: { S: timestamp },
-//         link: { S: link },
-//         sourcePage: { S: sourcePage },
-//       },
-//     };
+    const putParams = {
+      TableName: 'AWS_Blog_UserActivityLog',
+      Item: {
+        userId: { S: userId },
+        timestamp: { S: timestamp },
+        action: { S: action },
+      },
+    };
+    const putCommand = new PutItemCommand(putParams);
+    await dynamoClient.send(putCommand);
+    console.log(`Activity logged: ${action} at ${timestamp}`);
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
+};
 
-//     try {
-//       const command = new PutItemCommand(params);
-//       await dynamoClient.send(command);
-//       console.log(`Recent article saved: ${articleId} for user: ${userId} at ${timestamp}`);
-//       res.status(200).json({ message: 'Recent article saved successfully' });
-//     } catch (error) {
-//       console.error('Error saving recent article:', error);
-//       res.status(500).json({ error: 'Error saving recent article' });
-//     }
-//   } else {
-//     res.setHeader('Allow', ['POST']);
-//     res.status(405).end(`Method ${req.method} Not Allowed`);
-//   }
-// };
+export default logActivity;

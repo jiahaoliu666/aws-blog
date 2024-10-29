@@ -4,6 +4,7 @@ import { useAuthContext } from '../../context/AuthContext';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, QueryCommand, UpdateItemCommand, DeleteItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttributesCommand, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
+import logActivity from '../../pages/api/profile/activity-log';
 
 interface EditableFields {
   username: boolean;
@@ -228,7 +229,7 @@ export const useProfileLogic = () => {
         setFormData(prevData => ({ ...prevData, username: localUsername }));
       } catch (error) {
         console.error('更新用戶名時出錯:', error);
-        setUploadMessage('更新用戶名失敗，請稍後再試。');
+        setUploadMessage('更新用戶名失敗，稍後再試。');
         console.log('更新用戶名失敗，請稍後再試。');
         changesSuccessful = false;
       }
@@ -313,7 +314,7 @@ export const useProfileLogic = () => {
 
   const handleLogout = async () => {
     console.log('Logging out...');
-    await logActivity('登出系統');
+    await logActivity(user?.sub || 'default-sub', '登出系統');
     await logoutUser();
     router.push('/auth/login');
   };
@@ -324,7 +325,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援請重新確認檔案型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗：檔案類型不支援，請確認檔案類型是否為 jpeg 或 png。');
         return;
       }
 
@@ -357,42 +358,15 @@ export const useProfileLogic = () => {
         localStorage.setItem('avatarUrl', fileUrl);
         setUploadMessage('頭像更換成功，頁面刷新中...');
 
-        const dynamoClient = new DynamoDBClient({
-          region: 'ap-northeast-1',
-          credentials: {
-            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-          },
-        });
+        // Log the activity
+        await logActivity(user?.sub || 'default-sub', '更換頭像');
 
-        const updateParams = {
-          TableName: 'AWS_Blog_UserProfiles',
-          Key: {
-            userId: { S: user?.sub || 'default-sub' },
-          },
-          UpdateExpression: 'SET avatarUrl = :avatarUrl',
-          ExpressionAttributeValues: {
-            ':avatarUrl': { S: fileUrl },
-          },
-        };
-
-        try {
-          const updateCommand = new UpdateItemCommand(updateParams);
-          await dynamoClient.send(updateCommand);
-          console.log('DynamoDB updated successfully');
-
-          await logActivity('更換頭像');
-
-          setTimeout(() => {
-            window.location.reload();
-          }, 3000);
-        } catch (error) {
-          console.error('Error updating DynamoDB:', error);
-          setUploadMessage('更新頭像失敗，請再次嘗試。');
-        }
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
       } catch (error) {
         console.error('Error uploading file:', error);
-        setUploadMessage('上傳失敗：請稍後試。');
+        setUploadMessage('上傳失敗：請稍後再試。');
       }
     }
   };
@@ -434,46 +408,6 @@ export const useProfileLogic = () => {
 
   const toggleEditableField = (field: keyof EditableFields) => {
     setIsEditable(prev => ({ ...prev, [field]: !prev[field] }));
-  };
-
-  const logActivity = async (action: string) => {
-    try {
-      const dynamoClient = new DynamoDBClient({
-        region: 'ap-northeast-1',
-        credentials: {
-          accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-        },
-      });
-
-      const formatDate = (date: Date) => {
-        return date.toLocaleString('zh-TW', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true,
-        }).replace(/\//g, '-');
-      };
-
-      const timestamp = formatDate(new Date());
-
-      const putParams = {
-        TableName: 'AWS_Blog_UserActivityLog',
-        Item: {
-          userId: { S: user?.sub || 'default-sub' },
-          timestamp: { S: timestamp },
-          action: { S: action },
-        },
-      };
-      const putCommand = new PutItemCommand(putParams);
-      await dynamoClient.send(putCommand);
-      console.log(`Activity logged: ${action} at ${timestamp}`);
-    } catch (error) {
-      console.error('Error logging activity:', error);
-    }
   };
 
   useEffect(() => {
@@ -695,7 +629,7 @@ export const useProfileLogic = () => {
         console.log('反饋已成功發送');
         setFeedbackMessage('已將反饋成功提交，感謝您寶貴的意見！');
         resetFeedbackForm();
-        await logActivity('成功提交意見反饋');
+        await logActivity(user?.sub || 'default-sub', '成功提交意見反饋');
         if (onSuccess) onSuccess();
       } else {
         setFeedbackMessage('發送反饋時出錯');
@@ -751,7 +685,6 @@ export const useProfileLogic = () => {
     localUsername,
     setLocalUsername,
     resetUsername,
-    logActivity,
     logRecentArticle,
     toggleNotification,
     handleSaveNotificationSettings,

@@ -7,6 +7,7 @@ import '@aws-amplify/ui-react/styles.css';
 import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 import Navbar from '../common/Navbar'; 
 import Footer from '../common/Footer'; 
+import logActivity from '../../pages/api/profile/activity-log';
 
 interface ProfileUIProps {
     uploadMessage: string;
