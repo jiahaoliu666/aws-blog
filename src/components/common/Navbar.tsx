@@ -148,12 +148,14 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
             <Link href="/" className="text-3xl font-bold text-white hover:text-gray-400 transition duration-300">AWS Blog</Link>  
           </div>
           <div className={`lg:flex ${isMenuOpen ? 'flex' : 'hidden'} flex-col lg:flex-row justify-end w-full lg:w-auto space-y-4 lg:space-y-0 lg:space-x-4 ml-6 lg:ml-0`}>
-            <div className="relative notification-container">
-              <button onClick={toggleNotification} className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0">
-                通知
-              </button>
-              {isNotificationOpen && <Notification notifications={notifications} />}
-            </div>
+            {user && (
+              <div className="relative notification-container">
+                <button onClick={toggleNotification} className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0">
+                  通知
+                </button>
+                {isNotificationOpen && <Notification notifications={notifications} />}
+              </div>
+            )}
             <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0" onClick={() => handleLinkClick('最新公告')}>最新公告</Link>  
             <Link href="/news" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('最新新聞')}>最新新聞</Link>  
             <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('解決方案')}>解決方案</Link>
