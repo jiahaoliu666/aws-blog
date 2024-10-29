@@ -1,4 +1,5 @@
 import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { extractDateFromInfo } from "@/utils/extractDateFromInfo";
 
 const dbClient = new DynamoDBClient({ region: "ap-northeast-1" });
 
@@ -23,15 +24,15 @@ async function getNewArticles() {
   };
 
   const data = await dbClient.send(new ScanCommand(params));
-  const sortedItems = data.Items.sort(
-    (a, b) => b.published_at.N - a.published_at.N
-  );
+  const sortedItems = data.Items.sort((a, b) => {
+    const dateA = extractDateFromInfo(a.translated_title.S) || new Date(0);
+    const dateB = extractDateFromInfo(b.translated_title.S) || new Date(0);
+    return dateB - dateA;
+  });
   const latestItems = sortedItems.slice(0, 5);
 
   return latestItems.map((item) => ({
-    title: item.translated_title.S,
-    date: new Date(parseInt(item.published_at.N) * 1000).toISOString(),
-    content: `有新的文章：${item.translated_title.S} ※${timeAgo(
+    content: `有新的文章：${item.translated_title.S} - ${timeAgo(
       item.published_at.N
     )}`,
   }));
