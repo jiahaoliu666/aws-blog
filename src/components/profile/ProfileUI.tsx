@@ -138,10 +138,9 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                   { tab: 'activity', label: '觀看紀錄', icon: faEye },
                   { tab: 'changePassword', label: '修改密碼', icon: faLock },
                   { tab: 'feedback', label: '意見反饋', icon: faCommentDots },
-                  { tab: 'activityLog', label: '活動日誌', icon: faClock },
                   { tab: 'notificationSettings', label: '通知設定', icon: faBell },
-                  { tab: 'settings', label: '帳戶設定', icon: faCog }, // 移到最下面
-                  // 添加其他選項
+                  { tab: 'settings', label: '偏好設定', icon: faCog }, 
+                  { tab: 'activityLog', label: '活動日誌', icon: faClock },
                 ].map(({ tab, label, icon }) => (
                   <li
                     key={tab}
@@ -284,7 +283,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 )}
                 {activeTab === 'settings' && (
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">帳戶設定</h3>
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">偏好設定</h3>
                   </div>
                 )}
                 {activeTab === 'changePassword' && (
