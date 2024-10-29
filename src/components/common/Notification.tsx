@@ -9,10 +9,17 @@ interface NotificationProps {
 }
 
 const Notification: React.FC<NotificationProps> = ({ notifications }) => {
+  const markAllAsRead = () => {
+    console.log("所有通知已標記為已讀");
+  };
+
   return (
     <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-lg z-50">
-      <div className="p-4 border-b border-gray-300">
+      <div className="p-4 border-b border-gray-300 flex justify-between items-center">
         <h2 className="text-lg font-bold text-black">通知</h2>
+        <button onClick={markAllAsRead} className="text-blue-500 hover:underline">
+          全部已讀
+        </button>
       </div>
       {notifications.map((notification, index) => (
         <div key={index} className="flex p-4 border-b border-gray-300">
