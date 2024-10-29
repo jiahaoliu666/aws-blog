@@ -6,6 +6,7 @@ import { useAuthContext } from '../../context/AuthContext';
 import { useNewsFavorites } from '../../hooks/news/useNewsFavorites';
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'; // 正確的導入
 import logActivity from '../../pages/api/profile/activity-log'; // 新增這行
+import Notification from './Notification';
 
 interface NavbarProps {
   setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選
@@ -21,6 +22,16 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);  
   const resourcesDropdownRef = useRef<HTMLDivElement>(null);  
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  const notifications = [
+    {
+      title: '英雄聯盟：激鬥峽谷有新的文章',
+      date: '7小時前',
+      content: '[問題] 個人檔案造型背景音樂',
+    },
+    // ... other notifications ...
+  ];
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -86,13 +97,16 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
       }  
       if (resourcesDropdownRef.current && !resourcesDropdownRef.current.contains(event.target as Node)) {  
         setIsResourcesDropdownOpen(false);  
-      }  
+      }
+      if (isNotificationOpen && !(event.target as Element)?.closest('.notification-container')) {
+        setIsNotificationOpen(false);
+      }
     };  
     document.addEventListener('mousedown', handleClickOutside);  
     return () => {  
       document.removeEventListener('mousedown', handleClickOutside);  
     };  
-  }, []);  
+  }, [isNotificationOpen]);  
 
   const menuItemClasses = `${isDarkMode ? "text-gray-300" : "text-gray-700"}`;  
 
@@ -104,6 +118,10 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
     if (setCurrentSourcePage) {
       setCurrentSourcePage(sourcePage);
     }
+  };
+
+  const toggleNotification = () => {
+    setIsNotificationOpen(!isNotificationOpen);
   };
 
   return (  
@@ -130,14 +148,12 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
             <Link href="/" className="text-3xl font-bold text-white hover:text-gray-400 transition duration-300">AWS Blog</Link>  
           </div>
           <div className={`lg:flex ${isMenuOpen ? 'flex' : 'hidden'} flex-col lg:flex-row justify-end w-full lg:w-auto space-y-4 lg:space-y-0 lg:space-x-4 ml-6 lg:ml-0`}>
-            {user && (
-              <div className="flex items-center mt-5 lg:mt-0">
-                <svg className="w-6 h-6 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z" />
-                </svg>
-                <span className="text-white text-lg">通知</span>
-              </div>
-            )}
+            <div className="relative notification-container">
+              <button onClick={toggleNotification} className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0">
+                通知
+              </button>
+              {isNotificationOpen && <Notification notifications={notifications} />}
+            </div>
             <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0" onClick={() => handleLinkClick('最新公告')}>最新公告</Link>  
             <Link href="/news" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('最新新聞')}>最新新聞</Link>  
             <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('解決方案')}>解決方案</Link>

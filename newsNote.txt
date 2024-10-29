@@ -5,6 +5,7 @@
   │     │     ├── Navbar.tsx                // 通用的導航欄組件，顯示應用程序的標題和導航鏈接，使用 AuthContext 獲取用戶信息  
   │     │     ├── Pagination.tsx            // 通用的分頁組件，用於在多頁新聞列表中導航  
   │     │     ├── ErrorMessage.tsx          // 顯示錯誤信息的組件  
+  │     │     ├── Notification.tsx          // 獨立的通知組件，顯示通知列表
   │     ├── /news  
   │     │     ├── NewsCard.tsx              // 顯示單個新聞文章的卡片組件，包含標題、摘要和鏈接  
   │     │     ├── NewsSearch.tsx            // 搜索新聞文章的組件，提供搜索框和按鈕  
