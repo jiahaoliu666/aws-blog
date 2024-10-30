@@ -12,6 +12,7 @@
     "isolatedModules": true,  
     "jsx": "preserve",  
     "incremental": true,  
+    "baseUrl": ".", // 新增這行以確保路徑解析正確
     "paths": {  
       "@/*": ["./src/*"]  
     }  
