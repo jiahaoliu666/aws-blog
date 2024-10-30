@@ -162,11 +162,6 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
               <div className="relative flex items-center">
                 <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300 relative">
                   <BellIcon className="w-6 h-6 relative" style={{ top: '-2px' }} />
-                  {newNotifications.length > 0 && (
-                    <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                      {newNotifications.length > 99 ? '99+' : newNotifications.length}
-                    </span>
-                  )}
                 </button>
                 {isNotificationOpen && (
                   <div className="notification-container rounded-xl shadow-lg">

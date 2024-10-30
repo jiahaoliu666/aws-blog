@@ -32,7 +32,8 @@
   │     │     │     ├── index.ts            // API 路由，從 DynamoDB 獲取新聞文章列表  
   │     │     │     ├── summary.ts          // API 路由，從 DynamoDB 獲取單個新聞文章的摘要  
   │     │     │     ├── addFavorite.ts      // API 路由，將文章添加到收藏  
-  │     │     │     └── removeFavorite.ts   // API 路由，從收藏中移除文章  
+  │     │     │     ├── removeFavorite.ts   // API 路由，從收藏中移除文章  
+  │     │     │     └── updateNews.js       // API 路由，從 AWS 部落格抓取最新文章並更新到 DynamoDB
   │     │     ├── /profile  
   │     │     │     ├── activity-log.ts     // 後端 API，用於處理活動日誌的存儲
   │     │     │     ├── recent-log.ts       // 後端 API，用於記錄用戶最近的文章活動

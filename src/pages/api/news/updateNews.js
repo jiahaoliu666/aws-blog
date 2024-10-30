@@ -36,7 +36,9 @@ async function getNewArticles() {
       item.link.S
     }" class="text-blue-500 hover:underline" target="_blank">${
       item.translated_title.S
-    }</a> - ${timeAgo(item.published_at.N)}`,
+    }</a><br><span style="font-size: smaller; color: gray;">${timeAgo(
+      item.published_at.N
+    )}</span>`,
   }));
 }
 

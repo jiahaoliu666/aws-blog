@@ -39,9 +39,9 @@ const Notification: React.FC<NotificationProps> = () => {
 
   return (
     <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-transform transform-gpu duration-300 ease-in-out">
-      <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-t-xl">
-        <h2 className="text-lg font-semibold text-white">通知</h2>
-        <button onClick={markAllAsRead} className="text-white hover:text-gray-200 transition duration-150">
+      <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
+        <h2 className="text-lg font-semibold text-gray-900">通知</h2>
+        <button onClick={markAllAsRead} className="text-blue-600 hover:text-blue-800 transition duration-150">
           全部已讀
         </button>
       </div>
@@ -58,8 +58,8 @@ const Notification: React.FC<NotificationProps> = () => {
           </div>
         ))
       )}
-      <div className="p-4 text-center bg-gradient-to-r from-blue-500 to-purple-600 rounded-b-xl">
-        <button className="text-white hover:text-gray-200 transition duration-150">查看所有通知</button>
+      <div className="p-4 text-center bg-gray-200 rounded-b-xl">
+        <button className="text-blue-600 hover:text-blue-800 transition duration-150">查看所有通知</button>
       </div>
     </div>
   );
