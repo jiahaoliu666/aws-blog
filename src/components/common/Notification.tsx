@@ -35,6 +35,10 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    setUnreadCount(newNotifications?.filter(notification => !notification.read).length || 0);
+  }, [newNotifications]);
+
   const markAllAsRead = () => {
     console.log("所有通知已標記為已讀");
     setNewNotifications((prevNotifications) =>
@@ -51,7 +55,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
       <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center">
           通知
-          {unreadCount > 0 && (
+          {unreadCount !== undefined && (
             <span className="ml-2 text-sm text-red-500">({unreadCount}則未讀)</span>
           )}
         </h2>
