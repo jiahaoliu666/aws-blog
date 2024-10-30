@@ -60,7 +60,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
       {loading ? (
         <div className="p-4 text-center text-gray-500">加載中...</div>
       ) : (
-        newNotifications?.slice(0, 5).map((notification, index) => (
+        newNotifications?.slice(0, 50).map((notification, index) => (
           <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
             <div>
               <p className="text-xs text-gray-500">{notification.date}</p>

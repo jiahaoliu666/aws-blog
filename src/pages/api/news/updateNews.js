@@ -29,7 +29,7 @@ async function getNewArticles() {
     const dateB = extractDateFromInfo(b.translated_title.S) || new Date(0);
     return dateB - dateA;
   });
-  const latestItems = sortedItems.slice(0, 5);
+  const latestItems = sortedItems.slice(0, 50);
 
   const unreadCount = latestItems.length;
 
