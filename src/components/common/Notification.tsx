@@ -59,7 +59,7 @@ const Notification: React.FC<NotificationProps> = () => {
             <div>
               <p className="text-xs text-gray-500">{notification.date}</p>
               <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
-              <p className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></p>
+              <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
             </div>
           </div>
         ))
