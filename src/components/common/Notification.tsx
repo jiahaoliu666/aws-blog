@@ -5,6 +5,7 @@ interface NotificationProps {
     title: string;
     date: string;
     content: string;
+    read?: boolean;
   }>;
 }
 
@@ -34,7 +35,12 @@ const Notification: React.FC<NotificationProps> = () => {
 
   const markAllAsRead = () => {
     console.log("所有通知已標記為已讀");
-    setNewNotifications([]);
+    setNewNotifications((prevNotifications) =>
+      (prevNotifications || []).map((notification) => ({
+        ...notification,
+        read: true,
+      }))
+    );
   };
 
   return (
@@ -49,7 +55,7 @@ const Notification: React.FC<NotificationProps> = () => {
         <div className="p-4 text-center text-gray-500">加載中...</div>
       ) : (
         newNotifications?.slice(0, 5).map((notification, index) => (
-          <div key={index} className="flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer">
+          <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
             <div>
               <p className="text-xs text-gray-500">{notification.date}</p>
               <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
