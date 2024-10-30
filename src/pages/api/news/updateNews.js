@@ -36,7 +36,7 @@ async function getNewArticles() {
   return {
     articles: latestItems.map((item) => ({
       content: `
-        <div class="flex items-center"></div>
+        <div class="flex items-center">
           ${
             item.read
               ? ""

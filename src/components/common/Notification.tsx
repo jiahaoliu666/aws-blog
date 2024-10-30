@@ -78,9 +78,6 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
           ))
         )}
       </div>
-      <div className="p-4 text-center bg-gray-200 rounded-b-xl">
-        <button className="text-blue-600 hover:text-blue-800 transition duration-150">查看所有通知</button>
-      </div>
     </div>
   );
 };
