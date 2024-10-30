@@ -39,9 +39,7 @@ async function getNewArticles() {
 
   const data = await dbClient.send(new ScanCommand(params));
   const sortedItems = data.Items.sort((a, b) => {
-    const dateA = extractDateFromInfo(a.translated_title.S) || new Date(0);
-    const dateB = extractDateFromInfo(b.translated_title.S) || new Date(0);
-    return dateB - dateA;
+    return b.published_at.N - a.published_at.N;
   });
   const latestItems = sortedItems.slice(0, 30);
 
