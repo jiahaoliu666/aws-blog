@@ -45,7 +45,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-transform transform-gpu duration-300 ease-in-out">
+    <div className="absolute right-0 mt-2 w-[26rem] bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-transform transform-gpu duration-300 ease-in-out">
       <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center">
           通知
@@ -57,7 +57,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
           全部已讀
         </button>
       </div>
-      <div className="max-h-80 overflow-y-auto">
+      <div className="max-h-[32rem] overflow-y-auto">
         {loading ? (
           <div className="p-4 text-center text-gray-500">加載中...</div>
         ) : (
