@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { BellIcon } from '@heroicons/react/24/outline';
 
 interface NotificationProps {
   notifications?: Array<{
@@ -11,15 +10,19 @@ interface NotificationProps {
 
 const Notification: React.FC<NotificationProps> = () => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchNewArticles = async () => {
+      setLoading(true);
       try {
         const response = await fetch('/api/news/updateNews');
         const data = await response.json();
         setNewNotifications(data);
       } catch (error) {
         console.error("獲取新文章時發生錯誤:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -34,33 +37,28 @@ const Notification: React.FC<NotificationProps> = () => {
   };
 
   return (
-    <div className="relative">
-      <button className="relative">
-        <BellIcon className="w-6 h-6 text-white" />
-        {(newNotifications?.length ?? 0) > 0 && (
-          <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-            {(newNotifications?.length ?? 0) > 99 ? '99+' : (newNotifications?.length ?? 0)}
-          </span>
-        )}
-      </button>
-      <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-lg z-50 border border-gray-300">
-        <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">通知</h2>
-          <button onClick={markAllAsRead} className="text-blue-600 hover:text-blue-800 transition duration-150">
-            全部已讀
-          </button>
-        </div>
-        {newNotifications?.slice(0, 5).map((notification, index) => (
-          <div key={index} className="flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150">
+    <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-lg z-50 border border-gray-300">
+      <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200">
+        <h2 className="text-lg font-semibold text-gray-900">通知</h2>
+        <button onClick={markAllAsRead} className="text-blue-600 hover:text-blue-800 transition duration-150">
+          全部已讀
+        </button>
+      </div>
+      {loading ? (
+        <div className="p-4 text-center text-gray-500">加載中...</div>
+      ) : (
+        newNotifications?.slice(0, 5).map((notification, index) => (
+          <div key={index} className="flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer">
             <div>
               <p className="text-xs text-gray-500">{notification.date}</p>
+              <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
               <p className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></p>
             </div>
           </div>
-        ))}
-        <div className="p-4 text-center bg-gray-200">
-          <button className="text-blue-600 hover:text-blue-800 transition duration-150">查看所有通知</button>
-        </div>
+        ))
+      )}
+      <div className="p-4 text-center bg-gray-200">
+        <button className="text-blue-600 hover:text-blue-800 transition duration-150">查看所有通知</button>
       </div>
     </div>
   );
