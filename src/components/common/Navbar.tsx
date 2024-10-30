@@ -180,7 +180,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
               <div className="relative flex items-center">
                 <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300 relative">
                   <BellIcon className="w-8 h-8 relative" style={{ top: '-2px' }} />
-                  {unreadCount !== undefined && (
+                  {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                       {unreadCount > 30 ? '30+' : unreadCount}
                     </span>

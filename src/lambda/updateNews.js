@@ -11,7 +11,7 @@ const OpenAI = require("openai");
 const axios = require("axios").default;
 
 // 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 6;
+const NUMBER_OF_ARTICLES_TO_FETCH = 1;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
