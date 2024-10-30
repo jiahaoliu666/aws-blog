@@ -42,6 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   const resourcesDropdownRef = useRef<HTMLDivElement>(null);  
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [newNotifications, setNewNotifications] = useState<{ title: string; date: string; content: string; }[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -84,6 +85,20 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
 
     fetchAvatar();
   }, [user]);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/news/updateNews');
+        const { unreadCount } = await response.json();
+        setUnreadCount(unreadCount);
+      } catch (error) {
+        console.error("獲取未讀通知數量時發生錯誤:", error);
+      }
+    };
+
+    fetchUnreadCount();
+  }, []);
 
   const handleLogout = async () => {  
     try {  
@@ -162,10 +177,15 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
               <div className="relative flex items-center">
                 <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300 relative">
                   <BellIcon className="w-6 h-6 relative" style={{ top: '-2px' }} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </button>
                 {isNotificationOpen && (
                   <div className="notification-container rounded-xl shadow-lg">
-                    <NotificationComponent notifications={newNotifications} />
+                    <NotificationComponent notifications={newNotifications} unreadCount={unreadCount} />
                   </div>
                 )}
               </div>

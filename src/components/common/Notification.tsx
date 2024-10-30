@@ -7,12 +7,12 @@ interface NotificationProps {
     content: string;
     read?: boolean;
   }>;
+  unreadCount: number;
 }
 
-const Notification: React.FC<NotificationProps> = () => {
+const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchNewArticles = async () => {
@@ -21,7 +21,6 @@ const Notification: React.FC<NotificationProps> = () => {
         const response = await fetch('/api/news/updateNews');
         const { articles, unreadCount } = await response.json();
         setNewNotifications(articles);
-        setUnreadCount(unreadCount);
       } catch (error) {
         console.error("獲取新文章時發生錯誤:", error);
       } finally {
@@ -41,13 +40,8 @@ const Notification: React.FC<NotificationProps> = () => {
       (prevNotifications || []).map((notification) => ({
         ...notification,
         read: true,
-        content: notification.content.replace(
-          '<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>',
-          ''
-        ),
       }))
     );
-    setUnreadCount(0);
   };
 
   return (
