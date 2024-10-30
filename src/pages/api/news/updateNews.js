@@ -32,7 +32,7 @@ async function getNewArticles() {
   const latestItems = sortedItems.slice(0, 5);
 
   return latestItems.map((item) => ({
-    content: `<span class="unread-marker">•</span> <a href="/news" class="text-blue-500 hover:underline">[最新新聞]</a> 有新的文章：<a href="${
+    content: `<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span> <a href="/news" class="text-blue-500 hover:underline">[最新新聞]</a> 有新的文章：<a href="${
       item.link.S
     }" class="text-blue-500 hover:underline" target="_blank">${
       item.translated_title.S
