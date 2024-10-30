@@ -160,10 +160,10 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
           <div className={`lg:flex ${isMenuOpen ? 'flex' : 'hidden'} flex-col lg:flex-row justify-end w-full lg:w-auto space-y-4 lg:space-y-0 lg:space-x-4 ml-6 lg:ml-0`}>
             {user && (
               <div className="relative flex items-center">
-                <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300">
+                <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300 relative">
                   <BellIcon className="w-6 h-6" />
                   {newNotifications.length > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                    <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                       {newNotifications.length > 99 ? '99+' : newNotifications.length}
                     </span>
                   )}
