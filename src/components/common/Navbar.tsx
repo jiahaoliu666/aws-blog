@@ -19,7 +19,7 @@ const Notification: React.FC = () => {
   return (
     <div className="relative">
       <button className="relative">
-        <BellIcon className="w-6 h-6 text-white" /> {/* 調整顏色和大小 */}
+        <BellIcon className="w-8 h-8 text-white" /> {/* 調整顏色和大小 */}
         {newNotifications > 0 && (
           <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
             {newNotifications > 99 ? '99+' : newNotifications}
@@ -176,7 +176,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
             {user && (
               <div className="relative flex items-center">
                 <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300 relative">
-                  <BellIcon className="w-6 h-6 relative" style={{ top: '-2px' }} />
+                  <BellIcon className="w-8 h-8 relative" style={{ top: '-2px' }} />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                       {unreadCount > 99 ? '99+' : unreadCount}
