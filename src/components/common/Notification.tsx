@@ -72,7 +72,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
               <div>
                 <p className="text-xs text-gray-500">{notification.date}</p>
                 <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
-                <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content.replace('<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>', '') }}></div>
+                <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
               </div>
             </div>
           ))
