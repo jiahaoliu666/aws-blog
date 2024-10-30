@@ -147,7 +147,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
 
   const toggleNotification = () => {
     setIsNotificationOpen(!isNotificationOpen);
-    if (isNotificationOpen) {
+    if (!isNotificationOpen) {
       setUnreadCount(0); // 當通知面板關閉時，將未讀計數設為 0
     }
   };
