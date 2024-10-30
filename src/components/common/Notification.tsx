@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 interface NotificationProps {
+  userId: string;
   notifications?: Array<{
     title: string;
     date: string;
@@ -11,7 +12,7 @@ interface NotificationProps {
   setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount }) => {
+const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -19,7 +20,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
     const fetchNewArticles = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/news/updateNews');
+        const response = await fetch(`/api/news/updateNews?userId=${userId}`);
         const { articles, unreadCount } = await response.json();
         setNewNotifications(articles);
       } catch (error) {
@@ -33,7 +34,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
     const intervalId = setInterval(fetchNewArticles, 60000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     setUnreadCount(newNotifications?.filter(notification => !notification.read).length || 0);
@@ -66,8 +67,8 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
       <div className="max-h-[32rem] overflow-y-auto">
         {loading ? (
           <div className="p-4 text-center text-gray-500">加載中...</div>
-        ) : (
-          newNotifications?.slice(0,30).map((notification, index) => (
+        ) : newNotifications && newNotifications.length > 0 ? (
+          newNotifications.slice(0,30).map((notification, index) => (
             <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
               <div>
                 <p className="text-xs text-gray-500">{notification.date}</p>
@@ -76,6 +77,8 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount
               </div>
             </div>
           ))
+        ) : (
+          <div className="p-24 text-center text-gray-500 italic">目前沒有任何通知</div>
         )}
       </div>
     </div>
