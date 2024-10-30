@@ -48,7 +48,7 @@ const Notification: React.FC<NotificationProps> = () => {
   return (
     <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-transform transform-gpu duration-300 ease-in-out">
       <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center">
           通知
           {unreadCount > 0 && (
             <span className="ml-2 text-sm text-red-500">({unreadCount} 未讀)</span>
