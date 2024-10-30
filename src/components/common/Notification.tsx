@@ -12,14 +12,16 @@ interface NotificationProps {
 const Notification: React.FC<NotificationProps> = () => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchNewArticles = async () => {
       setLoading(true);
       try {
         const response = await fetch('/api/news/updateNews');
-        const data = await response.json();
-        setNewNotifications(data);
+        const { articles, unreadCount } = await response.json();
+        setNewNotifications(articles);
+        setUnreadCount(unreadCount);
       } catch (error) {
         console.error("獲取新文章時發生錯誤:", error);
       } finally {
@@ -46,7 +48,12 @@ const Notification: React.FC<NotificationProps> = () => {
   return (
     <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-transform transform-gpu duration-300 ease-in-out">
       <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
-        <h2 className="text-lg font-semibold text-gray-900">通知</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          通知
+          {unreadCount > 0 && (
+            <span className="ml-2 text-sm text-red-500">({unreadCount} 未讀)</span>
+          )}
+        </h2>
         <button onClick={markAllAsRead} className="text-blue-600 hover:text-blue-800 transition duration-150">
           全部已讀
         </button>
