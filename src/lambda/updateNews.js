@@ -11,7 +11,7 @@ const OpenAI = require("openai");
 const axios = require("axios").default;
 
 // 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 1;
+const NUMBER_OF_ARTICLES_TO_FETCH = 2;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
@@ -132,10 +132,11 @@ async function saveToDynamoDB(article) {
   const translatedTitle = await translateText(article.title);
   const translatedDescription = await translateText(article.description);
 
+  const articleId = uuidv4();
   const params = {
     TableName: "AWS_Blog_News",
     Item: {
-      article_id: { S: uuidv4() },
+      article_id: { S: articleId },
       title: { S: article.title },
       translated_title: { S: translatedTitle },
       published_at: { N: String(Math.floor(Date.now() / 1000)) },
@@ -152,6 +153,17 @@ async function saveToDynamoDB(article) {
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
     console.log(`文章插入成功`);
+
+    // 獲取所有用戶的 userId
+    const userIds = await getAllUserIds();
+    let notifiedUserCount = 0;
+    for (const userId of userIds) {
+      await addNotification(userId, articleId);
+      notifiedUserCount++;
+    }
+
+    console.log(`通知了 ${notifiedUserCount} 名用戶`);
+
     return true;
   } catch (error) {
     console.error("插入文章時發生錯誤:", error);
@@ -210,6 +222,39 @@ async function scrapeAWSBlog() {
     if (browser !== null) {
       await browser.close();
     }
+  }
+}
+
+async function getAllUserIds() {
+  const params = {
+    TableName: "AWS_Blog_UserProfiles", // 假設用戶資料儲存在這個表中
+    ProjectionExpression: "userId", // 只選擇 userId 欄位
+  };
+
+  try {
+    const data = await dbClient.send(new ScanCommand(params));
+    return data.Items.map((item) => item.userId.S);
+  } catch (error) {
+    console.error("獲取用戶 ID 時發生錯誤:", error);
+    return [];
+  }
+}
+
+async function addNotification(userId, articleId) {
+  const params = {
+    TableName: "AWS_Blog_UserNotifications",
+    Item: {
+      userId: { S: userId },
+      article_id: { S: articleId },
+      read: { BOOL: false },
+    },
+  };
+
+  try {
+    await dbClient.send(new PutItemCommand(params));
+    console.log(`通知已新增: userId=${userId}, article_id=${articleId}`);
+  } catch (error) {
+    console.error("新增通知時發生錯誤:", error);
   }
 }
 
