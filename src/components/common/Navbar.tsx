@@ -6,11 +6,29 @@ import { useAuthContext } from '../../context/AuthContext';
 import { useNewsFavorites } from '../../hooks/news/useNewsFavorites';
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'; // 正確的導入
 import logActivity from '../../pages/api/profile/activity-log'; // 新增這行
-import Notification from './Notification';
+import NotificationComponent from './Notification';
+import { BellIcon } from '@heroicons/react/24/outline'; // 更新這行以符合 Heroicons v2
 
 interface NavbarProps {
   setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選
 }
+
+const Notification: React.FC = () => {
+  const [newNotifications, setNewNotifications] = useState<number>(0);
+
+  return (
+    <div className="relative">
+      <button className="relative">
+        <BellIcon className="w-6 h-6 text-white" /> {/* 調整顏色和大小 */}
+        {newNotifications > 0 && (
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+            {newNotifications > 99 ? '99+' : newNotifications}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+};
 
 const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {  
   const { isDarkMode } = useAppContext();  
@@ -140,11 +158,16 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
           </div>
           <div className={`lg:flex ${isMenuOpen ? 'flex' : 'hidden'} flex-col lg:flex-row justify-end w-full lg:w-auto space-y-4 lg:space-y-0 lg:space-x-4 ml-6 lg:ml-0`}>
             {user && (
-              <div className="relative notification-container">
-                <button onClick={toggleNotification} className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0">
-                  通知
+              <div className="relative flex items-center">
+                <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300">
+                  <BellIcon className="w-6 h-6" />
+                  <span className="ml-2">通知</span>
                 </button>
-                {isNotificationOpen && <Notification notifications={[]} />}
+                {isNotificationOpen && (
+                  <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-lg z-50 border border-gray-300">
+                    <NotificationComponent />
+                  </div>
+                )}
               </div>
             )}
             <Link href="/announcement" className="text-white hover:text-gray-400 transition duration-300 text-lg mt-4 lg:mt-0" onClick={() => handleLinkClick('最新公告')}>最新公告</Link>  
