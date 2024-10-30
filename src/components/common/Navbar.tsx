@@ -169,7 +169,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                   )}
                 </button>
                 {isNotificationOpen && (
-                  <div>
+                  <div className="notification-container rounded-xl shadow-lg">
                     <NotificationComponent notifications={newNotifications} />
                   </div>
                 )}
