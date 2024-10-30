@@ -50,7 +50,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
         <h2 className="text-lg font-semibold text-gray-900 flex items-center">
           通知
           {unreadCount > 0 && (
-            <span className="ml-2 text-sm text-red-500">({unreadCount} 未讀)</span>
+            <span className="ml-2 text-sm text-red-500">({unreadCount}則未讀)</span>
           )}
         </h2>
         <button onClick={markAllAsRead} className="text-blue-600 hover:text-blue-800 transition duration-150">
