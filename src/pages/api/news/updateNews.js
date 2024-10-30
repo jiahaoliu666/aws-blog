@@ -37,7 +37,11 @@ async function getNewArticles() {
     articles: latestItems.map((item) => ({
       content: `
         <div class="flex items-center">
-          <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+          ${
+            item.read
+              ? ""
+              : '<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>'
+          }
           <div class="flex-1">
             <a href="/news" class="text-blue-600 hover:text-blue-800 hover:underline transition duration-150">[最新新聞]</a> 有新的文章：
             <a href="${
@@ -52,6 +56,7 @@ async function getNewArticles() {
           </div>
         </div>
       `,
+      read: false,
     })),
     unreadCount,
   };

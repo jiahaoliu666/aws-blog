@@ -41,8 +41,13 @@ const Notification: React.FC<NotificationProps> = () => {
       (prevNotifications || []).map((notification) => ({
         ...notification,
         read: true,
+        content: notification.content.replace(
+          '<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>',
+          ''
+        ),
       }))
     );
+    setUnreadCount(0);
   };
 
   return (
@@ -66,7 +71,7 @@ const Notification: React.FC<NotificationProps> = () => {
             <div>
               <p className="text-xs text-gray-500">{notification.date}</p>
               <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
-              <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
+              <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content.replace('<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>', '') }}></div>
             </div>
           </div>
         ))
