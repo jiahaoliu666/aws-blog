@@ -147,6 +147,9 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
 
   const toggleNotification = () => {
     setIsNotificationOpen(!isNotificationOpen);
+    if (isNotificationOpen) {
+      setUnreadCount(0); // 當通知面板關閉時，將未讀計數設為 0
+    }
   };
 
   return (  
@@ -185,7 +188,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                 </button>
                 {isNotificationOpen && (
                   <div className="notification-container absolute right-0 mt-2  bg-white shadow-lg rounded-xl z-50 border border-gray-300">
-                    <NotificationComponent notifications={newNotifications} unreadCount={unreadCount} />
+                    <NotificationComponent notifications={newNotifications} unreadCount={unreadCount} setUnreadCount={setUnreadCount} />
                   </div>
                 )}
               </div>

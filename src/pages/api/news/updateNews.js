@@ -31,7 +31,7 @@ async function getNewArticles() {
   });
   const latestItems = sortedItems.slice(0, 50);
 
-  const unreadCount = latestItems.length;
+  const unreadCount = latestItems.filter((item) => !item.read).length;
 
   return {
     articles: latestItems.map((item) => ({
@@ -56,7 +56,7 @@ async function getNewArticles() {
           </div>
         </div>
       `,
-      read: false,
+      read: item.read || false,
     })),
     unreadCount,
   };

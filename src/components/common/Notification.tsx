@@ -8,9 +8,10 @@ interface NotificationProps {
     read?: boolean;
   }>;
   unreadCount: number;
+  setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
+const Notification: React.FC<NotificationProps> = ({ unreadCount, setUnreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -42,6 +43,7 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
         read: true,
       }))
     );
+    setUnreadCount(0);
   };
 
   return (
