@@ -78,7 +78,10 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             </div>
           ))
         ) : (
-          <div className="p-24 text-center text-gray-500 italic">目前沒有任何通知</div>
+          <div className="p-24 text-center text-gray-500 italic">
+            目前沒有任何通知
+            <img src="/kuku.png" alt="哭哭圖" className="mb-6 w-48 h-48" />
+          </div>
         )}
       </div>
     </div>
