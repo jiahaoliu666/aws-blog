@@ -41,6 +41,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);  
   const resourcesDropdownRef = useRef<HTMLDivElement>(null);  
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [newNotifications, setNewNotifications] = useState<{ title: string; date: string; content: string; }[]>([]);
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -161,11 +162,15 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
               <div className="relative flex items-center">
                 <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300">
                   <BellIcon className="w-6 h-6" />
-                  <span className="ml-2">通知</span>
+                  {newNotifications.length > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                      {newNotifications.length > 99 ? '99+' : newNotifications.length}
+                    </span>
+                  )}
                 </button>
                 {isNotificationOpen && (
                   <div className="absolute right-0 mt-2 w-96 bg-white shadow-lg rounded-lg z-50 border border-gray-300">
-                    <NotificationComponent />
+                    <NotificationComponent notifications={newNotifications} />
                   </div>
                 )}
               </div>
@@ -211,7 +216,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                   <div className="flex flex-col mt-2 space-y-2 lg:absolute lg:right-0 lg:mt-2 lg:w-48 lg:bg-gray-800 lg:rounded-md lg:shadow-lg lg:z-20 lg:py-1">  
                     <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">個人資訊</Link>
                     <Link href="/bookmark" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">收藏文章</Link>  
-                    <Link href="/notifications" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">所有通知</Link>   
+                    <Link href="/notifications" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">所通知</Link>   
                     <Link href="/exam" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">考試題庫</Link>   
                     <Link href="/history" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">版本歷史</Link>   
                     <div className="border-t border-gray-700"></div>  

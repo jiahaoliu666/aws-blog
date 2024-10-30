@@ -36,9 +36,9 @@ const Notification: React.FC<NotificationProps> = () => {
   return (
     <div className="relative">
       <button className="relative">
-        <BellIcon className="w-6 h-6 text-gray-700" />
+        <BellIcon className="w-6 h-6 text-white" />
         {(newNotifications?.length ?? 0) > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
             {(newNotifications?.length ?? 0) > 99 ? '99+' : (newNotifications?.length ?? 0)}
           </span>
         )}
