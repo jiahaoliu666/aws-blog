@@ -57,19 +57,21 @@ const Notification: React.FC<NotificationProps> = ({ unreadCount }) => {
           全部已讀
         </button>
       </div>
-      {loading ? (
-        <div className="p-4 text-center text-gray-500">加載中...</div>
-      ) : (
-        newNotifications?.slice(0, 50).map((notification, index) => (
-          <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
-            <div>
-              <p className="text-xs text-gray-500">{notification.date}</p>
-              <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
-              <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content.replace('<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>', '') }}></div>
+      <div className="max-h-80 overflow-y-auto">
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">加載中...</div>
+        ) : (
+          newNotifications?.slice(0, 50).map((notification, index) => (
+            <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
+              <div>
+                <p className="text-xs text-gray-500">{notification.date}</p>
+                <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
+                <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content.replace('<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>', '') }}></div>
+              </div>
             </div>
-          </div>
-        ))
-      )}
+          ))
+        )}
+      </div>
       <div className="p-4 text-center bg-gray-200 rounded-b-xl">
         <button className="text-blue-600 hover:text-blue-800 transition duration-150">查看所有通知</button>
       </div>
