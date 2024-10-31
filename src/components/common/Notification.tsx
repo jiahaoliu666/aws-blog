@@ -33,7 +33,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         console.log("API 響應狀態:", response.status);
 
         const data = await response.json();
-        console.log("獲取到的數據:", JSON.stringify(data, null, 2));
+        console.log("���取到的數據:", JSON.stringify(data, null, 2));
 
         if (data && Array.isArray(data.articles)) {
           console.log("獲取到的文章數據:", data.articles);
@@ -105,7 +105,6 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           {unreadCount !== undefined && (
             <span className="ml-2 text-base text-red-500">({unreadCount}則未讀)</span>
           )}
-          <span className="ml-2 text-base text-gray-500">(顯示最多 3 篇)</span>
         </h2>
         <button onClick={markAllAsRead} className="text-lg text-blue-600 hover:text-blue-800 transition duration-150">
           全部已讀
@@ -115,7 +114,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         {loading ? (
           <div className="p-4 text-center text-gray-500">加載中...</div>
         ) : newNotifications && newNotifications.length > 0 ? (
-          newNotifications.slice(0,3).map((notification, index) => (
+          newNotifications.map((notification, index) => (
             <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
               <div>
                 <h3 className="text-base font-bold text-gray-900">{notification.title}</h3>
