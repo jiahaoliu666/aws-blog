@@ -33,7 +33,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         console.log("API 響應狀態:", response.status);
 
         const data = await response.json();
-        console.log("���取到的數據:", JSON.stringify(data, null, 2));
+        console.log("取到的數據:", JSON.stringify(data, null, 2));
 
         if (data && Array.isArray(data.articles)) {
           console.log("獲取到的文章數據:", data.articles);
@@ -79,6 +79,9 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         },
         body: JSON.stringify({ userId }),
       });
+
+      console.log("POST 請求 URL:", '/api/news/updateNews');
+      console.log("POST 響應狀態:", response.status);
 
       if (response.ok) {
         setNewNotifications((prevNotifications) =>

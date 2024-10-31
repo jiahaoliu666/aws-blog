@@ -2,12 +2,75 @@ import {
   DynamoDBClient,
   QueryCommand,
   DeleteItemCommand,
+  UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-northeast-1" });
 
 export default async function handler(req, res) {
   const { userId } = req.query;
+
+  if (req.method === "POST") {
+    try {
+      const { userId } = req.body;
+      console.log("接收到的 userId:", userId);
+
+      if (!userId) {
+        throw new Error("Missing userId in request");
+      }
+
+      // 查詢所有未讀通知
+      const queryParams = {
+        TableName: "AWS_Blog_UserNotifications",
+        KeyConditionExpression: "userId = :userId",
+        FilterExpression: "read = :false",
+        ExpressionAttributeValues: {
+          ":userId": { S: userId },
+          ":false": { BOOL: false },
+        },
+      };
+
+      const queryCommand = new QueryCommand(queryParams);
+      const queryResponse = await dynamoClient.send(queryCommand);
+
+      console.log("未讀通知查詢結果:", JSON.stringify(queryResponse, null, 2));
+
+      if (queryResponse.Items && queryResponse.Items.length > 0) {
+        for (const item of queryResponse.Items) {
+          console.log("正在更新通知 article_id:", item.article_id.S);
+          const updateParams = {
+            TableName: "AWS_Blog_UserNotifications",
+            Key: {
+              userId: { S: userId },
+              article_id: { S: item.article_id.S },
+            },
+            UpdateExpression: "SET read = :true",
+            ExpressionAttributeValues: {
+              ":true": { BOOL: true },
+            },
+          };
+
+          const updateCommand = new UpdateItemCommand(updateParams);
+          const updateResponse = await dynamoClient.send(updateCommand);
+
+          console.log("更新響應:", JSON.stringify(updateResponse, null, 2));
+          console.log("已標記為已讀的通知 article_id:", item.article_id.S);
+        }
+      } else {
+        console.log("沒有未讀通知需要更新");
+      }
+
+      return res
+        .status(200)
+        .json({ message: "All notifications marked as read" });
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", details: error.message });
+    }
+  }
+
   const maxNotifications = 3; // 設定通知顯示的最大數量
 
   try {
