@@ -88,17 +88,22 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
-      try {
-        const response = await fetch('/api/news/updateNews');
-        const { unreadCount } = await response.json();
-        setUnreadCount(unreadCount);
-      } catch (error) {
-        console.error("獲取未讀通知數量時發生錯誤:", error);
+      if (user) {
+        try {
+          const response = await fetch(`/api/news/updateNews?userId=${user.sub}`);
+          const { unreadCount } = await response.json();
+          setUnreadCount(unreadCount);
+        } catch (error) {
+          console.error("獲取未讀通知數量時發生錯誤:", error);
+        }
       }
     };
 
     fetchUnreadCount();
-  }, [newNotifications]);
+    const intervalId = setInterval(fetchUnreadCount, 60000);
+
+    return () => clearInterval(intervalId);
+  }, [user]);
 
   const handleLogout = async () => {  
     try {  
