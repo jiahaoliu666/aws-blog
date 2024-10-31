@@ -61,7 +61,7 @@ export default async function handler(req, res) {
 
     // 查詢 AWS_Blog_News
     const articles = await Promise.all(
-      userNotificationsResponse.Items.map(async (item) => {
+      userNotificationsResponse.Items.map(async (item, index) => {
         const articleId = item.article_id.S;
         const newsParams = {
           TableName: "AWS_Blog_News",
@@ -84,28 +84,30 @@ export default async function handler(req, res) {
           const newsItem = newsResponse.Items[0];
           return {
             content: `
-            <div class="flex items-center">
-              ${
-                item.read.BOOL
-                  ? ""
-                  : '<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>'
-              }
-              <div class="flex-1">
-                <a href="/news" class="text-blue-600 hover:text-blue-800 hover:underline transition duration-150">[最新新聞]</a> 有新的文章：
-                <a href="${
-                  newsItem.link.S
-                }" class="text-blue-600 hover:text-blue-800 hover:underline transition duration-150" target="_blank"> ${
+              <div class="flex items-center">
+                ${
+                  item.read.BOOL
+                    ? ""
+                    : '<span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>'
+                }
+                <div class="flex-1">
+                  ${
+                    index + 1
+                  }. <a href="/news" class="text-blue-600 hover:text-blue-800 hover:underline transition duration-150">[最新新聞]</a> 有新的文章：
+                  <a href="${
+                    newsItem.link.S
+                  }" class="text-blue-600 hover:text-blue-800 hover:underline transition duration-150" target="_blank"> ${
               newsItem.translated_title.S
             }</a>
-                <br>
-                <span class="text-sm text-gray-500">${
-                  newsItem.published_at.N
-                    ? timeAgo(newsItem.published_at.N)
-                    : ""
-                }</span>
+                  <br>
+                  <span class="text-sm text-gray-500">${
+                    newsItem.published_at.N
+                      ? timeAgo(newsItem.published_at.N)
+                      : ""
+                  }</span>
+                </div>
               </div>
-            </div>
-          `,
+            `,
             read: item.read.BOOL || false,
             published_at: parseInt(newsItem.published_at.N, 10),
           };
@@ -118,7 +120,9 @@ export default async function handler(req, res) {
 
     const filteredArticles = articles
       .filter((article) => article !== null)
-      .sort((a, b) => b.published_at - a.published_at);
+      .sort((a, b) => b.published_at - a.published_at)
+      .slice(0, maxNotifications)
+      .map((article, index) => ({ ...article, index: index + 1 }));
     const unreadCount = filteredArticles.filter(
       (article) => !article.read
     ).length;

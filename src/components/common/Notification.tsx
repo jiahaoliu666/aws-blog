@@ -37,7 +37,9 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
 
         if (data && Array.isArray(data.articles)) {
           console.log("獲取到的文章數據:", data.articles);
-          const sortedArticles = data.articles.sort((a: Article, b: Article) => b.published_at - a.published_at);
+          const sortedArticles = data.articles
+            .sort((a: Article, b: Article) => b.published_at - a.published_at)
+            .slice(0, 3);
           setNewNotifications(sortedArticles.map((article: Article) => ({
             title: article.translated_title,
             date: article.published_at ? new Date(article.published_at * 1000).toLocaleString() : '',
@@ -103,6 +105,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           {unreadCount !== undefined && (
             <span className="ml-2 text-sm text-red-500">({unreadCount}則未讀)</span>
           )}
+          <span className="ml-2 text-sm text-gray-500">(顯示最多 3 篇)</span>
         </h2>
         <button onClick={markAllAsRead} className="text-blue-600 hover:text-blue-800 transition duration-150">
           全部已讀
