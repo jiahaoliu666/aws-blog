@@ -13,23 +13,6 @@ interface NavbarProps {
   setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選
 }
 
-const Notification: React.FC = () => {
-  const [newNotifications, setNewNotifications] = useState<number>(0);
-
-  return (
-    <div className="relative">
-      <button className="relative">
-        <BellIcon className="w-8 h-8 text-white" /> {/* 調整顏色和大小 */}
-        {newNotifications > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
-            {newNotifications > 99 ? '99+' : newNotifications}
-          </span>
-        )}
-      </button>
-    </div>
-  );
-};
-
 const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {  
   const { isDarkMode } = useAppContext();  
   const { user, logoutUser } = useAuthContext();  
