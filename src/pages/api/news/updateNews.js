@@ -34,7 +34,6 @@ export default async function handler(req, res) {
 
 async function getNewArticles(userId) {
   try {
-    console.log("開始從 AWS_Blog_UserNotifications 獲取數據...");
     const params = {
       TableName: "AWS_Blog_UserNotifications",
       KeyConditionExpression: "userId = :userId",
@@ -44,29 +43,20 @@ async function getNewArticles(userId) {
     };
 
     const data = await dbClient.send(new QueryCommand(params));
-    console.log(
-      "從 AWS_Blog_UserNotifications 獲取到的數據:",
-      JSON.stringify(data, null, 2)
-    );
 
     if (!data.Items || data.Items.length === 0) {
-      console.error("未找到任何通知項目");
       return { articles: [], unreadCount: 0 };
     }
 
-    const sortedItems = data.Items.sort((a, b) => {
-      console.log("排序項目:", a, b);
-      return b.published_at.N - a.published_at.N;
-    });
+    const sortedItems = data.Items.sort(
+      (a, b) => b.published_at.N - a.published_at.N
+    );
     const latestItems = sortedItems.slice(0, 30);
-    console.log("最新的通知項目:", latestItems);
 
     const unreadCount = latestItems.filter((item) => !item.read.BOOL).length;
-    console.log("未讀通知數量:", unreadCount);
 
     const articles = await Promise.all(
       latestItems.map(async (item) => {
-        console.log("獲取文章詳細信息，article_id:", item.article_id.S);
         const newsParams = {
           TableName: "AWS_Blog_News",
           KeyConditionExpression: "article_id = :article_id",
@@ -75,18 +65,12 @@ async function getNewArticles(userId) {
           },
         };
         const newsData = await dbClient.send(new QueryCommand(newsParams));
-        console.log(
-          "從 AWS_Blog_News 獲取到的數據:",
-          JSON.stringify(newsData, null, 2)
-        );
 
         if (!newsData.Items || newsData.Items.length === 0) {
-          console.error("未找到任何文章項目");
           return null;
         }
 
         const newsItem = newsData.Items[0];
-        console.log("獲取到的文章項目:", newsItem);
 
         return {
           content: `
@@ -114,8 +98,6 @@ async function getNewArticles(userId) {
         };
       })
     );
-
-    console.log("最終獲取到的文章:", articles);
 
     return {
       articles: articles.filter((article) => article !== null),
