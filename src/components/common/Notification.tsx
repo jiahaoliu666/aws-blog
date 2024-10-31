@@ -12,6 +12,13 @@ interface NotificationProps {
   setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
 }
 
+interface Article {
+  translated_title: string;
+  published_at: number;
+  content: string;
+  read?: boolean;
+}
+
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -20,11 +27,30 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     const fetchNewArticles = async () => {
       setLoading(true);
       try {
+        console.log("開始獲取新文章...");
         const response = await fetch(`/api/news/updateNews?userId=${userId}`);
-        const { articles, unreadCount } = await response.json();
-        setNewNotifications(articles);
+        console.log("API 請求 URL:", `/api/news/updateNews?userId=${userId}`);
+        console.log("API 響應狀態:", response.status);
+
+        const data = await response.json();
+        console.log("獲取到的數據:", JSON.stringify(data, null, 2));
+
+        if (data && Array.isArray(data.articles)) {
+          console.log("獲取到的文章數據:", data.articles);
+          setNewNotifications(data.articles.map((article: Article) => ({
+            title: article.translated_title,
+            date: new Date(article.published_at * 1000).toLocaleString(),
+            content: article.content,
+            read: article.read,
+          })));
+        } else {
+          console.error("獲取新文章時發生錯誤: articles 不是一個數組");
+          console.log("完整的響應數據:", JSON.stringify(data, null, 2));
+          setNewNotifications([]);
+        }
       } catch (error) {
         console.error("獲取新文章時發生錯誤:", error);
+        setNewNotifications([]);
       } finally {
         setLoading(false);
       }
@@ -40,15 +66,32 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     setUnreadCount(newNotifications?.filter(notification => !notification.read).length || 0);
   }, [newNotifications]);
 
-  const markAllAsRead = () => {
-    console.log("所有通知已標記為已讀");
-    setNewNotifications((prevNotifications) =>
-      (prevNotifications || []).map((notification) => ({
-        ...notification,
-        read: true,
-      }))
-    );
-    setUnreadCount(0);
+  const markAllAsRead = async () => {
+    console.log("嘗試將所有通知標記為已讀");
+    try {
+      const response = await fetch('/api/news/updateNews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (response.ok) {
+        setNewNotifications((prevNotifications) =>
+          (prevNotifications || []).map((notification) => ({
+            ...notification,
+            read: true,
+          }))
+        );
+        setUnreadCount(0);
+        console.log("所有通知已成功標記為已讀");
+      } else {
+        console.error("標記所有通知為已讀時發生錯誤: 無法更新伺服器");
+      }
+    } catch (error) {
+      console.error("標記所有通知為已讀時發生錯誤:", error);
+    }
   };
 
   return (
