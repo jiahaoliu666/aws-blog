@@ -37,7 +37,8 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
 
         if (data && Array.isArray(data.articles)) {
           console.log("獲取到的文章數據:", data.articles);
-          setNewNotifications(data.articles.map((article: Article) => ({
+          const sortedArticles = data.articles.sort((a: Article, b: Article) => b.published_at - a.published_at);
+          setNewNotifications(sortedArticles.map((article: Article) => ({
             title: article.translated_title,
             date: article.published_at ? new Date(article.published_at * 1000).toLocaleString() : '',
             content: article.content,
@@ -67,7 +68,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   }, [newNotifications]);
 
   const markAllAsRead = async () => {
-    console.log("嘗試將所有通知標記為已讀");
+    console.log("試將所有通知標記為已讀");
     try {
       const response = await fetch('/api/news/updateNews', {
         method: 'POST',

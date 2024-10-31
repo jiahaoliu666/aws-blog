@@ -81,6 +81,7 @@ export default async function handler(req, res) {
             </div>
           `,
             read: item.read.BOOL || false,
+            published_at: parseInt(newsItem.published_at.N, 10),
           };
         } else {
           console.log("No news found for article_id:", articleId);
@@ -89,7 +90,9 @@ export default async function handler(req, res) {
       })
     );
 
-    const filteredArticles = articles.filter((article) => article !== null);
+    const filteredArticles = articles
+      .filter((article) => article !== null)
+      .sort((a, b) => b.published_at - a.published_at);
     const unreadCount = filteredArticles.filter(
       (article) => !article.read
     ).length;
