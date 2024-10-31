@@ -115,7 +115,6 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           newNotifications.slice(0,3).map((notification, index) => (
             <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
               <div>
-                <p className="text-xs text-gray-500">{notification.date}</p>
                 <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
                 <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
               </div>
