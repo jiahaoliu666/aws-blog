@@ -1,9 +1,14 @@
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  QueryCommand,
+  DeleteItemCommand,
+} from "@aws-sdk/client-dynamodb";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-northeast-1" });
 
 export default async function handler(req, res) {
   const { userId } = req.query;
+  const maxNotifications = 3; // 設定通知顯示的最大數量
 
   try {
     // 查詢 AWS_Blog_UserNotifications
@@ -31,6 +36,27 @@ export default async function handler(req, res) {
     ) {
       console.log("No notifications found for userId:", userId);
       return res.status(200).json({ articles: [], unreadCount: 0 });
+    }
+
+    // 如果通知數量超過限制，刪除最舊的通知
+    if (userNotificationsResponse.Items.length > maxNotifications) {
+      const itemsToDelete =
+        userNotificationsResponse.Items.slice(maxNotifications);
+      for (const item of itemsToDelete) {
+        const deleteParams = {
+          TableName: "AWS_Blog_UserNotifications",
+          Key: {
+            userId: { S: userId },
+            article_id: { S: item.article_id.S },
+          },
+        };
+        const deleteCommand = new DeleteItemCommand(deleteParams);
+        await dynamoClient.send(deleteCommand);
+        console.log(
+          "Deleted old notification with article_id:",
+          item.article_id.S
+        );
+      }
     }
 
     // 查詢 AWS_Blog_News
