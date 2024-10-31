@@ -39,7 +39,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           console.log("獲取到的文章數據:", data.articles);
           setNewNotifications(data.articles.map((article: Article) => ({
             title: article.translated_title,
-            date: new Date(article.published_at * 1000).toLocaleString(),
+            date: article.published_at ? new Date(article.published_at * 1000).toLocaleString() : '',
             content: article.content,
             read: article.read,
           })));

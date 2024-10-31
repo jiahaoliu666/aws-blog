@@ -72,9 +72,11 @@ export default async function handler(req, res) {
               newsItem.translated_title.S
             }</a>
                 <br>
-                <span class="text-sm text-gray-500">${timeAgo(
+                <span class="text-sm text-gray-500">${
                   newsItem.published_at.N
-                )}</span>
+                    ? timeAgo(newsItem.published_at.N)
+                    : ""
+                }</span>
               </div>
             </div>
           `,
