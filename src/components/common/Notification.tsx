@@ -100,14 +100,14 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   return (
     <div className="absolute right-0 mt-2 w-full max-w-md bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-transform transform-gpu duration-300 ease-in-out sm:w-[26rem]">
       <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+        <h2 className="text-xl font-semibold text-gray-900 flex items-center">
           通知
           {unreadCount !== undefined && (
-            <span className="ml-2 text-sm text-red-500">({unreadCount}則未讀)</span>
+            <span className="ml-2 text-base text-red-500">({unreadCount}則未讀)</span>
           )}
-          <span className="ml-2 text-sm text-gray-500">(顯示最多 3 篇)</span>
+          <span className="ml-2 text-base text-gray-500">(顯示最多 3 篇)</span>
         </h2>
-        <button onClick={markAllAsRead} className="text-blue-600 hover:text-blue-800 transition duration-150">
+        <button onClick={markAllAsRead} className="text-lg text-blue-600 hover:text-blue-800 transition duration-150">
           全部已讀
         </button>
       </div>
@@ -118,8 +118,8 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           newNotifications.slice(0,3).map((notification, index) => (
             <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
               <div>
-                <h3 className="text-sm font-bold text-gray-900">{notification.title}</h3>
-                <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
+                <h3 className="text-base font-bold text-gray-900">{notification.title}</h3>
+                <div className="text-base text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
               </div>
             </div>
           ))

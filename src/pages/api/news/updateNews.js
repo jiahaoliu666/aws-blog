@@ -38,23 +38,55 @@ export default async function handler(req, res) {
       return res.status(200).json({ articles: [], unreadCount: 0 });
     }
 
+    // 查詢 AWS_Blog_News 並根據 published_at 排序
+    const notificationsWithTimestamps = await Promise.all(
+      userNotificationsResponse.Items.map(async (item) => {
+        const articleId = item.article_id.S;
+        const newsParams = {
+          TableName: "AWS_Blog_News",
+          KeyConditionExpression: "article_id = :article_id",
+          ExpressionAttributeValues: {
+            ":article_id": { S: articleId },
+          },
+        };
+
+        const newsCommand = new QueryCommand(newsParams);
+        const newsResponse = await dynamoClient.send(newsCommand);
+
+        if (newsResponse.Items && newsResponse.Items.length > 0) {
+          const newsItem = newsResponse.Items[0];
+          return {
+            article_id: articleId,
+            published_at: parseInt(newsItem.published_at.N, 10),
+          };
+        }
+        return null;
+      })
+    );
+
+    const sortedNotifications = notificationsWithTimestamps
+      .filter((item) => item !== null)
+      .sort((a, b) => a.published_at - b.published_at);
+
     // 如果通知數量超過限制，刪除最舊的通知
-    if (userNotificationsResponse.Items.length > maxNotifications) {
-      const itemsToDelete =
-        userNotificationsResponse.Items.slice(maxNotifications);
+    if (sortedNotifications.length > maxNotifications) {
+      const itemsToDelete = sortedNotifications.slice(
+        0,
+        sortedNotifications.length - maxNotifications
+      );
       for (const item of itemsToDelete) {
         const deleteParams = {
           TableName: "AWS_Blog_UserNotifications",
           Key: {
             userId: { S: userId },
-            article_id: { S: item.article_id.S },
+            article_id: { S: item.article_id },
           },
         };
         const deleteCommand = new DeleteItemCommand(deleteParams);
         await dynamoClient.send(deleteCommand);
         console.log(
           "Deleted old notification with article_id:",
-          item.article_id.S
+          item.article_id
         );
       }
     }
