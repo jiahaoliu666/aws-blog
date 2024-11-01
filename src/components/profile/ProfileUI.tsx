@@ -13,7 +13,6 @@ interface ProfileUIProps {
     uploadMessage: string;
     passwordMessage: string;
     setIsEditable: () => void;
-    // ... 其他屬性 ...
 }
 
 const ProfileUI: React.FC<ProfileUIProps> = (props) => {
@@ -521,13 +520,9 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           <p className="text-sm text-gray-600">在Line接收即時通知</p>
                         </div>
                       </div>
-                      <div className="mt-6">
+                      <div className="relative mt-6">
                         <label className="block text-sm font-medium text-gray-700">通知頻率</label>
-                        <select
-                          className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          value="daily"
-                          onChange={() => {}}
-                        >
+                        <select className="mt-2 p-2 border border-gray-300 rounded w-full">
                           <option value="hourly">每小時通知一次</option>
                           <option value="daily">每日通知一次</option>
                           <option value="weekly">每週通知一次</option>
