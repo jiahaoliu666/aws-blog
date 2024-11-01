@@ -93,9 +93,9 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
   }, [feedbackMessage, resetUploadState]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex-grow container mx-auto p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 overflow-y-auto">
+      <div className="flex-grow container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-6">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
@@ -104,26 +104,26 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
           </div>
         ) : (
           <>
-            <div className="w-full lg:w-1/4 bg-gray-700 p-4 rounded-lg shadow-lg mb-4 lg:mb-0">
-              <div className="flex flex-col items-center mb-6">
+            <div className="w-full lg:w-1/4 bg-gray-700 p-6 rounded-xl shadow-xl mb-6 lg:mb-0 sticky top-4">
+              <div className="flex flex-col items-center mb-8">
                 <img
                   src={formData.avatar}
                   alt="用戶頭像"
-                  className="w-24 h-24 rounded-full border-4 border-blue-500 shadow-lg mb-2"
+                  className="w-28 h-28 rounded-full border-4 border-blue-500 shadow-lg mb-4"
                 />
-                <p className="text-white text-lg">{formData.username}</p>
-                <p className="text-gray-300 text-sm">{formData.email}</p>
+                <p className="text-white text-xl font-semibold">{formData.username}</p>
+                <p className="text-gray-300 text-sm mt-1">{formData.email}</p>
               </div>
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="text-white hover:text-gray-400 transition duration-300 flex items-center text-xl lg:hidden"
+                className="w-full text-white hover:text-gray-200 transition duration-300 flex items-center justify-between p-3 rounded-lg bg-gray-600 lg:hidden mb-4"
               >
-                個人資訊選單
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <span>個人資訊選單</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <ul className={`space-y-3 ${isProfileMenuOpen ? 'block mt-8' : 'hidden'} lg:block`}>
+              <ul className={`space-y-2 ${isProfileMenuOpen ? 'block' : 'hidden'} lg:block`}>
                 {[
                   { tab: 'profile', label: '個人資訊', icon: faUser },
                   { tab: 'changePassword', label: '修改密碼', icon: faLock },
@@ -146,76 +146,69 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 ))}
               </ul>
             </div>
-            <div className="w-full lg:w-3/4 p-3 bg-white border border-gray-300 rounded-lg shadow-lg flex-grow mt-0">
+            <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-6">
               <div className="text-gray-800 ">
                 {activeTab === 'profile' && (
-                  <div>
-                    <h1 className="text-4xl font-bold mb-4">個人資訊</h1>
-                    <div className="flex flex-col md:flex-row items-center mb-2">
-                      <div className="flex flex-col items-center">
+                  <div className="space-y-8">
+                    <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">個人資訊</h1>
+                    <div className="flex flex-col md:flex-row items-start gap-8">
+                      <div className="flex flex-col items-center space-y-4">
                         <img
                           src={formData.avatar}
                           alt="用戶頭像"
-                          className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mb-2"
+                          className="w-40 h-40 rounded-full border-4 border-blue-500 shadow-xl"
                         />
                         <button
                           onClick={() => document.getElementById('avatar')?.click()}
-                          className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
+                          className="bg-blue-600 text-white py-2.5 px-6 rounded-full hover:bg-blue-700 transition duration-200 shadow-md"
                         >
                           更換頭像
                         </button>
                       </div>
-                      <div className="text-center md:text-left md:ml-6 mt-4 mb-14 md:mt-0">
-                        <p className="text-xl mb-2">用戶名：{formData.username}</p>
-                        <p className="text-xl mb-2">電子郵件：{formData.email}</p>
-                        <p className="text-xl">註冊日期：{formData.registrationDate}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <input
-                          type="file"
-                          id="avatar"
-                          name="avatar"
-                          onChange={handleAvatarChange}
-                          className="hidden"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">用戶名</label>
-                        <input
-                          id="name"
-                          name="username"
-                          value={localUsername}
-                          onChange={(e) => setLocalUsername(e.target.value)}
-                          className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          disabled={!isEditable.username}
-                        />
-                      </div>
-                      <div className="pt-0">
-                        <div className="flex items-center mt-2">
-                          <SwitchField
-                            label="編輯用戶名"
-                            isChecked={isEditable.username}
-                            onChange={() => {
-                              toggleEditableField('username');
-                              if (isEditable.username) {
-                                resetUsername(); // 開關關閉時用戶名
-                              }
-                            }}
-                            className="mr-2"
+                      <div className="flex-grow space-y-4">
+                        <div>
+                          <p className="text-xl mb-2">用戶名：{formData.username}</p>
+                          <p className="text-xl mb-2">電子郵件：{formData.email}</p>
+                          <p className="text-xl">註冊日期：{formData.registrationDate}</p>
+                        </div>
+                        <div>
+                          <input
+                            type="file"
+                            id="avatar"
+                            name="avatar"
+                            onChange={handleAvatarChange}
+                            className="hidden"
                           />
+                        </div>
+                        <div>
+                          <label htmlFor="name" className="block text-sm font-medium text-gray-700">用戶名</label>
+                          <input
+                            id="name"
+                            name="username"
+                            value={localUsername}
+                            onChange={(e) => setLocalUsername(e.target.value)}
+                            className="mt-2 p-2 border border-gray-300 rounded w-full"
+                            disabled={!isEditable.username}
+                          />
+                        </div>
+                        <div className="pt-0">
+                          <div className="flex items-center mt-2">
+                            <SwitchField
+                              label="編輯用戶名"
+                              isChecked={isEditable.username}
+                              onChange={() => {
+                                toggleEditableField('username');
+                                if (isEditable.username) {
+                                  resetUsername(); // 開關關閉時用戶名
+                                }
+                              }}
+                              className="mr-2"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
-
-                    {uploadMessage && (
-                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {uploadMessage}
-                      </div>
-                    )}
-
-                    <div className="profile-actions mt-6 flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4">
+                    <div className="flex justify-end gap-4 mt-8 pt-4 border-t">
                       <button 
                         onClick={() => {
                           handleCancelChanges();
@@ -229,6 +222,11 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         保存更改
                       </button>
                     </div>
+                    {uploadMessage && (
+                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {uploadMessage}
+                      </div>
+                    )}
                   </div>
                 )}
                 {activeTab === 'activity' && (
