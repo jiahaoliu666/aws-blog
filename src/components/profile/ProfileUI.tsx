@@ -95,7 +95,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex-grow container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-6">
+      <div className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-6">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
@@ -104,12 +104,12 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
           </div>
         ) : (
           <>
-            <div className="w-full lg:w-1/4 bg-gray-700 p-6 rounded-xl shadow-xl mb-6 lg:mb-0 sticky top-4">
-              <div className="flex flex-col items-center mb-8">
+            <div className="w-full lg:w-1/4 bg-gray-700 p-4 sm:p-6 rounded-xl shadow-xl mb-6 lg:mb-0 lg:sticky lg:top-4">
+              <div className="flex flex-col items-center mb-6 sm:mb-8">
                 <img
                   src={formData.avatar}
                   alt="用戶頭像"
-                  className="w-28 h-28 rounded-full border-4 border-blue-500 shadow-lg mb-4"
+                  className="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 border-blue-500 shadow-lg mb-4"
                 />
                 <p className="text-white text-xl font-semibold">{formData.username}</p>
                 <p className="text-gray-300 text-sm mt-1">{formData.email}</p>
@@ -118,8 +118,8 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="w-full text-white hover:text-gray-200 transition duration-300 flex items-center justify-between p-3 rounded-lg bg-gray-600 lg:hidden mb-4"
               >
-                <span>個人資訊選單</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span className="text-sm sm:text-base">個人資訊選單</span>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -146,7 +146,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 ))}
               </ul>
             </div>
-            <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-6">
+            <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-4 sm:p-6">
               <div className="text-gray-800 ">
                 {activeTab === 'profile' && (
                   <div className="space-y-8">
@@ -392,7 +392,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 {activeTab === 'feedback' && (
                   <div>
                     <h3 className="text-xl font-bold text-gray-800 mb-4">意見反饋</h3>
-                    <form className="space-y-4" onSubmit={(e) => {
+                    <form className="space-y-4 max-w-2xl mx-auto" onSubmit={(e) => {
                       e.preventDefault();
                       sendFeedback(() => {
                         const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
@@ -401,29 +401,31 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         }
                       });
                     }}>
-                      <div>
-                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
-                        <input
-                          id="feedbackEmail"
-                          name="feedbackEmail"
-                          type="email"
-                          value={formData.email}
-                          className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="輸入您的電子郵件"
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="feedbackTitle" className="block text-sm font-medium text-gray-700">標題</label>
-                        <input
-                          id="feedbackTitle"
-                          name="feedbackTitle"
-                          type="text"
-                          value={formData.feedbackTitle}
-                          onChange={handleChange}
-                          className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="輸入標題"
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
+                          <input
+                            id="feedbackEmail"
+                            name="feedbackEmail"
+                            type="email"
+                            value={formData.email}
+                            className="mt-2 p-2 border border-gray-300 rounded w-full"
+                            placeholder="輸入您的電子郵件"
+                            disabled
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="feedbackTitle" className="block text-sm font-medium text-gray-700">標題</label>
+                          <input
+                            id="feedbackTitle"
+                            name="feedbackTitle"
+                            type="text"
+                            value={formData.feedbackTitle}
+                            onChange={handleChange}
+                            className="mt-2 p-2 border border-gray-300 rounded w-full"
+                            placeholder="輸入標題"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label htmlFor="feedbackContent" className="block text-sm font-medium text-gray-700">反饋內容</label>
