@@ -166,7 +166,10 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
           <div className={`lg:flex ${isMenuOpen ? 'flex' : 'hidden'} flex-col lg:flex-row justify-end w-full lg:w-auto space-y-4 lg:space-y-0 lg:space-x-4 ml-6 lg:ml-0`}>
             {user && (
               <div className="relative flex items-center mt-4 lg:mt-0">
-                <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300 relative">
+                <button 
+                  onClick={toggleNotification} 
+                  className="flex items-center text-white hover:text-gray-400 transition duration-300 relative z-50"
+                >
                   <BellIcon className="w-8 h-8 relative" style={{ top: '-2px' }} />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
@@ -175,14 +178,17 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                   )}
                 </button>
                 {isNotificationOpen && (
-                  <div className="notification-container absolute right-0 mt-2  bg-white shadow-lg rounded-xl z-50 border border-gray-300">
-                    <NotificationComponent 
-                      notifications={newNotifications} 
-                      unreadCount={unreadCount} 
-                      setUnreadCount={setUnreadCount} 
-                      userId={user.sub}
-                    />
-                  </div>
+                  <>
+                    <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={toggleNotification}></div>
+                    <div className="notification-container lg:absolute lg:right-0 z-50">
+                      <NotificationComponent 
+                        notifications={newNotifications} 
+                        unreadCount={unreadCount} 
+                        setUnreadCount={setUnreadCount} 
+                        userId={user.sub}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             )}

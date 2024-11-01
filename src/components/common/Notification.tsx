@@ -93,21 +93,24 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-full max-w-md bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-transform transform-gpu duration-300 ease-in-out sm:w-[26rem]">
-      <div className="p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+    <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[26rem] max-w-md mx-auto lg:mx-0 bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-all duration-300 ease-in-out">
+      <div className="p-3 lg:p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
+        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center flex-wrap">
           通知
           {unreadCount !== undefined && (
-            <span className="ml-2 text-base text-red-500">
+            <span className="ml-2 text-sm lg:text-base text-red-500">
               (共{totalCount}則，有{unreadCount}則未讀)
             </span>
           )}
         </h2>
-        <button onClick={markAllAsRead} className="text-lg text-blue-600 hover:text-blue-800 transition duration-150">
+        <button 
+          onClick={markAllAsRead} 
+          className="text-base lg:text-lg text-blue-600 hover:text-blue-800 transition duration-150 whitespace-nowrap"
+        >
           全部已讀
         </button>
       </div>
-      <div className="max-h-[32rem] overflow-y-auto">
+      <div className="max-h-[50vh] lg:max-h-[32rem] overflow-y-auto">
         {loading ? (
           <div className="p-4 text-center text-gray-500">加載中...</div>
         ) : newNotifications && newNotifications.length > 0 ? (

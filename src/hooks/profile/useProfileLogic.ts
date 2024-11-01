@@ -71,6 +71,20 @@ export const useProfileLogic = () => {
   const [activityLog, setActivityLog] = useState<{ date: string; action: string; }[]>([]);
   const [localUsername, setLocalUsername] = useState(user ? user.username : '');
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -218,7 +232,7 @@ export const useProfileLogic = () => {
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        setUploadMessage('用戶名更新成功，頁面刷新中...');
+        setUploadMessage('���戶名更新成功，頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
@@ -684,5 +698,6 @@ export const useProfileLogic = () => {
     sendFeedback,
     feedbackMessage,
     resetUploadState,
+    isMobile,
   };
 };
