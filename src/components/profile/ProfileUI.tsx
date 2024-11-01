@@ -505,8 +505,19 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         />
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">電子郵件通知</h4>
-                          <p className="text-sm text-gray-600">接收重要更新和公告</p>
                         </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="notificationEmail" className="mt-4 ml-16 block text-sm font-medium text-gray-700">通知郵件地址：</label>
+                        <input
+                          id="notificationEmail"
+                          type="email"
+                          value={formData.email}
+                          className="mt-2 mb-4 ml-16 p-2 border border-gray-300 rounded"
+                          style={{ width: `${formData.email.length + 5}ch` }}
+                          disabled
+                        />
                       </div>
 
                       <div className="flex items-center space-x-4">
@@ -517,7 +528,6 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         />
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
-                          <p className="text-sm text-gray-600">在Line接收即時通知</p>
                         </div>
                       </div>
                       <div className="relative mt-6">
