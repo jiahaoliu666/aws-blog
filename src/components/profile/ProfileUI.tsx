@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faUser, faBell, faShieldAlt, faGlobe, faCog, faClock, faCommentDots, faHistory, faEye, faEnvelope, faQuestionCircle, faBolt, faBookmark, faShareAlt, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faUser, faBell, faShieldAlt, faGlobe, faCog, faClock, faCommentDots, faHistory, faEye, faEnvelope, faQuestionCircle, faBolt, faBookmark, faShareAlt, faFile, faTh, faThList } from '@fortawesome/free-solid-svg-icons';
 import { SwitchField } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
@@ -238,9 +238,10 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <h3 className="text-2xl font-bold text-gray-800">最近的觀看紀錄</h3>
                       <button
                         onClick={() => setIsCompactLayout(!isCompactLayout)}
-                        className="bg-blue-600 text-white py-1 px-3 rounded-full hover:bg-blue-700 transition duration-200 hidden md:block"
+                        className="bg-blue-600 text-white py-2 px-3 rounded-full hover:bg-blue-700 transition duration-200 flex items-center"
                       >
-                        切換佈局
+                        <FontAwesomeIcon icon={isCompactLayout ? faTh : faThList} size="lg" className="mr-2" />
+                        {isCompactLayout ? '網格佈局' : '列表佈局'}
                       </button>
                     </div>
                     <div className={`grid ${isCompactLayout ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
