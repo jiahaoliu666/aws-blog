@@ -75,7 +75,7 @@ export default async function handler(req, res) {
     }
   }
 
-  const maxNotifications = 3; // 設定通知顯示的最大數量
+  const maxNotifications = 5; // 設定通知顯示的最大數量
 
   try {
     // 查詢 AWS_Blog_UserNotifications
