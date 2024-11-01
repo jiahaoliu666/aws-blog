@@ -113,12 +113,14 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         ) : newNotifications && newNotifications.length > 0 ? (
           newNotifications.map((notification, index) => (
             <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
-              <div>
-                <h3 className="text-base font-bold text-gray-900">{notification.title}</h3>
-                <div className="text-base text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
+              <div className="flex items-center">
                 {!notification.read && (
                   <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                 )}
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">{notification.title}</h3>
+                  <div className="text-base text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
+                </div>
               </div>
             </div>
           ))
