@@ -495,7 +495,8 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 )}
                 {activeTab === 'notificationSettings' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4">通知設置</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">通知設置</h3>
+                    <p className="mb-6 text-sm text-gray-500">當發布最新文章時，將會發送通知</p>
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
                         <SwitchField
@@ -509,7 +510,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       </div>
 
                       <div>
-                        <label htmlFor="notificationEmail" className="mt-4 ml-16 block text-sm font-medium text-gray-700">通知郵件地址：</label>
+                        <label htmlFor="notificationEmail" className="ml-16 block text-sm font-medium text-gray-700">通知郵件地址：</label>
                         <input
                           id="notificationEmail"
                           type="email"
