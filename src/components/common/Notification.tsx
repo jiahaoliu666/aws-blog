@@ -66,8 +66,6 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   }, [newNotifications]);
 
   const markAllAsRead = async () => {
-    console.log("試將所有通知標記為已讀");
-    
     // 立即更新狀態以反映所有通知已讀
     setNewNotifications((prevNotifications) =>
       (prevNotifications || []).map((notification) => ({
@@ -85,9 +83,6 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         },
         body: JSON.stringify({ userId }),
       });
-
-      console.log("POST 請求 URL:", '/api/news/updateNews');
-      console.log("POST 響應狀態:", response.status);
 
       if (!response.ok) {
         console.error("標記所有通知為已讀時發生錯誤: 無法更新伺服器");

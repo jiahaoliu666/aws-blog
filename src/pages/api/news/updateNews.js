@@ -15,8 +15,6 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     try {
       const { userId } = req.body;
-      console.log("接收到的 userId:", userId);
-
       if (!userId) {
         throw new Error("Missing userId in request");
       }
@@ -33,13 +31,10 @@ export default async function handler(req, res) {
       const queryCommand = new QueryCommand(queryParams);
       const queryResponse = await dynamoClient.send(queryCommand);
 
-      console.log("通知查詢結果:", JSON.stringify(queryResponse, null, 2));
-
       if (queryResponse.Items && queryResponse.Items.length > 0) {
         for (const item of queryResponse.Items) {
           if (!item.read.BOOL) {
             // 過濾未讀通知
-            console.log("正在更新通知 article_id:", item.article_id.S);
             const updateParams = {
               TableName: "AWS_Blog_UserNotifications",
               Key: {
@@ -57,13 +52,8 @@ export default async function handler(req, res) {
 
             const updateCommand = new UpdateItemCommand(updateParams);
             const updateResponse = await dynamoClient.send(updateCommand);
-
-            console.log("更新響應:", JSON.stringify(updateResponse, null, 2));
-            console.log("已標記為已讀的通知 article_id:", item.article_id.S);
           }
         }
-      } else {
-        console.log("沒有未讀通知需要更新");
       }
 
       return res
@@ -94,16 +84,10 @@ export default async function handler(req, res) {
       userNotificationsCommand
     );
 
-    console.log(
-      "User Notifications Response:",
-      JSON.stringify(userNotificationsResponse, null, 2)
-    );
-
     if (
       !userNotificationsResponse.Items ||
       userNotificationsResponse.Items.length === 0
     ) {
-      console.log("No notifications found for userId:", userId);
       return res.status(200).json({ articles: [], unreadCount: 0 });
     }
 
@@ -153,10 +137,6 @@ export default async function handler(req, res) {
         };
         const deleteCommand = new DeleteItemCommand(deleteParams);
         await dynamoClient.send(deleteCommand);
-        console.log(
-          "Deleted old notification with article_id:",
-          item.article_id
-        );
       }
     }
 
@@ -174,12 +154,6 @@ export default async function handler(req, res) {
 
         const newsCommand = new QueryCommand(newsParams);
         const newsResponse = await dynamoClient.send(newsCommand);
-
-        console.log(
-          "News Response for article_id:",
-          articleId,
-          JSON.stringify(newsResponse, null, 2)
-        );
 
         if (newsResponse.Items && newsResponse.Items.length > 0) {
           const newsItem = newsResponse.Items[0];
@@ -211,7 +185,6 @@ export default async function handler(req, res) {
             published_at: parseInt(newsItem.published_at.N, 10),
           };
         } else {
-          console.log("No news found for article_id:", articleId);
           return null;
         }
       })
