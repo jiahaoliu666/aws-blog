@@ -19,7 +19,7 @@ interface Article {
   read?: boolean;
 }
 
-const MAX_ARTICLES_DISPLAY = 5;
+const MAX_ARTICLES_DISPLAY = 30;
 
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
@@ -65,6 +65,16 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
 
   const markAllAsRead = async () => {
     console.log("試將所有通知標記為已讀");
+    
+    // 立即更新狀態以反映所有通知已讀
+    setNewNotifications((prevNotifications) =>
+      (prevNotifications || []).map((notification) => ({
+        ...notification,
+        read: true,
+      }))
+    );
+    setUnreadCount(0);
+
     try {
       const response = await fetch('/api/news/updateNews', {
         method: 'POST',
@@ -77,16 +87,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       console.log("POST 請求 URL:", '/api/news/updateNews');
       console.log("POST 響應狀態:", response.status);
 
-      if (response.ok) {
-        setNewNotifications((prevNotifications) =>
-          (prevNotifications || []).map((notification) => ({
-            ...notification,
-            read: true,
-          }))
-        );
-        setUnreadCount(0);
-        console.log("所有通知已成功標記為已讀");
-      } else {
+      if (!response.ok) {
         console.error("標記所有通知為已讀時發生錯誤: 無法更新伺服器");
       }
     } catch (error) {
