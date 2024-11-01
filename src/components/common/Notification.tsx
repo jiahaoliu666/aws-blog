@@ -19,6 +19,8 @@ interface Article {
   read?: boolean;
 }
 
+const MAX_ARTICLES_DISPLAY = 5;
+
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,7 +35,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         if (data && Array.isArray(data.articles)) {
           const sortedArticles = data.articles
             .sort((a: Article, b: Article) => b.published_at - a.published_at)
-            .slice(0, 3);
+            .slice(0, MAX_ARTICLES_DISPLAY);
           setNewNotifications(sortedArticles.map((article: Article) => ({
             title: article.translated_title,
             date: article.published_at ? new Date(article.published_at * 1000).toLocaleString() : '',

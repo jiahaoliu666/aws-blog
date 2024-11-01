@@ -7,6 +7,8 @@ import {
 
 const dynamoClient = new DynamoDBClient({ region: "ap-northeast-1" });
 
+const MAX_NOTIFICATIONS = 5; // 新增這一行
+
 export default async function handler(req, res) {
   const { userId } = req.query;
 
@@ -75,7 +77,7 @@ export default async function handler(req, res) {
     }
   }
 
-  const maxNotifications = 5; // 設定通知顯示的最大數量
+  const maxNotifications = MAX_NOTIFICATIONS; // 使用常量
 
   try {
     // 查詢 AWS_Blog_UserNotifications
