@@ -7,7 +7,7 @@ import {
 
 const dynamoClient = new DynamoDBClient({ region: "ap-northeast-1" });
 
-const MAX_NOTIFICATIONS = 30; // 新增這一行
+const MAX_NOTIFICATIONS = 50; // 新增這一行
 
 export default async function handler(req, res) {
   const { userId } = req.query;

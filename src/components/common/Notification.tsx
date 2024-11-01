@@ -19,7 +19,7 @@ interface Article {
   read?: boolean;
 }
 
-const MAX_ARTICLES_DISPLAY = 30;
+const MAX_ARTICLES_DISPLAY = 50;
 
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
