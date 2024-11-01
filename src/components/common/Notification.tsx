@@ -93,44 +93,57 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   };
 
   return (
-    <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[26rem] max-w-md mx-auto lg:mx-0 bg-white shadow-lg rounded-xl z-50 border border-gray-300 transition-all duration-300 ease-in-out">
-      <div className="p-3 lg:p-4 border-b border-gray-300 flex justify-between items-center bg-gray-200 rounded-t-xl">
-        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center flex-wrap">
+    <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[26rem] max-w-md 
+      mx-auto lg:mx-0 bg-white shadow-lg rounded-xl z-50 border border-gray-300 
+      transition-all duration-300 ease-in-out
+      left-1/2 lg:left-auto transform -translate-x-1/2 lg:translate-x-0">
+      <div className="p-3 lg:p-4 border-b border-gray-300 flex justify-between items-center 
+        bg-gray-200 rounded-t-xl flex-wrap gap-2">
+        <h2 className="text-base lg:text-xl font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
           通知
           {unreadCount !== undefined && (
-            <span className="ml-2 text-sm lg:text-base text-red-500">
+            <span className="text-sm lg:text-base text-red-500 whitespace-nowrap">
               (共{totalCount}則，有{unreadCount}則未讀)
             </span>
           )}
         </h2>
         <button 
           onClick={markAllAsRead} 
-          className="text-base lg:text-lg text-blue-600 hover:text-blue-800 transition duration-150 whitespace-nowrap"
+          className="text-sm lg:text-base text-blue-600 hover:text-blue-800 
+            transition duration-150 whitespace-nowrap px-2 py-1 rounded
+            hover:bg-blue-50"
         >
           全部已讀
         </button>
       </div>
-      <div className="max-h-[50vh] lg:max-h-[32rem] overflow-y-auto">
+      <div className="max-h-[60vh] lg:max-h-[32rem] overflow-y-auto">
         {loading ? (
           <div className="p-4 text-center text-gray-500">加載中...</div>
         ) : newNotifications && newNotifications.length > 0 ? (
           newNotifications.map((notification, index) => (
-            <div key={index} className={`flex p-4 border-b border-gray-300 hover:bg-gray-100 transition duration-150 cursor-pointer ${notification.read ? 'bg-gray-100' : ''}`}>
-              <div className="flex items-center">
+            <div key={index} 
+              className={`flex p-3 lg:p-4 border-b border-gray-300 
+                hover:bg-gray-100 transition duration-150 cursor-pointer
+                ${notification.read ? 'bg-gray-50' : ''}`}>
+              <div className="flex items-start w-full gap-2">
                 {!notification.read && (
-                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2"></span>
                 )}
-                <div className="flex-1">
-                  <h3 className="text-base font-bold text-gray-900">{notification.title}</h3>
-                  <div className="text-base text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm lg:text-base font-bold text-gray-900 mb-1 
+                    break-words">{notification.title}</h3>
+                  <div className="text-sm lg:text-base text-gray-700 break-words" 
+                    dangerouslySetInnerHTML={{ __html: notification.content }}></div>
+                  <div className="text-xs text-gray-500 mt-1">{notification.date}</div>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="p-24 text-center text-gray-500 italic">
+          <div className="py-12 lg:py-24 text-center text-gray-500 italic">
             目前沒有任何通知
-            <img src="/kuku.png" alt="哭哭圖" className="mb-6 w-32 h-32 mx-auto sm:w-48 sm:h-48" />
+            <img src="/kuku.png" alt="哭哭圖" 
+              className="mt-4 w-24 h-24 lg:w-32 lg:h-32 mx-auto" />
           </div>
         )}
       </div>
