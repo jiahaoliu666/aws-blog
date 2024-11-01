@@ -357,23 +357,49 @@ export const useProfileLogic = () => {
       };
 
       try {
+        // 上傳到 S3
         const command = new PutObjectCommand(params);
         await s3Client.send(command);
         const fileUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
+        
+        // 更新 DynamoDB
+        const dynamoClient = new DynamoDBClient({
+          region: 'ap-northeast-1',
+          credentials: {
+            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+          },
+        });
+
+        const updateParams = {
+          TableName: 'AWS_Blog_UserProfiles',
+          Key: {
+            userId: { S: userSub },
+          },
+          UpdateExpression: 'SET avatarUrl = :avatarUrl',
+          ExpressionAttributeValues: {
+            ':avatarUrl': { S: fileUrl },
+          },
+        };
+
+        const updateCommand = new UpdateItemCommand(updateParams);
+        await dynamoClient.send(updateCommand);
+
+        // 更新本地狀態
         console.log('File uploaded successfully:', fileUrl);
         setTempAvatar(fileUrl);
         setFormData(prevData => ({ ...prevData, avatar: fileUrl }));
         localStorage.setItem('avatarUrl', fileUrl);
         setUploadMessage('頭像更換成功，頁面刷新中...');
 
-        // Log the activity
+        // 記錄活動
         await logActivity(user?.sub || 'default-sub', '更換頭像');
 
         setTimeout(() => {
           window.location.reload();
         }, 3000);
       } catch (error) {
-        console.error('Error uploading file:', error);
+        console.error('Error uploading file or updating profile:', error);
         setUploadMessage('上傳失敗：請稍後再試。');
       }
     }
