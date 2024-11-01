@@ -27,16 +27,10 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     const fetchNewArticles = async () => {
       setLoading(true);
       try {
-        console.log("開始獲取新文章...");
         const response = await fetch(`/api/news/updateNews?userId=${userId}`);
-        console.log("API 請求 URL:", `/api/news/updateNews?userId=${userId}`);
-        console.log("API 響應狀態:", response.status);
-
         const data = await response.json();
-        console.log("取到的數據:", JSON.stringify(data, null, 2));
 
         if (data && Array.isArray(data.articles)) {
-          console.log("獲取到的文章數據:", data.articles);
           const sortedArticles = data.articles
             .sort((a: Article, b: Article) => b.published_at - a.published_at)
             .slice(0, 3);
@@ -47,8 +41,6 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             read: article.read,
           })));
         } else {
-          console.error("獲取新文章時發生錯誤: articles 不是一個數組");
-          console.log("完整的響應數據:", JSON.stringify(data, null, 2));
           setNewNotifications([]);
         }
       } catch (error) {
