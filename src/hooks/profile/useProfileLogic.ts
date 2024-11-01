@@ -87,7 +87,6 @@ export const useProfileLogic = () => {
 
     // 僅在訪問 /profile 頁面時執行重定向
     if (user === null && currentPath === '/profile') {
-      console.log('User is null, redirecting to login from profile page...');
       setShowLoginMessage(true);
       const timer = setTimeout(() => {
         router.push('/auth/login');
@@ -121,11 +120,8 @@ export const useProfileLogic = () => {
               user.accessToken = newAccessToken;
               fetchUserDetails();
             } catch (refreshError) {
-              console.error('Error refreshing access token:', refreshError);
               router.push('/auth/login');
             }
-          } else {
-            console.error('Error fetching user details:', error);
           }
         }
       };
@@ -204,8 +200,7 @@ export const useProfileLogic = () => {
     let changesSuccessful = true;
 
     if (!localUsername.trim()) {
-      setUploadMessage('用戶名��能為空。');
-      console.log('用戶名不能為空。');
+      setUploadMessage('用戶名不能為空。');
       return;
     }
 
@@ -224,23 +219,19 @@ export const useProfileLogic = () => {
         });
         await cognitoClient.send(updateUserCommand);
         setUploadMessage('用戶名更新成功，頁面刷新中...');
-        console.log('用戶名更新成功頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
         // Log the activity
         await logActivity(user?.sub || 'default-sub', `變更用戶名：${localUsername}`);
       } catch (error) {
-        console.error('更新用戶名時出錯:', error);
         setUploadMessage('更新用戶名失敗，稍後再試。');
-        console.log('更新用戶名失敗，請稍後再試。');
         changesSuccessful = false;
       }
     }
 
     if (!hasChanges) {
       setUploadMessage('無任何變更項目');
-      console.log('無任何變更項目');
     }
 
     if (hasChanges && changesSuccessful) {
@@ -252,12 +243,10 @@ export const useProfileLogic = () => {
   };
 
   const handleChangePassword = async () => {
-    console.log('handleChangePassword called');
     const passwordRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
 
     if (!oldPassword || !formData.password) {
       setPasswordMessage('請輸入舊密碼和新密碼。');
-      console.log('Missing old or new password');
       return;
     }
 
@@ -292,7 +281,6 @@ export const useProfileLogic = () => {
         handleLogout(); // 在這裡調用登出函數
       }, 3000); // 3秒後登出
     } catch (error) {
-      console.error('Error changing password:', error);
       setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
     }
   };
@@ -320,7 +308,6 @@ export const useProfileLogic = () => {
   };
 
   const handleLogout = async () => {
-    console.log('Logging out...');
     await logActivity(user?.sub || 'default-sub', '登出系統');
     await logoutUser();
     router.push('/auth/login');
@@ -441,7 +428,6 @@ export const useProfileLogic = () => {
         try {
           const command = new QueryCommand(params);
           const response = await dynamoClient.send(command);
-          console.log('Fetched activity log:', response.Items); // 添加日誌輸出
           const logs = response.Items?.map(item => ({
             date: item.timestamp?.S || '',
             action: item.action?.S || '',

@@ -39,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUserFromCognito = async () => {
       const storedUser = localStorage.getItem("user");
-      console.log('Checking stored user:', storedUser);
       if (storedUser) {
         const parsedUser: User = JSON.parse(storedUser);
         try {
@@ -65,7 +64,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(updatedUser);
           localStorage.setItem("user", JSON.stringify(updatedUser));
         } catch (err) {
-          console.error("無法從 Cognito 獲取用戶資料: ", err);
           setUser(null);
           localStorage.removeItem("user");
         }
