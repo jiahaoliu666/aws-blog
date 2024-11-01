@@ -124,17 +124,16 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             <div key={index} 
               className={`flex p-3 lg:p-4 border-b border-gray-300 
                 hover:bg-gray-100 transition duration-150 cursor-pointer
-                ${notification.read ? 'bg-gray-50' : ''}`}>
-              <div className="flex items-start w-full gap-2">
+                ${notification.read ? 'bg-gray-100' : ''}`}>
+              <div className="flex items-center w-full gap-2">
                 {!notification.read && (
-                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2"></span>
+                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full my-auto"></span>
                 )}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm lg:text-base font-bold text-gray-900 mb-1 
                     break-words">{notification.title}</h3>
                   <div className="text-sm lg:text-base text-gray-700 break-words" 
                     dangerouslySetInnerHTML={{ __html: notification.content }}></div>
-                  <div className="text-xs text-gray-500 mt-1">{notification.date}</div>
                 </div>
               </div>
             </div>
