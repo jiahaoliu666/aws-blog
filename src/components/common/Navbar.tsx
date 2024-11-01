@@ -161,7 +161,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                 />
               </svg>
             </button>
-            <Link href="/" className="text-3xl font-bold text-white hover:text-gray-400 transition duration-300">AWS Blog</Link>  
+            <Link href="/" className="text-3xl font-bold text-white hover:text-gray-400 transition duration-300">AWS Blog 365</Link>  
           </div>
           <div className={`lg:flex ${isMenuOpen ? 'flex' : 'hidden'} flex-col lg:flex-row justify-end w-full lg:w-auto space-y-4 lg:space-y-0 lg:space-x-4 ml-6 lg:ml-0`}>
             {user && (

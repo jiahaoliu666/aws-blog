@@ -21,7 +21,7 @@ const Home: React.FC = () => {
       <Navbar />
       <div className="flex flex-col items-center justify-center flex-grow px-4 py-8 fade-in">
         <h1 className="text-5xl font-extrabold text-center mb-6 text-gray-900 drop-shadow-lg">
-          歡迎來到 <span className="text-blue-600">AWS Blog</span>
+          歡迎來到 <span className="text-blue-600">AWS Blog 365</span>
         </h1>
         <p className="text-xl text-center mb-6 text-gray-800 max-w-2xl leading-relaxed">
           這是一個專為 AWS 文章而設的閱讀平台。在這裡，您可以輕鬆找到、收藏和管理您的文章。

@@ -15,7 +15,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <AppProvider>
         <LanguageProvider>
             <Head>
-              <title>AWS Blog</title> {/* 在這裡添加標題 */}
+              <title>AWS Blog 365</title> {/* 在這裡添加標題 */}
             </Head>
             <Component {...pageProps} />
         </LanguageProvider>

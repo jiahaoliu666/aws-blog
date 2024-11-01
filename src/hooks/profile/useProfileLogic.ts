@@ -613,11 +613,34 @@ export const useProfileLogic = () => {
 
   const handleSaveNotificationSettings = async () => {
     try {
-      // 在這裡添加代碼來更新後端的用戶設置
-      console.log('通知設置已保存:', formData.notifications);
-      // 例如，調用 API 來保存設置
+      const dynamoClient = new DynamoDBClient({
+        region: 'ap-northeast-1',
+        credentials: {
+          accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+        },
+      });
+
+      const updateParams = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Item: {
+          userId: { S: user?.sub || 'default-sub' },
+          email: { S: formData.email },
+          emailNotification: { BOOL: formData.notifications.email },
+          lineNotification: { BOOL: formData.notifications.line },
+          updatedAt: { S: new Date().toISOString() }
+        }
+      };
+
+      await dynamoClient.send(new PutItemCommand(updateParams));
+      setUploadMessage('通知設置已更新');
+      
+      // 記錄活動
+      await logActivity(user?.sub || 'default-sub', '更新通知設置');
+      
     } catch (error) {
       console.error('保存通知設置時發生錯誤:', error);
+      setUploadMessage('更新通知設置失敗');
     }
   };
 

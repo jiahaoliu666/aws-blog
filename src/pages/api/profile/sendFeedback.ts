@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Image URL: ${imageUrl ? imageUrl : 'No image provided'}
     `,
     html: `
-      <h2>AWS Blog 反饋內容</h2>
+      <h2>AWS Blog 365 反饋內容</h2>
       <p><strong>寄件人：</strong> ${email}</p>
       <p><strong>標題：</strong> ${title}</p>
       <p><strong>內容：</strong></p>
