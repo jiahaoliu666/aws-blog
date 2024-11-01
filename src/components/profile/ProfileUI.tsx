@@ -495,9 +495,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 )}
                 {activeTab === 'notificationSettings' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4">個人資料設置</h3>
-                    <p className="text-sm text-gray-600 mb-6">管理您的帳戶信息和偏好設置</p>
-                    
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">通知設置</h3>
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
                         <SwitchField
@@ -520,18 +518,6 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
                           <p className="text-sm text-gray-600">在Line接收即時通知</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-4">
-                        <SwitchField
-                          label=""
-                          isChecked={false}
-                          onChange={() => {}}
-                        />
-                        <div>
-                          <h4 className="text-lg font-semibold text-gray-800">導覽列通知</h4>
-                          <p className="text-sm text-gray-600">在導覽列顯示通知</p>
                         </div>
                       </div>
                       <div className="mt-6">
