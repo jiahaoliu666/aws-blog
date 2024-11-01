@@ -117,7 +117,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                 {!notification.read && (
                   <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                 )}
-                <div>
+                <div className="flex-1">
                   <h3 className="text-base font-bold text-gray-900">{notification.title}</h3>
                   <div className="text-base text-gray-900" dangerouslySetInnerHTML={{ __html: notification.content }}></div>
                 </div>
