@@ -208,26 +208,32 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         </div>
                       </div>
                     </div>
-                    {uploadMessage && (
-                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {uploadMessage}
+                    <div className="border-t pt-4">
+                      {uploadMessage && (
+                        <div className={`mb-4 p-4 rounded-lg shadow-md ${
+                          uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {uploadMessage}
+                        </div>
+                      )}
+                      <div className="flex justify-end gap-4">
+                        <button 
+                          onClick={() => {
+                            handleCancelChanges();
+                            setLocalUsername(formData.username);
+                          }} 
+                          className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
+                        >
+                          取消更改
+                        </button>
+                        <button 
+                          onClick={() => handleSaveProfileChanges(localUsername)} 
+                          className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
+                        >
+                          保存更改
+                        </button>
                       </div>
-                    )}
-                    <div className="flex justify-end gap-4 mt-8 pt-4 border-t">
-                      <button 
-                        onClick={() => {
-                          handleCancelChanges();
-                          setLocalUsername(formData.username);
-                        }} 
-                        className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
-                      >
-                        取消更改
-                      </button>
-                      <button onClick={() => handleSaveProfileChanges(localUsername)} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200">
-                        保存更改
-                      </button>
                     </div>
-                    
                   </div>
                 )}
                 {activeTab === 'activity' && (
