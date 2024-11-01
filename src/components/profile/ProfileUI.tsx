@@ -95,7 +95,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-6">
+      <div className="flex-grow container mx-auto px-2 sm:px-6 lg:px-8 py-4 lg:py-8 flex flex-col lg:flex-row gap-3 lg:gap-6">
         {!user ? (
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
@@ -104,7 +104,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
           </div>
         ) : (
           <>
-            <div className="w-full lg:w-1/4 bg-gray-700 p-4 sm:p-6 rounded-xl shadow-xl mb-6 lg:mb-0 lg:sticky lg:top-4">
+            <div className="w-full lg:w-1/4 bg-gray-700 p-3 sm:p-6 rounded-xl shadow-xl mb-3 lg:mb-0 lg:sticky lg:top-4">
               <div className="flex flex-col items-center mb-6 sm:mb-8">
                 <img
                   src={formData.avatar}
@@ -146,7 +146,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 ))}
               </ul>
             </div>
-            <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-4 sm:p-6">
+            <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
               <div className="text-gray-800 ">
                 {activeTab === 'profile' && (
                   <div className="space-y-8">
