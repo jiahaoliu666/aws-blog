@@ -224,8 +224,11 @@ export default async function handler(req, res) {
     const unreadCount = filteredArticles.filter(
       (article) => !article.read
     ).length;
+    const totalCount = userNotificationsResponse.Items.length; // 新增這一行
 
-    res.status(200).json({ articles: filteredArticles, unreadCount });
+    res
+      .status(200)
+      .json({ articles: filteredArticles, unreadCount, totalCount }); // 修改這一行
   } catch (error) {
     console.error("Error fetching news:", error);
     res.status(500).json({ error: "Internal Server Error" });

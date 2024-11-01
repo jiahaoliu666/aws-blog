@@ -24,6 +24,7 @@ const MAX_ARTICLES_DISPLAY = 30;
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchNewArticles = async () => {
@@ -42,6 +43,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             content: article.content,
             read: article.read,
           })));
+          setTotalCount(data.totalCount);
         } else {
           setNewNotifications([]);
         }
@@ -101,7 +103,9 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         <h2 className="text-xl font-semibold text-gray-900 flex items-center">
           通知
           {unreadCount !== undefined && (
-            <span className="ml-2 text-base text-red-500">({unreadCount}則未讀)</span>
+            <span className="ml-2 text-base text-red-500">
+              (共{totalCount}則，有{unreadCount}則未讀)
+            </span>
           )}
         </h2>
         <button onClick={markAllAsRead} className="text-lg text-blue-600 hover:text-blue-800 transition duration-150">
