@@ -392,40 +392,38 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 {activeTab === 'feedback' && (
                   <div>
                     <h3 className="text-xl font-bold text-gray-800 mb-4">意見反饋</h3>
-                    <form className="space-y-4 max-w-2xl mx-auto" onSubmit={(e) => {
+                    <form className="space-y-4" onSubmit={(e) => {
                       e.preventDefault();
                       sendFeedback(() => {
                         const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
                         if (feedbackImageInput) {
-                          feedbackImageInput.value = ''; // 清空選擇的檔案
+                          feedbackImageInput.value = '';
                         }
                       });
                     }}>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
-                          <input
-                            id="feedbackEmail"
-                            name="feedbackEmail"
-                            type="email"
-                            value={formData.email}
-                            className="mt-2 p-2 border border-gray-300 rounded w-full"
-                            placeholder="輸入您的電子郵件"
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="feedbackTitle" className="block text-sm font-medium text-gray-700">標題</label>
-                          <input
-                            id="feedbackTitle"
-                            name="feedbackTitle"
-                            type="text"
-                            value={formData.feedbackTitle}
-                            onChange={handleChange}
-                            className="mt-2 p-2 border border-gray-300 rounded w-full"
-                            placeholder="輸入標題"
-                          />
-                        </div>
+                      <div>
+                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
+                        <input
+                          id="feedbackEmail"
+                          name="feedbackEmail"
+                          type="email"
+                          value={formData.email}
+                          className="mt-2 p-2 border border-gray-300 rounded w-full"
+                          placeholder="輸入您的電子郵件"
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="feedbackTitle" className="block text-sm font-medium text-gray-700">標題</label>
+                        <input
+                          id="feedbackTitle"
+                          name="feedbackTitle"
+                          type="text"
+                          value={formData.feedbackTitle}
+                          onChange={handleChange}
+                          className="mt-2 p-2 border border-gray-300 rounded w-full"
+                          placeholder="輸入標題"
+                        />
                       </div>
                       <div>
                         <label htmlFor="feedbackContent" className="block text-sm font-medium text-gray-700">反饋內容</label>
