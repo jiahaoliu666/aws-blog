@@ -72,14 +72,6 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
   }, [activeTab]);
 
   React.useEffect(() => {
-    console.log('Password message updated:', passwordMessage);
-  }, [passwordMessage]);
-
-  React.useEffect(() => {
-    console.log('Upload message updated:', uploadMessage);
-  }, [uploadMessage]);
-
-  React.useEffect(() => {
     if (passwordMessage && passwordMessage.includes('密碼變更成功')) {
       setTimeout(() => {
         handleLogout(); // 3秒後登出
