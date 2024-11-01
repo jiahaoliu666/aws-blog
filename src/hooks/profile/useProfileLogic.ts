@@ -232,7 +232,7 @@ export const useProfileLogic = () => {
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        setUploadMessage('���戶名更新成功，頁面刷新中...');
+        setUploadMessage('用戶名更新成功，頁面刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 

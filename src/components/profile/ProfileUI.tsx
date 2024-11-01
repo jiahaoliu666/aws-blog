@@ -208,6 +208,11 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         </div>
                       </div>
                     </div>
+                    {uploadMessage && (
+                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {uploadMessage}
+                      </div>
+                    )}
                     <div className="flex justify-end gap-4 mt-8 pt-4 border-t">
                       <button 
                         onClick={() => {
@@ -222,11 +227,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         保存更改
                       </button>
                     </div>
-                    {uploadMessage && (
-                      <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {uploadMessage}
-                      </div>
-                    )}
+                    
                   </div>
                 )}
                 {activeTab === 'activity' && (
