@@ -165,7 +165,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
           </div>
           <div className={`lg:flex ${isMenuOpen ? 'flex' : 'hidden'} flex-col lg:flex-row justify-end w-full lg:w-auto space-y-4 lg:space-y-0 lg:space-x-4 ml-6 lg:ml-0`}>
             {user && (
-              <div className="relative flex items-center">
+              <div className="relative flex items-center mt-4 lg:mt-0">
                 <button onClick={toggleNotification} className="flex items-center text-white hover:text-gray-400 transition duration-300 relative">
                   <BellIcon className="w-8 h-8 relative" style={{ top: '-2px' }} />
                   {unreadCount > 0 && (
