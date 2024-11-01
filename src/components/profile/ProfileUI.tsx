@@ -536,7 +536,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <div className="flex justify-end mt-6">
                         <button
                           onClick={() => {}}
-                          className="bg-black text-white py-2 px-4 rounded-full hover:bg-gray-800 transition duration-200"
+                          className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
                         >
                           保存更改
                         </button>
