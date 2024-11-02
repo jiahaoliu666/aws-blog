@@ -1,8 +1,11 @@
-export const generateNewsNotificationEmail = (articleData: {
-  title: string;
-  link: string;
-  timestamp: string;
-}) => {
+// 將 interface 轉換為 JavaScript 物件結構
+const ArticleData = {
+  title: "",
+  timestamp: "",
+  link: "",
+};
+
+module.exports.generateNewsNotificationEmail = (articleData) => {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #2c5282;">AWS 部落格最新文章通知</h2>
@@ -22,4 +25,4 @@ export const generateNewsNotificationEmail = (articleData: {
       </p>
     </div>
   `;
-}; 
+};

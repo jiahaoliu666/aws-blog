@@ -1,20 +1,23 @@
-import { SendEmailCommand } from "@aws-sdk/client-ses";
-import { sesClient } from '../config/aws';
-import { EmailNotification } from '../types/emailTypes';
-import { generateNewsNotificationEmail } from '../templates/emailTemplates';
-import { EMAIL_CONFIG } from '../config/constants';
-import { logger } from '@/utils/logger';
-import { RateLimiter } from '@/utils/rateLimiter';
+const { SendEmailCommand } = require("@aws-sdk/client-ses");
+const { sesClient } = require("../config/aws");
+const {
+  generateNewsNotificationEmail,
+} = require("../templates/emailTemplates");
+const { EMAIL_CONFIG } = require("../config/constants");
+const { logger } = require("../utils/logger");
+const RateLimiter = require("../utils/rateLimiter");
 
 const rateLimiter = new RateLimiter(EMAIL_CONFIG.RATE_LIMIT);
 
-export class EmailService {
-  async sendEmail(notification: EmailNotification): Promise<boolean> {
+class EmailService {
+  async sendEmail(notification) {
     await rateLimiter.acquire();
-    
+
     try {
-      const emailContent = generateNewsNotificationEmail(notification.articleData);
-      
+      const emailContent = generateNewsNotificationEmail(
+        notification.articleData
+      );
+
       const params = {
         Source: process.env.SES_SENDER_EMAIL,
         Destination: {
@@ -23,12 +26,12 @@ export class EmailService {
         Message: {
           Subject: {
             Data: notification.subject,
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
           },
           Body: {
             Html: {
               Data: emailContent,
-              Charset: 'UTF-8',
+              Charset: "UTF-8",
             },
           },
         },
@@ -38,29 +41,34 @@ export class EmailService {
       logger.info(`郵件成功發送至 ${notification.to}`);
       return true;
     } catch (error) {
-      logger.error('發送郵件失敗:', error);
+      logger.error(`發送郵件時發生錯誤: ${error.message}`, error);
       throw error;
     }
   }
 
-  async sendBatchEmails(notifications: EmailNotification[]): Promise<void> {
+  async sendBatchEmails(notifications) {
     const batches = this.chunkArray(notifications, EMAIL_CONFIG.BATCH_SIZE);
-    
+
     for (const batch of batches) {
       await Promise.all(
-        batch.map(notification => this.sendEmail(notification))
+        batch.map((notification) => this.sendEmail(notification))
       );
     }
   }
 
-  private chunkArray<T>(array: T[], size: number): T[][] {
+  chunkArray(array, size) {
     return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
       array.slice(i * size, i * size + size)
     );
   }
 }
 
-export const sendEmailNotification = async (notification: EmailNotification): Promise<boolean> => {
+const sendEmailNotification = async (notification) => {
   const emailService = new EmailService();
   return await emailService.sendEmail(notification);
-}; 
+};
+
+module.exports = {
+  EmailService,
+  sendEmailNotification,
+};

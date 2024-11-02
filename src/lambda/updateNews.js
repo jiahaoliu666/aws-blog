@@ -18,7 +18,7 @@ const {
 } = require("../utils/notificationUtils");
 
 // 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 6;
+const NUMBER_OF_ARTICLES_TO_FETCH = 7;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
