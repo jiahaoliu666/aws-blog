@@ -60,7 +60,7 @@ module.exports.generateNewsNotificationEmail = (articleData) => {
                     font-weight: 600;
                     font-size: 16px;
                     transition: background-color 0.2s;">
-            立即閱讀全文
+            閱讀全文
           </a>
         </div>
 
