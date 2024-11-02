@@ -9,9 +9,10 @@ const puppeteer = require("puppeteer");
 const { v4: uuidv4 } = require("uuid");
 const OpenAI = require("openai");
 const axios = require("axios").default;
+const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
 
 // 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 4;
+const NUMBER_OF_ARTICLES_TO_FETCH = 5;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
@@ -26,6 +27,27 @@ const dbClient = new DynamoDBClient({
 
 let insertedCount = 0;
 let skippedCount = 0;
+
+const dynamoClient = new DynamoDBClient({ region: "ap-northeast-1" });
+
+async function getNotificationUsers() {
+  const params = {
+    TableName: "AWS_Blog_UserNotificationSettings",
+    FilterExpression: "emailNotification = :true",
+    ExpressionAttributeValues: {
+      ":true": { BOOL: true },
+    },
+  };
+
+  try {
+    const command = new ScanCommand(params);
+    const response = await dynamoClient.send(command);
+    return response.Items || [];
+  } catch (error) {
+    console.error("獲取通知用戶列表時發生錯誤:", error);
+    return [];
+  }
+}
 
 async function checkIfExists(title) {
   const scanParams = {
@@ -152,21 +174,74 @@ async function saveToDynamoDB(article) {
     console.log(`插入文章到資料庫`);
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
-    console.log(`文章插入成功`);
 
-    // 獲取所有用戶的 userId
+    // 獲取所有用戶 ID
     const userIds = await getAllUserIds();
-    let notifiedUserCount = 0;
-    for (const userId of userIds) {
-      await addNotification(userId, articleId);
-      notifiedUserCount++;
-    }
 
-    console.log(`通知了 ${notifiedUserCount} 名用戶`);
+    // 為每個用戶添加通知記錄
+    await Promise.all(
+      userIds.map(async (userId) => {
+        await addNotification(userId, articleId);
+      })
+    );
+
+    // 獲取需要通知的用戶
+    const notificationUsers = await getNotificationUsers();
+
+    if (notificationUsers.length > 0) {
+      // 使用 SES 發送郵件
+      const ses = new SESClient({
+        region: "ap-northeast-1",
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
+      });
+
+      // 批次處理郵件發送
+      await Promise.all(
+        notificationUsers.map(async (user) => {
+          if (!user.email?.S) return;
+
+          try {
+            const emailParams = {
+              Source: process.env.SES_SENDER_EMAIL,
+              Destination: {
+                ToAddresses: [user.email.S],
+              },
+              Message: {
+                Subject: {
+                  Data: `新的 AWS 部落格文章：${translatedTitle}`,
+                  Charset: "UTF-8",
+                },
+                Body: {
+                  Html: {
+                    Data: generateNewsNotificationEmail({
+                      title: translatedTitle,
+                      link: article.link,
+                      timestamp: new Date().toLocaleString(),
+                    }),
+                    Charset: "UTF-8",
+                  },
+                },
+              },
+            };
+
+            await ses.send(new SendEmailCommand(emailParams));
+            console.log(`成功發送郵件給 ${user.email.S}`);
+
+            // 為該用戶添加通知記錄
+            await addNotification(user.userId.S, articleId);
+          } catch (error) {
+            console.error(`發送郵件給 ${user.email.S} 失敗:`, error);
+          }
+        })
+      );
+    }
 
     return true;
   } catch (error) {
-    console.error("插入文章時發生錯誤:", error);
+    console.error("處理文章時發生錯誤:", error);
     return false;
   }
 }
@@ -211,7 +286,10 @@ async function scrapeAWSBlog() {
     }, NUMBER_OF_ARTICLES_TO_FETCH);
 
     for (const article of pageData) {
-      await saveToDynamoDB(article);
+      const saved = await saveToDynamoDB(article);
+      if (saved) {
+        console.log(`文章已保存並發送通知: ${article.title}`);
+      }
     }
 
     console.log(`成功儲存 ${insertedCount} 篇新文章`);
@@ -227,13 +305,14 @@ async function scrapeAWSBlog() {
 
 async function getAllUserIds() {
   const params = {
-    TableName: "AWS_Blog_UserProfiles", // 假設用戶資料儲存在這個表中
-    ProjectionExpression: "userId", // 只選擇 userId 欄位
+    TableName: "AWS_Blog_UserProfiles",
+    ProjectionExpression: "userId",
   };
 
   try {
-    const data = await dbClient.send(new ScanCommand(params));
-    return data.Items.map((item) => item.userId.S);
+    const command = new ScanCommand(params);
+    const response = await dbClient.send(command);
+    return response.Items?.map((item) => item.userId.S) || [];
   } catch (error) {
     console.error("獲取用戶 ID 時發生錯誤:", error);
     return [];
@@ -247,6 +326,8 @@ async function addNotification(userId, articleId) {
       userId: { S: userId },
       article_id: { S: articleId },
       read: { BOOL: false },
+      created_at: { N: String(Math.floor(Date.now() / 1000)) },
+      notification_type: { S: "new_article" },
     },
   };
 
@@ -256,6 +337,29 @@ async function addNotification(userId, articleId) {
   } catch (error) {
     console.error("新增通知時發生錯誤:", error);
   }
+}
+
+// 添加郵件模板生成函數
+function generateNewsNotificationEmail(articleData) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #2c5282;">AWS 部落格最新文章通知</h2>
+      <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px;">
+        <h3 style="color: #4a5568;">${articleData.title}</h3>
+        <p style="color: #718096;">發布時間：${articleData.timestamp}</p>
+        <a href="${articleData.link}" 
+           style="display: inline-block; padding: 10px 20px; 
+                  background-color: #4299e1; color: white; 
+                  text-decoration: none; border-radius: 5px; 
+                  margin-top: 15px;">
+          閱讀全文
+        </a>
+      </div>
+      <p style="color: #718096; font-size: 12px; margin-top: 20px;">
+        此為系統自動發送的郵件，請勿直接回覆。
+      </p>
+    </div>
+  `;
 }
 
 (async () => {

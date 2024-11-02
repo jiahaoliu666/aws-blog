@@ -3,11 +3,61 @@ import {
   QueryCommand,
   DeleteItemCommand,
   UpdateItemCommand,
+  PutItemCommand,
 } from "@aws-sdk/client-dynamodb";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-northeast-1" });
 
 const MAX_NOTIFICATIONS = 50; // 新增這一行
+
+// 新增獲取需要通知的用戶列表的函數
+async function getNotificationUsers(dynamoClient) {
+  const params = {
+    TableName: "AWS_Blog_UserNotificationSettings",
+    FilterExpression: "emailNotification = :true",
+    ExpressionAttributeValues: {
+      ":true": { BOOL: true },
+    },
+  };
+
+  try {
+    const command = new QueryCommand(params);
+    const response = await dynamoClient.send(command);
+    return response.Items || [];
+  } catch (error) {
+    console.error("Error fetching notification users:", error);
+    return [];
+  }
+}
+
+// 在新文章發布時發送郵件通知
+async function sendNotifications(users, articleData) {
+  for (const user of users) {
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/notifications/sendEmail`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email.S,
+            articleData: {
+              title: articleData.translated_title.S,
+              link: articleData.link.S,
+              timestamp: new Date(
+                parseInt(articleData.published_at.N) * 1000
+              ).toLocaleString(),
+            },
+          }),
+        }
+      );
+    } catch (error) {
+      console.error(`Error sending notification to ${user.email.S}:`, error);
+    }
+  }
+}
 
 export default async function handler(req, res) {
   const { userId } = req.query;
@@ -197,6 +247,12 @@ export default async function handler(req, res) {
     res
       .status(200)
       .json({ articles: filteredArticles, unreadCount, totalCount }); // 修改這一行
+
+    // 在成功添加新文章後
+    if (filteredArticles.length > 0) {
+      const notificationUsers = await getNotificationUsers(dynamoClient);
+      await sendNotifications(notificationUsers, filteredArticles[0]);
+    }
   } catch (error) {
     console.error("Error fetching news:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -211,4 +267,42 @@ function timeAgo(timestamp) {
   if (hours < 24) return `${hours} 小時前`;
   const days = Math.floor(hours / 24);
   return `${days} 天前`;
+}
+
+// 修改 saveToDynamoDB 函數
+async function saveToDynamoDB(article) {
+  // ... 現有代碼 ...
+  try {
+    await dbClient.send(new PutItemCommand(params));
+    insertedCount++;
+
+    // 獲取需要通知的用戶
+    const notificationUsers = await getNotificationUsers(dynamoClient);
+
+    // 發送郵件通知
+    for (const user of notificationUsers) {
+      try {
+        await fetch(`${process.env.API_URL}/api/notifications/sendEmail`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email.S,
+            articleData: {
+              title: translatedTitle,
+              link: article.link,
+              timestamp: new Date().toLocaleString(),
+            },
+          }),
+        });
+      } catch (error) {
+        console.error(`發送郵件通知失敗: ${error}`);
+      }
+    }
+
+    return true;
+  } catch (error) {
+    // ... 錯誤處理 ...
+  }
 }

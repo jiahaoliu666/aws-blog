@@ -612,6 +612,12 @@ export const useProfileLogic = () => {
   };
 
   const handleSaveNotificationSettings = async () => {
+    if (!user) {
+      setUploadMessage('請先登入');
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const dynamoClient = new DynamoDBClient({
         region: 'ap-northeast-1',
@@ -624,7 +630,7 @@ export const useProfileLogic = () => {
       const updateParams = {
         TableName: 'AWS_Blog_UserNotificationSettings',
         Item: {
-          userId: { S: user?.sub || 'default-sub' },
+          userId: { S: user.sub },
           email: { S: formData.email },
           emailNotification: { BOOL: formData.notifications.email },
           lineNotification: { BOOL: formData.notifications.line },
@@ -633,14 +639,23 @@ export const useProfileLogic = () => {
       };
 
       await dynamoClient.send(new PutItemCommand(updateParams));
-      setUploadMessage('通知設置已更新');
       
       // 記錄活動
-      await logActivity(user?.sub || 'default-sub', '更新通知設置');
+      await logActivity(user.sub, '更新通知設置');
       
+      // 設置成功消息
+      setUploadMessage('通知設置已成功更新');
+      
+      // 3秒後清除消息
+      setTimeout(() => {
+        setUploadMessage(null);
+      }, 3000);
+
     } catch (error) {
       console.error('保存通知設置時發生錯誤:', error);
-      setUploadMessage('更新通知設置失敗');
+      setUploadMessage('更新通知設置失敗，請稍後再試');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -702,6 +717,48 @@ export const useProfileLogic = () => {
     }));
     setFeedbackMessage(null); // 隱藏消息通知
   };
+
+  useEffect(() => {
+    const fetchNotificationSettings = async () => {
+      if (user) {
+        try {
+          const dynamoClient = new DynamoDBClient({
+            region: 'ap-northeast-1',
+            credentials: {
+              accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+              secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+            },
+          });
+
+          const params = {
+            TableName: 'AWS_Blog_UserNotificationSettings',
+            KeyConditionExpression: 'userId = :userId',
+            ExpressionAttributeValues: {
+              ':userId': { S: user.sub },
+            },
+          };
+
+          const command = new QueryCommand(params);
+          const response = await dynamoClient.send(command);
+
+          if (response.Items && response.Items.length > 0) {
+            const settings = response.Items[0];
+            setFormData(prevData => ({
+              ...prevData,
+              notifications: {
+                email: settings.emailNotification?.BOOL || false,
+                line: settings.lineNotification?.BOOL || false,
+              },
+            }));
+          }
+        } catch (error) {
+          console.error('獲取通知設置時發生錯誤:', error);
+        }
+      }
+    };
+
+    fetchNotificationSettings();
+  }, [user]);
 
   return {
     user,

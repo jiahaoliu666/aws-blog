@@ -1,18 +1,11 @@
-export interface EmailContent {
+export interface EmailNotification {
   to: string;
   subject: string;
-  html: string;
-}
-
-export interface NewsEmailData {
-  translated_title: {
-    S: string;
-  };
-  link: {
-    S: string;
-  };
-  published_at: {
-    N: string;
+  content: string;
+  articleData: {
+    title: string;
+    link: string;
+    timestamp: string;
   };
 }
 

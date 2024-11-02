@@ -409,7 +409,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           type="email"
                           value={formData.email}
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="輸入您的電子郵件"
+                          placeholder="入您的電子郵件"
                           disabled
                         />
                       </div>
@@ -502,12 +502,13 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                   <>
                     <h3 className="text-2xl font-bold text-gray-800 mb-2">通知設置</h3>
                     <p className="mb-6 text-sm text-gray-500">當發布最新文章時，將會發送通知</p>
+                    
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
                         <SwitchField
                           label=""
-                          isChecked={false}
-                          onChange={() => {}}
+                          isChecked={formData.notifications.email}
+                          onChange={() => toggleNotification('email')}
                         />
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">電子郵件通知</h4>
@@ -515,7 +516,9 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       </div>
 
                       <div>
-                        <label htmlFor="notificationEmail" className="ml-16 block text-sm font-medium text-gray-700">通知郵件地址：</label>
+                        <label htmlFor="notificationEmail" className="ml-16 block text-sm font-medium text-gray-700">
+                          通知郵件地址：
+                        </label>
                         <input
                           id="notificationEmail"
                           type="email"
@@ -529,28 +532,39 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <div className="flex items-center space-x-4">
                         <SwitchField
                           label=""
-                          isChecked={false}
-                          onChange={() => {}}
+                          isChecked={formData.notifications.line}
+                          onChange={() => toggleNotification('line')}
+                          // disabled={true} // Line 通知功能暫時禁用
                         />
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
+                          <p className="text-sm text-gray-500">(即將推出)</p>
                         </div>
                       </div>
-                      <div className="relative mt-6">
-                        <label className="block text-sm font-medium text-gray-700">通知頻率</label>
-                        <select className="mt-2 p-2 border border-gray-300 rounded w-full">
-                          <option value="hourly">每小時通知一次</option>
-                          <option value="daily">每日通知一次</option>
-                          <option value="weekly">每週通知一次</option>
-                        </select>
-                      </div>
+
+                      {uploadMessage && (
+                        <div className={`mt-6 p-4 rounded-lg shadow-md ${
+                          uploadMessage.includes('成功') 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {uploadMessage}
+                        </div>
+                      )}
 
                       <div className="flex justify-end mt-6">
                         <button
-                          onClick={() => {}}
-                          className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
+                          onClick={handleSaveNotificationSettings}
+                          disabled={isLoading}
+                          className={`
+                            px-4 py-2 rounded-full
+                            ${isLoading 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-blue-600 hover:bg-blue-700'}
+                            text-white transition duration-200
+                          `}
                         >
-                          保存更改
+                          {isLoading ? '保存中...' : '保存更改'}
                         </button>
                       </div>
                     </div>
