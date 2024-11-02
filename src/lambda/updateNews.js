@@ -16,9 +16,10 @@ const {
   failedNotifications,
   processFailedNotifications,
 } = require("../utils/notificationUtils");
+const { logger } = require("../utils/logger");
 
 // 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 7;
+const NUMBER_OF_ARTICLES_TO_FETCH = 8;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
@@ -283,7 +284,7 @@ async function scrapeAWSBlog() {
     console.log(`成功儲存 ${insertedCount} 篇新文章`);
     console.log(`跳過了 ${skippedCount} 篇已存在的文章`);
   } catch (error) {
-    console.error("爬取程中發生錯誤:", error.message);
+    console.error("取程中發生錯誤:", error.message);
   } finally {
     if (browser !== null) {
       await browser.close();
@@ -331,7 +332,7 @@ async function addNotification(userId, articleId) {
 function generateNewsNotificationEmail(articleData) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #2c5282;">AWS 部落格最新文章通知</h2>
+      <h2 style="color: #2c5282;">AWS 部落格���新文章通知</h2>
       <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px;">
         <h3 style="color: #4a5568;">${articleData.title}</h3>
         <p style="color: #718096;">發布時間：${articleData.timestamp}</p>
