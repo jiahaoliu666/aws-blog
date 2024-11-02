@@ -10,15 +10,15 @@ const { v4: uuidv4 } = require("uuid");
 const OpenAI = require("openai");
 const axios = require("axios").default;
 const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
-import { sendEmailNotification } from "../services/emailService";
-import {
+const { sendEmailNotification } = require("../services/emailService");
+const {
   sendEmailWithRetry,
   failedNotifications,
   processFailedNotifications,
-} from "../utils/notificationUtils";
+} = require("../utils/notificationUtils");
 
 // 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 5;
+const NUMBER_OF_ARTICLES_TO_FETCH = 6;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
@@ -283,7 +283,7 @@ async function scrapeAWSBlog() {
     console.log(`成功儲存 ${insertedCount} 篇新文章`);
     console.log(`跳過了 ${skippedCount} 篇已存在的文章`);
   } catch (error) {
-    console.error("爬取過程中發生錯誤:", error.message);
+    console.error("爬取程中發生錯誤:", error.message);
   } finally {
     if (browser !== null) {
       await browser.close();
