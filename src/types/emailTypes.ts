@@ -14,4 +14,10 @@ export interface NotificationSettings {
   email: string;
   emailNotification: boolean;
   lineNotification: boolean;
+}
+
+export interface NotificationUser {
+  userId: { S: string };
+  email: { S: string };
+  emailNotification: { BOOL: boolean };
 } 

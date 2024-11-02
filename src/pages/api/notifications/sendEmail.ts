@@ -1,7 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { sendEmailNotification } from '../../../services/emailService';
-import { generateNewsNotificationEmail } from '../../../templates/emailTemplates';
-import { EmailNotification } from '../../../types/emailTypes';
+import { EmailService } from '../../../services/emailService';
+import { errorHandler } from '../../../utils/errorHandler';
+import { logger } from '@/utils/logger';
+
+const emailService = new EmailService();
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,20 +16,17 @@ export default async function handler(
   try {
     const { email, articleData } = req.body;
 
-    const emailContent = generateNewsNotificationEmail(articleData);
-    
-    const emailData: EmailNotification = {
+    await emailService.sendEmail({
       to: email,
       subject: '新的 AWS 部落格文章通知',
-      content: emailContent,
+      content: '',
       articleData,
-    };
+    });
 
-    await sendEmailNotification(emailData);
-    
-    res.status(200).json({ message: '郵件發送成功' });
+    logger.info(`成功發送郵件至 ${email}`);
+    res.status(200).json({ success: true });
   } catch (error) {
-    console.error('發送郵件通知時發生錯誤:', error);
-    res.status(500).json({ message: '發送郵件失敗' });
+    const errorResponse = errorHandler.handle(error);
+    res.status(500).json(errorResponse);
   }
 } 

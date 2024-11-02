@@ -1,44 +1,66 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { SendEmailCommand } from "@aws-sdk/client-ses";
+import { sesClient } from '../config/aws';
 import { EmailNotification } from '../types/emailTypes';
+import { generateNewsNotificationEmail } from '../templates/emailTemplates';
+import { EMAIL_CONFIG } from '../config/constants';
+import { logger } from '@/utils/logger';
+import { RateLimiter } from '@/utils/rateLimiter';
 
-const ses = new SESClient({
-  region: 'ap-northeast-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  }
-});
+const rateLimiter = new RateLimiter(EMAIL_CONFIG.RATE_LIMIT);
 
-export const sendEmailNotification = async (emailData: EmailNotification) => {
-  if (!process.env.SES_SENDER_EMAIL) {
-    throw new Error('未設置發件人郵箱');
-  }
+export class EmailService {
+  async sendEmail(notification: EmailNotification): Promise<boolean> {
+    await rateLimiter.acquire();
+    
+    try {
+      const emailContent = generateNewsNotificationEmail(notification.articleData);
+      
+      const params = {
+        Source: process.env.SES_SENDER_EMAIL,
+        Destination: {
+          ToAddresses: [notification.to],
+        },
+        Message: {
+          Subject: {
+            Data: notification.subject,
+            Charset: 'UTF-8',
+          },
+          Body: {
+            Html: {
+              Data: emailContent,
+              Charset: 'UTF-8',
+            },
+          },
+        },
+      };
 
-  const params = {
-    Source: process.env.SES_SENDER_EMAIL,
-    Destination: {
-      ToAddresses: [emailData.to]
-    },
-    Message: {
-      Subject: {
-        Data: emailData.subject,
-        Charset: 'UTF-8'
-      },
-      Body: {
-        Html: {
-          Data: emailData.content,
-          Charset: 'UTF-8'
-        }
-      }
+      await sesClient.send(new SendEmailCommand(params));
+      logger.info(`郵件成功發送至 ${notification.to}`);
+      return true;
+    } catch (error) {
+      logger.error('發送郵件失敗:', error);
+      throw error;
     }
-  };
-
-  try {
-    await ses.send(new SendEmailCommand(params));
-    console.log(`成功發送郵件至 ${emailData.to}`);
-    return { success: true };
-  } catch (error) {
-    console.error('發送郵件失敗:', error);
-    throw error;
   }
+
+  async sendBatchEmails(notifications: EmailNotification[]): Promise<void> {
+    const batches = this.chunkArray(notifications, EMAIL_CONFIG.BATCH_SIZE);
+    
+    for (const batch of batches) {
+      await Promise.all(
+        batch.map(notification => this.sendEmail(notification))
+      );
+    }
+  }
+
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
+      array.slice(i * size, i * size + size)
+    );
+  }
+}
+
+export const sendEmailNotification = async (notification: EmailNotification): Promise<boolean> => {
+  const emailService = new EmailService();
+  return await emailService.sendEmail(notification);
 }; 

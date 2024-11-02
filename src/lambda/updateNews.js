@@ -10,6 +10,12 @@ const { v4: uuidv4 } = require("uuid");
 const OpenAI = require("openai");
 const axios = require("axios").default;
 const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
+import { sendEmailNotification } from "../services/emailService";
+import {
+  sendEmailWithRetry,
+  failedNotifications,
+  processFailedNotifications,
+} from "../utils/notificationUtils";
 
 // 設定要爬取的文章數量
 const NUMBER_OF_ARTICLES_TO_FETCH = 5;
@@ -175,73 +181,55 @@ async function saveToDynamoDB(article) {
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
 
-    // 獲取所有用戶 ID
-    const userIds = await getAllUserIds();
-
-    // 為每個用戶添加通知記錄
-    await Promise.all(
-      userIds.map(async (userId) => {
-        await addNotification(userId, articleId);
-      })
-    );
-
     // 獲取需要通知的用戶
     const notificationUsers = await getNotificationUsers();
 
-    if (notificationUsers.length > 0) {
-      // 使用 SES 發送郵件
-      const ses = new SESClient({
-        region: "ap-northeast-1",
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        },
-      });
+    // 批次處理通知
+    await Promise.allSettled(
+      notificationUsers.map(async (user) => {
+        try {
+          // 1. 添加通知記錄
+          await addNotification(user.userId.S, articleId);
 
-      // 批次處理郵件發送
-      await Promise.all(
-        notificationUsers.map(async (user) => {
-          if (!user.email?.S) return;
-
-          try {
-            const emailParams = {
-              Source: process.env.SES_SENDER_EMAIL,
-              Destination: {
-                ToAddresses: [user.email.S],
-              },
-              Message: {
-                Subject: {
-                  Data: `新的 AWS 部落格文章：${translatedTitle}`,
-                  Charset: "UTF-8",
-                },
-                Body: {
-                  Html: {
-                    Data: generateNewsNotificationEmail({
-                      title: translatedTitle,
-                      link: article.link,
-                      timestamp: new Date().toLocaleString(),
-                    }),
-                    Charset: "UTF-8",
-                  },
-                },
+          // 2. 發送郵件通知
+          if (user.email?.S) {
+            const emailData = {
+              to: user.email.S,
+              subject: `新的 AWS 部落格文章：${translatedTitle}`,
+              articleData: {
+                title: translatedTitle,
+                link: article.link,
+                timestamp: new Date().toLocaleString(),
               },
             };
 
-            await ses.send(new SendEmailCommand(emailParams));
-            console.log(`成功發送郵件給 ${user.email.S}`);
-
-            // 為該用戶添加通知記錄
-            await addNotification(user.userId.S, articleId);
-          } catch (error) {
-            console.error(`發送郵件給 ${user.email.S} 失敗:`, error);
+            await sendEmailWithRetry(emailData);
           }
-        })
-      );
+        } catch (error) {
+          console.error(`處理用戶 ${user.userId.S} 的通知時發生錯誤:`, error);
+          failedNotifications.push({
+            userId: user.userId.S,
+            articleId,
+            email: user.email?.S,
+            retryCount: 0,
+            articleData: {
+              title: translatedTitle,
+              link: article.link,
+              timestamp: new Date().toLocaleString(),
+            },
+          });
+        }
+      })
+    );
+
+    // 處理失敗的通知
+    if (failedNotifications.length > 0) {
+      await processFailedNotifications();
     }
 
     return true;
   } catch (error) {
-    console.error("處理文章時發生錯誤:", error);
+    console.error("儲存文章時發生錯誤:", error);
     return false;
   }
 }
@@ -361,6 +349,63 @@ function generateNewsNotificationEmail(articleData) {
     </div>
   `;
 }
+
+// 修改發送通知的函數
+async function sendNotifications(users, articleData) {
+  for (const user of users) {
+    try {
+      const emailData = {
+        to: user.email.S,
+        articleData: {
+          title: articleData.translated_title.S,
+          link: articleData.link.S,
+          timestamp: new Date(
+            parseInt(articleData.published_at.N) * 1000
+          ).toLocaleString(),
+        },
+      };
+
+      // 使用重試機制發送郵件
+      await sendEmailWithRetry(emailData);
+    } catch (error) {
+      console.error(`發送通知給 ${user.email.S} 失敗:`, error);
+
+      // 添加到失敗隊列
+      failedNotifications.push({
+        userId: user.userId.S,
+        articleId: articleData.id.S,
+        email: user.email.S,
+        retryCount: 0,
+      });
+    }
+  }
+
+  // 處理失敗隊列
+  if (failedNotifications.length > 0) {
+    await processFailedNotifications();
+  }
+}
+
+// 添加日誌記錄函數
+const logError = (error, context) => {
+  console.error(`[${new Date().toISOString()}] ${context}:`, error);
+  // 可以添加錯誤追蹤或監控服務的整合
+};
+
+// 在檔案開頭添加
+const requiredEnvVars = [
+  "NEXT_PUBLIC_AWS_ACCESS_KEY_ID",
+  "NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY",
+  "NEXT_PUBLIC_SES_SENDER_EMAIL",
+  "OPENAI_API_KEY",
+  "MICROSOFT_TRANSLATOR_API_KEY",
+];
+
+requiredEnvVars.forEach((varName) => {
+  if (!process.env[varName]) {
+    throw new Error(`Missing required environment variable: ${varName}`);
+  }
+});
 
 (async () => {
   await scrapeAWSBlog();

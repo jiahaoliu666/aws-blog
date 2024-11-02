@@ -14,3 +14,17 @@ export const emailConfig = {
     }
   }
 }; 
+
+export const validateEmailConfig = () => {
+  const requiredVars = [
+    'NEXT_PUBLIC_AWS_ACCESS_KEY_ID',
+    'NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY',
+    'NEXT_PUBLIC_SES_SENDER_EMAIL',
+  ];
+
+  for (const varName of requiredVars) {
+    if (!process.env[varName]) {
+      throw new Error(`Missing required environment variable: ${varName}`);
+    }
+  }
+}; 
