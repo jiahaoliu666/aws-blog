@@ -208,8 +208,6 @@ async function saveToDynamoDB(article) {
                 timeZone: "Asia/Taipei",
               }),
               summary: summary,
-              category: article.category || "一般文章",
-              author: article.author || "AWS Blog Team",
             },
           };
 
@@ -245,6 +243,22 @@ async function saveToDynamoDB(article) {
       });
 
       const results = await Promise.allSettled(notificationPromises);
+
+      // 添加發送統計
+      const successCount = results.filter(
+        (r) => r.status === "fulfilled" && r.value.status === "success"
+      ).length;
+      const failedCount = results.filter(
+        (r) => r.status === "fulfilled" && r.value.status === "failed"
+      ).length;
+      const skippedCount = results.filter(
+        (r) => r.status === "fulfilled" && r.value.status === "skipped"
+      ).length;
+
+      logger.info(
+        `通知發送完成統計：成功=${successCount}, 失敗=${failedCount}, 跳過=${skippedCount}`
+      );
+
       logger.info(
         "通知發送完成，結果:",
         results.map((result) => {
@@ -382,7 +396,7 @@ async function addNotification(userId, articleId) {
   }
 }
 
-// 添加郵件模板生成函數
+// 修改郵件模板生成函數
 function generateNewsNotificationEmail(articleData) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

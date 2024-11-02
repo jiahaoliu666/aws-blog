@@ -7,8 +7,6 @@ export interface EmailNotification {
     link: string;
     timestamp: string;
     summary?: string;
-    author?: string;
-    category?: string;
   };
 }
 
