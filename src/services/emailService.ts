@@ -1,16 +1,15 @@
-const { SendEmailCommand } = require("@aws-sdk/client-ses");
-const { sesClient } = require("../config/aws");
-const {
-  generateNewsNotificationEmail,
-} = require("../templates/emailTemplates");
-const { EMAIL_CONFIG } = require("../config/constants");
-const { logger } = require("../utils/logger");
-const RateLimiter = require("../utils/rateLimiter");
+import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
+import { sesClient } from "../config/aws";
+import { generateNewsNotificationEmail } from "../templates/emailTemplates";
+import { EMAIL_CONFIG } from "../config/constants";
+import { logger } from "../utils/logger";
+import RateLimiter from "../utils/rateLimiter";
+import { EmailNotification } from "../types/emailTypes";
 
 const rateLimiter = new RateLimiter(EMAIL_CONFIG.RATE_LIMIT);
 
-class EmailService {
-  async sendEmail(notification) {
+export class EmailService {
+  async sendEmail(notification: EmailNotification) {
     await rateLimiter.acquire();
 
     try {
@@ -44,18 +43,17 @@ class EmailService {
         messageId: result.MessageId,
       };
     } catch (error) {
-      logger.error(`發送郵件時發生錯誤: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.error(`發送郵件時發生錯誤: ${errorMessage}`);
       return {
         success: false,
-        error:
-          error instanceof Error ? error.message : "發送郵件時發生未知錯誤",
-        details: error,
+        error: errorMessage,
       };
     }
   }
 
-  async sendBatchEmails(notifications) {
-    const results = [];
+  async sendBatchEmails(notifications: EmailNotification[]) {
+    const results: PromiseSettledResult<any>[] = [];
     const batches = this.chunkArray(notifications, EMAIL_CONFIG.BATCH_SIZE);
 
     for (const batch of batches) {
@@ -64,18 +62,13 @@ class EmailService {
           try {
             const result = await this.sendEmail(notification);
             if (!result.success) {
-              throw new Error(result.error || "發送郵件失敗");
+              throw new Error(result.error);
             }
-            return { success: true, result };
+            return result;
           } catch (error) {
-            logger.error(`批量發送郵件時發生錯誤: ${error.message}`);
-            return {
-              success: false,
-              error:
-                error instanceof Error
-                  ? error.message
-                  : "發送郵件時發生未知錯誤",
-            };
+            const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+            logger.error(`批量發送郵件時發生錯誤: ${errorMessage}`);
+            throw new Error(errorMessage);
           }
         })
       );
@@ -85,19 +78,14 @@ class EmailService {
     return results;
   }
 
-  chunkArray(array, size) {
+  private chunkArray<T>(array: T[], size: number): T[][] {
     return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
       array.slice(i * size, i * size + size)
     );
   }
 }
 
-const sendEmailNotification = async (notification) => {
+export const sendEmailNotification = async (notification: EmailNotification) => {
   const emailService = new EmailService();
   return await emailService.sendEmail(notification);
-};
-
-module.exports = {
-  EmailService,
-  sendEmailNotification,
-};
+}; 

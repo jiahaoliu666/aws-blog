@@ -19,7 +19,7 @@ const {
 const { logger } = require("../utils/logger");
 
 // 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 8;
+const NUMBER_OF_ARTICLES_TO_FETCH = 10;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {

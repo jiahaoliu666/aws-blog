@@ -8,38 +8,50 @@ const emailService = new EmailService();
 
 export const handler = async (event: any) => {
   try {
-    // 獲取需要通知的用戶
     const users = await getNotificationUsers();
-    
-    // 獲取新文章
     const newArticles = await fetchNewArticles();
     
     if (newArticles.length > 0) {
-      // 準備通知數據
       const notifications = users
-        .filter(user => user.email.S)
+        .filter(user => user.email?.S)
         .map(user => ({
-          to: user.email.S as string,
+          to: user.email.S!,
           subject: '新的 AWS 部落格文章通知',
           articleData: {
             title: newArticles[0].translated_title.S,
             link: newArticles[0].link.S,
             timestamp: new Date(parseInt(newArticles[0].published_at.N) * 1000).toLocaleString(),
           },
-          content: `請查看新的文章：${newArticles[0].translated_title.S}，鏈接：${newArticles[0].link.S}`
+          content: `請查看新的文章：${newArticles[0].translated_title.S}`
         }));
 
-      // 發送通知
-      await emailService.sendBatchEmails(notifications);
+      const results = await emailService.sendBatchEmails(notifications);
+      
+      const failedNotifications = results.filter(
+        (result: { status: string; value?: { success: boolean } }) => 
+          result.status === 'rejected' || !result.value?.success
+      );
+
+      if (failedNotifications.length > 0) {
+        logger.error(`${failedNotifications.length} 封郵件發送失敗`);
+      }
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: '通知發送成功' }),
+      body: JSON.stringify({ 
+        message: '通知處理完成',
+        totalProcessed: newArticles.length
+      }),
     };
   } catch (error) {
     logger.error('處理更新時發生錯誤:', error);
-    throw error;
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: error instanceof Error ? error.message : '處理更新時發生未知錯誤'
+      }),
+    };
   }
 };
 
