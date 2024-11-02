@@ -186,6 +186,8 @@ async function saveToDynamoDB(article) {
     const notificationUsers = await getNotificationUsers();
 
     if (notificationUsers.length > 0) {
+      logger.info(`開始發送通知給 ${notificationUsers.length} 位用戶`);
+
       const notificationPromises = notificationUsers.map(async (user) => {
         if (!user.userId?.S || !user.email?.S) {
           logger.warn("跳過無效的用戶數據:", user);
@@ -193,10 +195,6 @@ async function saveToDynamoDB(article) {
         }
 
         try {
-          // 1. 添加通知記錄
-          await addNotification(user.userId.S, articleId);
-
-          // 2. 發送郵件通知
           const emailData = {
             to: user.email.S,
             subject: `新的 AWS 部落格文章：${translatedTitle}`,
@@ -207,10 +205,12 @@ async function saveToDynamoDB(article) {
             },
           };
 
-          await sendEmailWithRetry(emailData);
-          logger.info(`成功發送通知給用戶 ${user.userId.S}`);
+          // 添加更詳細的日誌
+          logger.info(`準備發送郵件至 ${user.email.S}`);
+          const result = await sendEmailWithRetry(emailData);
+          logger.info(`郵件發送結果:`, result);
         } catch (error) {
-          logger.error(`處理用戶 ${user.userId.S} 的通知時發生錯誤:`, error);
+          logger.error(`發送郵件失敗 (${user.email.S}):`, error);
           failedNotifications.push({
             userId: user.userId.S,
             articleId,
@@ -225,7 +225,10 @@ async function saveToDynamoDB(article) {
         }
       });
 
-      await Promise.allSettled(notificationPromises);
+      const results = await Promise.allSettled(notificationPromises);
+      logger.info(`通知發送完成，結果:`, results);
+    } else {
+      logger.warn("沒有需要通知的用戶");
     }
 
     // 處理失敗的通知
@@ -236,7 +239,7 @@ async function saveToDynamoDB(article) {
     return true;
   } catch (error) {
     logger.error("儲存文章時發生錯誤:", error);
-    return false;
+    throw error;
   }
 }
 
@@ -255,6 +258,16 @@ async function gotoWithRetry(page, url, options, retries = 3) {
 
 async function scrapeAWSBlog() {
   let browser = null;
+
+  // 添加環境變數檢查
+  if (
+    !process.env.OPENAI_API_KEY ||
+    !process.env.MICROSOFT_TRANSLATOR_API_KEY
+  ) {
+    logger.error("缺少必要的環境變數");
+    throw new Error("缺少必要的環境變數");
+  }
+
   try {
     browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
@@ -289,7 +302,12 @@ async function scrapeAWSBlog() {
     console.log(`成功儲存 ${insertedCount} 篇新文章`);
     console.log(`跳過了 ${skippedCount} 篇已存在的文章`);
   } catch (error) {
-    console.error("取程中發生錯誤:", error.message);
+    console.error("爬取過程中發生錯誤:", error?.message || "未知錯誤");
+    logger.error("爬取失敗:", {
+      error: error?.message || "未知錯誤",
+      stack: error?.stack,
+    });
+    throw new Error(`爬取失敗: ${error?.message || "未知錯誤"}`);
   } finally {
     if (browser !== null) {
       await browser.close();
@@ -350,7 +368,7 @@ function generateNewsNotificationEmail(articleData) {
         </a>
       </div>
       <p style="color: #718096; font-size: 12px; margin-top: 20px;">
-        此為系統自動發送的郵件，請勿直接回覆。
+        此為系統自動發送的郵件，請勿直���回覆。
       </p>
     </div>
   `;
@@ -414,5 +432,13 @@ requiredEnvVars.forEach((varName) => {
 });
 
 (async () => {
-  await scrapeAWSBlog();
+  try {
+    await scrapeAWSBlog();
+  } catch (error) {
+    logger.error("執行爬蟲時發生錯誤:", {
+      message: error?.message || "未知錯誤",
+      stack: error?.stack,
+    });
+    process.exit(1);
+  }
 })();

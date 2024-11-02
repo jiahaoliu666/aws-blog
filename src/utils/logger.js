@@ -10,4 +10,5 @@ const logger = {
   },
 };
 
-module.exports = logger;
+// 修改導出方式，使用具名導出
+exports.logger = logger;

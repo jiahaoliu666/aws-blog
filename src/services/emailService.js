@@ -19,7 +19,7 @@ class EmailService {
       );
 
       const params = {
-        Source: process.env.SES_SENDER_EMAIL,
+        Source: `"AWS Blog 通知" <${process.env.NEXT_PUBLIC_SES_SENDER_EMAIL}>`,
         Destination: {
           ToAddresses: [notification.to],
         },
@@ -45,12 +45,7 @@ class EmailService {
       };
     } catch (error) {
       logger.error(`發送郵件時發生錯誤: ${error.message}`);
-      return {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "發送郵件時發生未知錯誤",
-        details: error,
-      };
+      throw error;
     }
   }
 

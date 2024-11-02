@@ -5,24 +5,31 @@ const { EMAIL_CONFIG } = require("../config/constants");
 // 重試機制
 const sendEmailWithRetry = async (emailData, maxRetries = 3) => {
   let retryCount = 0;
+  let lastError;
 
   while (retryCount < maxRetries) {
     try {
+      logger.info(`嘗試發送郵件至 ${emailData.to} (第 ${retryCount + 1} 次)`);
       const result = await sendEmailNotification(emailData);
+
       if (result && result.success) {
         logger.info(`成功發送郵件至 ${emailData.to}`);
         return result;
       }
+
       throw new Error(result?.error || "發送郵件失敗");
     } catch (error) {
+      lastError = error;
       retryCount++;
+
       if (retryCount === maxRetries) {
         logger.error(
           `發送郵件失敗 (重試 ${retryCount}/${maxRetries} 次):`,
           error
         );
-        throw error;
+        throw lastError;
       }
+
       logger.warn(`發送郵件失敗，準備重試 (${retryCount}/${maxRetries})`);
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
