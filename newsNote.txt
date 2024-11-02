@@ -5,7 +5,7 @@
   │     │     ├── Navbar.tsx                // 通用的導航欄組件，顯示應用程序的標題和導航鏈接，使用 AuthContext 獲取用戶信息  
   │     │     ├── Pagination.tsx            // 通用的分頁組件，用於在多頁新聞列表中導航  
   │     │     ├── ErrorMessage.tsx          // 顯示錯誤信息的組件  
-  │     │     ├── Notification.tsx          // 獨立的通知組件，顯示通知列表
+  │     │     └── Notification.tsx          // 獨立的通知組件，顯示通知列表和處理通知狀態
   │     ├── /news  
   │     │     ├── NewsCard.tsx              // 顯示單個新聞文章的卡片組件，包含標題、摘要和鏈接  
   │     │     ├── NewsSearch.tsx            // 搜索新聞文章的組件，提供搜索框和按鈕  
@@ -49,7 +49,8 @@
   │     │     │     ├── recent-log.ts       // 後端 API，用於記錄用戶最近的文章活動
   │     │     │     └── sendFeedback.ts     // API 路由，處理用戶反饋的提交
   ├── /services                             
-  │     ├── emailService.ts                 // 郵件服務相關的邏輯和功能
+  │     ├── emailService.js                 // 郵件服務核心邏輯，處理郵件發送和批量處理
+  │     ├── dbService.ts                    // 數據庫服務，處理與 DynamoDB 的交互
   │     ├── notificationService.ts          // 通知服務相關的邏輯和功能
   │     └── sesService.ts                   // AWS SES 服務的封裝和配置
   ├── /templates                            
@@ -65,11 +66,18 @@
   │     ├── apiClient.ts                    // 工具函數，用於封裝 API 請求邏輯  
   │     ├── cognitoClient.ts                // 封裝 AWS Cognito 相關的 API 調用邏輯
   │     ├── emailUtils.ts                   // 新增的郵件相關工具函數
-  │     └── notificationUtils.ts            // 新增的通知相關工具函數
+  │     ├── notificationUtils.ts            // 新增的通知相關工具函數
+  │     ├── errorHandler.ts                 // 統一的錯誤處理工具，包含自定義錯誤類
+  │     ├── logger.ts                       // TypeScript 版本的日誌記錄工具
+  │     ├── logger.js                       // JavaScript 版本的日誌記錄工具
+  │     └── rateLimiter.js                  // 請求速率限制工具，控制 API 調用頻率
   ├── /lambda
   │     ├── updateNews.js                   // Lambda 函數，用於從 AWS 部落格抓取最新文章
   │     ├── fetchNews.js                    // Lambda 函數，使用翻譯和 OpenAI 總結文章
   │     └── sendNotifications.js            // 新增的 Lambda 函數，處理批量發送通知
   └── /config                               
         ├── aws.ts                          // AWS 服務相關配置
-        └── email.ts                        // 郵件服務相關配置
+        ├── email.ts                        // 郵件服務相關配置
+        ├── aws.js                          // AWS 服務配置，包含 SES 和 DynamoDB 客戶端
+        ├── constants.js                    // JavaScript 版本的常量定義
+        └── constants.ts                    // TypeScript 版本的常量定義
