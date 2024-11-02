@@ -14,9 +14,19 @@ class EmailService {
     await rateLimiter.acquire();
 
     try {
-      const emailContent = generateNewsNotificationEmail(
-        notification.articleData
-      );
+      const subject = `AWS 部落格新文章：${notification.articleData.title}`;
+
+      const emailContent = generateNewsNotificationEmail({
+        ...notification.articleData,
+        timestamp: new Date().toLocaleString("zh-TW", {
+          timeZone: "Asia/Taipei",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      });
 
       const params = {
         Source: `"AWS Blog 通知" <${process.env.NEXT_PUBLIC_SES_SENDER_EMAIL}>`,
@@ -25,7 +35,7 @@ class EmailService {
         },
         Message: {
           Subject: {
-            Data: notification.subject,
+            Data: subject,
             Charset: "UTF-8",
           },
           Body: {

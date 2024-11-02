@@ -191,26 +191,39 @@ async function saveToDynamoDB(article) {
       const notificationPromises = notificationUsers.map(async (user) => {
         if (!user.userId?.S || !user.email?.S) {
           logger.warn("跳過無效的用戶數據:", user);
-          return;
+          return {
+            email: user.email?.S,
+            status: "skipped",
+            reason: "無效的用戶數據",
+          };
         }
 
         try {
           const emailData = {
             to: user.email.S,
-            subject: `新的 AWS 部落格文章：${translatedTitle}`,
             articleData: {
               title: translatedTitle,
               link: article.link,
-              timestamp: new Date().toLocaleString(),
+              timestamp: new Date().toLocaleString("zh-TW", {
+                timeZone: "Asia/Taipei",
+              }),
+              summary: summary,
+              category: article.category || "一般文章",
+              author: article.author || "AWS Blog Team",
             },
           };
 
-          // 添加更詳細的日誌
           logger.info(`準備發送郵件至 ${user.email.S}`);
           const result = await sendEmailWithRetry(emailData);
-          logger.info(`郵件發送結果:`, result);
+
+          return {
+            email: user.email.S,
+            status: "success",
+            messageId: result.messageId,
+          };
         } catch (error) {
           logger.error(`發送郵件失敗 (${user.email.S}):`, error);
+
           failedNotifications.push({
             userId: user.userId.S,
             articleId,
@@ -222,11 +235,29 @@ async function saveToDynamoDB(article) {
               timestamp: new Date().toLocaleString(),
             },
           });
+
+          return {
+            email: user.email.S,
+            status: "failed",
+            error: error.message,
+          };
         }
       });
 
       const results = await Promise.allSettled(notificationPromises);
-      logger.info(`通知發送完成，結果:`, results);
+      logger.info(
+        "通知發送完成，結果:",
+        results.map((result) => {
+          if (result.status === "fulfilled") {
+            return result.value;
+          } else {
+            return {
+              status: "error",
+              error: result.reason,
+            };
+          }
+        })
+      );
     } else {
       logger.warn("沒有需要通知的用戶");
     }
@@ -368,7 +399,7 @@ function generateNewsNotificationEmail(articleData) {
         </a>
       </div>
       <p style="color: #718096; font-size: 12px; margin-top: 20px;">
-        此為系統自動發送的郵件，請勿直���回覆。
+        此為系統自動發送的郵件，請勿直回覆。
       </p>
     </div>
   `;
