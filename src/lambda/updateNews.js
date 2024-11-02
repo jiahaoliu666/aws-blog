@@ -182,36 +182,39 @@ async function saveToDynamoDB(article) {
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
 
-    // 獲取需要通知的用戶
+    // 修改通知處理邏輯
     const notificationUsers = await getNotificationUsers();
 
-    // 批次處理通知
-    await Promise.allSettled(
-      notificationUsers.map(async (user) => {
+    if (notificationUsers.length > 0) {
+      const notificationPromises = notificationUsers.map(async (user) => {
+        if (!user.userId?.S || !user.email?.S) {
+          logger.warn("跳過無效的用戶數據:", user);
+          return;
+        }
+
         try {
           // 1. 添加通知記錄
           await addNotification(user.userId.S, articleId);
 
           // 2. 發送郵件通知
-          if (user.email?.S) {
-            const emailData = {
-              to: user.email.S,
-              subject: `新的 AWS 部落格文章：${translatedTitle}`,
-              articleData: {
-                title: translatedTitle,
-                link: article.link,
-                timestamp: new Date().toLocaleString(),
-              },
-            };
+          const emailData = {
+            to: user.email.S,
+            subject: `新的 AWS 部落格文章：${translatedTitle}`,
+            articleData: {
+              title: translatedTitle,
+              link: article.link,
+              timestamp: new Date().toLocaleString(),
+            },
+          };
 
-            await sendEmailWithRetry(emailData);
-          }
+          await sendEmailWithRetry(emailData);
+          logger.info(`成功發送通知給用戶 ${user.userId.S}`);
         } catch (error) {
-          console.error(`處理用戶 ${user.userId.S} 的通知時發生錯誤:`, error);
+          logger.error(`處理用戶 ${user.userId.S} 的通知時發生錯誤:`, error);
           failedNotifications.push({
             userId: user.userId.S,
             articleId,
-            email: user.email?.S,
+            email: user.email.S,
             retryCount: 0,
             articleData: {
               title: translatedTitle,
@@ -220,8 +223,10 @@ async function saveToDynamoDB(article) {
             },
           });
         }
-      })
-    );
+      });
+
+      await Promise.allSettled(notificationPromises);
+    }
 
     // 處理失敗的通知
     if (failedNotifications.length > 0) {
@@ -230,7 +235,7 @@ async function saveToDynamoDB(article) {
 
     return true;
   } catch (error) {
-    console.error("儲存文章時發生錯誤:", error);
+    logger.error("儲存文章時發生錯誤:", error);
     return false;
   }
 }
@@ -332,7 +337,7 @@ async function addNotification(userId, articleId) {
 function generateNewsNotificationEmail(articleData) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #2c5282;">AWS 部落格���新文章通知</h2>
+      <h2 style="color: #2c5282;">AWS 部落格新文章通知</h2>
       <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px;">
         <h3 style="color: #4a5568;">${articleData.title}</h3>
         <p style="color: #718096;">發布時間：${articleData.timestamp}</p>
