@@ -53,17 +53,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               break;
             }
             
-            // 1. 發送歡迎訊息
+            // 發送歡迎訊息
             await sendWelcomeMessage(event.source.userId);
             
-            // 2. 更新資料庫 - 簡化版本
+            // 更新資料庫
             try {
               const params = {
                 TableName: 'AWS_Blog_UserNotificationSettings',
                 Item: {
                   lineUserId: { S: event.source.userId },
                   lineNotification: { BOOL: true },
-                  followStatus: { S: 'active' }
+                  followStatus: { S: 'active' },
+                  email: { S: '' },
                 }
               };
 

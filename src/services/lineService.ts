@@ -69,8 +69,8 @@ export const lineService = {
       const welcomeMessage = {
         type: "text" as const,
         text: `感謝您追蹤 AWS Blog 365！
-您的 LINE 帳號已成��驗證 ✅
-未來將透�� LINE 為您推送最新 AWS 文章。
+您的 LINE 帳號已成功驗證 ✅
+未來將透過 LINE 為您推送最新 AWS 文章。
 
 💡 小提醒：
 • 您可以隨時在個人設定頁面調整通知偏好
@@ -87,7 +87,7 @@ export const lineService = {
           lineUserId: { S: userId },
           lineNotification: { BOOL: true },
           followStatus: { S: 'active' },
-          verifiedAt: { S: new Date().toISOString() }
+          email: { S: '' },
         }
       };
 
@@ -156,7 +156,8 @@ export async function handleLineWebhook(event: any) {
           lineUserId: { S: lineUserId },
           lineNotification: { BOOL: true },
           lastVerified: { S: new Date().toISOString() },
-          followStatus: { S: 'active' }
+          followStatus: { S: 'active' },
+          email: { S: '' },
         }
       };
 

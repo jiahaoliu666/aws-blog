@@ -30,7 +30,6 @@ interface FormData {
   lineSettings: {
     id: string;
     isVerified: boolean;
-    lastVerified?: string;
   };
 }
 
@@ -383,7 +382,7 @@ export const useProfileLogic = () => {
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，請確認檔案類型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗檔案類型不支援，請確認檔案類型是否為 jpeg 或 png。');
         return;
       }
 
@@ -717,17 +716,22 @@ export const useProfileLogic = () => {
     try {
       setIsLoading(true);
       
-      if (formData.notifications.line && lineUserId) {
-        logger.info(`正在驗證 LINE ID: ${lineUserId}`);
-        
-        // 檢查 LINE ID 格式
-        if (!validateLineId(lineUserId)) {
-          setLineIdError('請輸入有效的 LINE ID');
+      // LINE 通知設���驗證
+      if (formData.notifications.line) {
+        if (!lineUserId) {
+          setUploadMessage('請輸入 LINE ID 以啟用 LINE 通知');
           setIsLoading(false);
           return;
         }
 
-        // 使用 API 路由檢查追蹤狀態
+        // 驗證 LINE ID 格式
+        if (!validateLineId(lineUserId)) {
+          setUploadMessage('LINE ID 格式不正確，請重新輸入');
+          setIsLoading(false);
+          return;
+        }
+
+        // 檢查追蹤狀態
         const response = await fetch('/api/line/check-follow-status', {
           method: 'POST',
           headers: {
@@ -739,7 +743,7 @@ export const useProfileLogic = () => {
         const data = await response.json();
         
         if (!data.isFollowing) {
-          setLineIdError('請先追蹤 LINE 官方帳號才能接收通知');
+          setUploadMessage('請先追蹤 LINE 官方帳號才能啟用通知');
           setIsLoading(false);
           return;
         }
@@ -750,19 +754,35 @@ export const useProfileLogic = () => {
         TableName: 'AWS_Blog_UserNotificationSettings',
         Item: {
           userId: { S: user?.sub || '' },
+          email: { S: user?.email || '' },
           lineUserId: { S: lineUserId || '' },
           lineNotification: { BOOL: formData.notifications.line },
-          emailNotification: { BOOL: formData.notifications.email },
-          lastVerified: { S: new Date().toISOString() }
+          emailNotification: { BOOL: formData.notifications.email }
         }
       };
 
       await dynamoClient.send(new PutItemCommand(updateParams));
-      setUploadMessage('通知設定已更新');
+
+      // 設定成功訊息
+      let successMessage = '';
+      if (formData.notifications.line && formData.notifications.email) {
+        successMessage = '已成功開啟 LINE 和 Email 通知';
+      } else if (formData.notifications.line) {
+        successMessage = '已成功開啟 LINE 通知';
+      } else if (formData.notifications.email) {
+        successMessage = '已成功開啟 Email 通知';
+      } else {
+        successMessage = '已關閉所有通知';
+      }
+
+      setUploadMessage(successMessage);
       
+      // 記錄活動
+      await logActivity(user?.sub || 'default-sub', `更新通知設定：${successMessage}`);
+
     } catch (error) {
       logger.error('保存通知設定時發生錯誤:', error);
-      setLineIdError('設定儲存失敗，請稍後再試');
+      setUploadMessage('設定儲存失敗，請稍後再試');
     } finally {
       setIsLoading(false);
     }
@@ -831,14 +851,6 @@ export const useProfileLogic = () => {
     const fetchNotificationSettings = async () => {
       if (user) {
         try {
-          const dynamoClient = new DynamoDBClient({
-            region: 'ap-northeast-1',
-            credentials: {
-              accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-              secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-            },
-          });
-
           const params = {
             TableName: 'AWS_Blog_UserNotificationSettings',
             KeyConditionExpression: 'userId = :userId',

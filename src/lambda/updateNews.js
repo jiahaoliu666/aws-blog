@@ -45,12 +45,13 @@ async function getNotificationUsers() {
     ExpressionAttributeValues: {
       ":true": { BOOL: true },
     },
+    ProjectionExpression: "userId, email",
   };
 
   try {
     const command = new ScanCommand(params);
     const response = await dynamoClient.send(command);
-    return response.Items || [];
+    return response.Items?.filter((item) => item.email?.S) || [];
   } catch (error) {
     console.error("獲取通知用戶列表時發生錯誤:", error);
     return [];

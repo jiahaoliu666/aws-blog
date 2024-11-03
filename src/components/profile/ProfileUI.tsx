@@ -539,13 +539,22 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                             className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm text-gray-500"
                           />
                           <p className="mt-2 text-sm text-gray-500">
-                            此為您的註冊信箱，如需修改請聯繫客服
+                            此為您的通知信箱
                           </p>
                         </div>
                       </div>
 
                       {/* LINE 通知設定 (新增功能) */}
                       <div className="p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                        {/* 添加消息顯示區域 */}
+                        {uploadMessage && (
+                          <div className={`mb-4 p-4 rounded-lg shadow-md ${
+                            uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {uploadMessage}
+                          </div>
+                        )}
+                        
                         {/* LINE 通知開關 */}
                         <div className="flex items-center justify-between mb-6">
                           <div className="flex items-center space-x-4">
