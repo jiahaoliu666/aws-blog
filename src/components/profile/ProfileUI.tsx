@@ -546,15 +546,6 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
 
                       {/* LINE 通知設定 (新增功能) */}
                       <div className="p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                        {/* 添加消息顯示區域 */}
-                        {uploadMessage && (
-                          <div className={`mb-4 p-4 rounded-lg shadow-md ${
-                            uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {uploadMessage}
-                          </div>
-                        )}
-                        
                         {/* LINE 通知開關 */}
                         <div className="flex items-center justify-between mb-6">
                           <div className="flex items-center space-x-4">
@@ -712,31 +703,43 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                         </div>
 
                         {/* 儲存按鈕 */}
-                        <div className="flex justify-end mt-6">
-                          <button
-                            onClick={handleSaveNotificationSettings}
-                            disabled={isLoading || lineIdStatus === 'error'}
-                            className={`
-                              px-6 py-2.5 rounded-full
-                              flex items-center space-x-2
-                              ${isLoading || lineIdStatus === 'error'
-                                ? 'bg-gray-400 cursor-not-allowed' 
-                                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
-                              text-white transition duration-200 shadow-md hover:shadow-lg
-                            `}
-                          >
-                            {isLoading ? (
-                              <>
-                                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                                <span>儲存中...</span>
-                              </>
-                            ) : (
-                              <>
-                                <FontAwesomeIcon icon={faSave} />
-                                <span>儲存設定</span>
-                              </>
-                            )}
-                          </button>
+                        <div className="flex flex-col space-y-4 mt-6">
+                          {/* 統一的消息通知區域 */}
+                          {uploadMessage && (
+                            <div className={`p-4 rounded-lg shadow-md ${
+                              uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {uploadMessage}
+                            </div>
+                          )}
+                          
+                          {/* 儲存按鈕 */}
+                          <div className="flex justify-end">
+                            <button
+                              onClick={handleSaveNotificationSettings}
+                              disabled={isLoading || lineIdStatus === 'error'}
+                              className={`
+                                px-6 py-2.5 rounded-full
+                                flex items-center space-x-2
+                                ${isLoading || lineIdStatus === 'error'
+                                  ? 'bg-gray-400 cursor-not-allowed' 
+                                  : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
+                                text-white transition duration-200 shadow-md hover:shadow-lg
+                              `}
+                            >
+                              {isLoading ? (
+                                <>
+                                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                                  <span>儲存中...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FontAwesomeIcon icon={faSave} />
+                                  <span>儲存設定</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
