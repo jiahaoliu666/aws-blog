@@ -2,14 +2,14 @@
 import { LineConfig } from '../types/lineTypes';
 
 export const lineConfig: LineConfig = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-  channelSecret: process.env.LINE_CHANNEL_SECRET || '',
-  webhookUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/line/webhook`
+  channelAccessToken: process.env.NEXT_PUBLIC_LINE_CHANNEL_ACCESS_TOKEN || '',
+  channelSecret: process.env.NEXT_PUBLIC_LINE_CHANNEL_SECRET || '',
+  webhookUrl: `${process.env.NEXT_PUBLIC_API_URL || ''}/api/line/webhook`
 };
 
-// 添加設定檢查
-if (!lineConfig.channelAccessToken) {
-  throw new Error('LINE Channel Access Token is missing');
+// 驗證設定是否完整
+if (!lineConfig.channelAccessToken || !lineConfig.channelSecret) {
+  console.error('缺少必要的 LINE 設定');
 }
 
 export const LINE_MESSAGE_MAX_LENGTH = 2000;

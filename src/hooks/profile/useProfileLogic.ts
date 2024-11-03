@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '../../context/AuthContext';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { DynamoDBClient, QueryCommand, UpdateItemCommand, DeleteItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, QueryCommand, UpdateItemCommand, DeleteItemCommand, PutItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttributesCommand, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
 import logActivity from '../../pages/api/profile/activity-log';
 import { lineConfig } from "../../config/line";
@@ -662,12 +662,12 @@ export const useProfileLogic = () => {
 
   const validateLineId = (id: string) => {
     if (!id) return false;
-    // LINE ID 格式驗證: 允許英文字母、數字、底線、點號，長度在4-20之間
+    // LINE ID 格式驗證: 允許英文字母、數、底線、點號，長度在4-20之間
     const lineIdRegex = /^[A-Za-z0-9._-]{4,20}$/;
     return lineIdRegex.test(id);
   };
 
-  const handleLineIdChange = (value: string) => {
+  const handleLineIdChange = async (value: string) => {
     setLineUserId(value);
     setLineIdStatus('validating');
     
@@ -679,33 +679,42 @@ export const useProfileLogic = () => {
       if (!value) {
         setLineIdError('請輸入LINE ID');
         setLineIdStatus('error');
-      } else if (!validateLineId(value)) {
+        return;
+      }
+      
+      if (!validateLineId(value)) {
         setLineIdError('LINE ID 格式不正確，應為4-20個字元，只能包含英文、數字、底線和點號');
         setLineIdStatus('error');
-      } else {
-        try {
-          const response = await fetch('/api/line/check-follow-status', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ lineId: value }),
-          });
+        return;
+      }
 
-          const data = await response.json();
-          
-          if (data.isFollowing) {
-            setLineIdError('');
-            setLineIdStatus('success');
-            setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章通知。');
-          } else {
-            setLineIdError('請先追蹤 LINE 官方帳號才能接收通知');
-            setLineIdStatus('error');
-          }
-        } catch (error) {
-          setLineIdError('驗證過程發生錯誤，請稍後再試');
+      try {
+        const response = await fetch('/api/line/check-follow-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ lineId: value }),
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || '驗證失敗');
+        }
+        
+        if (data.isFollowing) {
+          setLineIdError('');
+          setLineIdStatus('success');
+          setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章通知。');
+        } else {
+          setLineIdError('請先追蹤 LINE 官方帳號才能接收通知');
           setLineIdStatus('error');
         }
+      } catch (error) {
+        logger.error('LINE ID 驗證失敗:', error);
+        setLineIdError('驗證過程發生錯誤，請稍後再試');
+        setLineIdStatus('error');
       }
     }, 500);
 
@@ -715,8 +724,13 @@ export const useProfileLogic = () => {
   const handleSaveNotificationSettings = async () => {
     try {
       setIsLoading(true);
+      logger.info('開始儲存通知設定', {
+        lineNotification: formData.notifications.line,
+        emailNotification: formData.notifications.email,
+        lineUserId
+      });
       
-      // LINE 通知設���驗證
+      // LINE 通���設定驗證
       if (formData.notifications.line) {
         if (!lineUserId) {
           setUploadMessage('請輸入 LINE ID 以啟用 LINE 通知');
@@ -731,19 +745,31 @@ export const useProfileLogic = () => {
           return;
         }
 
-        // 檢查追蹤狀態
-        const response = await fetch('/api/line/check-follow-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ lineId: lineUserId }),
-        });
+        try {
+          logger.info('開始檢查 LINE 追蹤狀態', { lineUserId });
+          const response = await fetch('/api/line/check-follow-status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ lineId: lineUserId }),
+          });
 
-        const data = await response.json();
-        
-        if (!data.isFollowing) {
-          setUploadMessage('請先追蹤 LINE 官方帳號才能啟用通知');
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '驗證失敗');
+          }
+
+          const data = await response.json();
+          
+          if (!data.isFollowing) {
+            setUploadMessage('請先追蹤 LINE 官方帳號才能啟用通知');
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          logger.error('LINE 追蹤狀態驗證失敗:', error);
+          setUploadMessage('LINE 追蹤狀態驗證失敗，請稍後再試');
           setIsLoading(false);
           return;
         }
@@ -757,7 +783,8 @@ export const useProfileLogic = () => {
           email: { S: user?.email || '' },
           lineUserId: { S: lineUserId || '' },
           lineNotification: { BOOL: formData.notifications.line },
-          emailNotification: { BOOL: formData.notifications.email }
+          emailNotification: { BOOL: formData.notifications.email },
+          updatedAt: { S: new Date().toISOString() }
         }
       };
 

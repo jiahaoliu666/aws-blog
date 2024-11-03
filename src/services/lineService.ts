@@ -4,7 +4,7 @@ import { generateArticleTemplate } from '../templates/lineTemplates';
 import { ArticleData } from '../types/lineTypes';
 import { logger } from '../utils/logger';
 import axios from 'axios';
-import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, PutItemCommand, UpdateItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 
 export async function sendArticleNotification(articleData: ArticleData) {
   try {
@@ -108,8 +108,25 @@ export const lineService = {
 
 export const checkLineFollowStatus = async (lineId: string): Promise<boolean> => {
   try {
-    logger.info(`正在檢查用戶 ${lineId} 的追蹤狀態`);
+    logger.info('開始檢查 LINE 追蹤狀態', { lineId });
     
+    // 先檢查資料庫中的追蹤狀態
+    const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
+    const params = {
+      TableName: 'AWS_Blog_UserNotificationSettings',
+      Key: {
+        lineUserId: { S: lineId }
+      }
+    };
+
+    const result = await dynamoClient.send(new GetItemCommand(params));
+    
+    if (result.Item && result.Item.followStatus?.S === 'active') {
+      logger.info('用戶追蹤狀態確認成功', { lineId });
+      return true;
+    }
+
+    // 如果資料庫中沒有記錄或狀態不是 active，則檢查 LINE API
     const response = await fetch(
       `https://api.line.me/v2/bot/profile/${lineId}`,
       {
@@ -119,26 +136,40 @@ export const checkLineFollowStatus = async (lineId: string): Promise<boolean> =>
       }
     );
 
-    logger.info(`LINE API 回應狀態碼: ${response.status}`);
-
     if (response.ok) {
       const profile = await response.json();
-      logger.info(`成功獲取用戶資料:`, profile);
+      
+      // 更新資料庫中的追蹤狀態
+      const updateParams = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Item: {
+          lineUserId: { S: lineId },
+          followStatus: { S: 'active' },
+          lineNotification: { BOOL: true },
+          lastVerified: { S: new Date().toISOString() }
+        }
+      };
+      
+      await dynamoClient.send(new PutItemCommand(updateParams));
+      
+      logger.info('用戶追蹤狀態已更新', { lineId, profile });
       return true;
     }
 
     const error = await response.json();
-    logger.error('LINE API 錯誤回應:', error);
-
     if (error.message?.includes('not found')) {
-      logger.info(`用戶 ${lineId} 未追蹤官方帳號`);
+      logger.info('用戶未追蹤官方帳號', { lineId });
       return false;
     }
 
     throw new Error(JSON.stringify(error));
   } catch (error) {
-    logger.error('檢查 LINE 追蹤狀態時發生錯誤:', error);
-    return false;
+    logger.error('檢查 LINE 追蹤狀態時發生錯誤', {
+      lineId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw error; // 將錯誤往上拋出，以便更好地處理
   }
 };
 
