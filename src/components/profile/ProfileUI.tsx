@@ -8,6 +8,7 @@ import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 import Navbar from '../common/Navbar'; 
 import Footer from '../common/Footer'; 
 import logActivity from '../../pages/api/profile/activity-log';
+import { Switch } from '@headlessui/react';  // 或其他 UI 庫的 Switch 組件
 
 interface ProfileUIProps {
     uploadMessage: string;
@@ -534,11 +535,25 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           label=""
                           isChecked={formData.notifications.line}
                           onChange={() => toggleNotification('line')}
-                          // disabled={true} // Line 通知功能暫時禁用
                         />
                         <div>
                           <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
-                          <p className="text-sm text-gray-500">(即將推出)</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="lineNotification" className="ml-16 block text-sm font-medium text-gray-700">
+                          Line 帳號綁定狀態：
+                        </label>
+                        <div className="mt-2 mb-4 ml-16 flex items-center">
+                          <span className="p-2 border border-gray-300 rounded bg-gray-50">
+                            {formData.notifications.line ? '已綁定' : '未綁定'}
+                          </span>
+                          {!formData.notifications.line && (
+                            <span className="ml-2 text-sm text-gray-500">
+                              (請先開啟 Line 通知並掃描 QR Code 進行綁定)
+                            </span>
+                          )}
                         </div>
                       </div>
 

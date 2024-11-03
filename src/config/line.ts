@@ -1,5 +1,12 @@
 // config/line.ts
-export const lineConfig = {
-    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-    channelSecret: process.env.LINE_CHANNEL_SECRET || '',
-  };
+import { LineConfig } from '../types/lineTypes';
+
+export const lineConfig: LineConfig = {
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
+  channelSecret: process.env.LINE_CHANNEL_SECRET || '',
+  webhookUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/line/webhook`
+};
+
+export const LINE_MESSAGE_MAX_LENGTH = 2000;
+export const LINE_RETRY_COUNT = 3;
+export const LINE_RETRY_DELAY = 1000; // milliseconds

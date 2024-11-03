@@ -17,6 +17,7 @@ const {
   processFailedNotifications,
 } = require("../utils/notificationUtils");
 const { logger } = require("../utils/logger");
+const { sendArticleNotification } = require("../services/lineService");
 
 // 設定要爬取的文章數量
 const NUMBER_OF_ARTICLES_TO_FETCH = 10;
@@ -182,103 +183,26 @@ async function saveToDynamoDB(article) {
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
 
-    // 修改通知處理邏輯
-    const notificationUsers = await getNotificationUsers();
+    // 獲取需要 Line 通知的用戶
+    const lineUsers = await getLineNotificationUsers();
 
-    if (notificationUsers.length > 0) {
-      logger.info(`開始發送通知給 ${notificationUsers.length} 位用戶`);
+    if (lineUsers.length > 0) {
+      const articleData = {
+        title: translatedTitle,
+        link: article.link,
+        timestamp: new Date().toLocaleString("zh-TW", {
+          timeZone: "Asia/Taipei",
+        }),
+        summary: summary,
+        lineUserIds: lineUsers.map((user) => user.userId.S),
+      };
 
-      const notificationPromises = notificationUsers.map(async (user) => {
-        if (!user.userId?.S || !user.email?.S) {
-          logger.warn("跳過無效的用戶數據:", user);
-          return {
-            email: user.email?.S,
-            status: "skipped",
-            reason: "無效的用戶數據",
-          };
-        }
-
-        try {
-          const emailData = {
-            to: user.email.S,
-            articleData: {
-              title: translatedTitle,
-              link: article.link,
-              timestamp: new Date().toLocaleString("zh-TW", {
-                timeZone: "Asia/Taipei",
-              }),
-              summary: summary,
-            },
-          };
-
-          logger.info(`準備發送郵件至 ${user.email.S}`);
-          const result = await sendEmailWithRetry(emailData);
-
-          return {
-            email: user.email.S,
-            status: "success",
-            messageId: result.messageId,
-          };
-        } catch (error) {
-          logger.error(`發送郵件失敗 (${user.email.S}):`, error);
-
-          failedNotifications.push({
-            userId: user.userId.S,
-            articleId,
-            email: user.email.S,
-            retryCount: 0,
-            articleData: {
-              title: translatedTitle,
-              link: article.link,
-              timestamp: new Date().toLocaleString(),
-            },
-          });
-
-          return {
-            email: user.email.S,
-            status: "failed",
-            error: error.message,
-          };
-        }
-      });
-
-      const results = await Promise.allSettled(notificationPromises);
-
-      // 添加發送統計
-      const successCount = results.filter(
-        (r) => r.status === "fulfilled" && r.value.status === "success"
-      ).length;
-      const failedCount = results.filter(
-        (r) => r.status === "fulfilled" && r.value.status === "failed"
-      ).length;
-      const skippedCount = results.filter(
-        (r) => r.status === "fulfilled" && r.value.status === "skipped"
-      ).length;
-
-      logger.info(
-        `通知發送完成統計：成功=${successCount}, 失敗=${failedCount}, 跳過=${skippedCount}`
-      );
-
-      logger.info(
-        "通知發送完成，結果:",
-        results.map((result) => {
-          if (result.status === "fulfilled") {
-            return result.value;
-          } else {
-            return {
-              status: "error",
-              error: result.reason,
-            };
-          }
-        })
-      );
-    } else {
-      logger.warn("沒有需要通知的用戶");
-    }
-
-    // 處理失敗的通知
-    if (failedNotifications.length > 0) {
-      await processFailedNotifications();
+      try {
+        await sendArticleNotification(articleData);
+        logger.info(`Line 通知已發送給 ${lineUsers.length} 位用戶`);
+      } catch (error) {
+        logger.error("發送 Line 通知時發生錯誤:", error);
+      }
     }
 
     return true;
@@ -475,6 +399,24 @@ requiredEnvVars.forEach((varName) => {
     throw new Error(`Missing required environment variable: ${varName}`);
   }
 });
+
+async function getLineNotificationUsers() {
+  const params = {
+    TableName: "AWS_Blog_UserNotificationSettings",
+    FilterExpression: "lineNotification = :true",
+    ExpressionAttributeValues: {
+      ":true": { BOOL: true },
+    },
+  };
+
+  try {
+    const data = await dbClient.send(new ScanCommand(params));
+    return data.Items || [];
+  } catch (error) {
+    logger.error("獲取 Line 通知用戶時發生錯誤:", error);
+    return [];
+  }
+}
 
 (async () => {
   try {

@@ -1,37 +1,40 @@
 // services/lineService.ts
-import { Client, WebhookEvent } from '@line/bot-sdk';
-import { lineConfig } from '@/config/line';
+import { lineConfig } from '../config/line';
+import { generateArticleTemplate } from '../utils/lineTemplates';
+import { ArticleData } from '../types/lineTypes';
+import { logger } from '../utils/logger';
 
-const client = new Client(lineConfig);
-
-export const handleLineEvent = async (event: WebhookEvent) => {
-  if (event.type !== 'message' || event.message.type !== 'text') {
-    return Promise.resolve(null);
-  }
-
-  const userMessage = event.message.text;
-
-  if (userMessage.toLowerCase() === 'today news') {
-    const newsList = await fetchTodayNews();
-    return client.replyMessage(event.replyToken, {
-      type: 'text',
-      text: `今天的新文章有: ${newsList.join(', ')}`,
+export async function sendArticleNotification(articleData: ArticleData) {
+  try {
+    const response = await fetch('https://api.line.me/v2/bot/message/multicast', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+      },
+      body: JSON.stringify({
+        to: articleData.lineUserIds,
+        messages: [generateArticleTemplate(articleData)]
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`Line API responded with status: ${response.status}`);
+    }
+
+    logger.info('Line 通知發送成功');
+    return true;
+  } catch (error) {
+    logger.error('發送 Line 通知時發生錯誤:', error);
+    return false;
   }
-
-  return client.replyMessage(event.replyToken, {
-    type: 'text',
-    text: `您說了: ${userMessage}`,
-  });
-};
-
-export const pushNewArticleNotification = async (userId: string, articleTitle: string) => {
-  return client.pushMessage(userId, {
-    type: 'text',
-    text: `新文章發布: ${articleTitle}`,
-  });
-};
-
-async function fetchTodayNews(): Promise<string[]> {
-  return ['新聞1', '新聞2', '新聞3'];
 }
+
+export const lineService = {
+  handleFollow: async (userId: string) => {
+    // implementation
+  },
+  handleUnfollow: async (userId: string) => {
+    // implementation
+  }
+};

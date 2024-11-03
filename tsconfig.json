@@ -1,5 +1,6 @@
 {  
   "compilerOptions": {  
+    "target": "es6",  
     "lib": ["dom", "dom.iterable", "esnext"],  
     "allowJs": true,  
     "skipLibCheck": true,  
@@ -17,8 +18,25 @@
       "@/*": ["./src/*"]  
     },  
     "outDir": "./dist",  
-    "rootDir": "."  
+    "rootDir": ".",  
+    "allowSyntheticDefaultImports": true,  
+    "forceConsistentCasingInFileNames": true,  
+    "noImplicitAny": true,  
+    "strictNullChecks": true,  
+    "types": [  
+      "node",  
+      "@types/node"  
+    ]  
   },  
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],  
-  "exclude": ["node_modules"]  
+  "include": [  
+    "next-env.d.ts",  
+    "**/*.ts",  
+    "**/*.tsx",  
+    "src/**/*"  
+  ],  
+  "exclude": [  
+    "node_modules",  
+    "dist",  
+    ".next"  
+  ]  
 }
