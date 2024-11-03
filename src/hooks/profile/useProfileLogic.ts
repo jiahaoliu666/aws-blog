@@ -672,12 +672,10 @@ export const useProfileLogic = () => {
     setLineUserId(value);
     setLineIdStatus('validating');
     
-    // 清除之前的計時器
     if (lineVerificationTimer) {
       clearTimeout(lineVerificationTimer);
     }
 
-    // 設置新的計時器進行驗證
     const timer = setTimeout(() => {
       if (!value) {
         setLineIdError('請輸入LINE ID');
