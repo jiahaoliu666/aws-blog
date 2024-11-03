@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faUser, faBell, faShieldAlt, faGlobe, faCog, faClock, faCommentDots, faHistory, faEye, faEnvelope, faQuestionCircle, faBolt, faBookmark, faShareAlt, faFile, faTh, faThList } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faUser, faBell, faShieldAlt, faGlobe, faCog, faClock, faCommentDots, faHistory, faEye, faEnvelope, faQuestionCircle, faBolt, faBookmark, faShareAlt, faFile, faTh, faThList, faExclamationCircle, faCheckCircle, faSpinner, faSave, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { SwitchField } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
@@ -61,6 +61,9 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     sendFeedback, // 確保調用 sendFeedback
     feedbackMessage, // 新增這行
     resetUploadState, // 新增這行
+    lineUserId,
+    setLineUserId,
+    lineIdError,
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -119,7 +122,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="w-full text-white hover:text-gray-200 transition duration-300 flex items-center justify-between p-3 rounded-lg bg-gray-600 lg:hidden mb-4"
               >
-                <span className="text-sm sm:text-base">個人資訊選單</span>
+                <span className="text-sm sm:text-base">個人資訊選</span>
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -364,7 +367,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
                         <p className="mt-2 text-sm text-gray-500">
-                          定期更改密碼並免在多個網站使用相同的密碼，可以大大提高帳戶安全性。
+                          定期更改密碼並免在多個網站使用同的密碼，可以大大提高帳戶安全性。
                         </p>
                       </div>
                     </div>
@@ -501,68 +504,103 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                 )}
                 {activeTab === 'notificationSettings' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">通知設置</h3>
-                    <p className="mb-6 text-sm text-gray-500">當發布最新文章時，將會發送通知</p>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-4">
-                        <SwitchField
-                          label=""
-                          isChecked={formData.notifications.email}
-                          onChange={() => toggleNotification('email')}
-                        />
-                        <div>
-                          <h4 className="text-lg font-semibold text-gray-800">電子郵件通知</h4>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6">通知設置</h3>
+                    <div className="space-y-6 bg-white rounded-xl">
+                      {/* Email 通知設定 */}
+                      <div className="p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="bg-blue-100 p-3 rounded-full">
+                              <FontAwesomeIcon icon={faEnvelope} className="text-blue-600 text-xl" />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-semibold text-gray-800">電子郵件通知</h4>
+                              <p className="text-sm text-gray-500">接收最新文章的電子郵件通知</p>
+                            </div>
+                          </div>
+                          <SwitchField
+                            label=""
+                            isChecked={formData.notifications.email}
+                            onChange={() => toggleNotification('email')}
+                          />
                         </div>
                       </div>
 
-                      <div>
-                        <label htmlFor="notificationEmail" className="ml-16 block text-sm font-medium text-gray-700">
-                          通知郵件地址：
-                        </label>
-                        <input
-                          id="notificationEmail"
-                          type="email"
-                          value={formData.email}
-                          className="mt-2 mb-4 ml-16 p-2 border border-gray-300 rounded"
-                          style={{ width: `${formData.email.length + 5}ch` }}
-                          disabled
-                        />
-                      </div>
-
-                      <div className="flex items-center space-x-4">
-                        <SwitchField
-                          label=""
-                          isChecked={formData.notifications.line}
-                          onChange={() => toggleNotification('line')}
-                        />
-                        <div>
-                          <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
+                      {/* LINE 通知設定 */}
+                      <div className="p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="bg-green-100 p-3 rounded-full">
+                              <FontAwesomeIcon icon={faCommentDots} className="text-green-600 text-xl" />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
+                              <p className="text-sm text-gray-500">接收最新文章的 LINE 即時通知</p>
+                            </div>
+                          </div>
+                          <SwitchField
+                            label=""
+                            isChecked={formData.notifications.line}
+                            onChange={() => toggleNotification('line')}
+                          />
                         </div>
-                      </div>
 
-                      <div>
-                        <label htmlFor="lineNotification" className="ml-16 block text-sm font-medium text-gray-700">
-                          Line 帳號綁定狀態：
-                        </label>
-                        <div className="mt-2 mb-4 ml-16 flex items-center">
-                          <span className="p-2 border border-gray-300 rounded bg-gray-50">
-                            {formData.notifications.line ? '已綁定' : '未綁定'}
-                          </span>
-                          {!formData.notifications.line && (
-                            <span className="ml-2 text-sm text-gray-500">
-                              (請先開啟 Line 通知並掃描 QR Code 進行綁定)
-                            </span>
-                          )}
-                        </div>
+                        {formData.notifications.line && (
+                          <div className="ml-14 mt-4 space-y-4">
+                            <div>
+                              <label htmlFor="lineUserId" className="block text-sm font-medium text-gray-700">
+                                LINE ID 設定
+                              </label>
+                              <div className="mt-2 relative">
+                                <FontAwesomeIcon 
+                                  icon={faUser} 
+                                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                />
+                                <input
+                                  id="lineUserId"
+                                  type="text"
+                                  value={lineUserId}
+                                  onChange={(e) => setLineUserId(e.target.value)}
+                                  placeholder="請輸入您的 LINE ID"
+                                  className="pl-10 w-full rounded-lg border border-gray-300 shadow-sm
+                                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                                           py-2 transition duration-150 ease-in-out"
+                                />
+                              </div>
+                              {lineIdError && (
+                                <p className="mt-2 text-sm text-red-600 flex items-center">
+                                  <FontAwesomeIcon icon={faExclamationCircle} className="mr-2" />
+                                  {lineIdError}
+                                </p>
+                              )}
+                              <p className="mt-2 text-sm text-gray-500 flex items-center">
+                                <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
+                                輸入您的 LINE ID 以接收即時通知
+                              </p>
+                            </div>
+
+                            <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                              <div className="flex-shrink-0">
+                                <div className={`w-3 h-3 rounded-full ${lineUserId ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">
+                                LINE 帳號狀態：{lineUserId ? '已設定' : '未設定'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {uploadMessage && (
-                        <div className={`mt-6 p-4 rounded-lg shadow-md ${
+                        <div className={`p-4 rounded-lg shadow-md flex items-center ${
                           uploadMessage.includes('成功') 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 text-green-800 border border-green-200' 
+                            : 'bg-red-100 text-red-800 border border-red-200'
                         }`}>
+                          <FontAwesomeIcon 
+                            icon={uploadMessage.includes('成功') ? faCheckCircle : faExclamationCircle} 
+                            className="mr-3"
+                          />
                           {uploadMessage}
                         </div>
                       )}
@@ -572,14 +610,25 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           onClick={handleSaveNotificationSettings}
                           disabled={isLoading}
                           className={`
-                            px-4 py-2 rounded-full
+                            px-6 py-2.5 rounded-full
+                            flex items-center space-x-2
                             ${isLoading 
                               ? 'bg-gray-400 cursor-not-allowed' 
-                              : 'bg-blue-600 hover:bg-blue-700'}
-                            text-white transition duration-200
+                              : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
+                            text-white transition duration-200 shadow-md hover:shadow-lg
                           `}
                         >
-                          {isLoading ? '保存中...' : '保存更改'}
+                          {isLoading ? (
+                            <>
+                              <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                              <span>保存中...</span>
+                            </>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon icon={faSave} />
+                              <span>保存設定</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>

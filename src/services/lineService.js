@@ -4,6 +4,21 @@ const { logger } = require("../utils/logger");
 
 async function sendArticleNotification(articleData) {
   try {
+    // 獲取已開啟 LINE 通知的用戶
+    const notificationUsers = await getLineNotificationUsers();
+
+    // 提取用戶的 LINE ID
+    const lineUserIds = notificationUsers
+      .filter((user) => user.lineUserId && user.lineUserId.S)
+      .map((user) => user.lineUserId.S);
+
+    // 如果沒有用戶開啟通知，直接返回
+    if (lineUserIds.length === 0) {
+      logger.info("沒有用戶開啟 LINE 通知");
+      return;
+    }
+
+    // 使用 multicast 發送訊息
     const response = await fetch(
       "https://api.line.me/v2/bot/message/multicast",
       {
@@ -13,26 +28,29 @@ async function sendArticleNotification(articleData) {
           Authorization: `Bearer ${lineConfig.channelAccessToken}`,
         },
         body: JSON.stringify({
-          to: articleData.lineUserIds,
+          to: lineUserIds,
           messages: [
-            generateArticleTemplate({
-              ...articleData,
-              timestamp: Number(articleData.timestamp),
-            }),
+            {
+              type: "flex",
+              altText: `新文章通知：${articleData.title}`,
+              contents: {
+                // 您現有的 Flex Message 內容
+                // ...
+              },
+            },
           ],
         }),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Line API responded with status: ${response.status}`);
+      throw new Error(`LINE API 錯誤: ${response.status}`);
     }
 
-    logger.info("Line 通知發送成功");
-    return true;
+    logger.info(`成功發送 LINE 通知給 ${lineUserIds.length} 位用戶`);
   } catch (error) {
-    logger.error("發送 Line 通知時發生錯誤:", error);
-    return false;
+    logger.error("發送 LINE 通知失敗:", error);
+    throw error;
   }
 }
 

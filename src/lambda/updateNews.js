@@ -82,7 +82,7 @@ async function checkIfExists(title) {
   }
 }
 
-async function summarizeArticle(url) {
+async function summarizeArticle(url, index) {
   const maxTokens = 300;
   const prompt = `使用繁體中文總結這篇文章的內容：${url}`;
 
@@ -91,14 +91,14 @@ async function summarizeArticle(url) {
     return "請求內容過長，無法處理。";
   }
 
-  console.log(`正在請求總結文章: ${url}`);
+  console.log(`第${index + 1}篇請求文章總結`);
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
     });
-    console.log(`已獲取文章總結: ${url}`);
+    console.log(`第${index + 1}篇文章總結完成`);
     return response.choices[0].message.content.trim();
   } catch (error) {
     console.error("總結文章時發生錯誤:", error);
@@ -148,13 +148,6 @@ async function translateText(text) {
 
 async function saveToDynamoDB(article, translatedTitle, summary) {
   console.log(`處理文章: ${article.title}`);
-  const exists = await checkIfExists(article.title);
-  if (exists) {
-    skippedCount++;
-    console.log(`⏭️ 文章已存在，使用已有翻譯`);
-    return false;
-  }
-
   // 確保所有必要的值都存在
   if (
     !article.title ||
@@ -189,48 +182,39 @@ async function saveToDynamoDB(article, translatedTitle, summary) {
   };
 
   try {
-    console.log(`插入文章到資料庫`, params);
+    console.log(`插入文章到資料庫: ${finalTranslatedTitle}`);
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
 
-    // 獲取所有啟用 Line 通知的用戶
-    const lineUsers = await getLineNotificationUsers();
+    // 準備文章資料
+    const articleData = {
+      title: finalTranslatedTitle,
+      link: article.link,
+      timestamp: Date.now(),
+      summary: finalSummary,
+    };
 
-    if (lineUsers.length > 0) {
-      const articleData = {
-        title: finalTranslatedTitle,
-        link: article.link,
-        timestamp: Date.now(),
-        summary: finalSummary,
-        lineUserIds: lineUsers.map((user) => user.lineUserId.S),
-      };
+    // 使用重試機制發送 LINE 通知給已開啟通知的用戶
+    let retryCount = 0;
+    const maxRetries = 2;
 
-      // 建議添加重試機制
-      let retryCount = 0;
-      const maxRetries = 2;
-
-      while (retryCount < maxRetries) {
-        try {
-          await sendArticleNotification(articleData);
-          logger.info(`已發送 Line 通知給 ${lineUsers.length} 位用戶`);
+    while (retryCount < maxRetries) {
+      try {
+        await sendArticleNotification(articleData);
+        logger.info("✅ 成功發送 LINE 通知給訂閱用戶");
+        break;
+      } catch (error) {
+        retryCount++;
+        logger.error(`❌ 第 ${retryCount} 次發送 LINE 通知失敗:`, error);
+        if (retryCount === maxRetries) {
+          logger.error(`已達最大重試次數 ${maxRetries} 次，放棄發送`);
           break;
-        } catch (error) {
-          retryCount++;
-          if (retryCount === maxRetries) {
-            logger.error(`發送 Line 通知失敗，已重試 ${maxRetries} 次`, error);
-          }
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * retryCount)
-          );
         }
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
 
     console.log(`✅ 成功儲存文章`);
-
-    if (lineUsers.length > 0) {
-      logger.info(`📱 Line通知: ${lineUsers.length}位用戶`);
-    }
     return true;
   } catch (error) {
     logger.error("❌ 儲存失敗:", error.message);
@@ -287,22 +271,38 @@ async function scrapeAWSBlog() {
         }));
     }, NUMBER_OF_ARTICLES_TO_FETCH);
 
-    for (const article of pageData) {
+    for (const [index, article] of pageData.entries()) {
       try {
+        // 先檢查文章是否存在
+        const exists = await checkIfExists(article.title);
+        if (exists) {
+          skippedCount++;
+          console.log(`第${index + 1}篇 ⏭️ 文章已存在，跳過`);
+          continue; // 跳過後續的翻譯和總結步驟
+        }
+
+        // 只有新文章才執行翻譯和總結
         const translatedTitle = await translateText(article.title);
-        const summary = await summarizeArticle(article.link);
+        const summary = await summarizeArticle(article.link, index);
         const saved = await saveToDynamoDB(article, translatedTitle, summary);
         if (saved) {
-          console.log(`文章已保存並發送通知: ${article.title}`);
+          console.log(
+            `第${index + 1}篇 文章已保存並發送通知: ${article.title}`
+          );
         }
       } catch (error) {
-        logger.error(`處理文章時發生錯誤: ${article.title}`, error);
+        logger.error(
+          `處理第${index + 1}篇文章時發生錯誤: ${article.title}`,
+          error
+        );
       }
     }
 
+    // 只保留簡單統計
     console.log(`\n📊 爬蟲統計:`);
     console.log(`✅ 新文章: ${insertedCount} 篇`);
-    console.log(`⏭️ 已存在: ${skippedCount} 篇\n`);
+    console.log(`⏭️ 已存在: ${skippedCount} 篇`);
+    console.log(`總計處理: ${insertedCount + skippedCount} 篇\n`);
   } catch (error) {
     console.error("❌ 爬蟲失敗:", error?.message || "未知錯誤");
     throw error;
@@ -392,10 +392,10 @@ async function sendNotifications(users, articleData) {
     } catch (error) {
       console.error(`發送通知給 ${user.email.S} 失敗:`, error);
 
-      // 添加到失敗隊列
+      // 添加到失敗隊列，使用 article_id 而不是 id
       failedNotifications.push({
         userId: user.userId.S,
-        articleId: articleData.id.S,
+        articleId: articleData.article_id.S,
         email: user.email.S,
         retryCount: 0,
       });

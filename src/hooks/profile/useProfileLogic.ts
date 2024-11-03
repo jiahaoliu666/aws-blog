@@ -72,6 +72,8 @@ export const useProfileLogic = () => {
   const [localUsername, setLocalUsername] = useState(user ? user.username : '');
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [lineUserId, setLineUserId] = useState<string>('');
+  const [lineIdError, setLineIdError] = useState<string>('');
 
   useEffect(() => {
     const handleResize = () => {
@@ -611,10 +613,25 @@ export const useProfileLogic = () => {
     }));
   };
 
+  const validateAndSaveLineId = async (id: string) => {
+    // 簡單的 LINE ID 格式驗證
+    if (id && !/^[A-Za-z0-9._-]+$/.test(id)) {
+      setLineIdError('LINE ID 格式不正確');
+      return false;
+    }
+    setLineIdError('');
+    return true;
+  };
+
   const handleSaveNotificationSettings = async () => {
     if (!user) {
       setUploadMessage('請先登入');
       return;
+    }
+
+    if (formData.notifications.line && lineUserId) {
+      const isValid = await validateAndSaveLineId(lineUserId);
+      if (!isValid) return;
     }
 
     setIsLoading(true);
@@ -634,19 +651,14 @@ export const useProfileLogic = () => {
           email: { S: formData.email },
           emailNotification: { BOOL: formData.notifications.email },
           lineNotification: { BOOL: formData.notifications.line },
+          lineUserId: lineUserId ? { S: lineUserId } : { NULL: true },
           updatedAt: { S: new Date().toISOString() }
         }
       };
 
       await dynamoClient.send(new PutItemCommand(updateParams));
-      
-      // 記錄活動
-      await logActivity(user.sub, '更新通知設置');
-      
-      // 設置成功消息
       setUploadMessage('通知設置已成功更新');
       
-      // 3秒後清除消息
       setTimeout(() => {
         setUploadMessage(null);
       }, 3000);
@@ -750,6 +762,10 @@ export const useProfileLogic = () => {
                 line: settings.lineNotification?.BOOL || false,
               },
             }));
+            // 設置 LINE ID
+            if (settings.lineUserId?.S) {
+              setLineUserId(settings.lineUserId.S);
+            }
           }
         } catch (error) {
           console.error('獲取通知設置時發生錯誤:', error);
@@ -805,5 +821,8 @@ export const useProfileLogic = () => {
     feedbackMessage,
     resetUploadState,
     isMobile,
+    lineUserId,
+    setLineUserId,
+    lineIdError,
   };
 };
