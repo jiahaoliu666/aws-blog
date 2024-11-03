@@ -148,7 +148,7 @@ async function translateText(text) {
   }
 }
 
-async function saveToDynamoDB(article) {
+async function saveToDynamoDB(article, translatedTitle, summary) {
   console.log(`開始處理文章: ${article.title}`);
   const exists = await checkIfExists(article.title);
   if (exists) {
@@ -157,9 +157,6 @@ async function saveToDynamoDB(article) {
     return false;
   }
 
-  const summary = await summarizeArticle(article.link);
-
-  const translatedTitle = await translateText(article.title);
   const translatedDescription = await translateText(article.description);
 
   const articleId = uuidv4();
@@ -183,32 +180,27 @@ async function saveToDynamoDB(article) {
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
 
-    // 獲取需要 Line 通知的用戶
+    // 獲取所有啟用 Line 通知的用戶
     const lineUsers = await getLineNotificationUsers();
 
     if (lineUsers.length > 0) {
       const articleData = {
         title: translatedTitle,
         link: article.link,
-        timestamp: new Date().toLocaleString("zh-TW", {
-          timeZone: "Asia/Taipei",
-        }),
+        timestamp: Date.now(),
         summary: summary,
-        lineUserIds: lineUsers.map((user) => user.userId.S),
+        lineUserIds: lineUsers.map((user) => user.lineUserId.S),
       };
 
-      try {
-        await sendArticleNotification(articleData);
-        logger.info(`Line 通知已發送給 ${lineUsers.length} 位用戶`);
-      } catch (error) {
-        logger.error("發送 Line 通知時發生錯誤:", error);
-      }
+      // 發送 Line 通知
+      await sendArticleNotification(articleData);
+      logger.info(`已發送 Line 通知給 ${lineUsers.length} 位用戶`);
     }
 
     return true;
   } catch (error) {
-    logger.error("儲存文章時發生錯誤:", error);
-    throw error;
+    logger.error("保存文章時發生錯誤:", error);
+    return false;
   }
 }
 
@@ -410,8 +402,9 @@ async function getLineNotificationUsers() {
   };
 
   try {
-    const data = await dbClient.send(new ScanCommand(params));
-    return data.Items || [];
+    const command = new ScanCommand(params);
+    const response = await dynamoClient.send(command);
+    return response.Items || [];
   } catch (error) {
     logger.error("獲取 Line 通知用戶時發生錯誤:", error);
     return [];

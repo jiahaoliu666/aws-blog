@@ -7,7 +7,7 @@ export const createNewsNotificationTemplate = (articleData: {
   summary?: string;
 }): LineMessage => ({
   type: 'flex',
-  altText: 'AWS 部落格新文章通知',
+  altText: `AWS 部落格新文章: ${articleData.title}`,
   contents: {
     type: 'bubble',
     hero: {
@@ -15,7 +15,7 @@ export const createNewsNotificationTemplate = (articleData: {
       layout: 'vertical',
       contents: [
         {
-          type: 'text' as const,
+          type: 'text',
           text: 'AWS 部落格新文章',
           weight: 'bold',
           size: 'xl',
@@ -30,7 +30,7 @@ export const createNewsNotificationTemplate = (articleData: {
       layout: 'vertical',
       contents: [
         {
-          type: 'text' as const,
+          type: 'text',
           text: articleData.title,
           weight: 'bold',
           size: 'md',
@@ -38,8 +38,8 @@ export const createNewsNotificationTemplate = (articleData: {
           color: '#1a202c'
         },
         {
-          type: 'text' as const,
-          text: new Date(articleData.timestamp).toLocaleString('zh-TW'),
+          type: 'text',
+          text: new Date(articleData.timestamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
           size: 'sm',
           color: '#718096',
           margin: 'md'
@@ -47,12 +47,12 @@ export const createNewsNotificationTemplate = (articleData: {
         ...(articleData.summary ? [{
           type: 'text' as const,
           text: articleData.summary,
-          size: 'sm',
+          size: 'sm' as const,
           color: '#4a5568',
           margin: 'md',
           wrap: true
         }] : [])
-      ] as FlexComponent[],
+      ],
       paddingAll: '20px'
     },
     footer: {
@@ -60,9 +60,9 @@ export const createNewsNotificationTemplate = (articleData: {
       layout: 'vertical',
       contents: [
         {
-          type: 'button' as const,
+          type: 'button',
           action: {
-            type: 'uri' as const,
+            type: 'uri',
             label: '閱讀全文',
             uri: articleData.link
           },

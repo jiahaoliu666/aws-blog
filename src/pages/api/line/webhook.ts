@@ -4,6 +4,7 @@ import { WebhookEvent } from '@line/bot-sdk';
 import { lineService } from '../../../services/lineService';
 import { verifyLineSignature } from '@/utils/lineUtils';
 import { logger } from '../../../utils/logger';
+import { getTodayNews, sendTodayNews, sendLineNotification } from '@/utils/lineUtils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -24,17 +25,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await Promise.all(events.map(async (event) => {
       try {
         switch (event.type) {
+          case 'message':
+            if (event.message.type === 'text') {
+              const text = event.message.text.toLowerCase();
+              if (text === 'today news') {
+                // 獲取今日最新文章
+                const todayNews = await getTodayNews();
+                if (!event.source.userId) {
+                  logger.error('找不到使用者 ID');
+                  return;
+                }
+                
+                if (todayNews.length > 0) {
+                  await sendTodayNews(event.source.userId, todayNews);
+                } else {
+                  await sendNoNewsMessage(event.source.userId);
+                }
+              }
+            }
+            break;
           case 'follow':
             if (!event.source.userId) {
-              throw new Error('Missing userId in follow event');
+              logger.error('找不到使用者 ID');
+              break;
             }
-            await lineService.handleFollow(event.source.userId);
-            break;
-          case 'unfollow':
-            if (!event.source.userId) {
-              throw new Error('Missing userId in unfollow event');
-            }
-            await lineService.handleUnfollow(event.source.userId);
+            await sendWelcomeMessage(event.source.userId);
             break;
           default:
             logger.info('未處理的事件類型', { eventType: event.type });
@@ -49,6 +64,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     logger.error('Webhook 處理失敗', { error });
     res.status(500).end();
   }
+}
+
+async function sendWelcomeMessage(userId: string) {
+  const message = {
+    type: "text" as const,
+    text: `Hao 您好！
+我是AWS Blog 365。
+感謝您加入好友 🤗
+
+此官方帳號將定期發放最新資訊
+給您 ❤️
+敬請期待 🎁 🎪`
+  };
+
+  await sendLineNotification(userId, [message]);
+}
+
+async function sendNoNewsMessage(userId: string) {
+  const message = {
+    type: "text" as const,
+    text: "抱歉，目前沒有最新的文章。"
+  };
+  
+  await sendLineNotification(userId, [message]);
 }
 
 export const config = {

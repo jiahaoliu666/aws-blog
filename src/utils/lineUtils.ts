@@ -63,4 +63,31 @@ export async function sendLineNotification(userId: string, messages: LineMessage
     logger.error('發送 Line 通知失敗:', error);
     return false;
   }
-} 
+}
+
+export async function getTodayNews() {
+  // 實作獲取今日新聞的邏輯
+  // 返回新聞陣列
+  return [];
+}
+
+export const sendTodayNews = async (userId: string, news: any[]) => {
+  const messages = news.map(item => ({
+    type: "text" as const,
+    text: `${item.title}\n${item.link}`
+  }));
+  
+  await sendLineNotification(userId, messages);
+};
+
+export async function sendNoNewsMessage(userId: string) {
+  const message = {
+    type: "text" as const,
+    text: `感謝您的訊息！
+
+很抱歉，本帳號無法個別回覆用戶的訊息。
+敬請期待我們下次發送的內容唷 🙂`
+  };
+
+  await sendLineNotification(userId, [message]);
+}
