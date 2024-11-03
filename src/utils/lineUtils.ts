@@ -38,33 +38,6 @@ export const LINE_CONFIG: LineNotificationConfig = {
   channelSecret: process.env.LINE_CHANNEL_SECRET || ''
 };
 
-export async function sendLineNotification(userId: string, messages: LineMessage[]) {
-  try {
-    const payload: LineNotificationPayload = {
-      to: userId,
-      messages: messages
-    };
-
-    const response = await fetch('https://api.line.me/v2/bot/message/push', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${LINE_CONFIG.channelAccessToken}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Line API responded with status: ${response.status}`);
-    }
-
-    return true;
-  } catch (error) {
-    logger.error('發送 Line 通知失敗:', error);
-    return false;
-  }
-}
-
 export async function getTodayNews() {
   // 實作獲取今日新聞的邏輯
   // 返回新聞陣列
@@ -90,4 +63,30 @@ export async function sendNoNewsMessage(userId: string) {
   };
 
   await sendLineNotification(userId, [message]);
+}
+
+export async function sendLineNotification(userId: string, messages: LineMessage[]): Promise<boolean> {
+  try {
+    const response = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${LINE_CONFIG.channelAccessToken}`
+      },
+      body: JSON.stringify({
+        to: userId,
+        messages: messages
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`LINE API responded with status: ${response.status}`);
+    }
+
+    logger.info('LINE 通知發送成功', { userId });
+    return true;
+  } catch (error) {
+    logger.error('發送 LINE 通知失敗:', error);
+    return false;
+  }
 }

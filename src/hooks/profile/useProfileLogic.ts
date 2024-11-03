@@ -676,7 +676,7 @@ export const useProfileLogic = () => {
       clearTimeout(lineVerificationTimer);
     }
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (!value) {
         setLineIdError('請輸入LINE ID');
         setLineIdStatus('error');
@@ -684,8 +684,29 @@ export const useProfileLogic = () => {
         setLineIdError('LINE ID 格式不正確，應為4-20個字元，只能包含英文、數字、底線和點號');
         setLineIdStatus('error');
       } else {
-        setLineIdError('');
-        setLineIdStatus('success');
+        try {
+          const response = await fetch('/api/line/check-follow-status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ lineId: value }),
+          });
+
+          const data = await response.json();
+          
+          if (data.isFollowing) {
+            setLineIdError('');
+            setLineIdStatus('success');
+            setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章通知。');
+          } else {
+            setLineIdError('請先追蹤 LINE 官方帳號才能接收通知');
+            setLineIdStatus('error');
+          }
+        } catch (error) {
+          setLineIdError('驗證過程發生錯誤，請稍後再試');
+          setLineIdStatus('error');
+        }
       }
     }, 500);
 
@@ -694,17 +715,32 @@ export const useProfileLogic = () => {
 
   const handleSaveNotificationSettings = async () => {
     try {
+      setIsLoading(true);
+      
       if (formData.notifications.line && lineUserId) {
+        logger.info(`正在驗證 LINE ID: ${lineUserId}`);
+        
         // 檢查 LINE ID 格式
         if (!validateLineId(lineUserId)) {
           setLineIdError('請輸入有效的 LINE ID');
+          setIsLoading(false);
           return;
         }
 
-        // 檢查是否追蹤官方帳號
-        const isFollowing = await checkLineFollowStatus(lineUserId);
-        if (!isFollowing) {
+        // 使用 API 路由檢查追蹤狀態
+        const response = await fetch('/api/line/check-follow-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ lineId: lineUserId }),
+        });
+
+        const data = await response.json();
+        
+        if (!data.isFollowing) {
           setLineIdError('請先追蹤 LINE 官方帳號才能接收通知');
+          setIsLoading(false);
           return;
         }
       }
@@ -716,15 +752,19 @@ export const useProfileLogic = () => {
           userId: { S: user?.sub || '' },
           lineUserId: { S: lineUserId || '' },
           lineNotification: { BOOL: formData.notifications.line },
-          emailNotification: { BOOL: formData.notifications.email }
+          emailNotification: { BOOL: formData.notifications.email },
+          lastVerified: { S: new Date().toISOString() }
         }
       };
 
       await dynamoClient.send(new PutItemCommand(updateParams));
       setUploadMessage('通知設定已更新');
+      
     } catch (error) {
       logger.error('保存通知設定時發生錯誤:', error);
       setLineIdError('設定儲存失敗，請稍後再試');
+    } finally {
+      setIsLoading(false);
     }
   };
 
