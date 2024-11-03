@@ -16,7 +16,6 @@ function MyApp({ Component, pageProps }: AppProps) {
         <LanguageProvider>
             <Head>
               <title>AWS Blog 365</title> 
-              <link rel="icon" href="/logo.png" />
             </Head>
             <Component {...pageProps} />
         </LanguageProvider>

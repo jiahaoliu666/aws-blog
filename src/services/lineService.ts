@@ -1,5 +1,5 @@
 // services/lineService.ts
-import { Client, middleware, WebhookEvent } from '@line/bot-sdk';
+import { Client, WebhookEvent } from '@line/bot-sdk';
 import { lineConfig } from '@/config/line';
 
 const client = new Client(lineConfig);
@@ -12,9 +12,10 @@ export const handleLineEvent = async (event: WebhookEvent) => {
   const userMessage = event.message.text;
 
   if (userMessage.toLowerCase() === 'today news') {
+    const newsList = await fetchTodayNews();
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: '這是今天的新文章列表...',
+      text: `今天的新文章有: ${newsList.join(', ')}`,
     });
   }
 
@@ -30,3 +31,7 @@ export const pushNewArticleNotification = async (userId: string, articleTitle: s
     text: `新文章發布: ${articleTitle}`,
   });
 };
+
+async function fetchTodayNews(): Promise<string[]> {
+  return ['新聞1', '新聞2', '新聞3'];
+}
