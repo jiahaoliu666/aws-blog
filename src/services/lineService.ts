@@ -1,6 +1,6 @@
 // services/lineService.ts
 import { lineConfig } from '../config/line';
-import { generateArticleTemplate } from '../utils/lineTemplates';
+import { generateArticleTemplate } from '../templates/lineTemplates';
 import { ArticleData } from '../types/lineTypes';
 import { logger } from '../utils/logger';
 
@@ -14,10 +14,13 @@ export async function sendArticleNotification(articleData: ArticleData) {
       },
       body: JSON.stringify({
         to: articleData.lineUserIds,
-        messages: [generateArticleTemplate(articleData)]
+        messages: [generateArticleTemplate({
+          ...articleData,
+          timestamp: Number(articleData.timestamp)
+        })]
       })
     });
-
+    
     if (!response.ok) {
       throw new Error(`Line API responded with status: ${response.status}`);
     }
