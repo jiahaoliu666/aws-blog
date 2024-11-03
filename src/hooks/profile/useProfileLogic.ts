@@ -25,6 +25,11 @@ interface FormData {
   feedbackTitle: string;
   feedbackContent: string;
   feedbackImage?: File; // 新增這一行
+  lineSettings: {
+    id: string;
+    isVerified: boolean;
+    lastVerified?: string;
+  };
 }
 
 export const useProfileLogic = () => {
@@ -48,6 +53,10 @@ export const useProfileLogic = () => {
     feedbackTitle: '',
     feedbackContent: '',
     feedbackImage: undefined, 
+    lineSettings: {
+      id: '',
+      isVerified: false,
+    },
   });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -74,6 +83,8 @@ export const useProfileLogic = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [lineUserId, setLineUserId] = useState<string>('');
   const [lineIdError, setLineIdError] = useState<string>('');
+  const [lineIdStatus, setLineIdStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
+  const [lineVerificationTimer, setLineVerificationTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -196,7 +207,7 @@ export const useProfileLogic = () => {
             return { translatedTitle, link, timestamp, sourcePage };
           }));
 
-          setRecentArticles(articles.slice(0, 12)); // 確保顯示12筆
+          setRecentArticles(articles.slice(0, 12)); // 確保顯���12筆
         } catch (error) {
           console.error('Error fetching recent articles:', error);
         }
@@ -613,25 +624,43 @@ export const useProfileLogic = () => {
     }));
   };
 
-  const validateAndSaveLineId = async (id: string) => {
-    // 簡單的 LINE ID 格式驗證
-    if (id && !/^[A-Za-z0-9._-]+$/.test(id)) {
-      setLineIdError('LINE ID 格式不正確');
-      return false;
+  const validateLineId = (id: string) => {
+    if (!id) return false;
+    // LINE ID 格式驗證: 允許英文字母、數字、底線、點號，長度在4-20之間
+    const lineIdRegex = /^[A-Za-z0-9._-]{4,20}$/;
+    return lineIdRegex.test(id);
+  };
+
+  const handleLineIdChange = (value: string) => {
+    setLineUserId(value);
+    setLineIdStatus('validating');
+    
+    // 清除之前的計時器
+    if (lineVerificationTimer) {
+      clearTimeout(lineVerificationTimer);
     }
-    setLineIdError('');
-    return true;
+
+    // 設置新的計時器進行驗證
+    const timer = setTimeout(() => {
+      if (!value) {
+        setLineIdError('請輸入LINE ID');
+        setLineIdStatus('error');
+      } else if (!validateLineId(value)) {
+        setLineIdError('LINE ID 格式不正確，應為4-20個字元，只能包含英文、數字、底線和點號');
+        setLineIdStatus('error');
+      } else {
+        setLineIdError('');
+        setLineIdStatus('success');
+      }
+    }, 500);
+
+    setLineVerificationTimer(timer);
   };
 
   const handleSaveNotificationSettings = async () => {
-    if (!user) {
-      setUploadMessage('請先登入');
+    if (formData.notifications.line && !validateLineId(lineUserId)) {
+      setLineIdError('請輸入有效的LINE ID');
       return;
-    }
-
-    if (formData.notifications.line && lineUserId) {
-      const isValid = await validateAndSaveLineId(lineUserId);
-      if (!isValid) return;
     }
 
     setIsLoading(true);
@@ -647,7 +676,7 @@ export const useProfileLogic = () => {
       const updateParams = {
         TableName: 'AWS_Blog_UserNotificationSettings',
         Item: {
-          userId: { S: user.sub },
+          userId: { S: user?.sub || 'default-sub' },
           email: { S: formData.email },
           emailNotification: { BOOL: formData.notifications.email },
           lineNotification: { BOOL: formData.notifications.line },
@@ -657,15 +686,14 @@ export const useProfileLogic = () => {
       };
 
       await dynamoClient.send(new PutItemCommand(updateParams));
-      setUploadMessage('通知設置已成功更新');
+      setUploadMessage('設定已成功儲存！');
       
       setTimeout(() => {
         setUploadMessage(null);
       }, 3000);
-
+      
     } catch (error) {
-      console.error('保存通知設置時發生錯誤:', error);
-      setUploadMessage('更新通知設置失敗，請稍後再試');
+      setUploadMessage('儲存設定時發生錯誤，請稍後再試');
     } finally {
       setIsLoading(false);
     }
@@ -824,5 +852,7 @@ export const useProfileLogic = () => {
     lineUserId,
     setLineUserId,
     lineIdError,
+    lineIdStatus,
+    handleLineIdChange,
   };
 };

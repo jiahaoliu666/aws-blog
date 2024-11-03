@@ -64,6 +64,8 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     lineUserId,
     setLineUserId,
     lineIdError,
+    lineIdStatus,
+    handleLineIdChange,
   } = useProfileLogic();
 
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -560,31 +562,61 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                                   id="lineUserId"
                                   type="text"
                                   value={lineUserId}
-                                  onChange={(e) => setLineUserId(e.target.value)}
+                                  onChange={(e) => handleLineIdChange(e.target.value)}
                                   placeholder="請輸入您的 LINE ID"
-                                  className="pl-10 w-full rounded-lg border border-gray-300 shadow-sm
-                                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                                           py-2 transition duration-150 ease-in-out"
+                                  className={`pl-10 w-full rounded-lg border shadow-sm py-2 transition duration-150 ease-in-out
+                                    ${lineIdStatus === 'error' 
+                                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                      : lineIdStatus === 'success'
+                                        ? 'border-green-300 focus:ring-green-500 focus:border-green-500'
+                                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                    }`}
                                 />
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  {lineIdStatus === 'validating' && (
+                                    <FontAwesomeIcon icon={faSpinner} className="text-gray-400 animate-spin" />
+                                  )}
+                                  {lineIdStatus === 'success' && (
+                                    <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+                                  )}
+                                  {lineIdStatus === 'error' && (
+                                    <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+                                  )}
+                                </div>
                               </div>
+                              
                               {lineIdError && (
                                 <p className="mt-2 text-sm text-red-600 flex items-center">
                                   <FontAwesomeIcon icon={faExclamationCircle} className="mr-2" />
                                   {lineIdError}
                                 </p>
                               )}
-                              <p className="mt-2 text-sm text-gray-500 flex items-center">
-                                <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
-                                輸入您的 LINE ID 以接收即時通知
-                              </p>
+                              
+                              <div className="mt-2 text-sm text-gray-500">
+                                <div className="flex items-center space-x-2">
+                                  <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500" />
+                                  <span>LINE ID 格式說明：</span>
+                                </div>
+                                <ul className="ml-6 mt-1 list-disc text-gray-600">
+                                  <li>長度必須在4-20個字元之間</li>
+                                  <li>可使用英文字母、數字、底線(_)和點號(.)</li>
+                                  <li>不可包含特殊符號或空格</li>
+                                </ul>
+                              </div>
                             </div>
 
                             <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
                               <div className="flex-shrink-0">
-                                <div className={`w-3 h-3 rounded-full ${lineUserId ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                <div className={`w-3 h-3 rounded-full ${
+                                  lineIdStatus === 'success' ? 'bg-green-500' : 
+                                  lineIdStatus === 'error' ? 'bg-red-500' : 'bg-gray-400'
+                                }`}></div>
                               </div>
                               <span className="text-sm font-medium text-gray-700">
-                                LINE 帳號狀態：{lineUserId ? '已設定' : '未設定'}
+                                LINE 帳號狀態：
+                                {lineIdStatus === 'success' ? '已驗證' : 
+                                 lineIdStatus === 'error' ? '驗證失敗' : 
+                                 lineUserId ? '驗證中' : '未設定'}
                               </span>
                             </div>
                           </div>
@@ -608,11 +640,11 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                       <div className="flex justify-end mt-6">
                         <button
                           onClick={handleSaveNotificationSettings}
-                          disabled={isLoading}
+                          disabled={isLoading || lineIdStatus === 'error'}
                           className={`
                             px-6 py-2.5 rounded-full
                             flex items-center space-x-2
-                            ${isLoading 
+                            ${isLoading || lineIdStatus === 'error'
                               ? 'bg-gray-400 cursor-not-allowed' 
                               : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
                             text-white transition duration-200 shadow-md hover:shadow-lg
@@ -621,12 +653,12 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           {isLoading ? (
                             <>
                               <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                              <span>保存中...</span>
+                              <span>儲存中...</span>
                             </>
                           ) : (
                             <>
                               <FontAwesomeIcon icon={faSave} />
-                              <span>保存設定</span>
+                              <span>儲存設定</span>
                             </>
                           )}
                         </button>
