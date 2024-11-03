@@ -3,6 +3,7 @@ import { lineConfig } from '../config/line';
 import { generateArticleTemplate } from '../templates/lineTemplates';
 import { ArticleData } from '../types/lineTypes';
 import { logger } from '../utils/logger';
+import axios from 'axios';
 
 export async function sendArticleNotification(articleData: ArticleData) {
   try {
@@ -66,5 +67,33 @@ export const lineService = {
   },
   handleUnfollow: async (userId: string) => {
     // implementation
+  }
+};
+
+export const checkLineFollowStatus = async (lineId: string): Promise<boolean> => {
+  try {
+    const response = await fetch(
+      `https://api.line.me/v2/bot/profile/${lineId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${lineConfig.channelAccessToken}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      return true;
+    }
+
+    const error = await response.json();
+    if (error.message?.includes('not found')) {
+      logger.info(`用戶 ${lineId} 未追蹤官方帳號`);
+      return false;
+    }
+
+    throw new Error(error.message);
+  } catch (error) {
+    logger.error('檢查 LINE 追蹤狀態時發生錯誤:', error);
+    return false;
   }
 };

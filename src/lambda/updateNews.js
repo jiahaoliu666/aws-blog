@@ -194,30 +194,21 @@ async function saveToDynamoDB(article, translatedTitle, summary) {
       summary: finalSummary,
     };
 
-    // 使用重試機制發送 LINE 通知給已開啟通知的用戶
-    let retryCount = 0;
-    const maxRetries = 2;
-
-    while (retryCount < maxRetries) {
+    // 發送 LINE 通知
+    const lineUsers = await getLineNotificationUsers();
+    if (lineUsers.length > 0) {
       try {
         await sendArticleNotification(articleData);
-        logger.info("✅ 成功發送 LINE 通知給訂閱用戶");
-        break;
+        logger.info(`成功發送 LINE 通知給 ${lineUsers.length} 位用戶`);
       } catch (error) {
-        retryCount++;
-        logger.error(`❌ 第 ${retryCount} 次發送 LINE 通知失敗:`, error);
-        if (retryCount === maxRetries) {
-          logger.error(`已達最大重試次數 ${maxRetries} 次，放棄發送`);
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+        logger.error("發送 LINE 通知失敗:", error);
       }
     }
 
     console.log(`✅ 成功儲存文章`);
     return true;
   } catch (error) {
-    logger.error("❌ 儲存失敗:", error.message);
+    logger.error("儲存文章失敗:", error);
     return false;
   }
 }

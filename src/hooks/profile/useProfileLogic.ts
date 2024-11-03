@@ -5,6 +5,8 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, QueryCommand, UpdateItemCommand, DeleteItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttributesCommand, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
 import logActivity from '../../pages/api/profile/activity-log';
+import { lineConfig } from "../../config/line";
+import { logger } from "../../utils/logger";
 
 interface EditableFields {
   username: boolean;
@@ -31,6 +33,34 @@ interface FormData {
     lastVerified?: string;
   };
 }
+
+const checkLineFollowStatus = async (lineId: string): Promise<boolean> => {
+  try {
+    const response = await fetch(
+      `https://api.line.me/v2/bot/profile/${lineId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${lineConfig.channelAccessToken}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      return true;
+    }
+
+    const error = await response.json();
+    if (error.message?.includes('not found')) {
+      logger.info(`用戶 ${lineId} 未追蹤官方帳號`);
+      return false;
+    }
+
+    throw new Error(error.message);
+  } catch (error) {
+    logger.error('檢查 LINE 追蹤狀態時發生錯誤:', error);
+    return false;
+  }
+};
 
 export const useProfileLogic = () => {
   const router = useRouter();
@@ -85,6 +115,13 @@ export const useProfileLogic = () => {
   const [lineIdError, setLineIdError] = useState<string>('');
   const [lineIdStatus, setLineIdStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
   const [lineVerificationTimer, setLineVerificationTimer] = useState<NodeJS.Timeout | null>(null);
+  const dynamoClient = new DynamoDBClient({
+    region: 'ap-northeast-1',
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+    },
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -207,7 +244,7 @@ export const useProfileLogic = () => {
             return { translatedTitle, link, timestamp, sourcePage };
           }));
 
-          setRecentArticles(articles.slice(0, 12)); // 確保顯���12筆
+          setRecentArticles(articles.slice(0, 12)); // 確保顯12筆
         } catch (error) {
           console.error('Error fetching recent articles:', error);
         }
@@ -250,7 +287,7 @@ export const useProfileLogic = () => {
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
         // Log the activity
-        await logActivity(user?.sub || 'default-sub', `變更用戶名：${localUsername}`);
+        await logActivity(user?.sub || 'default-sub', `變更用戶：${localUsername}`);
       } catch (error) {
         setUploadMessage('更新用戶名失敗，稍後再試。');
         changesSuccessful = false;
@@ -658,44 +695,38 @@ export const useProfileLogic = () => {
   };
 
   const handleSaveNotificationSettings = async () => {
-    if (formData.notifications.line && !validateLineId(lineUserId)) {
-      setLineIdError('請輸入有效的LINE ID');
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      const dynamoClient = new DynamoDBClient({
-        region: 'ap-northeast-1',
-        credentials: {
-          accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-        },
-      });
+      if (formData.notifications.line && lineUserId) {
+        // 檢查 LINE ID 格式
+        if (!validateLineId(lineUserId)) {
+          setLineIdError('請輸入有效的 LINE ID');
+          return;
+        }
 
+        // 檢查是否追蹤官方帳號
+        const isFollowing = await checkLineFollowStatus(lineUserId);
+        if (!isFollowing) {
+          setLineIdError('請先追蹤 LINE 官方帳號才能接收通知');
+          return;
+        }
+      }
+
+      // 更新通知設定
       const updateParams = {
         TableName: 'AWS_Blog_UserNotificationSettings',
         Item: {
-          userId: { S: user?.sub || 'default-sub' },
-          email: { S: formData.email },
-          emailNotification: { BOOL: formData.notifications.email },
+          userId: { S: user?.sub || '' },
+          lineUserId: { S: lineUserId || '' },
           lineNotification: { BOOL: formData.notifications.line },
-          lineUserId: lineUserId ? { S: lineUserId } : { NULL: true },
-          updatedAt: { S: new Date().toISOString() }
+          emailNotification: { BOOL: formData.notifications.email }
         }
       };
 
       await dynamoClient.send(new PutItemCommand(updateParams));
-      setUploadMessage('設定已成功儲存！');
-      
-      setTimeout(() => {
-        setUploadMessage(null);
-      }, 3000);
-      
+      setUploadMessage('通知設定已更新');
     } catch (error) {
-      setUploadMessage('儲存設定時發生錯誤，請稍後再試');
-    } finally {
-      setIsLoading(false);
+      logger.error('保存通知設定時發生錯誤:', error);
+      setLineIdError('設定儲存失敗，請稍後再試');
     }
   };
 
@@ -740,7 +771,7 @@ export const useProfileLogic = () => {
         console.log('反饋已成功發送');
         setFeedbackMessage('已將反饋成功提交，感謝您寶貴的意見！');
         resetFeedbackForm();
-        await logActivity(user?.sub || 'default-sub', '提交意見反饋');
+        await logActivity(user?.sub || 'default-sub', '提交意見饋');
         if (onSuccess) onSuccess();
       } else {
         setFeedbackMessage('發送反饋時出錯');

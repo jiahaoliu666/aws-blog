@@ -44,7 +44,10 @@ async function sendArticleNotification(articleData) {
     );
 
     if (!response.ok) {
-      throw new Error(`LINE API 錯誤: ${response.status}`);
+      const error = await response.json();
+      if (error.details?.[0]?.message?.includes("recipient_not_found")) {
+        logger.error("用戶未追蹤 LINE 官方帳號");
+      }
     }
 
     logger.info(`成功發送 LINE 通知給 ${lineUserIds.length} 位用戶`);
