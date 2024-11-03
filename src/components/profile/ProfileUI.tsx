@@ -583,7 +583,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           {/* QR Code */}
                           <div className="text-center">
                             <img 
-                              src="/line-qr-code.png" 
+                              src="/line.png" 
                               alt="LINE 官方帳號 QR Code" 
                               className="w-40 h-40 mb-2"
                             />
