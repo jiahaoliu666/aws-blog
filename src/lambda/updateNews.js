@@ -107,7 +107,6 @@ async function summarizeArticle(url) {
 }
 
 async function translateText(text) {
-  console.log(`開始翻譯文本`);
   const endpoint = "https://api.cognitive.microsofttranslator.com";
   const subscriptionKey = process.env.MICROSOFT_TRANSLATOR_API_KEY;
   const location = process.env.MICROSOFT_TRANSLATOR_REGION;
@@ -137,7 +136,6 @@ async function translateText(text) {
     });
 
     const translatedText = response.data[0].translations[0].text;
-    console.log(`翻譯成功`);
     return translatedText;
   } catch (error) {
     console.error(
@@ -149,14 +147,29 @@ async function translateText(text) {
 }
 
 async function saveToDynamoDB(article, translatedTitle, summary) {
-  console.log(`開始處理文章: ${article.title}`);
+  console.log(`處理文章: ${article.title}`);
   const exists = await checkIfExists(article.title);
   if (exists) {
     skippedCount++;
-    console.log(`文章已存在，跳過`);
+    console.log(`⏭️ 文章已存在，使用已有翻譯`);
     return false;
   }
 
+  // 確保所有必要的值都存在
+  if (
+    !article.title ||
+    !article.link ||
+    !article.description ||
+    !article.info
+  ) {
+    logger.error("文章缺少必要欄位:", { article });
+    return false;
+  }
+
+  // 確保 translatedTitle 和 summary 有預設值
+  const finalTranslatedTitle =
+    translatedTitle || (await translateText(article.title));
+  const finalSummary = summary || "暫無摘要";
   const translatedDescription = await translateText(article.description);
 
   const articleId = uuidv4();
@@ -165,18 +178,18 @@ async function saveToDynamoDB(article, translatedTitle, summary) {
     Item: {
       article_id: { S: articleId },
       title: { S: article.title },
-      translated_title: { S: translatedTitle },
+      translated_title: { S: finalTranslatedTitle },
       published_at: { N: String(Math.floor(Date.now() / 1000)) },
       info: { S: article.info },
       description: { S: article.description },
       translated_description: { S: translatedDescription },
       link: { S: article.link },
-      summary: { S: summary },
+      summary: { S: finalSummary },
     },
   };
 
   try {
-    console.log(`插入文章到資料庫`);
+    console.log(`插入文章到資料庫`, params);
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
 
@@ -185,21 +198,42 @@ async function saveToDynamoDB(article, translatedTitle, summary) {
 
     if (lineUsers.length > 0) {
       const articleData = {
-        title: translatedTitle,
+        title: finalTranslatedTitle,
         link: article.link,
         timestamp: Date.now(),
-        summary: summary,
+        summary: finalSummary,
         lineUserIds: lineUsers.map((user) => user.lineUserId.S),
       };
 
-      // 發送 Line 通知
-      await sendArticleNotification(articleData);
-      logger.info(`已發送 Line 通知給 ${lineUsers.length} 位用戶`);
+      // 建議添加重試機制
+      let retryCount = 0;
+      const maxRetries = 2;
+
+      while (retryCount < maxRetries) {
+        try {
+          await sendArticleNotification(articleData);
+          logger.info(`已發送 Line 通知給 ${lineUsers.length} 位用戶`);
+          break;
+        } catch (error) {
+          retryCount++;
+          if (retryCount === maxRetries) {
+            logger.error(`發送 Line 通知失敗，已重試 ${maxRetries} 次`, error);
+          }
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * retryCount)
+          );
+        }
+      }
     }
 
+    console.log(`✅ 成功儲存文章`);
+
+    if (lineUsers.length > 0) {
+      logger.info(`📱 Line通知: ${lineUsers.length}位用戶`);
+    }
     return true;
   } catch (error) {
-    logger.error("保存文章時發生錯誤:", error);
+    logger.error("❌ 儲存失敗:", error.message);
     return false;
   }
 }
@@ -254,21 +288,24 @@ async function scrapeAWSBlog() {
     }, NUMBER_OF_ARTICLES_TO_FETCH);
 
     for (const article of pageData) {
-      const saved = await saveToDynamoDB(article);
-      if (saved) {
-        console.log(`文章已保存並發送通知: ${article.title}`);
+      try {
+        const translatedTitle = await translateText(article.title);
+        const summary = await summarizeArticle(article.link);
+        const saved = await saveToDynamoDB(article, translatedTitle, summary);
+        if (saved) {
+          console.log(`文章已保存並發送通知: ${article.title}`);
+        }
+      } catch (error) {
+        logger.error(`處理文章時發生錯誤: ${article.title}`, error);
       }
     }
 
-    console.log(`成功儲存 ${insertedCount} 篇新文章`);
-    console.log(`跳過了 ${skippedCount} 篇已存在的文章`);
+    console.log(`\n📊 爬蟲統計:`);
+    console.log(`✅ 新文章: ${insertedCount} 篇`);
+    console.log(`⏭️ 已存在: ${skippedCount} 篇\n`);
   } catch (error) {
-    console.error("爬取過程中發生錯誤:", error?.message || "未知錯誤");
-    logger.error("爬取失敗:", {
-      error: error?.message || "未知錯誤",
-      stack: error?.stack,
-    });
-    throw new Error(`爬取失敗: ${error?.message || "未知錯誤"}`);
+    console.error("❌ 爬蟲失敗:", error?.message || "未知錯誤");
+    throw error;
   } finally {
     if (browser !== null) {
       await browser.close();
