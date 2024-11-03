@@ -22,6 +22,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@heroicons/react": "^2.1.5",
+    "@line/bot-sdk": "^9.4.4",
     "@mui/material": "^6.1.4",
     "@types/puppeteer": "^5.4.7",
     "axios": "^1.7.7",

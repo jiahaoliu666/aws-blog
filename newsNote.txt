@@ -48,11 +48,14 @@
   │     │     │     ├── activity-log.ts     // 後端 API，用於處理活動日誌的存儲
   │     │     │     ├── recent-log.ts       // 後端 API，用於記錄用戶最近的文章活動
   │     │     │     └── sendFeedback.ts     // API 路由，處理用戶反饋的提交
+  │     │     ├── /line
+  │     │     │     └── webhook.ts          // Line Webhook API 路由，處理來自 Line 的事件
   ├── /services                             
   │     ├── emailService.js                 // 郵件服務核心邏輯，處理郵件發送和批量處理
   │     ├── dbService.ts                    // 數據庫服務，處理與 DynamoDB 的交互
   │     ├── notificationService.ts          // 通知服務相關的邏輯和功能
-  │     └── sesService.ts                   // AWS SES 服務的封裝和配置
+  │     ├── sesService.ts                   // AWS SES 服務的封裝和配置
+  │     ├── lineService.ts                  // Line 服務邏輯，處理 Line Bot 和 Messaging API 的交互
   ├── /templates                            
   │     ├── emailTemplates.ts               // 郵件模板文件，包含各種郵件的 HTML 模板
   │     └── notificationTemplates.ts        // 通知模板文件，包含各種通知的格式模板
@@ -70,7 +73,8 @@
   │     ├── errorHandler.ts                 // 統一的錯誤處理工具，包含自定義錯誤類
   │     ├── logger.ts                       // TypeScript 版本的日誌記錄工具
   │     ├── logger.js                       // JavaScript 版本的日誌記錄工具
-  │     └── rateLimiter.js                  // 請求速率限制工具，控制 API 調用頻率
+  │     ├── rateLimiter.js                  // 請求速率限制工具，控制 API 調用頻率
+  │     └── lineUtils.ts                    // Line 相關的工具函數
   ├── /lambda
   │     ├── updateNews.js                   // Lambda 函數，用於從 AWS 部落格抓取最新文章
   │     ├── fetchNews.js                    // Lambda 函數，使用翻譯和 OpenAI 總結文章
@@ -80,4 +84,5 @@
         ├── email.ts                        // 郵件服務相關配置
         ├── aws.js                          // AWS 服務配置，包含 SES 和 DynamoDB 客戶端
         ├── constants.js                    // JavaScript 版本的常量定義
-        └── constants.ts                    // TypeScript 版本的常量定義
+        ├── constants.ts                    // TypeScript 版本的常量定義
+        └── line.ts                         // Line 相關配置文件

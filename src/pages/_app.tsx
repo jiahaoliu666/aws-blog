@@ -3,10 +3,10 @@ import React from 'react';
 import { AppProps } from 'next/app';
 import { AuthProvider } from '../context/AuthContext';
 import { AppProvider } from '../context/AppContext';
-import { LanguageProvider } from '../context/LanguageContext'; // 引入 LanguageProvider
+import { LanguageProvider } from '../context/LanguageContext'; 
 import Head from 'next/head';
-import '../styles/globals.css'; // 導入全局樣式
-import 'dotenv/config'; // 確保在其他導入之前加載
+import '../styles/globals.css'; 
+import 'dotenv/config'; 
 
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -15,7 +15,8 @@ function MyApp({ Component, pageProps }: AppProps) {
       <AppProvider>
         <LanguageProvider>
             <Head>
-              <title>AWS Blog 365</title> {/* 在這裡添加標題 */}
+              <title>AWS Blog 365</title> 
+              <link rel="icon" href="/logo.png" />
             </Head>
             <Component {...pageProps} />
         </LanguageProvider>
