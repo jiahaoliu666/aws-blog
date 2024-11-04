@@ -7,6 +7,7 @@ import { CognitoIdentityProviderClient, GetUserCommand, AdminUpdateUserAttribute
 import logActivity from '../../pages/api/profile/activity-log';
 import { lineConfig } from "../../config/line";
 import { logger } from "../../utils/logger";
+import { lineService } from '../../services/lineService';
 
 interface EditableFields {
   username: boolean;
@@ -121,6 +122,9 @@ export const useProfileLogic = () => {
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
     },
   });
+  const [lineId, setLineId] = useState('');
+  const [lineNotification, setLineNotification] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const handleResize = () => {
@@ -721,95 +725,40 @@ export const useProfileLogic = () => {
     setLineVerificationTimer(timer);
   };
 
-  const handleSaveNotificationSettings = async () => {
+  const handleSaveNotificationSettings = async (userId: string) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      logger.info('開始儲存通知設定', {
-        lineNotification: formData.notifications.line,
-        emailNotification: formData.notifications.email,
-        lineUserId
+      // 1. 檢查 LINE ID 是否有效
+      if (lineId) {
+        const isFollowing = await lineService.checkFollowStatus(lineId);
+        if (!isFollowing) {
+          setMessage('請先加入官方帳號為好友');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // 2. 更新資料庫設定
+      const response = await fetch('/api/notifications/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          lineUserId: lineId,
+          lineNotification
+        })
       });
-      
-      // LINE 通���設定驗證
-      if (formData.notifications.line) {
-        if (!lineUserId) {
-          setUploadMessage('請輸入 LINE ID 以啟用 LINE 通知');
-          setIsLoading(false);
-          return;
-        }
 
-        // 驗證 LINE ID 格式
-        if (!validateLineId(lineUserId)) {
-          setUploadMessage('LINE ID 格式不正確，請重新輸入');
-          setIsLoading(false);
-          return;
-        }
-
-        try {
-          logger.info('開始檢查 LINE 追蹤狀態', { lineUserId });
-          const response = await fetch('/api/line/check-follow-status', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ lineId: lineUserId }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || '驗證失敗');
-          }
-
-          const data = await response.json();
-          
-          if (!data.isFollowing) {
-            setUploadMessage('請先追蹤 LINE 官方帳號才能啟用通知');
-            setIsLoading(false);
-            return;
-          }
-        } catch (error) {
-          logger.error('LINE 追蹤狀態驗證失敗:', error);
-          setUploadMessage('LINE 追蹤狀態驗證失敗，請稍後再試');
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // 更新通知設定
-      const updateParams = {
-        TableName: 'AWS_Blog_UserNotificationSettings',
-        Item: {
-          userId: { S: user?.sub || '' },
-          email: { S: user?.email || '' },
-          lineUserId: { S: lineUserId || '' },
-          lineNotification: { BOOL: formData.notifications.line },
-          emailNotification: { BOOL: formData.notifications.email },
-          updatedAt: { S: new Date().toISOString() }
-        }
-      };
-
-      await dynamoClient.send(new PutItemCommand(updateParams));
-
-      // 設定成功訊息
-      let successMessage = '';
-      if (formData.notifications.line && formData.notifications.email) {
-        successMessage = '已成功開啟 LINE 和 Email 通知';
-      } else if (formData.notifications.line) {
-        successMessage = '已成功開啟 LINE 通知';
-      } else if (formData.notifications.email) {
-        successMessage = '已成功開啟 Email 通知';
+      if (response.ok) {
+        setMessage('設定已儲存');
       } else {
-        successMessage = '已關閉所有通知';
+        throw new Error('儲存設定失敗');
       }
-
-      setUploadMessage(successMessage);
-      
-      // 記錄活動
-      await logActivity(user?.sub || 'default-sub', `更新通知設定：${successMessage}`);
-
     } catch (error) {
-      logger.error('保存通知設定時發生錯誤:', error);
-      setUploadMessage('設定儲存失敗，請稍後再試');
+      logger.error('儲存通知設定時發生錯誤:', error);
+      setMessage('儲存設定時發生錯誤');
     } finally {
       setIsLoading(false);
     }
@@ -962,5 +911,11 @@ export const useProfileLogic = () => {
     lineIdError,
     lineIdStatus,
     handleLineIdChange,
+    lineId,
+    setLineId,
+    lineNotification,
+    setLineNotification,
+    message,
+    setMessage,
   };
 };

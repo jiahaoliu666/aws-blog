@@ -92,6 +92,12 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     }
   };
 
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // 使用 userId 進行操作
+    console.log(`User ID: ${userId}`);
+    // 其他邏輯
+  };
+
   return (
     <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[26rem] max-w-md 
       mx-auto lg:mx-0 bg-white shadow-lg rounded-xl z-50 border border-gray-300 
@@ -108,7 +114,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           )}
         </h2>
         <button 
-          onClick={markAllAsRead} 
+          onClick={handleClick} 
           className="text-sm lg:text-base text-blue-600 hover:text-blue-800 
             transition duration-150 whitespace-nowrap px-2 py-1 rounded
             hover:bg-blue-50"

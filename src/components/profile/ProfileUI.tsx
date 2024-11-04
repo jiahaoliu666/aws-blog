@@ -9,11 +9,77 @@ import Navbar from '../common/Navbar';
 import Footer from '../common/Footer'; 
 import logActivity from '../../pages/api/profile/activity-log';
 import { Switch } from '@headlessui/react';  // 或其他 UI 庫的 Switch 組件
+import { checkLineFollowStatus } from '../../services/lineService';
+import { useAuth } from '../../hooks/useAuth';
+import { MouseEvent } from 'react';
+import { User } from '../../types/userType';
+
+interface NotificationSettings {
+  line: boolean;
+  email: boolean;
+}
 
 interface ProfileUIProps {
-    uploadMessage: string;
-    passwordMessage: string;
-    setIsEditable: () => void;
+  user: User;
+  onSave: (settings: NotificationSettings) => Promise<void>;
+  formData: {
+    notifications: {
+      line: boolean;
+      email: boolean;
+    };
+    username: string;
+    email: string;
+    avatar: string;
+    registrationDate: string;
+  };
+  recentArticles: any[];
+  isEditing: boolean;
+  isPasswordModalOpen: boolean;
+  showOldPassword: boolean;
+  showNewPassword: boolean;
+  isLoading: boolean;
+  isEditable: {
+    username: boolean;
+  };
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  setTempAvatar: React.Dispatch<React.SetStateAction<string>>;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
+  setOldPassword: React.Dispatch<React.SetStateAction<string>>;
+  setIsPasswordModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowOldPassword: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowNewPassword: React.Dispatch<React.SetStateAction<boolean>>;
+  handleSaveProfileChanges: (username: string) => Promise<void>;
+  handleChangePassword: () => Promise<void>;
+  handleLogout: () => Promise<void>;
+  handleAvatarChange: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleEditClick: () => void;
+  handleOpenPasswordModal: () => void;
+  handleClosePasswordModal: () => void;
+  handleCancelChanges: () => void;
+  handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  resetPasswordFields: () => void;
+  toggleEditableField: (field: 'username') => void;
+  activityLog: any[];
+  oldPassword: string;
+  calculatePasswordStrength: (password: string) => number;
+  resetFeedbackForm: () => void;
+  initializeTabState: () => void;
+  localUsername: string;
+  setLocalUsername: React.Dispatch<React.SetStateAction<string>>;
+  resetUsername: () => void;
+  uploadMessage: string;
+  passwordMessage: string;
+  logRecentArticle: (article: any) => void;
+  toggleNotification: (notification: 'email' | 'line') => void;
+  handleSaveNotificationSettings: () => Promise<void>;
+  sendFeedback: () => Promise<void>;
+  feedbackMessage: string;
+  resetUploadState: () => void;
+  lineUserId: string;
+  setLineUserId: React.Dispatch<React.SetStateAction<string>>;
+  lineIdError: string;
+  lineIdStatus: 'validating' | 'success' | 'error';
+  handleLineIdChange: (value: string) => void;
 }
 
 const ProfileUI: React.FC<ProfileUIProps> = (props) => {
@@ -97,6 +163,20 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
       return () => clearTimeout(timer); // 清除計時器
     }
   }, [feedbackMessage, resetUploadState]);
+
+  const handleCheckFollowStatus = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (!user?.sub) {
+      console.error('找不到用戶 ID');
+      return;
+    }
+    
+    try {
+      await checkLineFollowStatus(user.sub);
+    } catch (error) {
+      console.error("檢查追蹤狀態時發生錯誤:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -363,7 +443,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                             style={{ width: `${calculatePasswordStrength(formData.password) * 20}%` }}
                           ></div>
                         </div>
-                        <p className="mt-4 text-sm text-gray-500">使用大小寫字母、數字、特殊字符來增強密碼安性</p>
+                        <p className="mt-4 text-sm text-gray-500">用大小寫字母、、特殊字符來增強密碼安性</p>
                       </div>
                       {/* 安全提示 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
@@ -574,7 +654,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                             <li>開啟上方的 LINE 通知開關</li>
                             <li>掃描下方 QR Code 或點擊追蹤按鈕，加入官方帳號好友</li>
                             <li>在下方輸入您的 LINE ID</li>
-                            <li>點擊儲存設定完成設置</li>
+                            <li>點擊儲存設��完成設置</li>
                           </ol>
                         </div>
 
@@ -716,7 +796,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                           {/* 儲存按鈕 */}
                           <div className="flex justify-end">
                             <button
-                              onClick={handleSaveNotificationSettings}
+                              onClick={() => handleSaveNotificationSettings(user?.sub)}
                               disabled={isLoading || lineIdStatus === 'error'}
                               className={`
                                 px-6 py-2.5 rounded-full

@@ -75,9 +75,9 @@ export const createNewsNotificationTemplate = (articleData: {
   }
 });
 
-export const createWelcomeTemplate = (userName: string): LineMessage => ({
+export const createWelcomeTemplate = (userName: string) => ({
   type: 'flex',
-  altText: `歡迎 ${userName}`,
+  altText: `歡迎訂閱 AWS 部落格通知`,
   contents: {
     type: 'bubble',
     body: {
@@ -85,28 +85,35 @@ export const createWelcomeTemplate = (userName: string): LineMessage => ({
       layout: 'vertical',
       contents: [
         {
-          type: 'text' as const,
-          text: `歡迎 ${userName}！`,
+          type: 'text',
+          text: '🎉 歡迎訂閱 AWS 部落格通知',
           weight: 'bold',
           size: 'xl',
           color: '#2c5282'
         },
         {
-          type: 'text' as const,
-          text: '感謝您訂閱 AWS 部落格通知',
+          type: 'text',
+          text: '您將收到：',
           margin: 'md',
-          size: 'md',
-          color: '#4a5568'
+          size: 'md'
         },
         {
-          type: 'text' as const,
-          text: '我們會在有新文章時立即通知您',
+          type: 'text',
+          text: '• 新文章發布通知\n• 重要更新提醒\n• 精選內容推薦',
           margin: 'sm',
           size: 'sm',
-          color: '#718096'
+          color: '#718096',
+          wrap: true
+        },
+        {
+          type: 'text',
+          text: '您可以隨時在設定頁面調整通知選項，或輸入「取消訂閱」來停止接收通知。',
+          margin: 'lg',
+          size: 'xs',
+          color: '#a0aec0',
+          wrap: true
         }
-      ] as FlexComponent[],
-      paddingAll: '20px'
+      ]
     }
   }
 });
