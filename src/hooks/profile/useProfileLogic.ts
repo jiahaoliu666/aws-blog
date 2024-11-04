@@ -77,6 +77,12 @@ interface NotificationSettings {
 export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null }) => {
   const { user: authUser, updateUser, logoutUser } = useAuthContext();
   const router = useRouter();
+  
+  // 將 ProfileUI 的 state 移到這裡統一管理
+  const [activeTab, setActiveTab] = useState('profile');
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+  
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
@@ -139,6 +145,32 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     lineNotification: false,
     emailNotification: false
   });
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser && !authUser) {
+      router.push('/auth/login');
+      return;
+    }
+
+    // 初始化表單資料
+    const currentUser = authUser || (storedUser ? JSON.parse(storedUser) : null);
+    if (currentUser) {
+      setFormData(prevData => ({
+        ...prevData,
+        username: currentUser.username || '',
+        email: currentUser.email || '',
+        // ... other initializations
+      }));
+    }
+  }, [authUser, router, isClient]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -161,21 +193,6 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       }
     }
   }, []);
-
-  useEffect(() => {
-    if (!authUser) {
-      router.push('/auth/login');
-      return;
-    }
-
-    // 初始化表單資料
-    setFormData(prevData => ({
-      ...prevData,
-      username: authUser.username || '',
-      email: authUser.email || '',
-      // ... other initializations
-    }));
-  }, [authUser, router]);
 
   useEffect(() => {
     const fetchRecentArticles = async () => {
@@ -247,7 +264,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     let changesSuccessful = true;
 
     if (!localUsername.trim()) {
-      setUploadMessage('戶名不能為空。');
+      setUploadMessage('戶名不為空。');
       return;
     }
 
@@ -949,5 +966,11 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     setMessage,
     sendFeedback,
     handleSaveNotificationSettings,
+    activeTab,
+    setActiveTab,
+    isProfileMenuOpen,
+    setIsProfileMenuOpen,
+    isCompactLayout,
+    setIsCompactLayout,
   };
 };

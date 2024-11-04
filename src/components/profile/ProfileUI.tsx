@@ -34,11 +34,13 @@ interface FormData {
 }
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
-  const profileLogic = useProfileLogic({ user });
-  const router = useRouter();
-  const { user: authUser } = useAuthContext(); // 使用 AuthContext 中的 user
-
   const {
+    activeTab,
+    setActiveTab,
+    isProfileMenuOpen,
+    setIsProfileMenuOpen,
+    isCompactLayout,
+    setIsCompactLayout,
     formData,
     recentArticles,
     isEditing,
@@ -87,51 +89,36 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     handleLineIdChange,
     settingsMessage,
     settingsStatus,
-    toggleNotification, // 確保這行��加入
+    toggleNotification, // 確保這行加入
     handleSaveNotificationSettings,
-  } = profileLogic;
+  } = useProfileLogic({ user });
 
-  const [activeTab, setActiveTab] = React.useState('profile');
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
-  const [isCompactLayout, setIsCompactLayout] = React.useState(false);
-
-  React.useEffect(() => {
-    initializeTabState();
-  }, [activeTab]);
-
-  React.useEffect(() => {
-    if (passwordMessage && passwordMessage.includes('密碼變更成功')) {
-      setTimeout(() => {
-        handleLogout(); // 3秒後登出
-      }, 3000);
-    }
-  }, [passwordMessage]);
-
-  React.useEffect(() => {
-    if (feedbackMessage) {
-      const timer = setTimeout(() => {
-        resetUploadState(); // 清除消息並重置上傳狀態
-        const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
-        if (feedbackImageInput) {
-          feedbackImageInput.value = ''; // 清空選擇的檔案
-        }
-      }, 5000);
-
-      return () => clearTimeout(timer); // 清除計時器
-    }
-  }, [feedbackMessage, resetUploadState]);
+  const router = useRouter();
+  const { user: authUser } = useAuthContext();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!authUser) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    if (!authUser && !window.localStorage.getItem("user")) {
       const timer = setTimeout(() => {
         router.push('/auth/login');
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [authUser, router]);
+  }, [authUser, router, isClient]);
 
-  // 如果沒有用戶，顯示登入提示
-  if (!authUser) {
+  // 修改條件渲染
+  if (!isClient) {
+    return null; // 或顯示載入中的狀態
+  }
+
+  const storedUser = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
+  if (!user && !storedUser) {
     return (
       <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
         <Loader className="mb-4" size="large" />
@@ -140,20 +127,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       </div>
     );
   }
-
-  const handleCheckFollowStatus = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (!user?.sub) {
-      console.error('找不到用戶 ID');
-      return;
-    }
-    
-    try {
-      await checkLineFollowStatus(user.sub);
-    } catch (error) {
-      console.error("檢查追蹤狀態時發生錯誤:", error);
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -439,7 +412,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         }} 
                         className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
                       >
-                        取消更改
+                        消更改
                       </button>
                       <button onClick={handleChangePassword} className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" disabled={isLoading}>
                         {isLoading ? '保存...' : '更改密碼'}

@@ -25,13 +25,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || "";
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
     const fetchUserFromCognito = async () => {
+      if (!isClient) return;
+      
       try {
-        const storedUser = localStorage.getItem("user");
+        const storedUser = window.localStorage.getItem("user");
         if (!storedUser) {
           setUser(null);
           return;
@@ -40,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const parsedUser: User = JSON.parse(storedUser);
         if (!parsedUser.accessToken) {
           setUser(null);
-          localStorage.removeItem("user");
+          window.localStorage.removeItem("user");
           return;
         }
 
@@ -62,21 +69,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
 
           setUser(updatedUser);
-          localStorage.setItem("user", JSON.stringify(updatedUser));
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
         } catch (err) {
           console.error('Cognito 驗證失敗:', err);
-          setUser(null);
-          localStorage.removeItem("user");
+          const currentUser = JSON.parse(storedUser);
+          setUser({ ...currentUser, needsReauth: true });
         }
       } catch (err) {
         console.error('獲取用戶資訊失敗:', err);
         setUser(null);
-        localStorage.removeItem("user");
+        window.localStorage.removeItem("user");
       }
     };
 
     fetchUserFromCognito();
-  }, []);
+  }, [isClient]);
 
   const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
@@ -143,7 +152,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           favorites: []
         };
         setUser(user);
-        localStorage.setItem("user", JSON.stringify(user));
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem("user", JSON.stringify(user));
+        }
 
         await logActivity(userId, '登入帳戶');
 
@@ -162,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const command = new GlobalSignOutCommand({ AccessToken: user.accessToken });
         await cognitoClient.send(command);
         setUser(null);
-        localStorage.removeItem("user");
+        window.localStorage.removeItem("user");
         setError(null);
 
         return true;
@@ -178,7 +189,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       const newUser = { ...user, ...updatedUser };
       setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem("user", JSON.stringify(newUser));
+      }
     }
   };
 
