@@ -877,7 +877,8 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
 
   const handleSaveNotificationSettings = async (userId?: string) => {
     if (!userId) {
-      setUploadMessage('找不到用戶ID');
+      setSettingsMessage('找不到用戶ID');
+      setSettingsStatus('error');
       return;
     }
 
@@ -886,7 +887,8 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       
       // 檢查 LINE 通知設定
       if (formData.notifications.line && !lineUserId) {
-        setUploadMessage('啟用 LINE 通知時必須提供有效的 LINE ID');
+        setSettingsMessage('啟用 LINE 通知時必須提供有效的 LINE ID');
+        setSettingsStatus('error');
         return;
       }
 
@@ -904,12 +906,14 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       const command = new PutItemCommand(params);
       await dynamoClient.send(command);
 
-      setUploadMessage('通知設定已成功更新');
+      setSettingsMessage('通知設定已成功更新');
+      setSettingsStatus('success');
       await logActivity(userId, '更新通知設定');
       
     } catch (error) {
       console.error('保存通知設定時發生錯誤:', error);
-      setUploadMessage('更新通知設定失敗');
+      setSettingsMessage('更新通知設定失敗');
+      setSettingsStatus('error');
     } finally {
       setIsLoading(false);
     }

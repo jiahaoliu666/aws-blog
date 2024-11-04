@@ -606,7 +606,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 alt="LINE 官方帳號 QR Code" 
                                 className="w-40 h-40 mb-2"
                               />
-                              <p className="text-sm text-gray-600">掃�� QR Code 加入好友</p>
+                              <p className="text-sm text-gray-600">掃 QR Code 加入好友</p>
                             </div>
 
                             {/* 直接追蹤按鈕 */}
@@ -724,13 +724,19 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                       </div>
 
                       {/* 新增：統一的儲存按鈕區域 */}
-                      <div className="mt-8">
+                      <div className="mt-8 flex flex-col space-y-4">
                         {/* 顯示設定狀態訊息 */}
                         {settingsMessage && (
-                          <div className={`mb-4 p-4 rounded-lg shadow-md ${
+                          <div className={`p-4 rounded-lg shadow-md ${
                             settingsStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
-                            {settingsMessage}
+                            <div className="flex items-center">
+                              <FontAwesomeIcon 
+                                icon={settingsStatus === 'success' ? faCheckCircle : faExclamationCircle} 
+                                className="mr-2"
+                              />
+                              {settingsMessage}
+                            </div>
                           </div>
                         )}
                         
