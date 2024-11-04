@@ -3,29 +3,37 @@ import { lineConfig } from '../config/line';
 import { createWelcomeTemplate } from '../templates/lineTemplates';
 import { DynamoDBClient, UpdateItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '../utils/logger';
+import NodeCache from 'node-cache';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
+const lineStatusCache = new NodeCache({ stdTTL: 300 }); // 5分鐘快取
 
 // 檢查 LINE 追蹤狀態
-export const checkLineFollowStatus = async (sub: string): Promise<boolean> => {
+export const checkLineFollowStatus = async (userId: string): Promise<boolean> => {
+  const cacheKey = `lineStatus:${userId}`;
+  
+  // 檢查快取
+  const cachedStatus = lineStatusCache.get<boolean>(cacheKey);
+  if (cachedStatus !== undefined) {
+    return cachedStatus;
+  }
+
   try {
     const response = await fetch(`/api/line/check-follow-status`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userId: sub }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
     });
 
-    if (!response.ok) {
-      throw new Error('檢查追蹤狀態失敗');
-    }
-
     const data = await response.json();
+    
+    // 儲存到快取
+    lineStatusCache.set(cacheKey, data.isFollowing);
+    
     return data.isFollowing;
   } catch (error) {
-    console.error('檢查追蹤狀態時發生錯誤:', error);
-    throw error;
+    console.error('檢查 LINE 追蹤狀態時發生錯誤:', error);
+    return false;
   }
 };
 

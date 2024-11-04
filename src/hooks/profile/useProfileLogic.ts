@@ -186,7 +186,7 @@ interface ProfileLogicReturn {
   setLineIdStatus: React.Dispatch<React.SetStateAction<'idle' | 'validating' | 'success' | 'error'>>;
 }
 
-export const useProfileLogic = ({ user }: { user: User | null }): ProfileLogicReturn => {
+export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): ProfileLogicReturn => {
   const { user: authUser, updateUser, logoutUser } = useAuthContext();
   const router = useRouter();
   
@@ -366,6 +366,34 @@ export const useProfileLogic = ({ user }: { user: User | null }): ProfileLogicRe
   const [verificationCode, setVerificationCode] = useState('');
   const [showVerificationInput, setShowVerificationInput] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+
+  const [settings, setSettings] = useState(() => {
+    // 從 localStorage 讀取快取的設定
+    const cachedSettings = localStorage.getItem('userSettings');
+    return cachedSettings ? JSON.parse(cachedSettings) : null;
+  });
+
+  const fetchSettings = async () => {
+    try {
+      // 檢查快取是否過期
+      const cachedTimestamp = localStorage.getItem('settingsCacheTimestamp');
+      const CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取
+      
+      if (cachedTimestamp && Date.now() - Number(cachedTimestamp) < CACHE_DURATION) {
+        return; // 使用快取的數據
+      }
+
+      const response = await fetch('/api/notifications/settings');
+      const data = await response.json();
+      
+      // 更新快取
+      localStorage.setItem('userSettings', JSON.stringify(data));
+      localStorage.setItem('settingsCacheTimestamp', Date.now().toString());
+      setSettings(data);
+    } catch (error) {
+      console.error('獲取設定時發生錯誤:', error);
+    }
+  };
 
   useEffect(() => {
     setIsClient(true);

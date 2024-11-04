@@ -26,7 +26,7 @@
   │     │     ├── useNewsPageLogic.ts       // 自定義 Hook，管理新聞頁面的狀態和邏輯，包括過濾、排序和分頁功能  
   │     │     └── useNewsFavorites.ts       // 自定義 Hook，管理新聞收藏邏輯，提供添加和移除收藏的功能  
   │     ├── /profile  
-  │     │     └── useProfileLogic.ts        // 新增的邏輯文件，負責用戶個人資料頁面的邏輯處理，包含 LINE ID 驗證和通知設定儲存
+  │     │     └── useProfileLogic.ts        // 新增的邏輯文件，負責用戶個人資料頁面的邏輯處理，包含 LINE ID 驗證和通知設定儲存，新增本地快取
   │     ├── /notifications                  
   │     │     ├── useNotifications.ts       // 管理通知狀態和操作的 Hook
   │     │     └── useEmailNotifications.ts  // 管理郵件通知相關邏輯的 Hook
@@ -42,7 +42,7 @@
   │     │     │     └── updateNews.js       // API 路由，從 AWS 部落格抓取最新文章並更新到 DynamoDB
   │     │     ├── /notifications            
   │     │     │     ├── sendEmail.ts        // API 路由，處理郵件通知的發送
-  │     │     │     ├── settings.ts         // API 路由，處理通知設置的保存和獲取，包含 LINE 通知設定的更新
+  │     │     │     ├── settings.ts         // API 路由，處理通知設置的保存和獲取，包含 LINE 通知設定的更新，新增 Redis 快取
   │     │     │     └── status.ts           // API 路由，獲取通知發送狀態
   │     │     ├── /profile  
   │     │     │     ├── activity-log.ts     // 後端 API，用於處理活動日誌的存儲
@@ -55,7 +55,7 @@
   │     ├── dbService.ts                    // 數據庫服務，處理與 DynamoDB 的交互
   │     ├── notificationService.ts          // 通知服務相關的邏輯和功能
   │     ├── sesService.ts                   // AWS SES 服務的封裝和配置
-  │     ├── lineService.ts                  // Line 服務邏輯，處理 Line Bot 和 Messaging API 的交互，包含用戶追蹤狀態檢查和通知發送
+  │     ├── lineService.ts                  // Line 服務邏輯，處理 Line Bot 和 Messaging API 的交互，包含用戶追蹤狀態檢查和通知發送，新增 NodeCache 快取
   ├── /templates                            
   │     ├── emailTemplates.ts               // 郵件模板文件，包含各種郵件的 HTML 模板
   │     └── lineTemplates.ts                // Line 通知模板文件，包含各種 Line 通知的格式模板，包含歡迎訊息模板
@@ -65,6 +65,7 @@
   │     ├── emailTypes.ts                   // 新增的郵件相關類型定義
   │     ├── notificationTypes.ts            // 新增的通知相關類型定義
   │     └── lineTypes.ts                    // 新增的 Line 相關類型定義，包含 LINE 通知和訊息的類型
+  │     └── amazon-dax-client.d.ts          // 新增的宣告檔案
   ├── /utils  
   │     ├── extractDateFromInfo.ts          // 工具函數，用於從字符串中提取日期
   │     ├── apiClient.ts                    // 工具函數，用於封裝 API 請求邏輯  
