@@ -75,17 +75,17 @@ interface NotificationSettings {
 }
 
 export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null }) => {
+  const { user: authUser, updateUser, logoutUser } = useAuthContext();
   const router = useRouter();
-  const { logoutUser, updateUser } = useAuthContext();
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [tempAvatar, setTempAvatar] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(() => ({
-    username: user?.username || '',
-    email: user?.email || '',
-    registrationDate: user?.registrationDate || '',
-    avatar: user?.avatar || '',
+    username: authUser?.username || '',
+    email: authUser?.email || '',
+    registrationDate: authUser?.registrationDate || '',
+    avatar: authUser?.avatar || '',
     password: '',
     confirmPassword: '',
     feedbackTitle: '',
@@ -109,13 +109,13 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
     },
   });
-  const [tempUsername, setTempUsername] = useState(user ? user.username : '');
+  const [tempUsername, setTempUsername] = useState(authUser ? authUser.username : '');
   const [recentArticles, setRecentArticles] = useState<{ translatedTitle: string; link: string; timestamp: string; sourcePage: string }[]>([]);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [activityLog, setActivityLog] = useState<{ date: string; action: string; }[]>([]);
-  const [localUsername, setLocalUsername] = useState(user ? user.username : '');
+  const [localUsername, setLocalUsername] = useState(authUser ? authUser.username : '');
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [lineUserId, setLineUserId] = useState<string>('');
@@ -163,62 +163,23 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   }, []);
 
   useEffect(() => {
-    // 獲取當前路徑
-    const currentPath = router.pathname;
-
-    if (!user && currentPath === '/profile') {
-      setShowLoginMessage(true);
-      const timer = setTimeout(() => {
-        router.push('/auth/login');
-      }, 3000);
-      return () => clearTimeout(timer);
+    if (!authUser) {
+      router.push('/auth/login');
+      return;
     }
 
-    if (user) {
-      setFormData(prevData => ({
-        ...prevData,
-        username: user.username,
-        email: user.email || '',
-      }));
-      setShowLoginMessage(false);
-
-      const fetchUserDetails = async () => {
-        try {
-          const userCommand = new GetUserCommand({ AccessToken: user.accessToken });
-          const userResponse = await cognitoClient.send(userCommand);
-
-          const registrationDateAttribute = userResponse.UserAttributes?.find(
-            attr => attr.Name === 'custom:registrationDate'
-          );
-          const registrationDate = registrationDateAttribute?.Value || '[註冊日期]';
-
-          setFormData(prevData => ({
-            ...prevData,
-            registrationDate,
-          }));
-        } catch (error) {
-          const err = error as Error;
-          if (err.name === 'NotAuthorizedException' && err.message.includes('Access Token has expired')) {
-            try {
-              const newAccessToken = await refreshAccessToken(user.refreshToken);
-              if (newAccessToken) {
-                user.accessToken = newAccessToken;
-                fetchUserDetails();
-              }
-            } catch (refreshError) {
-              router.push('/auth/login');
-            }
-          }
-        }
-      };
-
-      fetchUserDetails();
-    }
-  }, [user, router]);
+    // 初始化表單資料
+    setFormData(prevData => ({
+      ...prevData,
+      username: authUser.username || '',
+      email: authUser.email || '',
+      // ... other initializations
+    }));
+  }, [authUser, router]);
 
   useEffect(() => {
     const fetchRecentArticles = async () => {
-      if (user) {
+      if (authUser) {
         const dynamoClient = new DynamoDBClient({
           region: 'ap-northeast-1',
           credentials: {
@@ -231,7 +192,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
           TableName: 'AWS_Blog_UserRecentArticles',
           KeyConditionExpression: 'userId = :userId',
           ExpressionAttributeValues: {
-            ':userId': { S: user.sub },
+            ':userId': { S: authUser.sub },
           },
           ScanIndexForward: false,
           Limit: 12, // 確保限制為12筆
@@ -274,7 +235,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     };
 
     fetchRecentArticles();
-  }, [user]);
+  }, [authUser]);
 
   const refreshAccessToken = async (refreshToken: string): Promise<string> => {
     const newAccessToken = 'newAccessToken';
@@ -290,12 +251,12 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       return;
     }
 
-    if (localUsername !== user?.username) {
+    if (localUsername !== authUser?.username) {
       hasChanges = true;
       try {
         const updateUserCommand = new AdminUpdateUserAttributesCommand({
           UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
-          Username: user?.sub!,
+          Username: authUser?.sub!,
           UserAttributes: [
             {
               Name: 'name',
@@ -309,7 +270,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
         // Log the activity
-        await logActivity(user?.sub || 'default-sub', `變更用戶：${localUsername}`);
+        await logActivity(authUser?.sub || 'default-sub', `變更用戶：${localUsername}`);
       } catch (error) {
         setUploadMessage('更新用戶名失敗，稍後再試。');
         changesSuccessful = false;
@@ -349,14 +310,14 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       const changePasswordCommand = new ChangePasswordCommand({
         PreviousPassword: oldPassword,
         ProposedPassword: formData.password,
-        AccessToken: user?.accessToken!,
+        AccessToken: authUser?.accessToken!,
       });
 
       await cognitoClient.send(changePasswordCommand);
       
       // 成功處理
       setPasswordMessage('密碼變更成功，請重新登入');
-      await logActivity(user?.sub || 'default-sub', '變更密碼');
+      await logActivity(authUser?.sub || 'default-sub', '變更密碼');
       
       // 延遲登出
       setTimeout(handleLogout, 3000);
@@ -368,9 +329,9 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
 
   const handleCancelChanges = () => {
     setIsEditing(false);
-    setTempUsername(user ? user.username : '');
+    setTempUsername(authUser ? authUser.username : '');
     setIsEditable(prev => ({ ...prev, username: false }));
-    setFormData(prevData => ({ ...prevData, username: user ? user.username : '' }));
+    setFormData(prevData => ({ ...prevData, username: authUser ? authUser.username : '' }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -389,7 +350,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   };
 
   const handleLogout = async () => {
-    await logActivity(user?.sub || 'default-sub', '登出系統');
+    await logActivity(authUser?.sub || 'default-sub', '登出系統');
     await logoutUser();
     router.push('/auth/login');
   };
@@ -414,7 +375,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         },
       });
 
-      const userSub = user?.sub || 'default-sub';
+      const userSub = authUser?.sub || 'default-sub';
 
       const params = {
         Bucket: 'aws-blog-avatar',
@@ -460,7 +421,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         setUploadMessage('頭像更換成功，頁面刷新中...');
 
         // 記錄活動
-        await logActivity(user?.sub || 'default-sub', '更換頭像');
+        await logActivity(authUser?.sub || 'default-sub', '更換頭像');
 
         setTimeout(() => {
           window.location.reload();
@@ -473,7 +434,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   };
 
   const handleEditClick = () => {
-    setTempUsername(user ? user.username : '');
+    setTempUsername(authUser ? authUser.username : '');
     setOldPassword('');
     setFormData(prevData => ({ ...prevData, password: '' }));
     setIsEditable({
@@ -513,7 +474,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
 
   useEffect(() => {
     const fetchActivityLog = async () => {
-      if (user) {
+      if (authUser) {
         const dynamoClient = new DynamoDBClient({
           region: 'ap-northeast-1',
           credentials: {
@@ -526,7 +487,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
           TableName: 'AWS_Blog_UserActivityLog',
           KeyConditionExpression: 'userId = :userId',
           ExpressionAttributeValues: {
-            ':userId': { S: user.sub },
+            ':userId': { S: authUser.sub },
           },
           ScanIndexForward: false,
           Limit: 12, // 確保限制為12筆
@@ -548,7 +509,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     };
 
     fetchActivityLog();
-  }, [user]);
+  }, [authUser]);
 
   useEffect(() => {
     if (uploadMessage) {
@@ -580,8 +541,8 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
 
   const initializeTabState = () => {
     setIsEditing(false);
-    setTempUsername(user ? user.username : '');
-    setLocalUsername(user ? user.username : ''); // 重置 localUsername
+    setTempUsername(authUser ? authUser.username : '');
+    setLocalUsername(authUser ? authUser.username : ''); // 重置 localUsername
     setIsEditable({
       username: false,
       password: false,
@@ -598,13 +559,13 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   };
 
   useEffect(() => {
-    if (user) {
-      setLocalUsername(user.username);
+    if (authUser) {
+      setLocalUsername(authUser.username);
     }
-  }, [user]);
+  }, [authUser]);
 
   const resetUsername = () => {
-    setLocalUsername(user ? user.username : '');
+    setLocalUsername(authUser ? authUser.username : '');
   };
 
   const logRecentArticle = async (articleId: string, link: string, sourcePage: string) => {
@@ -622,7 +583,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         const putParams = {
             TableName: 'AWS_Blog_UserRecentArticles',
             Item: {
-                userId: { S: user?.sub || 'default-sub' },
+                userId: { S: authUser?.sub || 'default-sub' },
                 articleId: { S: articleId },
                 timestamp: { S: timestamp },
                 link: { S: link },
@@ -638,7 +599,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
             TableName: 'AWS_Blog_UserRecentArticles',
             KeyConditionExpression: 'userId = :userId',
             ExpressionAttributeValues: {
-                ':userId': { S: user?.sub || 'default-sub' },
+                ':userId': { S: authUser?.sub || 'default-sub' },
             },
             ScanIndexForward: true, // Ascending order to get the oldest first
         };
@@ -652,7 +613,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
                 const deleteParams = {
                     TableName: 'AWS_Blog_UserRecentArticles',
                     Key: {
-                        userId: { S: user?.sub || 'default-sub' },
+                        userId: { S: authUser?.sub || 'default-sub' },
                         timestamp: { S: oldestArticle.timestamp.S },
                     },
                 };
@@ -789,7 +750,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.sub,
+          userId: authUser?.sub,
           ...notificationSettings
         }),
       });
@@ -800,7 +761,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
 
       setSettingsMessage('設定已成功儲存');
       setSettingsStatus('success');
-      await logActivity(user?.sub || 'default-sub', '更新通知設定');
+      await logActivity(authUser?.sub || 'default-sub', '更新通知設定');
 
     } catch (error) {
       setSettingsMessage(error instanceof Error ? error.message : '儲存設定時發生錯誤');
@@ -853,13 +814,13 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
 
   useEffect(() => {
     const fetchNotificationSettings = async () => {
-      if (user) {
+      if (authUser) {
         try {
           const params = {
             TableName: 'AWS_Blog_UserNotificationSettings',
             KeyConditionExpression: 'userId = :userId',
             ExpressionAttributeValues: {
-              ':userId': { S: user.sub },
+              ':userId': { S: authUser.sub },
             },
           };
 
@@ -887,7 +848,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     };
 
     fetchNotificationSettings();
-  }, [user]);
+  }, [authUser]);
 
   const handleSaveNotificationSettings = async (userId?: string) => {
     if (!userId) {
@@ -930,7 +891,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   };
 
   return {
-    user,
+    user: authUser,
     formData,
     recentArticles,
     isEditing,

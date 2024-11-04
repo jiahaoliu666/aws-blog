@@ -13,6 +13,8 @@ import { checkLineFollowStatus } from '../../services/lineService';
 import { useAuth } from '../../hooks/useAuth';
 import { MouseEvent } from 'react';
 import { User } from '../../types/userType';
+import { useRouter } from 'next/router';
+import { useAuthContext } from '../../context/AuthContext';
 
 interface NotificationSettings {
   line: boolean;
@@ -33,6 +35,8 @@ interface FormData {
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   const profileLogic = useProfileLogic({ user });
+  const router = useRouter();
+  const { user: authUser } = useAuthContext(); // 使用 AuthContext 中的 user
 
   const {
     formData,
@@ -83,7 +87,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     handleLineIdChange,
     settingsMessage,
     settingsStatus,
-    toggleNotification, // 確保這行被加入
+    toggleNotification, // 確保這行��加入
     handleSaveNotificationSettings,
   } = profileLogic;
 
@@ -116,6 +120,26 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       return () => clearTimeout(timer); // 清除計時器
     }
   }, [feedbackMessage, resetUploadState]);
+
+  useEffect(() => {
+    if (!authUser) {
+      const timer = setTimeout(() => {
+        router.push('/auth/login');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [authUser, router]);
+
+  // 如果沒有用戶，顯示登入提示
+  if (!authUser) {
+    return (
+      <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
+        <Loader className="mb-4" size="large" />
+        <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
+        <p className="text-lg text-gray-700">您將重新導向至登入頁面...</p>
+      </div>
+    );
+  }
 
   const handleCheckFollowStatus = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();

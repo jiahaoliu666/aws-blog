@@ -9,10 +9,10 @@ export interface User {
   userId: string;
   sub: string;
   email?: string;
+  registrationDate?: string;
   favorites?: ExtendedNews[];
   lineSettings?: LineSettings;
   notifications?: NotificationSettings;
-  registrationDate?: string;
   avatar?: string;
 }
 

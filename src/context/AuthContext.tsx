@@ -8,15 +8,7 @@ import {
 import cognitoClient from "../utils/cognitoClient";
 import { ExtendedNews } from "@/types/newsType";
 import logActivity from '../pages/api/profile/activity-log'; // 引入 logActivity 函數
-
-interface User {
-  accessToken: string;
-  refreshToken: string;
-  username: string;
-  sub: string;
-  email: string;
-  favorites?: ExtendedNews[];
-}
+import { User } from '../types/userType';
 
 interface AuthContextType {
   user: User | null;
@@ -38,35 +30,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const fetchUserFromCognito = async () => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsedUser: User = JSON.parse(storedUser);
-        try {
-          const userCommand = new GetUserCommand({ AccessToken: parsedUser.accessToken });
-          const userResponse = await cognitoClient.send(userCommand);
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (!storedUser) {
+          setUser(null);
+          return;
+        }
 
+        const parsedUser: User = JSON.parse(storedUser);
+        if (!parsedUser.accessToken) {
+          setUser(null);
+          localStorage.removeItem("user");
+          return;
+        }
+
+        const userCommand = new GetUserCommand({ AccessToken: parsedUser.accessToken });
+        
+        try {
+          const userResponse = await cognitoClient.send(userCommand);
           const nameAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'name');
           const userIdAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'sub');
 
-          const username = nameAttribute ? nameAttribute.Value || parsedUser.email : parsedUser.email;
-
-          if (!userIdAttribute || !userIdAttribute.Value) {
+          if (!userIdAttribute?.Value) {
             throw new Error("無法獲取用戶的 ID（sub）。");
           }
-          const userId = userIdAttribute.Value;
 
-          const updatedUser: User = { 
-            ...parsedUser, 
-            username, 
-            sub: userId 
+          const updatedUser: User = {
+            ...parsedUser,
+            username: nameAttribute?.Value ?? parsedUser.email ?? '',
+            sub: userIdAttribute.Value!
           };
 
           setUser(updatedUser);
           localStorage.setItem("user", JSON.stringify(updatedUser));
         } catch (err) {
+          console.error('Cognito 驗證失敗:', err);
           setUser(null);
           localStorage.removeItem("user");
         }
+      } catch (err) {
+        console.error('獲取用戶資訊失敗:', err);
+        setUser(null);
+        localStorage.removeItem("user");
       }
     };
 
@@ -127,7 +132,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         const userId = userIdAttribute.Value;
 
-        const user: User = { accessToken, refreshToken, username, sub: userId, email, favorites: [] };
+        const user: User = { 
+          accessToken, 
+          refreshToken, 
+          username, 
+          sub: userId, 
+          email,
+          avatar: '',
+          userId: userId,
+          favorites: []
+        };
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
 
