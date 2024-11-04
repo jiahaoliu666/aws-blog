@@ -16,6 +16,7 @@ import { User } from '../../types/userType';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '../../context/AuthContext';
 import { lineService } from '../../services/lineService';
+import toast from 'react-hot-toast';
 
 interface NotificationSettings {
   line: boolean;
@@ -115,6 +116,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     message: '',
     status: 'pending'
   });
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerificationInput, setShowVerificationInput] = useState(false);
+  const [lineId, setLineId] = useState('');
 
   useEffect(() => {
     setIsClient(true);
@@ -209,6 +213,67 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       });
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyLineId = async () => {
+    try {
+      if (!user) {
+        throw new Error('用戶未登入');
+      }
+      
+      const response = await fetch('/api/line/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.userId,
+          lineId: lineId
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setShowVerificationInput(true);
+        toast.success('請查看 LINE 訊息中的驗證碼');
+      } else {
+        toast.error(data.message || '驗證失敗');
+      }
+    } catch (error) {
+      toast.error('驗證過程發生錯誤');
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    try {
+      if (!user?.userId) {
+        throw new Error('用戶未登入');
+      }
+      
+      const response = await fetch('/api/line/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.userId,
+          code: verificationCode
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setShowVerificationInput(false);
+        toast.success('LINE 帳號驗證成功！');
+        // 更新用戶狀態
+      } else {
+        toast.error(data.message || '驗證碼錯誤');
+      }
+    } catch (error) {
+      toast.error('驗證過程發生錯誤');
     }
   };
 
@@ -745,52 +810,46 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             <label htmlFor="lineUserId" className="block text-sm font-medium text-gray-700 mb-2">
                               LINE ID 設定
                             </label>
-                            
-                            <div className="relative">
+                            <div className="flex gap-2">
                               <input
                                 type="text"
                                 id="lineUserId"
-                                value={lineUserId}
-                                onChange={(e) => handleLineIdChange(e.target.value)}
-                                className={`
-                                  pl-10 pr-4 py-2 w-full rounded-lg border
-                                  ${lineIdStatus === 'success' ? 'border-green-500' : 
-                                    lineIdStatus === 'error' ? 'border-red-500' : 'border-gray-300'}
-                                `}
+                                value={lineId}
+                                onChange={(e) => setLineId(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 placeholder="請輸入您的 LINE ID"
                               />
-                              
-                              {/* 狀態圖示 */}
-                              {lineIdStatus === 'validating' && (
-                                <FontAwesomeIcon 
-                                  icon={faSpinner} 
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" 
-                                />
-                              )}
-                              {lineIdStatus === 'success' && (
-                                <FontAwesomeIcon 
-                                  icon={faCheckCircle} 
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" 
-                                />
-                              )}
-                              {lineIdStatus === 'error' && (
-                                <FontAwesomeIcon 
-                                  icon={faExclamationCircle} 
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" 
-                                />
-                              )}
+                              <button
+                                onClick={handleVerifyLineId}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                              >
+                                驗證
+                              </button>
                             </div>
 
-                            {/* 錯誤訊息 */}
-                            {lineIdError && (
-                              <p className="mt-2 text-sm text-red-600">{lineIdError}</p>
-                            )}
-
-                            {/* 驗證成功訊息 */}
-                            {lineIdStatus === 'success' && (
-                              <p className="mt-2 text-sm text-green-600">
-                                LINE 帳號驗證成功！您將可以收到最新文章通知。
-                              </p>
+                            {/* 驗證碼輸入區域 */}
+                            {showVerificationInput && (
+                              <div className="mt-4">
+                                <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
+                                  驗證碼
+                                </label>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    id="verificationCode"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="請輸入驗證碼"
+                                  />
+                                  <button
+                                    onClick={handleVerifyCode}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                                  >
+                                    確認
+                                  </button>
+                                </div>
+                              </div>
                             )}
                           </div>
 
@@ -881,7 +940,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             {isLoading ? (
                               <>
                                 <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
-                                <span>儲存中...</span>
+                                <span>儲存...</span>
                               </>
                             ) : (
                               <>

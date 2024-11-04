@@ -9,6 +9,7 @@ import { lineConfig } from "../../config/line";
 import { logger } from "../../utils/logger";
 import { lineService } from '../../services/lineService';
 import { User } from '../../types/userType';
+import { toast } from 'react-toastify';
 
 interface EditableFields {
   username: boolean;
@@ -150,6 +151,8 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     emailNotification: false
   });
   const [isClient, setIsClient] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerificationInput, setShowVerificationInput] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -248,7 +251,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
             return { translatedTitle, link, timestamp, sourcePage };
           }));
 
-          setRecentArticles(articles.slice(0, 12)); // 確保顯12筆
+          setRecentArticles(articles.slice(0, 12)); // 確保���12筆
         } catch (error) {
           console.error('Error fetching recent articles:', error);
         }
@@ -291,7 +294,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
         // Log the activity
-        await logActivity(authUser?.sub || 'default-sub', `變更用戶：${localUsername}`);
+        await logActivity(authUser?.sub || 'default-sub', `變更用戶��${localUsername}`);
       } catch (error) {
         setUploadMessage('更新用戶名失敗，稍後再試。');
         changesSuccessful = false;
@@ -932,6 +935,59 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     }
   };
 
+  const handleVerifyLineId = async () => {
+    try {
+      const response = await fetch('/api/line/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.userId || authUser?.sub,
+          lineId: lineId
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setShowVerificationInput(true);
+        toast.success('請查看 LINE 訊息中的驗證碼');
+      } else {
+        toast.error(data.message || '驗證失敗');
+      }
+    } catch (error) {
+      toast.error('驗證過程發生錯誤');
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    try {
+      const response = await fetch('/api/line/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.userId || authUser?.sub,
+          code: verificationCode
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setShowVerificationInput(false);
+        toast.success('LINE 帳號驗證成功！');
+        // 更新用戶狀態
+      } else {
+        toast.error(data.message || '驗證碼錯誤');
+      }
+    } catch (error) {
+      toast.error('驗證過程發生錯誤');
+    }
+  };
+
   return {
     user: authUser,
     formData,
@@ -997,5 +1053,10 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     setIsProfileMenuOpen,
     isCompactLayout,
     setIsCompactLayout,
+    verificationCode,
+    setVerificationCode,
+    showVerificationInput,
+    handleVerifyLineId,
+    handleVerifyCode,
   };
 };

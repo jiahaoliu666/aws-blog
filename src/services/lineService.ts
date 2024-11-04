@@ -191,28 +191,16 @@ export const lineService = {
         };
       }
 
-      // 2. 更新用戶的 LINE 設定
-      const updateParams = {
-        TableName: 'AWS_Blog_UserNotificationSettings',
-        Key: {
-          userId: { S: userId }
-        },
-        UpdateExpression: 'SET lineUserId = :lineId, lineNotification = :true, isVerified = :true, updatedAt = :now',
-        ExpressionAttributeValues: {
-          ':lineId': { S: lineId },
-          ':true': { BOOL: true },
-          ':now': { N: String(Date.now()) }
-        }
-      };
+      // 2. 產生驗證碼
+      const verificationCode = await lineService.generateVerificationCode(userId);
 
-      await dynamoClient.send(new UpdateItemCommand(updateParams));
-
-      // 3. 發送歡迎訊息
+      // 3. 發送驗證碼訊息給用戶
       await sendWelcomeMessage(lineId);
+      await lineService.sendVerificationMessage(lineId, verificationCode);
 
       return {
         success: true,
-        message: 'LINE 帳號驗證成功'
+        message: '已發送驗證碼，請在 LINE 中查收'
       };
     } catch (error) {
       logger.error('LINE 驗證失敗:', error);
@@ -220,6 +208,28 @@ export const lineService = {
         success: false,
         message: '驗證過程發生錯誤'
       };
+    }
+  },
+
+  // 新增發送驗證碼訊息的函數
+  sendVerificationMessage: async (lineId: string, code: string) => {
+    const response = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+      },
+      body: JSON.stringify({
+        to: lineId,
+        messages: [{
+          type: 'text',
+          text: `您的驗證碼是：${code}\n請在網頁上輸入此驗證碼完成驗證。\n驗證碼有效期為10分鐘。`
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('發送驗證碼訊息失敗');
     }
   }
 };

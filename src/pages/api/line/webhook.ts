@@ -23,7 +23,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           break;
         case 'message':
           if (message.type === 'text') {
-            await lineService.handleVerification(message.text, source.userId);
+            if (message.text.startsWith('verify:')) {
+              await lineService.handleVerification(message.text, source.userId);
+            }
           }
           break;
       }
