@@ -397,7 +397,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         </div>
                         <p className="mt-4 text-sm text-gray-500">用大小寫字母、、特殊字符來增強密碼安性</p>
                       </div>
-                      {/* 安全示 */}
+                      {/* 安全 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
                         <p className="mt-2 text-sm text-gray-500">
@@ -539,10 +539,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                 {activeTab === 'notificationSettings' && (
                   <>
                     <h3 className="text-2xl font-bold text-gray-800 mb-6">通知設置</h3>
-                    <div className="space-y-6 bg-white rounded-xl">
+                    <div className="space-y-6">
                       {/* Email 通知設定 */}
-                      <div className="p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <div className="bg-blue-100 p-3 rounded-full">
                               <FontAwesomeIcon icon={faEnvelope} className="text-blue-600 text-xl" />
@@ -558,31 +558,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             onChange={() => toggleNotification('email')}
                           />
                         </div>
-                        
-                        {/* Email 設定內容 - 使用動畫過渡 */}
-                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                          formData.showEmailSettings ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                        }`}>
-                          <div className="mt-4">
-                            <label htmlFor="notificationEmail" className="block text-sm font-medium text-gray-700">
-                              通知信箱
-                            </label>
-                            <input
-                              type="email"
-                              id="notificationEmail"
-                              value={formData.email}
-                              disabled
-                              className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm text-gray-500"
-                            />
-                            <p className="mt-2 text-sm text-gray-500">
-                              此為您的通知信箱
-                            </p>
-                          </div>
-                        </div>
                       </div>
 
                       {/* LINE 通知設定 */}
-                      <div className="p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-4">
                             <div className="bg-green-100 p-3 rounded-full">
@@ -627,7 +606,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 alt="LINE 官方帳號 QR Code" 
                                 className="w-40 h-40 mb-2"
                               />
-                              <p className="text-sm text-gray-600">掃描 QR Code 加入好友</p>
+                              <p className="text-sm text-gray-600">掃�� QR Code 加入好友</p>
                             </div>
 
                             {/* 直接追蹤按鈕 */}
@@ -741,46 +720,46 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               </details>
                             </div>
                           </div>
+                        </div>
+                      </div>
 
-                          {/* 儲存按鈕 */}
-                          <div className="flex flex-col space-y-4 mt-6">
-                            {/* 統一的消息通知區域 */}
-                            {uploadMessage && (
-                              <div className={`p-4 rounded-lg shadow-md ${
-                                uploadMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                              }`}>
-                                {uploadMessage}
-                              </div>
-                            )}
-                            
-                            {/* 儲存按鈕 */}
-                            <div className="flex justify-end">
-                              <button
-                                onClick={() => handleSaveNotificationSettings(user?.sub)}
-                                disabled={isLoading || lineIdStatus === 'error'}
-                                className={`
-                                  px-6 py-2.5 rounded-full
-                                  flex items-center space-x-2
-                                  ${isLoading || lineIdStatus === 'error'
-                                    ? 'bg-gray-400 cursor-not-allowed' 
-                                    : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
-                                  text-white transition duration-200 shadow-md hover:shadow-lg
-                                `}
-                              >
-                                {isLoading ? (
-                                  <>
-                                    <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                                    <span>儲存中...</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <FontAwesomeIcon icon={faSave} />
-                                    <span>儲存設定</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
+                      {/* 新增：統一的儲存按鈕區域 */}
+                      <div className="mt-8">
+                        {/* 顯示設定狀態訊息 */}
+                        {settingsMessage && (
+                          <div className={`mb-4 p-4 rounded-lg shadow-md ${
+                            settingsStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {settingsMessage}
                           </div>
+                        )}
+                        
+                        {/* 儲存按鈕 */}
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleSaveNotificationSettings(user?.sub)}
+                            disabled={isLoading || lineIdStatus === 'error'}
+                            className={`
+                              px-6 py-2.5 rounded-full
+                              flex items-center space-x-2
+                              ${isLoading || lineIdStatus === 'error'
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
+                              text-white transition duration-200 shadow-md hover:shadow-lg
+                            `}
+                          >
+                            {isLoading ? (
+                              <>
+                                <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
+                                <span>儲存中...</span>
+                              </>
+                            ) : (
+                              <>
+                                <FontAwesomeIcon icon={faSave} className="mr-2" />
+                                <span>儲存設定</span>
+                              </>
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>
