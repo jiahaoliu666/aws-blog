@@ -557,7 +557,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           placeholder="請輸入您的問題、意見或建議"
                         />
                       </div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">���傳圖片</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">傳圖片</label>
                       <input
                         id="feedbackImage1"
                         name="feedbackImage1"
@@ -708,7 +708,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             {/* 直接追蹤按鈕 */}
                             <div className="text-center">
                               <a 
-                                href="https://line.me/R/ti/p/@your-line-id"
+                                href="https://line.me/R/ti/p/@601feiwz"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center px-6 py-3 bg-[#00B900] text-white rounded-lg hover:bg-[#00A000] transition-colors duration-200"

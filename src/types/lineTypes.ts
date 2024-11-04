@@ -2,6 +2,8 @@ export interface LineConfig {
   channelAccessToken: string;
   channelSecret: string;
   webhookUrl: string;
+  basicId: string;
+  qrCodeUrl: string;
 }
 
 interface LineTextContent {
