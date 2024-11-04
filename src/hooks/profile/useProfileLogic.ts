@@ -29,6 +29,8 @@ interface FormData {
     email: boolean;
     line: boolean;
   };
+  showEmailSettings: boolean;
+  showLineSettings: boolean;
 }
 
 const checkLineFollowStatus = async (lineId: string): Promise<boolean> => {
@@ -99,7 +101,9 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     notifications: {
       email: false,
       line: false
-    }
+    },
+    showEmailSettings: false,
+    showLineSettings: false
   }));
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -323,7 +327,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         throw new Error('密碼強度不足，請包含大小寫字母、數字和特殊符號');
       }
 
-      // 變更密碼
+      // 變��密碼
       const changePasswordCommand = new ChangePasswordCommand({
         PreviousPassword: oldPassword,
         ProposedPassword: formData.password,
@@ -652,7 +656,9 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       notifications: {
         ...prev.notifications,
         [type]: !prev.notifications[type]
-      }
+      },
+      showEmailSettings: type === 'email' ? !prev.notifications.email : prev.showEmailSettings,
+      showLineSettings: type === 'line' ? !prev.notifications.line : prev.showLineSettings
     }));
   };
 
