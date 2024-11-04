@@ -98,6 +98,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   const router = useRouter();
   const { user: authUser } = useAuthContext();
   const [isClient, setIsClient] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<{
+    status: 'success' | 'error' | null;
+    message: string;
+  }>({ status: null, message: '' });
 
   useEffect(() => {
     setIsClient(true);
@@ -129,6 +134,48 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       </div>
     );
   }
+
+  const verifyLineFollowing = async () => {
+    if (!lineUserId.trim()) {
+      setVerificationResult({
+        status: 'error',
+        message: '請先輸入 LINE ID'
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const response = await fetch('/api/line/check-follow-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ lineId: lineUserId, userId: authUser?.sub })
+      });
+
+      const data = await response.json();
+      
+      if (data.isFollowing) {
+        setVerificationResult({
+          status: 'success',
+          message: '驗證成功！您已成功追蹤 LINE 官方帳號'
+        });
+      } else {
+        setVerificationResult({
+          status: 'error',
+          message: '驗證失敗：您尚未追蹤 LINE 官方帳號'
+        });
+      }
+    } catch (error) {
+      setVerificationResult({
+        status: 'error',
+        message: '驗證過程發生錯誤，請稍後再試'
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
