@@ -251,3 +251,25 @@ export class LineService {
 }
 
 export const lineService = new LineService();
+
+async function requestVerification(userId: string, lineId: string) {
+  try {
+    const response = await fetch('/api/line/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, lineId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('驗證請求失敗');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('發送驗證請求時發生錯誤:', error);
+    throw error;
+  }
+}

@@ -8,44 +8,45 @@ export const useProfileLogic = (user: { userId: string }) => {
     code?: string;
   }>({ step: 'idle' });
 
-  const verifyLineId = async (lineId: string) => {
+  const handleVerifyLineId = async (lineId: string) => {
     try {
-      const response = await fetch('/api/line/check-follow-status', {
+      setVerificationState({ step: 'verifying' });
+      
+      if (!user?.userId) {
+        throw new Error('用戶未登入');
+      }
+
+      // 發送驗證請求
+      await fetch('/api/line/request', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          lineId,
-          userId: user.userId 
+          userId: user.userId,
+          lineId: lineId
         })
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        // 更新用戶狀態
-        updateUser({
-          lineSettings: {
-            id: lineId,
-            isVerified: true,
-            status: 'success'
-          }
-        });
-        return true;
-      } else {
-        throw new Error(data.message);
-      }
+      // 更新狀態
+      setVerificationState(prev => ({
+        ...prev,
+        id: lineId,
+        status: 'validating'
+      }));
+
+      // 顯示成功訊息
+      setVerificationState(prev => ({
+        ...prev,
+        status: 'success'
+      }));
+
     } catch (error) {
-      // 更新驗證失敗狀態
-      updateUser({
-        lineSettings: {
-          id: lineId, 
-          isVerified: false,
-          status: 'error'
-        }
-      });
-      return false;
+      console.error('LINE ID 驗證失敗:', error);
+      setVerificationState(prev => ({
+        ...prev,
+        status: 'error'
+      }));
     }
   };
 
@@ -67,5 +68,5 @@ export const useProfileLogic = (user: { userId: string }) => {
     }
   };
 
-  return { verificationState, verifyLineId, confirmVerification };
+  return { verificationState, handleVerifyLineId, confirmVerification };
 }; 

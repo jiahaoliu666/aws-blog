@@ -184,6 +184,18 @@ interface ProfileLogicReturn {
   handleVerifyCode: () => Promise<void>;
   isVerifying: boolean;
   setLineIdStatus: React.Dispatch<React.SetStateAction<'idle' | 'validating' | 'success' | 'error'>>;
+  verificationStatus: {
+    code: string | null;
+    message: string;
+    status: 'pending' | 'success' | 'error';
+  };
+  setVerificationStatus: React.Dispatch<React.SetStateAction<VerificationStatus>>;
+}
+
+interface VerificationStatus {
+  code: string | null;
+  message: string;
+  status: 'pending' | 'success' | 'error';
 }
 
 export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): ProfileLogicReturn => {
@@ -267,6 +279,12 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   const [isVerifying, setIsVerifying] = useState(false);
 
   const [settings, setSettings] = useState(null);
+
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
+    code: null,
+    message: '',
+    status: 'pending'
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -436,7 +454,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        setUploadMessage('用戶名更新成功，頁面刷新中...');
+        setUploadMessage('用戶名新成功，頁刷新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
@@ -526,7 +544,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗檔案類型不支援，請確認檔案類型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗檔類型不支援，請確認檔案類型是否為 jpeg 或 png。');
         return;
       }
 
@@ -838,7 +856,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       
       if (data.success) {
         setLineIdStatus('success');
-        toast.success('LINE 帳號驗證成功！');
+        toast.success('LINE 號驗證成功！');
         setFormData(prev => ({
           ...prev,
           notifications: {
@@ -1087,7 +1105,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
         toast.error(data.message || '驗證碼錯誤');
       }
     } catch (error) {
-      toast.error('驗證過程發生錯誤');
+      toast.error('驗證過程發生誤');
     }
   };
 
@@ -1163,5 +1181,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     handleVerifyCode,
     isVerifying,
     setLineIdStatus,
+    verificationStatus,
+    setVerificationStatus,
   };
 };

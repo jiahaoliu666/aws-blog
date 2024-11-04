@@ -8,7 +8,7 @@ import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 import Navbar from '../common/Navbar'; 
 import Footer from '../common/Footer'; 
 import logActivity from '../../pages/api/profile/activity-log';
-import { Switch } from '@headlessui/react';  // 或其他 UI 庫的 Switch 組件
+import { Switch } from '@headlessui/react';  // 其他 UI 庫的 Switch 組件
 import { checkLineFollowStatus } from '../../services/lineService';
 import { useAuth } from '../../hooks/useAuth';
 import { MouseEvent } from 'react';
@@ -102,6 +102,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     toggleNotification, // 確保這行加入
     handleSaveNotificationSettings,
     setLineIdStatus,
+    handleVerifyLineId,
+    verificationStatus,
+    setVerificationStatus,
   } = useProfileLogic({ user });
 
   const router = useRouter();
@@ -112,14 +115,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     status: 'success' | 'error' | null;
     message: string;
   }>({ status: null, message: '' });
-  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
-    code: null,
-    message: '',
-    status: 'pending'
-  });
-  const [verificationCode, setVerificationCode] = useState('');
-  const [showVerificationInput, setShowVerificationInput] = useState(false);
-  const [lineId, setLineId] = useState('');
+  const [lineId, setLineId] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     setIsClient(true);
@@ -218,103 +215,18 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     }
   };
 
-  const handleVerifyLineId = async () => {
-    if (!setLineIdStatus || !setFormData) {
-      toast.error('系統錯誤：狀態更新函數未定義');
+  const onVerifyClick = async () => {
+    if (!lineId?.trim()) {
+      toast.error('請輸入 LINE ID');
       return;
     }
-
+    
     try {
-      if (!user?.sub && !user?.userId) {
-        toast.error('用戶未登入');
-        return;
-      }
-      
-      if (!lineId) {
-        toast.error('請輸入 LINE ID');
-        return;
-      }
-
-      setIsVerifying(true);
-      setLineIdStatus('validating');
-
-      const response = await fetch('/api/line/check-follow-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          lineId: lineId.trim(),
-          userId: user.sub || user.userId
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setLineIdStatus('success');
-        toast.success('LINE 帳號驗證成功！');
-        setFormData((prev) => ({
-          ...prev,
-          notifications: {
-            ...prev.notifications,
-            line: true
-          }
-        }));
-      } else {
-        setLineIdStatus('error');
-        setFormData((prev) => ({
-          ...prev,
-          notifications: {
-            ...prev.notifications,
-            line: false
-          }
-        }));
-        toast.error(data.message || '驗證失敗');
-      }
+      await handleVerifyLineId();
+      setLineUserId(lineId);
     } catch (error) {
-      setLineIdStatus('error');
-      setFormData((prev) => ({
-        ...prev,
-        notifications: {
-          ...prev.notifications,
-          line: false
-        }
-      }));
-      toast.error('驗證過程發生錯誤');
-      console.error('LINE 驗證錯誤:', error);
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    try {
-      if (!user?.userId) {
-        throw new Error('用戶未登入');
-      }
-      
-      const response = await fetch('/api/line/verify-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.userId,
-          code: verificationCode
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setShowVerificationInput(false);
-        toast.success('LINE 帳號驗證成功！');
-        // 更新用戶狀態
-      } else {
-        toast.error(data.message || '驗證碼錯誤');
-      }
-    } catch (error) {
-      toast.error('驗證過程發生錯誤');
+      console.error('驗證處理失敗:', error);
+      toast.error('驗證處理失敗，請稍後再試');
     }
   };
 
@@ -409,7 +321,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         <div>
                           <p className="text-xl mb-2">用戶名：{formData.username}</p>
                           <p className="text-xl mb-2">電子郵件：{formData.email}</p>
-                          <p className="text-xl">註冊日期：{formData.registrationDate}</p>
+                          <p className="text-xl">冊日期：{formData.registrationDate}</p>
                         </div>
                         <div>
                           <input
@@ -642,7 +554,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                       });
                     }}>
                       <div>
-                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵件</label>
+                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵��</label>
                         <input
                           id="feedbackEmail"
                           name="feedbackEmail"
@@ -887,25 +799,15 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 )}
                               </div>
                               <button
-                                onClick={handleVerifyLineId}
-                                disabled={lineIdStatus === 'validating' || !lineUserId}
+                                onClick={onVerifyClick}
+                                disabled={verificationStatus.status === 'pending'}
                                 className={`px-4 py-2 rounded-md ${
-                                  lineIdStatus === 'validating'
+                                  verificationStatus.status === 'pending'
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-blue-600 hover:bg-blue-700'
                                 } text-white`}
                               >
-                                {lineIdStatus === 'validating' ? (
-                                  <span className="flex items-center">
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    驗證中
-                                  </span>
-                                ) : (
-                                  '驗證'
-                                )}
+                                {verificationStatus.status === 'pending' ? '驗證中...' : '驗證'}
                               </button>
                             </div>
                             
@@ -957,7 +859,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 <summary className="font-medium">LINE ID 格式說明</summary>
                                 <ul className="mt-2 ml-5 list-disc text-sm space-y-1">
                                   <li>長度必須在4-20個字元之間</li>
-                                  <li>可使用英文字、數字、底線(_)和點號(.)</li>
+                                  <li>可使英文字、數字、底線(_)和點號(.)</li>
                                   <li>不可包含特殊符號或空格</li>
                                 </ul>
                               </details>
