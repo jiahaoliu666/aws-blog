@@ -193,111 +193,10 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   // 使用 authUser 作為後備
   const currentUser = user || authUser;
   
-  // 如果兩者都沒有，則重定向到登入頁面
-  useEffect(() => {
-    if (!currentUser) {
-      router.push('/auth/login');
-    }
-  }, [currentUser, router]);
-
-  // 如果沒有用戶資料，返回載入中狀態
-  if (!currentUser) {
-    return {
-      isLoading: true,
-      user: null,
-      formData: {
-        username: '',
-        email: '',
-        registrationDate: '',
-        avatar: '/default-avatar.png',
-        password: '',
-        confirmPassword: '',
-        feedbackTitle: '',
-        feedbackContent: '',
-        notifications: {
-          email: false,
-          line: false
-        },
-        showEmailSettings: false,
-        showLineSettings: false
-      },
-      recentArticles: [],
-      isEditing: false,
-      isPasswordModalOpen: false,
-      showOldPassword: false,
-      showNewPassword: false,
-      uploadMessage: null,
-      passwordMessage: null,
-      isEditable: {
-        username: false,
-        password: false,
-      },
-      setIsEditing: () => {},
-      setTempAvatar: () => {},
-      setFormData: () => {},
-      setOldPassword: () => {},
-      setIsPasswordModalOpen: () => {},
-      setShowOldPassword: () => {},
-      setShowNewPassword: () => {},
-      handleSaveProfileChanges: async () => {},
-      handleChangePassword: async () => {},
-      handleLogout: async () => {},
-      handleAvatarChange: async () => {},
-      handleEditClick: () => {},
-      handleOpenPasswordModal: () => {},
-      handleClosePasswordModal: () => {},
-      handleCancelChanges: () => {},
-      handleChange: () => {},
-      resetPasswordFields: () => {},
-      toggleEditableField: () => {},
-      activityLog: [],
-      oldPassword: '',
-      calculatePasswordStrength: () => 0,
-      resetFeedbackForm: () => {},
-      initializeTabState: () => {},
-      localUsername: '',
-      setLocalUsername: () => {},
-      resetUsername: () => {},
-      logRecentArticle: async () => {},
-      toggleNotification: () => {},
-      handleSaveSettings: async () => {},
-      settingsMessage: null,
-      settingsStatus: null,
-      feedbackMessage: null,
-      resetUploadState: () => {},
-      isMobile: false,
-      lineUserId: '',
-      setLineUserId: () => {},
-      lineIdError: '',
-      lineIdStatus: 'idle',
-      handleLineIdChange: () => {},
-      lineId: '',
-      setLineId: () => {},
-      lineNotification: false,
-      setLineNotification: () => {},
-      message: '',
-      setMessage: () => {},
-      sendFeedback: async () => {},
-      handleSaveNotificationSettings: async () => {},
-      activeTab: '',
-      setActiveTab: () => {},
-      isProfileMenuOpen: false,
-      setIsProfileMenuOpen: () => {},
-      isCompactLayout: false,
-      setIsCompactLayout: () => {},
-      verificationCode: '',
-      setVerificationCode: () => {},
-      showVerificationInput: false,
-      handleVerifyLineId: async () => {},
-      handleVerifyCode: async () => {},
-      isVerifying: false,
-      setLineIdStatus: () => {},
-    } as ProfileLogicReturn;
-  }
+  // 初始化所有 state hooks
   const [activeTab, setActiveTab] = useState('profile');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isCompactLayout, setIsCompactLayout] = useState(false);
-  
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
@@ -367,28 +266,35 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   const [showVerificationInput, setShowVerificationInput] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const [settings, setSettings] = useState(() => {
-    // 從 localStorage 讀取快取的設定
-    const cachedSettings = localStorage.getItem('userSettings');
-    return cachedSettings ? JSON.parse(cachedSettings) : null;
-  });
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cachedSettings = localStorage.getItem('userSettings');
+      if (cachedSettings) {
+        setSettings(JSON.parse(cachedSettings));
+      }
+    }
+  }, []);
 
   const fetchSettings = async () => {
     try {
-      // 檢查快取是否過期
-      const cachedTimestamp = localStorage.getItem('settingsCacheTimestamp');
-      const CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取
-      
-      if (cachedTimestamp && Date.now() - Number(cachedTimestamp) < CACHE_DURATION) {
-        return; // 使用快取的數據
+      if (typeof window !== 'undefined') {
+        const cachedTimestamp = localStorage.getItem('settingsCacheTimestamp');
+        const CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取
+        
+        if (cachedTimestamp && Date.now() - Number(cachedTimestamp) < CACHE_DURATION) {
+          return; // 使用快取的數據
+        }
       }
 
       const response = await fetch('/api/notifications/settings');
       const data = await response.json();
       
-      // 更新快取
-      localStorage.setItem('userSettings', JSON.stringify(data));
-      localStorage.setItem('settingsCacheTimestamp', Date.now().toString());
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userSettings', JSON.stringify(data));
+        localStorage.setItem('settingsCacheTimestamp', Date.now().toString());
+      }
       setSettings(data);
     } catch (error) {
       console.error('獲取設定時發生錯誤:', error);
