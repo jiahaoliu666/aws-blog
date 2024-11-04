@@ -589,7 +589,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                     <div className="space-y-6">
                       {/* Email 通知設定 */}
                       <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-4">
                             <div className="bg-blue-100 p-3 rounded-full">
                               <FontAwesomeIcon icon={faEnvelope} className="text-blue-600 text-xl" />
@@ -604,6 +604,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             isChecked={formData.notifications.email}
                             onChange={() => toggleNotification('email')}
                           />
+                        </div>
+
+                        {/* Email 設定展開內容 */}
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                          formData.notifications.email ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                        }`}>
+                          <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-gray-600">通知接收信箱：</span>
+                            </div>
+                            <div className="mt-2 p-2 bg-gray-100 rounded">
+                              <p className="text-gray-800 font-medium">{formData.email}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
