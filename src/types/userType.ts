@@ -20,6 +20,7 @@ export interface User {
 export interface LineSettings {
   id: string;
   isVerified: boolean;
+  status?: 'idle' | 'validating' | 'success' | 'error';
 }
 
 // 通知設定介面
@@ -34,19 +35,17 @@ export interface FormData {
   email: string;
   registrationDate: string;
   avatar: string;
-  notifications: {
-    line: boolean;
-    email: boolean;
-  };
   password: string;
   confirmPassword: string;
   feedbackTitle: string;
   feedbackContent: string;
   feedbackImage?: File;
-  lineSettings: {
-    id: string;
-    isVerified: boolean;
+  notifications: {
+    email: boolean;
+    line: boolean;
   };
+  showEmailSettings?: boolean;
+  showLineSettings?: boolean;
 }
 
 // 可編輯欄位介面

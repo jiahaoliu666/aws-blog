@@ -112,11 +112,188 @@ const updateNotificationSettings = async ({
   await dynamoClient.send(command);
 };
 
-export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
+interface ProfileLogicReturn {
+  user: User | null;
+  formData: FormData;
+  recentArticles: { translatedTitle: string; link: string; timestamp: string; sourcePage: string }[];
+  isEditing: boolean;
+  isPasswordModalOpen: boolean;
+  showOldPassword: boolean;
+  showNewPassword: boolean;
+  uploadMessage: string | null;
+  passwordMessage: string | null;
+  isLoading: boolean;
+  isEditable: EditableFields;
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  setTempAvatar: React.Dispatch<React.SetStateAction<string | null>>;
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
+  setOldPassword: React.Dispatch<React.SetStateAction<string>>;
+  setIsPasswordModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowOldPassword: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowNewPassword: React.Dispatch<React.SetStateAction<boolean>>;
+  handleSaveProfileChanges: (localUsername: string) => Promise<void>;
+  handleChangePassword: () => Promise<void>;
+  handleLogout: () => Promise<void>;
+  handleAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleEditClick: () => void;
+  handleOpenPasswordModal: () => void;
+  handleClosePasswordModal: () => void;
+  handleCancelChanges: () => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  resetPasswordFields: () => void;
+  toggleEditableField: (field: keyof EditableFields) => void;
+  activityLog: { date: string; action: string; }[];
+  oldPassword: string;
+  calculatePasswordStrength: (password: string) => number;
+  resetFeedbackForm: () => void;
+  initializeTabState: () => void;
+  localUsername: string;
+  setLocalUsername: React.Dispatch<React.SetStateAction<string>>;
+  resetUsername: () => void;
+  logRecentArticle: (articleId: string, link: string, sourcePage: string) => Promise<void>;
+  toggleNotification: (type: 'email' | 'line') => void;
+  handleSaveSettings: () => Promise<void>;
+  settingsMessage: string | null;
+  settingsStatus: 'success' | 'error' | null;
+  feedbackMessage: string | null;
+  resetUploadState: () => void;
+  isMobile: boolean;
+  lineUserId: string;
+  setLineUserId: React.Dispatch<React.SetStateAction<string>>;
+  lineIdError: string;
+  lineIdStatus: 'idle' | 'validating' | 'success' | 'error';
+  handleLineIdChange: (value: string) => void;
+  lineId: string;
+  setLineId: React.Dispatch<React.SetStateAction<string>>;
+  lineNotification: boolean;
+  setLineNotification: React.Dispatch<React.SetStateAction<boolean>>;
+  message: string;
+  setMessage: React.Dispatch<React.SetStateAction<string>>;
+  sendFeedback: (resetFileInput: () => void) => Promise<void>;
+  handleSaveNotificationSettings: (userId?: string) => Promise<void>;
+  activeTab: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  isProfileMenuOpen: boolean;
+  setIsProfileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isCompactLayout: boolean;
+  setIsCompactLayout: React.Dispatch<React.SetStateAction<boolean>>;
+  verificationCode: string;
+  setVerificationCode: React.Dispatch<React.SetStateAction<string>>;
+  showVerificationInput: boolean;
+  handleVerifyLineId: () => Promise<void>;
+  handleVerifyCode: () => Promise<void>;
+  isVerifying: boolean;
+  setLineIdStatus: React.Dispatch<React.SetStateAction<'idle' | 'validating' | 'success' | 'error'>>;
+}
+
+export const useProfileLogic = ({ user }: { user: User | null }): ProfileLogicReturn => {
   const { user: authUser, updateUser, logoutUser } = useAuthContext();
   const router = useRouter();
   
-  // 將 ProfileUI 的 state 移到這裡統一管理
+  // 使用 authUser 作為後備
+  const currentUser = user || authUser;
+  
+  // 如果兩者都沒有，則重定向到登入頁面
+  useEffect(() => {
+    if (!currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, router]);
+
+  // 如果沒有用戶資料，返回載入中狀態
+  if (!currentUser) {
+    return {
+      isLoading: true,
+      user: null,
+      formData: {
+        username: '',
+        email: '',
+        registrationDate: '',
+        avatar: '/default-avatar.png',
+        password: '',
+        confirmPassword: '',
+        feedbackTitle: '',
+        feedbackContent: '',
+        notifications: {
+          email: false,
+          line: false
+        },
+        showEmailSettings: false,
+        showLineSettings: false
+      },
+      recentArticles: [],
+      isEditing: false,
+      isPasswordModalOpen: false,
+      showOldPassword: false,
+      showNewPassword: false,
+      uploadMessage: null,
+      passwordMessage: null,
+      isEditable: {
+        username: false,
+        password: false,
+      },
+      setIsEditing: () => {},
+      setTempAvatar: () => {},
+      setFormData: () => {},
+      setOldPassword: () => {},
+      setIsPasswordModalOpen: () => {},
+      setShowOldPassword: () => {},
+      setShowNewPassword: () => {},
+      handleSaveProfileChanges: async () => {},
+      handleChangePassword: async () => {},
+      handleLogout: async () => {},
+      handleAvatarChange: async () => {},
+      handleEditClick: () => {},
+      handleOpenPasswordModal: () => {},
+      handleClosePasswordModal: () => {},
+      handleCancelChanges: () => {},
+      handleChange: () => {},
+      resetPasswordFields: () => {},
+      toggleEditableField: () => {},
+      activityLog: [],
+      oldPassword: '',
+      calculatePasswordStrength: () => 0,
+      resetFeedbackForm: () => {},
+      initializeTabState: () => {},
+      localUsername: '',
+      setLocalUsername: () => {},
+      resetUsername: () => {},
+      logRecentArticle: async () => {},
+      toggleNotification: () => {},
+      handleSaveSettings: async () => {},
+      settingsMessage: null,
+      settingsStatus: null,
+      feedbackMessage: null,
+      resetUploadState: () => {},
+      isMobile: false,
+      lineUserId: '',
+      setLineUserId: () => {},
+      lineIdError: '',
+      lineIdStatus: 'idle',
+      handleLineIdChange: () => {},
+      lineId: '',
+      setLineId: () => {},
+      lineNotification: false,
+      setLineNotification: () => {},
+      message: '',
+      setMessage: () => {},
+      sendFeedback: async () => {},
+      handleSaveNotificationSettings: async () => {},
+      activeTab: '',
+      setActiveTab: () => {},
+      isProfileMenuOpen: false,
+      setIsProfileMenuOpen: () => {},
+      isCompactLayout: false,
+      setIsCompactLayout: () => {},
+      verificationCode: '',
+      setVerificationCode: () => {},
+      showVerificationInput: false,
+      handleVerifyLineId: async () => {},
+      handleVerifyCode: async () => {},
+      isVerifying: false,
+      setLineIdStatus: () => {},
+    } as ProfileLogicReturn;
+  }
   const [activeTab, setActiveTab] = useState('profile');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isCompactLayout, setIsCompactLayout] = useState(false);
@@ -125,22 +302,22 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [tempAvatar, setTempAvatar] = useState<string | null>(null);
-  const [formData, setFormData] = useState<FormData>(() => ({
-    username: authUser?.username || '',
-    email: authUser?.email || '',
-    registrationDate: authUser?.registrationDate || '',
-    avatar: authUser?.avatar || '',
+  const [formData, setFormData] = useState<FormData>({
+    username: user?.username || '',
+    email: user?.email || '',
+    registrationDate: user?.registrationDate || '',
+    avatar: user?.avatar || '/default-avatar.png',
+    notifications: {
+      line: false,
+      email: false
+    },
     password: '',
     confirmPassword: '',
     feedbackTitle: '',
     feedbackContent: '',
-    notifications: {
-      email: false,
-      line: false
-    },
     showEmailSettings: false,
     showLineSettings: false
-  }));
+  });
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [isEditable, setIsEditable] = useState<EditableFields>({
@@ -166,7 +343,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [lineUserId, setLineUserId] = useState('');
   const [lineIdError, setLineIdError] = useState('');
-  const [lineIdStatus, setLineIdStatus] = useState<'success' | 'error' | 'idle' | 'validating'>('idle');
+  const [lineIdStatus, setLineIdStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
   const [lineVerificationTimer, setLineVerificationTimer] = useState<NodeJS.Timeout | null>(null);
   const dynamoClient = new DynamoDBClient({
     region: 'ap-northeast-1',
@@ -203,7 +380,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
       return;
     }
 
-    // 初始化表單資料
+    // 始化表單資料
     const currentUser = authUser || (storedUser ? JSON.parse(storedUser) : null);
     if (currentUser) {
       setFormData(prevData => ({
@@ -363,7 +540,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
       // 密碼強度驗證
       const strength = calculatePasswordStrength(formData.password);
       if (strength < 3) {
-        throw new Error('密碼強度不足，請包含大小寫字母、數字和特殊符號');
+        throw new Error('密碼強不足，請包含大小字母、數字和特殊符號');
       }
 
       // 變密碼
@@ -397,16 +574,10 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
-    if (type === 'checkbox') {
-      const target = e.target as HTMLInputElement;
-      setFormData({ ...formData, [name]: target.checked });
-    } else {
-      if (name === 'username') {
-        setTempUsername(value);
-      } else {
-        setFormData({ ...formData, [name]: value });
-      }
-    }
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
   };
 
   const handleLogout = async () => {

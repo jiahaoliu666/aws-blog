@@ -153,7 +153,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   }
 
   const verifyLineFollowing = async () => {
-    if (!lineUserId.trim()) {
+    const currentLineId = lineUserId || '';
+    if (!currentLineId.trim()) {
       setVerificationResult({
         status: 'error',
         message: '請先輸入 LINE ID'
@@ -168,7 +169,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ lineId: lineUserId, userId: authUser?.sub })
+        body: JSON.stringify({ lineId: currentLineId, userId: authUser?.sub })
       });
 
       const data = await response.json();
@@ -218,15 +219,22 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   };
 
   const handleVerifyLineId = async () => {
+    if (!setLineIdStatus || !setFormData) {
+      toast.error('系統錯誤：狀態更新函數未定義');
+      return;
+    }
+
     try {
-      if (!user) {
-        throw new Error('用戶未登入');
+      if (!user?.sub && !user?.userId) {
+        toast.error('用戶未登入');
+        return;
       }
       
       if (!lineId) {
         toast.error('請輸入 LINE ID');
         return;
       }
+
       setIsVerifying(true);
       setLineIdStatus('validating');
 
@@ -245,7 +253,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       if (data.success) {
         setLineIdStatus('success');
         toast.success('LINE 帳號驗證成功！');
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           notifications: {
             ...prev.notifications,
@@ -254,7 +262,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
         }));
       } else {
         setLineIdStatus('error');
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           notifications: {
             ...prev.notifications,
@@ -265,7 +273,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       }
     } catch (error) {
       setLineIdStatus('error');
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         notifications: {
           ...prev.notifications,
@@ -310,6 +318,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     }
   };
 
+  // 在 UI 中可以根據狀態顯示不同的視覺反饋
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'text-green-500';
+      case 'error':
+        return 'text-red-500';
+      case 'validating':
+        return 'text-blue-500';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
@@ -318,7 +340,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
             <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
-            <p className="text-lg text-gray-700">您將���新導向至登入頁面...</p>
+            <p className="text-lg text-gray-700">您將重新導向至登入頁面...</p>
           </div>
         ) : (
           <>
@@ -575,7 +597,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             style={{ width: `${calculatePasswordStrength(formData.password) * 20}%` }}
                           ></div>
                         </div>
-                        <p className="mt-4 text-sm text-gray-500">用大小寫字母、、特殊字符來增強密碼安性</p>
+                        <p className="mt-4 text-sm text-gray-500">用大小寫字母、、特殊符來增強密碼安性</p>
                       </div>
                       {/* 安全 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
@@ -729,7 +751,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold text-gray-800">Email 通知</h4>
-                              <p className="text-sm text-gray-500">接收最新文章的 Email 通知</p>
+                              <p className="text-sm text-gray-500">接收最新文的 Email 通知</p>
                             </div>
                           </div>
                           <SwitchField
@@ -781,7 +803,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           <div className="mb-8 bg-blue-50 p-4 rounded-lg">
                             <h5 className="font-semibold text-blue-800 mb-3">
                               <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
-                              設定步���
+                              設定步
                             </h5>
                             <ol className="list-decimal list-inside space-y-2 text-blue-700">
                               <li>開啟上方的 LINE 通知開關</li>
@@ -844,17 +866,26 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               LINE ID
                             </label>
                             <div className="mt-1 flex items-center gap-2">
-                              <input
-                                type="text"
-                                id="lineUserId"
-                                value={lineUserId}
-                                onChange={(e) => handleLineIdChange(e.target.value)}
-                                className={`block w-full rounded-md ${
-                                  lineIdStatus === 'error' ? 'border-red-300' : 'border-gray-300'
-                                } shadow-sm focus:border-blue-500 focus:ring-blue-500`}
-                                placeholder="請輸入您的 LINE ID"
-                                disabled={lineIdStatus === 'validating'}
-                              />
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={lineId}
+                                  onChange={(e) => setLineId(e.target.value)}
+                                  className={`border rounded-lg p-2 w-full ${
+                                    lineIdStatus === 'success' ? 'border-green-500' : 
+                                    lineIdStatus === 'error' ? 'border-red-500' : 
+                                    lineIdStatus === 'validating' ? 'border-blue-500' : 
+                                    'border-gray-300'
+                                  }`}
+                                />
+                                {lineIdStatus !== 'idle' && (
+                                  <span className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${getStatusColor(lineIdStatus)}`}>
+                                    {lineIdStatus === 'success' && '✓'}
+                                    {lineIdStatus === 'error' && '✗'}
+                                    {lineIdStatus === 'validating' && '...'}
+                                  </span>
+                                )}
+                              </div>
                               <button
                                 onClick={handleVerifyLineId}
                                 disabled={lineIdStatus === 'validating' || !lineUserId}
