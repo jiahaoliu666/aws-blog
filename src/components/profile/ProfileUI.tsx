@@ -20,72 +20,20 @@ interface NotificationSettings {
 }
 
 interface ProfileUIProps {
-  user: User;
-  onSave: (settings: NotificationSettings) => Promise<void>;
-  formData: {
-    notifications: {
-      line: boolean;
-      email: boolean;
-    };
-    username: string;
-    email: string;
-    avatar: string;
-    registrationDate: string;
-  };
-  recentArticles: any[];
-  isEditing: boolean;
-  isPasswordModalOpen: boolean;
-  showOldPassword: boolean;
-  showNewPassword: boolean;
-  isLoading: boolean;
-  isEditable: {
-    username: boolean;
-  };
-  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-  setTempAvatar: React.Dispatch<React.SetStateAction<string>>;
-  setFormData: React.Dispatch<React.SetStateAction<any>>;
-  setOldPassword: React.Dispatch<React.SetStateAction<string>>;
-  setIsPasswordModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowOldPassword: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowNewPassword: React.Dispatch<React.SetStateAction<boolean>>;
-  handleSaveProfileChanges: (username: string) => Promise<void>;
-  handleChangePassword: () => Promise<void>;
-  handleLogout: () => Promise<void>;
-  handleAvatarChange: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
-  handleEditClick: () => void;
-  handleOpenPasswordModal: () => void;
-  handleClosePasswordModal: () => void;
-  handleCancelChanges: () => void;
-  handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  resetPasswordFields: () => void;
-  toggleEditableField: (field: 'username') => void;
-  activityLog: any[];
-  oldPassword: string;
-  calculatePasswordStrength: (password: string) => number;
-  resetFeedbackForm: () => void;
-  initializeTabState: () => void;
-  localUsername: string;
-  setLocalUsername: React.Dispatch<React.SetStateAction<string>>;
-  resetUsername: () => void;
-  uploadMessage: string;
-  passwordMessage: string;
-  logRecentArticle: (article: any) => void;
-  toggleNotification: (notification: 'email' | 'line') => void;
-  handleSaveNotificationSettings: () => Promise<void>;
-  sendFeedback: () => Promise<void>;
-  feedbackMessage: string;
-  resetUploadState: () => void;
-  lineUserId: string;
-  setLineUserId: React.Dispatch<React.SetStateAction<string>>;
-  lineIdError: string;
-  lineIdStatus: 'validating' | 'success' | 'error';
-  handleLineIdChange: (value: string) => void;
-  settingsMessage: string | null;
-  settingsStatus: 'success' | 'error' | null;
-  handleSaveSettings: () => Promise<void>;
+  user: User | null;
 }
 
-const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
+interface FormData {
+  // ... 現有的屬性 ...
+  notifications: {
+    email: boolean;
+    line: boolean;
+  };
+}
+
+const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
+  const profileLogic = useProfileLogic({ user });
+
   const {
     formData,
     recentArticles,
@@ -124,10 +72,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
     uploadMessage, // 確保這些狀態直接從 useProfileLogic 中獲取
     passwordMessage,
     logRecentArticle, // 確保這些狀態直接從 useProfileLogic 中獲取
-    toggleNotification, // 移除這行
-    handleSaveNotificationSettings, // 移除這行
-    sendFeedback, // 確保調用 sendFeedback
-    feedbackMessage, // 新增這行
+    handleSaveSettings,
+    sendFeedback,
+    feedbackMessage,
     resetUploadState, // 新增這行
     lineUserId,
     setLineUserId,
@@ -136,8 +83,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
     handleLineIdChange,
     settingsMessage,
     settingsStatus,
-    handleSaveSettings,
-  } = useProfileLogic({ user });
+    toggleNotification, // 確保這行被加入
+    handleSaveNotificationSettings,
+  } = profileLogic;
 
   const [activeTab, setActiveTab] = React.useState('profile');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
@@ -209,7 +157,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="w-full text-white hover:text-gray-200 transition duration-300 flex items-center justify-between p-3 rounded-lg bg-gray-600 lg:hidden mb-4"
               >
-                <span className="text-sm sm:text-base">個人資訊選</span>
+                <span className="text-sm sm:text-base">個人訊選</span>
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -450,7 +398,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
                         </div>
                         <p className="mt-4 text-sm text-gray-500">用大小寫字母、、特殊字符來增強密碼安性</p>
                       </div>
-                      {/* 安全提示 */}
+                      {/* 安全示 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
                         <p className="mt-2 text-sm text-gray-500">
@@ -639,7 +587,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
-                              <p className="text-sm text-gray-500">接收最新文章的 LINE 即時通知</p>
+                              <p className="text-sm text-gray-500">接收最新文章的 LINE 即時通</p>
                             </div>
                           </div>
                           <SwitchField
@@ -736,7 +684,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
                           )}
                         </div>
 
-                        {/* 追蹤狀態指示器 */}
+                        {/* 追蹤狀態指示 */}
                         <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex items-center space-x-3">
                             <div className={`w-3 h-3 rounded-full ${

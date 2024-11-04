@@ -20,18 +20,14 @@ interface FormData {
   email: string;
   registrationDate: string;
   avatar: string;
-  notifications: {
-    line: boolean;
-    email: boolean;
-  };
   password: string;
   confirmPassword: string;
   feedbackTitle: string;
   feedbackContent: string;
-  feedbackImage?: File; // 新增這一行
-  lineSettings: {
-    id: string;
-    isVerified: boolean;
+  feedbackImage?: File;
+  notifications: {
+    email: boolean;
+    line: boolean;
   };
 }
 
@@ -72,7 +68,13 @@ interface UseProfileLogicProps {
   user: User | null;
 }
 
-export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
+interface NotificationSettings {
+  lineId: string;
+  lineNotification: boolean;
+  emailNotification: boolean;
+}
+
+export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null }) => {
   const router = useRouter();
   const { logoutUser, updateUser } = useAuthContext();
   const [showLoginMessage, setShowLoginMessage] = useState(false);
@@ -84,19 +86,14 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
     email: user?.email || '',
     registrationDate: user?.registrationDate || '',
     avatar: user?.avatar || '',
-    notifications: {
-      line: user?.notifications?.line || false,
-      email: user?.notifications?.email || false
-    },
     password: '',
     confirmPassword: '',
     feedbackTitle: '',
     feedbackContent: '',
-    feedbackImage: undefined,
-    lineSettings: {
-      id: '',
-      isVerified: false,
-    },
+    notifications: {
+      email: false,
+      line: false
+    }
   }));
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -137,6 +134,11 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
   const [message, setMessage] = useState('');
   const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
   const [settingsStatus, setSettingsStatus] = useState<'success' | 'error' | null>(null);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    lineId: '',
+    lineNotification: false,
+    emailNotification: false
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -284,7 +286,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
     let changesSuccessful = true;
 
     if (!localUsername.trim()) {
-      setUploadMessage('用戶名不能為空。');
+      setUploadMessage('戶名不能為空。');
       return;
     }
 
@@ -327,45 +329,40 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
   };
 
   const handleChangePassword = async () => {
-    const passwordRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
-
-    if (!oldPassword || !formData.password) {
-      setPasswordMessage('請輸入舊密碼和新密碼。');
-      return;
-    }
-
-    if (!passwordRegex.test(formData.password)) {
-      setPasswordMessage('密碼只能包含殊符號、英文和數字。');
-      return;
-    }
-
-    if (formData.password === oldPassword) {
-      setPasswordMessage('新密碼不能與舊密碼相同。');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setPasswordMessage('新密碼和確認密碼不一致。');
-      return;
-    }
-
     try {
+      // 基本驗證
+      if (!oldPassword || !formData.password) {
+        throw new Error('請輸入舊密碼和新密碼');
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error('新密碼和確認密碼不一致');
+      }
+
+      // 密碼強度驗證
+      const strength = calculatePasswordStrength(formData.password);
+      if (strength < 3) {
+        throw new Error('密碼強度不足，請包含大小寫字母、數字和特殊符號');
+      }
+
+      // 變更密碼
       const changePasswordCommand = new ChangePasswordCommand({
         PreviousPassword: oldPassword,
         ProposedPassword: formData.password,
         AccessToken: user?.accessToken!,
       });
-      await cognitoClient.send(changePasswordCommand);
-      setPasswordMessage('密碼變更成功，請重新登入。');
-      
-      // Log the password change activity
-      await logActivity(user?.sub || 'default-sub', '變更密碼');
 
-      setTimeout(() => {
-        handleLogout(); // 在這裡調用登出函數
-      }, 3000); // 3秒後登出
+      await cognitoClient.send(changePasswordCommand);
+      
+      // 成功處理
+      setPasswordMessage('密碼變更成功，請重新登入');
+      await logActivity(user?.sub || 'default-sub', '變更密碼');
+      
+      // 延遲登出
+      setTimeout(handleLogout, 3000);
+
     } catch (error) {
-      setPasswordMessage('更新密碼失敗，請確認舊密碼是否正確並重試。');
+      setPasswordMessage(error instanceof Error ? error.message : '密碼變更失敗');
     }
   };
 
@@ -671,13 +668,13 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
     }
   };
 
-  const toggleNotification = (type: 'line' | 'email') => {
-    setFormData(prevData => ({
-      ...prevData,
+  const toggleNotification = (type: 'email' | 'line'): void => {
+    setFormData((prev: FormData) => ({
+      ...prev,
       notifications: {
-        ...prevData.notifications,
-        [type]: !prevData.notifications[type],
-      },
+        ...prev.notifications,
+        [type]: !prev.notifications[type]
+      }
     }));
   };
 
@@ -770,80 +767,30 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
       setSettingsMessage(null);
       setSettingsStatus(null);
 
-      const settings = {
-        lineId: formData.lineSettings.id,
-        lineNotification: formData.notifications.line,
-        emailNotification: formData.notifications.email,
-      };
-
       // 驗證設定
-      const validation = validateSettings(settings);
-      if (!validation.isValid) {
-        setSettingsMessage(validation.message);
+      if (notificationSettings.lineNotification && !notificationSettings.lineId.trim()) {
+        setSettingsMessage('啟用 LINE 通知時必須提供有效的 LINE ID');
         setSettingsStatus('error');
         return;
       }
 
-      // 如果啟用了 LINE 通知，檢查追蹤狀態
-      if (settings.lineNotification && settings.lineId) {
-        const followStatus = await checkLineFollowStatus(settings.lineId);
-        if (!followStatus) {
-          setSettingsMessage('請先追蹤官方 LINE 帳號才能啟用 LINE 通知');
+      // 檢查 LINE 追蹤狀態
+      if (notificationSettings.lineNotification) {
+        const isFollowing = await checkLineFollowStatus(notificationSettings.lineId);
+        if (!isFollowing) {
+          setSettingsMessage('請先追官方 LINE 帳號');
           setSettingsStatus('error');
           return;
         }
       }
 
-      // 儲存設定到資料庫
+      // 儲存設定
       const response = await fetch('/api/notifications/settings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.sub,
-          lineUserId: settings.lineId,
-          lineNotification: settings.lineNotification,
-          emailNotification: settings.emailNotification,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        setSettingsMessage('通知設定已成功儲存');
-        setSettingsStatus('success');
-        
-        // 記錄活動
-        await logActivity(user?.sub || 'default-sub', '更新通知設定');
-      } else {
-        throw new Error(result.error || '儲存設定時發生錯誤');
-      }
-    } catch (error) {
-      setSettingsMessage(error instanceof Error ? error.message : '儲存設定時發生錯誤');
-      setSettingsStatus('error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSaveNotificationSettings = async (userId?: string) => {
-    if (!userId) {
-      setUploadMessage('用戶 ID 無效');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/notifications/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          lineUserId,
-          lineNotification: formData.notifications.line,
+          ...notificationSettings
         }),
       });
 
@@ -851,10 +798,13 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
         throw new Error('儲存設定失敗');
       }
 
-      setUploadMessage('通知設定已成功更新');
-      setTimeout(() => setUploadMessage(''), 3000);
+      setSettingsMessage('設定已成功儲存');
+      setSettingsStatus('success');
+      await logActivity(user?.sub || 'default-sub', '更新通知設定');
+
     } catch (error) {
-      setUploadMessage('儲存設定時發生錯誤');
+      setSettingsMessage(error instanceof Error ? error.message : '儲存設定時發生錯誤');
+      setSettingsStatus('error');
     } finally {
       setIsLoading(false);
     }
@@ -939,6 +889,46 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
     fetchNotificationSettings();
   }, [user]);
 
+  const handleSaveNotificationSettings = async (userId?: string) => {
+    if (!userId) {
+      setUploadMessage('找不到用戶ID');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // 檢查 LINE 通知設定
+      if (formData.notifications.line && !lineUserId) {
+        setUploadMessage('啟用 LINE 通知時必須提供有效的 LINE ID');
+        return;
+      }
+
+      const params = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Item: {
+          userId: { S: userId },
+          lineUserId: { S: lineUserId },
+          emailNotification: { BOOL: formData.notifications.email },
+          lineNotification: { BOOL: formData.notifications.line },
+          updatedAt: { S: new Date().toISOString() }
+        }
+      };
+
+      const command = new PutItemCommand(params);
+      await dynamoClient.send(command);
+
+      setUploadMessage('通知設定已成功更新');
+      await logActivity(userId, '更新通知設定');
+      
+    } catch (error) {
+      console.error('保存通知設定時發生錯誤:', error);
+      setUploadMessage('更新通知設定失敗');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     user,
     formData,
@@ -996,7 +986,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
     setLineNotification,
     message,
     setMessage,
-    handleSaveNotificationSettings,
     sendFeedback,
+    handleSaveNotificationSettings,
   };
 };
