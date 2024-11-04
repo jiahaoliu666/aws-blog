@@ -2,7 +2,15 @@ import NodeCache from 'node-cache';
 import { Redis } from 'ioredis';
 import { useQueryClient } from '@tanstack/react-query';
 
-const lineStatusCache = new NodeCache({ stdTTL: 300 }); // 5分鐘快取
+export const verificationCache = new NodeCache({
+  stdTTL: 600, // 10分鐘過期
+  checkperiod: 60
+});
+
+export const lineStatusCache = new NodeCache({
+  stdTTL: 300, // 5分鐘過期
+  checkperiod: 30
+});
 
 export const invalidateCache = async (userId: string) => {
   // 清除本地快取

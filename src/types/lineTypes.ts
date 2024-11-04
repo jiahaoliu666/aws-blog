@@ -115,3 +115,26 @@ export interface LineUser {
   userId: string;
   lineNotification: boolean;
 }
+
+export interface LineVerification {
+  userId: string;
+  code: string;
+  expireAt: number;
+}
+
+export interface LineVerificationResponse {
+  success: boolean;
+  message: string;
+  code?: string;
+}
+
+export interface LineFollowStatus {
+  isFollowing: boolean;
+  message: string;
+}
+
+export interface LineVerificationState {
+  step: 'idle' | 'verifying' | 'confirming' | 'complete';
+  code?: string;
+  error?: string;
+}

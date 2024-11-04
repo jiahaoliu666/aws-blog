@@ -2,40 +2,44 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { lineService } from '../../../services/lineService';
 import { logger } from '../../../utils/logger';
+import crypto from 'crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).end();
+  // 驗證 LINE 簽名
+  if (!verifyLineSignature(req)) {
+    return res.status(401).json({ message: '無效的簽名' });
   }
 
-  try {
-    const { events } = req.body;
-
-    for (const event of events) {
-      const { type, source, message } = event;
-
-      switch (type) {
-        case 'follow':
-          await lineService.handleFollow(source.userId, source.userId);
-          break;
-        case 'unfollow':
-          await lineService.handleUnfollow(source.userId);
-          break;
-        case 'message':
-          if (message.type === 'text') {
-            if (message.text.startsWith('verify:')) {
-              await lineService.handleVerification(message.text, source.userId);
-            }
-          }
-          break;
-      }
+  const events = req.body.events;
+  
+  for (const event of events) {
+    switch (event.type) {
+      case 'follow':
+        // 用戶追蹤時的處理
+        await lineService.handleFollow(event.source.userId);
+        break;
+        
+      case 'unfollow':
+        // 用戶取消追蹤時的處理
+        await lineService.handleUnfollow(event.source.userId);
+        break;
     }
-
-    res.status(200).json({ message: 'OK' });
-  } catch (error) {
-    logger.error('處理 webhook 事件時發生錯誤:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
   }
+
+  res.status(200).json({ message: 'OK' });
+}
+
+function verifyLineSignature(req: NextApiRequest): boolean {
+  const signature = req.headers['x-line-signature'];
+  const body = JSON.stringify(req.body);
+  const channelSecret = process.env.LINE_CHANNEL_SECRET || '';
+  
+  const hash = crypto
+    .createHmac('SHA256', channelSecret)
+    .update(body)
+    .digest('base64');
+    
+  return signature === hash;
 }
 
 // 設定請求大小限制
