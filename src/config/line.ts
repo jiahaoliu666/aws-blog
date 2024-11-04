@@ -6,7 +6,8 @@ export const lineConfig: LineConfig = {
   channelSecret: process.env.NEXT_PUBLIC_LINE_CHANNEL_SECRET || '',
   webhookUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/line/webhook`,
   basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID || '',
-  qrCodeUrl: `https://line.me/R/ti/p/@${process.env.NEXT_PUBLIC_LINE_BASIC_ID}`
+  qrCodeUrl: `https://line.me/R/ti/p/@${process.env.NEXT_PUBLIC_LINE_BASIC_ID}`,
+  officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || 'AWS Blog 365'
 };
 
 // 添加環境變數檢查

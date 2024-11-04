@@ -4,6 +4,7 @@ export interface LineConfig {
   webhookUrl: string;
   basicId: string;
   qrCodeUrl: string;
+  officialAccountName: string;
 }
 
 interface LineTextContent {

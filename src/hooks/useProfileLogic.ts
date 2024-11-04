@@ -68,5 +68,62 @@ export const useProfileLogic = (user: { userId: string }) => {
     }
   };
 
-  return { verificationState, handleVerifyLineId, confirmVerification };
+  const checkLineFollowStatus = async (lineUserId: string) => {
+    try {
+      setVerificationState(prev => ({
+        ...prev,
+        status: 'validating'
+      }));
+      
+      const response = await fetch('/api/line/check-follow-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lineUserId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('檢查追蹤狀態失敗');
+      }
+
+      const data = await response.json();
+      
+      // 更新狀態處理邏輯
+      if (data.isFollowing) {
+        setVerificationState(prev => ({
+          ...prev,
+          isVerified: true,
+          status: 'success'
+        }));
+      } else {
+        setVerificationState(prev => ({
+          ...prev,
+          isVerified: false,
+          status: 'error'
+        }));
+        setVerificationState(prev => ({
+          ...prev,
+          error: '請先追蹤官方帳號'
+        }));
+      }
+    } catch (error) {
+      setVerificationState(prev => ({
+        ...prev,
+        isVerified: false,
+        status: 'error'
+      }));
+      setVerificationState(prev => ({
+        ...prev,
+        error: '檢查追蹤狀態時發生錯誤'
+      }));
+    } finally {
+      setVerificationState(prev => ({
+        ...prev,
+        status: 'idle'
+      }));
+    }
+  };
+
+  return { verificationState, handleVerifyLineId, confirmVerification, checkLineFollowStatus };
 }; 
