@@ -688,7 +688,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       }
       
       if (!validateLineId(value)) {
-        setLineIdError('LINE ID 格式不正確，應為4-20個字元，只能包含英文、數字、底線和點號');
+        setLineIdError('LINE ID 格式不正確');
         setLineIdStatus('error');
         return;
       }
@@ -699,26 +699,33 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ lineId: value }),
+          body: JSON.stringify({ 
+            lineId: value,
+            userId: user?.sub 
+          }),
         });
 
         const data = await response.json();
         
-        if (!response.ok) {
-          throw new Error(data.error || '驗證失敗');
-        }
-        
-        if (data.isFollowing) {
+        if (data.success) {
           setLineIdError('');
           setLineIdStatus('success');
-          setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章知。');
+          setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章通知。');
+          
+          // 更新本地狀態
+          setFormData(prev => ({
+            ...prev,
+            notifications: {
+              ...prev.notifications,
+              line: true
+            }
+          }));
         } else {
-          setLineIdError('先追蹤 LINE 官方帳號才能接收通知');
+          setLineIdError(data.message || '驗證失敗');
           setLineIdStatus('error');
         }
       } catch (error) {
-        logger.error('LINE ID 驗證失敗:', error);
-        setLineIdError('驗證過程發生錯誤，請稍後再試');
+        setLineIdError('驗證過程發生錯誤');
         setLineIdStatus('error');
       }
     }, 500);
@@ -741,7 +748,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     if (!settings.lineNotification && !settings.emailNotification) {
       return {
         isValid: false,
-        message: '請��少啟用一種通知方式',
+        message: '請少啟用一種通知方式',
       };
     }
 

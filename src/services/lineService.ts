@@ -1,7 +1,7 @@
 // services/lineService.ts
 import { lineConfig } from '../config/line';
 import { createWelcomeTemplate } from '../templates/lineTemplates';
-import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '../utils/logger';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
@@ -29,6 +29,25 @@ export const checkLineFollowStatus = async (sub: string): Promise<boolean> => {
   }
 };
 
+// 新增 sendWelcomeMessage 函數
+const sendWelcomeMessage = async (lineUserId: string) => {
+  const response = await fetch('https://api.line.me/v2/bot/message/push', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+    },
+    body: JSON.stringify({
+      to: lineUserId,
+      messages: [createWelcomeTemplate('新訂閱者')]
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('發送歡迎訊息失敗');
+  }
+};
+
 export const lineService = {
   // 處理用戶追蹤事件
   handleFollow: async (userId: string, lineUserId: string) => {
@@ -50,21 +69,7 @@ export const lineService = {
       await dynamoClient.send(new UpdateItemCommand(updateParams));
 
       // 2. 發送歡迎訊息
-      const response = await fetch('https://api.line.me/v2/bot/message/push', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${lineConfig.channelAccessToken}`
-        },
-        body: JSON.stringify({
-          to: lineUserId,
-          messages: [createWelcomeTemplate('新訂閱者')]
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('發送歡迎訊息失敗');
-      }
+      await sendWelcomeMessage(lineUserId);
 
       return true;
     } catch (error) {
@@ -116,6 +121,105 @@ export const lineService = {
     } catch (error) {
       console.error('檢查追蹤狀態時發生錯誤:', error);
       throw error;
+    }
+  },
+
+  // 產生驗證碼
+  generateVerificationCode: async (userId: string) => {
+    const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    try {
+      const updateParams = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Key: {
+          userId: { S: userId }
+        },
+        UpdateExpression: 'SET verificationCode = :code, verificationExpiry = :expiry',
+        ExpressionAttributeValues: {
+          ':code': { S: verificationCode },
+          ':expiry': { N: String(Date.now() + 1000 * 60 * 10) } // 10分鐘有效期
+        }
+      };
+
+      await dynamoClient.send(new UpdateItemCommand(updateParams));
+      return verificationCode;
+    } catch (error) {
+      logger.error('產生驗證碼時發生錯誤:', error);
+      throw error;
+    }
+  },
+
+  // 處理驗證訊息
+  handleVerification: async (message: string, lineUserId: string) => {
+    if (!message.startsWith('verify:')) return;
+    
+    const code = message.split(':')[1];
+    try {
+      const params = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        FilterExpression: 'verificationCode = :code AND verificationExpiry > :now',
+        ExpressionAttributeValues: {
+          ':code': { S: code },
+          ':now': { N: String(Date.now()) }
+        }
+      };
+
+      const result = await dynamoClient.send(new ScanCommand(params));
+      if (result.Items && result.Items.length > 0) {
+        const userId = result.Items[0].userId.S;
+        if (!userId) {
+            return false;
+        }
+        await lineService.handleFollow(userId, lineUserId);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error('驗證碼驗證失敗:', error);
+      return false;
+    }
+  },
+
+  verifyLineUser: async (userId: string, lineId: string) => {
+    try {
+      // 1. 檢查是否已追蹤官方帳號
+      const isFollowing = await checkLineFollowStatus(lineId);
+      if (!isFollowing) {
+        return {
+          success: false,
+          message: '請先追蹤官方帳號'
+        };
+      }
+
+      // 2. 更新用戶的 LINE 設定
+      const updateParams = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Key: {
+          userId: { S: userId }
+        },
+        UpdateExpression: 'SET lineUserId = :lineId, lineNotification = :true, isVerified = :true, updatedAt = :now',
+        ExpressionAttributeValues: {
+          ':lineId': { S: lineId },
+          ':true': { BOOL: true },
+          ':now': { N: String(Date.now()) }
+        }
+      };
+
+      await dynamoClient.send(new UpdateItemCommand(updateParams));
+
+      // 3. 發送歡迎訊息
+      await sendWelcomeMessage(lineId);
+
+      return {
+        success: true,
+        message: 'LINE 帳號驗證成功'
+      };
+    } catch (error) {
+      logger.error('LINE 驗證失敗:', error);
+      return {
+        success: false,
+        message: '驗證過程發生錯誤'
+      };
     }
   }
 };

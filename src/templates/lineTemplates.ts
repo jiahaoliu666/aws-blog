@@ -119,3 +119,30 @@ export const createWelcomeTemplate = (userName: string) => ({
 });
 
 export const generateArticleTemplate = createNewsNotificationTemplate;
+
+export const createVerificationSuccessTemplate = () => ({
+  type: 'flex',
+  altText: '驗證成功',
+  contents: {
+    type: 'bubble',
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        {
+          type: 'text',
+          text: '✅ 驗證成功',
+          weight: 'bold',
+          size: 'xl',
+          color: '#2c5282'
+        },
+        {
+          type: 'text',
+          text: '您已成功開啟 LINE 通知功能',
+          margin: 'md',
+          size: 'md'
+        }
+      ]
+    }
+  }
+});

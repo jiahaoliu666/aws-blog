@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { events } = req.body;
 
     for (const event of events) {
-      const { type, source } = event;
+      const { type, source, message } = event;
 
       switch (type) {
         case 'follow':
@@ -20,6 +20,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           break;
         case 'unfollow':
           await lineService.handleUnfollow(source.userId);
+          break;
+        case 'message':
+          if (message.type === 'text') {
+            await lineService.handleVerification(message.text, source.userId);
+          }
           break;
       }
     }

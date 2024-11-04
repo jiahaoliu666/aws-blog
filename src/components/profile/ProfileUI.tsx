@@ -15,6 +15,7 @@ import { MouseEvent } from 'react';
 import { User } from '../../types/userType';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '../../context/AuthContext';
+import { lineService } from '../../services/lineService';
 
 interface NotificationSettings {
   line: boolean;
@@ -33,6 +34,12 @@ interface FormData {
   };
   showEmailSettings: boolean;
   showLineSettings: boolean;
+}
+
+interface VerificationStatus {
+  code: string | null;
+  message: string;
+  status: 'pending' | 'success' | 'error';
 }
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
@@ -103,6 +110,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     status: 'success' | 'error' | null;
     message: string;
   }>({ status: null, message: '' });
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
+    code: null,
+    message: '',
+    status: 'pending'
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -171,6 +183,29 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       setVerificationResult({
         status: 'error',
         message: '驗證過程發生錯誤，請稍後再試'
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleVerification = async () => {
+    setIsVerifying(true);
+    try {
+      if (!user?.sub) {
+        throw new Error('使用者ID未定義');
+      }
+      const code = await lineService.generateVerificationCode(user.sub);
+      setVerificationStatus({
+        code,
+        message: '請將驗證碼傳送給官方帳號',
+        status: 'pending'
+      });
+    } catch (error) {
+      setVerificationStatus({
+        code: null,
+        message: '驗證碼產生失敗，請稍後再試',
+        status: 'error'
       });
     } finally {
       setIsVerifying(false);
@@ -324,7 +359,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                 {activeTab === 'activity' && (
                   <>
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-2xl font-bold text-gray-800">最近的觀看紀錄</h3>
+                      <h3 className="text-2xl font-bold text-gray-800">最的觀看紀錄</h3>
                       <button
                         onClick={() => setIsCompactLayout(!isCompactLayout)}
                         className="bg-blue-600 text-white py-2 px-3 rounded-full hover:bg-blue-700 transition duration-200 flex items-center"
@@ -522,7 +557,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           placeholder="請輸入您的問題、意見或建議"
                         />
                       </div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">上傳圖片</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">���傳圖片</label>
                       <input
                         id="feedbackImage1"
                         name="feedbackImage1"
@@ -683,6 +718,26 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               </a>
                               <p className="text-sm text-gray-600 mt-2">或直接點擊按鈕加入</p>
                             </div>
+
+                            {/* 新增：驗證按鈕區塊 */}
+                            <div className="text-center">
+                              <button
+                                onClick={handleVerification}
+                                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                                disabled={isVerifying}
+                              >
+                                <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                                {isVerifying ? '驗證中...' : '開始驗證'}
+                              </button>
+                              {verificationStatus.code && (
+                                <div className="mt-4 p-4 bg-white rounded-lg border shadow-sm">
+                                  <p className="font-medium">驗證碼：{verificationStatus.code}</p>
+                                  <p className="text-sm text-gray-600 mt-2">
+                                    請將此驗證碼傳送給官方帳號
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           {/* LINE ID 輸入區域 */}
@@ -690,43 +745,51 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             <label htmlFor="lineUserId" className="block text-sm font-medium text-gray-700 mb-2">
                               LINE ID 設定
                             </label>
+                            
                             <div className="relative">
-                              <FontAwesomeIcon 
-                                icon={faUser} 
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                              />
                               <input
-                                id="lineUserId"
                                 type="text"
+                                id="lineUserId"
                                 value={lineUserId}
                                 onChange={(e) => handleLineIdChange(e.target.value)}
+                                className={`
+                                  pl-10 pr-4 py-2 w-full rounded-lg border
+                                  ${lineIdStatus === 'success' ? 'border-green-500' : 
+                                    lineIdStatus === 'error' ? 'border-red-500' : 'border-gray-300'}
+                                `}
                                 placeholder="請輸入您的 LINE ID"
-                                className={`pl-10 w-full rounded-lg border shadow-sm py-2 transition duration-150 ease-in-out
-                                  ${lineIdStatus === 'error' 
-                                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                                    : lineIdStatus === 'success'
-                                      ? 'border-green-300 focus:ring-green-500 focus:border-green-500'
-                                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                                  }`}
                               />
-                              {/* 狀態指示器 */}
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                {lineIdStatus === 'validating' && (
-                                  <FontAwesomeIcon icon={faSpinner} className="text-gray-400 animate-spin" />
-                                )}
-                                {lineIdStatus === 'success' && (
-                                  <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
-                                )}
-                                {lineIdStatus === 'error' && (
-                                  <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
-                                )}
-                              </div>
+                              
+                              {/* 狀態圖示 */}
+                              {lineIdStatus === 'validating' && (
+                                <FontAwesomeIcon 
+                                  icon={faSpinner} 
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" 
+                                />
+                              )}
+                              {lineIdStatus === 'success' && (
+                                <FontAwesomeIcon 
+                                  icon={faCheckCircle} 
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" 
+                                />
+                              )}
+                              {lineIdStatus === 'error' && (
+                                <FontAwesomeIcon 
+                                  icon={faExclamationCircle} 
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" 
+                                />
+                              )}
                             </div>
+
                             {/* 錯誤訊息 */}
                             {lineIdError && (
-                              <p className="mt-2 text-sm text-red-600 flex items-center">
-                                <FontAwesomeIcon icon={faExclamationCircle} className="mr-2" />
-                                {lineIdError}
+                              <p className="mt-2 text-sm text-red-600">{lineIdError}</p>
+                            )}
+
+                            {/* 驗證成功訊息 */}
+                            {lineIdStatus === 'success' && (
+                              <p className="mt-2 text-sm text-green-600">
+                                LINE 帳號驗證成功！您將可以收到最新文章通知。
                               </p>
                             )}
                           </div>
