@@ -585,7 +585,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                 )}
                 {activeTab === 'notificationSettings' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6">通知設置</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6">通知設定</h3>
                     <div className="space-y-6">
                       {/* Email 通知設定 */}
                       <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">

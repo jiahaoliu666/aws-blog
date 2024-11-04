@@ -741,7 +741,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     if (!settings.lineNotification && !settings.emailNotification) {
       return {
         isValid: false,
-        message: '請至少啟用一種通知方式',
+        message: '請��少啟用一種通知方式',
       };
     }
 
@@ -887,7 +887,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
       
       // 檢查 LINE 通知設定
       if (formData.notifications.line && !lineUserId) {
-        setSettingsMessage('啟用 LINE 通知時必須���供有效的 LINE ID');
+        setSettingsMessage('啟用 LINE 通知時必須提供有效的 LINE ID');
         setSettingsStatus('error');
         return;
       }
@@ -897,6 +897,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         Item: {
           userId: { S: userId },
           lineUserId: { S: lineUserId },
+          email: { S: formData.email },
           emailNotification: { BOOL: formData.notifications.email },
           lineNotification: { BOOL: formData.notifications.line },
           updatedAt: { S: new Date().toISOString() }
