@@ -327,7 +327,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         throw new Error('密碼強度不足，請包含大小寫字母、數字和特殊符號');
       }
 
-      // 變��密碼
+      // 變密碼
       const changePasswordCommand = new ChangePasswordCommand({
         PreviousPassword: oldPassword,
         ProposedPassword: formData.password,
@@ -651,15 +651,18 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   };
 
   const toggleNotification = (type: 'email' | 'line'): void => {
-    setFormData((prev: FormData) => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [type]: !prev.notifications[type]
-      },
-      showEmailSettings: type === 'email' ? !prev.notifications.email : prev.showEmailSettings,
-      showLineSettings: type === 'line' ? !prev.notifications.line : prev.showLineSettings
-    }));
+    setFormData((prev: FormData) => {
+      const newNotificationState = !prev.notifications[type];
+      return {
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          [type]: newNotificationState
+        },
+        showEmailSettings: type === 'email' ? newNotificationState : prev.showEmailSettings,
+        showLineSettings: type === 'line' ? newNotificationState : prev.showLineSettings
+      };
+    });
   };
 
   const validateLineId = (id: string) => {
@@ -841,28 +844,27 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         try {
           const params = {
             TableName: 'AWS_Blog_UserNotificationSettings',
-            KeyConditionExpression: 'userId = :userId',
-            ExpressionAttributeValues: {
-              ':userId': { S: authUser.sub },
+            Key: {
+              userId: { S: authUser.sub },
             },
           };
 
-          const command = new QueryCommand(params);
+          const command = new GetItemCommand(params);
           const response = await dynamoClient.send(command);
 
-          if (response.Items && response.Items.length > 0) {
-            const settings = response.Items[0];
+          if (response.Item) {
+            const emailNotification = response.Item.emailNotification?.BOOL || false;
+            const lineNotification = response.Item.lineNotification?.BOOL || false;
+
             setFormData(prevData => ({
               ...prevData,
               notifications: {
-                email: settings.emailNotification?.BOOL || false,
-                line: settings.lineNotification?.BOOL || false,
+                email: emailNotification,
+                line: lineNotification
               },
+              showEmailSettings: emailNotification,
+              showLineSettings: lineNotification
             }));
-            // 設置 LINE ID
-            if (settings.lineUserId?.S) {
-              setLineUserId(settings.lineUserId.S);
-            }
           }
         } catch (error) {
           console.error('獲取通知設置時發生錯誤:', error);
