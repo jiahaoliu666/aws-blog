@@ -77,7 +77,42 @@ interface NotificationSettings {
   emailNotification: boolean;
 }
 
-export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null }) => {
+interface UpdateNotificationSettingsParams {
+  userId?: string;
+  lineUserId: string;
+  lineNotification?: boolean;
+}
+
+const updateNotificationSettings = async ({
+  userId,
+  lineUserId,
+  lineNotification = true
+}: UpdateNotificationSettingsParams) => {
+  if (!userId) return;
+
+  const dynamoClient = new DynamoDBClient({
+    region: 'ap-northeast-1',
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+
+  const params = {
+    TableName: 'AWS_Blog_UserNotificationSettings',
+    Item: {
+      userId: { S: userId },
+      lineUserId: { S: lineUserId },
+      lineNotification: { BOOL: lineNotification },
+      updatedAt: { S: new Date().toISOString() }
+    }
+  };
+
+  const command = new PutItemCommand(params);
+  await dynamoClient.send(command);
+};
+
+export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
   const { user: authUser, updateUser, logoutUser } = useAuthContext();
   const router = useRouter();
   
@@ -129,9 +164,9 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   const [localUsername, setLocalUsername] = useState(authUser ? authUser.username : '');
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [lineUserId, setLineUserId] = useState<string>('');
-  const [lineIdError, setLineIdError] = useState<string>('');
-  const [lineIdStatus, setLineIdStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
+  const [lineUserId, setLineUserId] = useState('');
+  const [lineIdError, setLineIdError] = useState('');
+  const [lineIdStatus, setLineIdStatus] = useState<'success' | 'error' | 'idle' | 'validating'>('idle');
   const [lineVerificationTimer, setLineVerificationTimer] = useState<NodeJS.Timeout | null>(null);
   const dynamoClient = new DynamoDBClient({
     region: 'ap-northeast-1',
@@ -153,6 +188,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
   const [isClient, setIsClient] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [showVerificationInput, setShowVerificationInput] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -251,7 +287,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
             return { translatedTitle, link, timestamp, sourcePage };
           }));
 
-          setRecentArticles(articles.slice(0, 12)); // 確保���12筆
+          setRecentArticles(articles.slice(0, 12)); // 確保12筆
         } catch (error) {
           console.error('Error fetching recent articles:', error);
         }
@@ -294,7 +330,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
         // Log the activity
-        await logActivity(authUser?.sub || 'default-sub', `變更用戶��${localUsername}`);
+        await logActivity(authUser?.sub || 'default-sub', `變更用戶${localUsername}`);
       } catch (error) {
         setUploadMessage('更新用戶名失敗，稍後再試。');
         changesSuccessful = false;
@@ -668,72 +704,60 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     });
   };
 
-  const validateLineId = (id: string) => {
-    if (!id) return false;
-    // LINE ID 格式驗證: 允許英文字母、數、底線、點號，長度在4-20之間
-    const lineIdRegex = /^[A-Za-z0-9._-]{4,20}$/;
-    return lineIdRegex.test(id);
-  };
-
-  const handleLineIdChange = async (value: string) => {
-    setLineUserId(value);
-    setLineIdStatus('validating');
-    
-    if (lineVerificationTimer) {
-      clearTimeout(lineVerificationTimer);
-    }
-
-    const timer = setTimeout(async () => {
-      if (!value) {
-        setLineIdError('請輸入LINE ID');
-        setLineIdStatus('error');
-        return;
+  const handleVerifyLineId = async () => {
+    try {
+      if (!user) {
+        throw new Error('用戶未登入');
       }
       
-      if (!validateLineId(value)) {
-        setLineIdError('LINE ID 格式不正確');
-        setLineIdStatus('error');
+      if (!lineUserId) {
+        toast.error('請輸入 LINE ID');
         return;
       }
 
-      try {
-        const response = await fetch('/api/line/check-follow-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            lineId: value,
-            userId: user?.sub 
-          }),
-        });
+      setIsVerifying(true);
+      setLineIdStatus('validating');
 
-        const data = await response.json();
-        
-        if (data.success) {
-          setLineIdError('');
-          setLineIdStatus('success');
-          setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章通知。');
-          
-          // 更新本地狀態
-          setFormData(prev => ({
-            ...prev,
-            notifications: {
-              ...prev.notifications,
-              line: true
-            }
-          }));
-        } else {
-          setLineIdError(data.message || '驗證失敗');
-          setLineIdStatus('error');
-        }
-      } catch (error) {
-        setLineIdError('驗證過程發生錯誤');
+      const response = await fetch('/api/line/check-follow-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lineId: lineUserId.trim(),
+          userId: user.sub || user.userId
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setLineIdStatus('success');
+        toast.success('LINE 帳號驗證成功！');
+        setFormData(prev => ({
+          ...prev,
+          notifications: {
+            ...prev.notifications,
+            line: true
+          }
+        }));
+      } else {
         setLineIdStatus('error');
+        toast.error(data.message || '驗證失敗');
       }
-    }, 500);
+    } catch (error) {
+      setLineIdStatus('error');
+      toast.error('驗證過程發生錯誤');
+      console.error('LINE 驗證錯誤:', error);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
-    setLineVerificationTimer(timer);
+  const handleLineIdChange = (value: string) => {
+    setLineUserId(value);
+    setLineIdError('');
+    setLineIdStatus('idle');
   };
 
   const validateSettings = (settings: {
@@ -751,7 +775,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     if (!settings.lineNotification && !settings.emailNotification) {
       return {
         isValid: false,
-        message: '請少啟用一種通知方式',
+        message: '請少啟用一種通知方',
       };
     }
 
@@ -935,32 +959,6 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     }
   };
 
-  const handleVerifyLineId = async () => {
-    try {
-      const response = await fetch('/api/line/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user?.userId || authUser?.sub,
-          lineId: lineId
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setShowVerificationInput(true);
-        toast.success('請查看 LINE 訊息中的驗證碼');
-      } else {
-        toast.error(data.message || '驗證失敗');
-      }
-    } catch (error) {
-      toast.error('驗證過程發生錯誤');
-    }
-  };
-
   const handleVerifyCode = async () => {
     try {
       const response = await fetch('/api/line/verify-code', {
@@ -1058,5 +1056,7 @@ export const useProfileLogic = ({ user }: UseProfileLogicProps = { user: null })
     showVerificationInput,
     handleVerifyLineId,
     handleVerifyCode,
+    isVerifying,
+    setLineIdStatus,
   };
 };

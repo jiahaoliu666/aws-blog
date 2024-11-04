@@ -101,6 +101,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     settingsStatus,
     toggleNotification, // 確保這行加入
     handleSaveNotificationSettings,
+    setLineIdStatus,
   } = useProfileLogic({ user });
 
   const router = useRouter();
@@ -222,27 +223,59 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
         throw new Error('用戶未登入');
       }
       
-      const response = await fetch('/api/line/verify', {
+      if (!lineId) {
+        toast.error('請輸入 LINE ID');
+        return;
+      }
+      setIsVerifying(true);
+      setLineIdStatus('validating');
+
+      const response = await fetch('/api/line/check-follow-status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.userId,
-          lineId: lineId
+          lineId: lineId.trim(),
+          userId: user.sub || user.userId
         }),
       });
 
       const data = await response.json();
-      
       if (data.success) {
-        setShowVerificationInput(true);
-        toast.success('請查看 LINE 訊息中的驗證碼');
+        setLineIdStatus('success');
+        toast.success('LINE 帳號驗證成功！');
+        setFormData(prev => ({
+          ...prev,
+          notifications: {
+            ...prev.notifications,
+            line: true
+          }
+        }));
       } else {
+        setLineIdStatus('error');
+        setFormData(prev => ({
+          ...prev,
+          notifications: {
+            ...prev.notifications,
+            line: false
+          }
+        }));
         toast.error(data.message || '驗證失敗');
       }
     } catch (error) {
+      setLineIdStatus('error');
+      setFormData(prev => ({
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          line: false
+        }
+      }));
       toast.error('驗證過程發生錯誤');
+      console.error('LINE 驗證錯誤:', error);
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -285,7 +318,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
           <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
             <Loader className="mb-4" size="large" />
             <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
-            <p className="text-lg text-gray-700">您將重新導向至登入頁面...</p>
+            <p className="text-lg text-gray-700">您將���新導向至登入頁面...</p>
           </div>
         ) : (
           <>
@@ -415,7 +448,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           onClick={() => handleSaveProfileChanges(localUsername)} 
                           className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
                         >
-                          保存更改
+                          保存改
                         </button>
                       </div>
                     </div>
@@ -424,7 +457,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                 {activeTab === 'activity' && (
                   <>
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-2xl font-bold text-gray-800">最的觀看紀錄</h3>
+                      <h3 className="text-2xl font-bold text-gray-800">最觀看紀錄</h3>
                       <button
                         onClick={() => setIsCompactLayout(!isCompactLayout)}
                         className="bg-blue-600 text-white py-2 px-3 rounded-full hover:bg-blue-700 transition duration-200 flex items-center"
@@ -645,7 +678,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         <button
                           type="button"
                           onClick={() => {
-                            resetFeedbackForm(); // 重置反饋表單
+                            resetFeedbackForm(); // 重反饋表單
                             resetUploadState(); // 重置上傳狀態
                             const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
                             if (feedbackImageInput) {
@@ -748,7 +781,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           <div className="mb-8 bg-blue-50 p-4 rounded-lg">
                             <h5 className="font-semibold text-blue-800 mb-3">
                               <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
-                              設定步驟
+                              設定步���
                             </h5>
                             <ol className="list-decimal list-inside space-y-2 text-blue-700">
                               <li>開啟上方的 LINE 通知開關</li>
@@ -767,7 +800,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 alt="LINE 官方帳號 QR Code" 
                                 className="w-40 h-40 mb-2"
                               />
-                              <p className="text-sm text-gray-600">掃 QR Code 加入好友</p>
+                              <p className="text-sm text-gray-600">掃 QR Code 加好友</p>
                             </div>
 
                             {/* 直接追蹤按鈕 */}
@@ -781,7 +814,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 <FontAwesomeIcon icon={faCommentDots} className="mr-2" />
                                 點擊加入好友
                               </a>
-                              <p className="text-sm text-gray-600 mt-2">或直接點擊按鈕加入</p>
+                              <p className="text-sm text-gray-600 mt-2">或直接擊按鈕加入</p>
                             </div>
 
                             {/* 新增：驗證按鈕區塊 */}
@@ -807,49 +840,54 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
 
                           {/* LINE ID 輸入區域 */}
                           <div className="mb-6">
-                            <label htmlFor="lineUserId" className="block text-sm font-medium text-gray-700 mb-2">
-                              LINE ID 設定
+                            <label htmlFor="lineUserId" className="block text-sm font-medium text-gray-700">
+                              LINE ID
                             </label>
-                            <div className="flex gap-2">
+                            <div className="mt-1 flex items-center gap-2">
                               <input
                                 type="text"
                                 id="lineUserId"
-                                value={lineId}
-                                onChange={(e) => setLineId(e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                value={lineUserId}
+                                onChange={(e) => handleLineIdChange(e.target.value)}
+                                className={`block w-full rounded-md ${
+                                  lineIdStatus === 'error' ? 'border-red-300' : 'border-gray-300'
+                                } shadow-sm focus:border-blue-500 focus:ring-blue-500`}
                                 placeholder="請輸入您的 LINE ID"
+                                disabled={lineIdStatus === 'validating'}
                               />
                               <button
                                 onClick={handleVerifyLineId}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                disabled={lineIdStatus === 'validating' || !lineUserId}
+                                className={`px-4 py-2 rounded-md ${
+                                  lineIdStatus === 'validating'
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                } text-white`}
                               >
-                                驗證
+                                {lineIdStatus === 'validating' ? (
+                                  <span className="flex items-center">
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    驗證中
+                                  </span>
+                                ) : (
+                                  '驗證'
+                                )}
                               </button>
                             </div>
-
-                            {/* 驗證碼輸入區域 */}
-                            {showVerificationInput && (
-                              <div className="mt-4">
-                                <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
-                                  驗證碼
-                                </label>
-                                <div className="flex gap-2">
-                                  <input
-                                    type="text"
-                                    id="verificationCode"
-                                    value={verificationCode}
-                                    onChange={(e) => setVerificationCode(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="請輸入驗證碼"
-                                  />
-                                  <button
-                                    onClick={handleVerifyCode}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                                  >
-                                    確認
-                                  </button>
-                                </div>
-                              </div>
+                            
+                            {/* 錯誤訊息 */}
+                            {lineIdError && (
+                              <p className="mt-2 text-sm text-red-600">{lineIdError}</p>
+                            )}
+                            
+                            {/* 成功訊息 */}
+                            {lineIdStatus === 'success' && (
+                              <p className="mt-2 text-sm text-green-600">
+                                LINE 帳號驗證成功您將可以收到最新文章通知。
+                              </p>
                             )}
                           </div>
 
@@ -881,14 +919,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 <ul className="mt-2 ml-5 list-disc text-sm space-y-1">
                                   <li>確認是否已追蹤官方帳號且未封鎖</li>
                                   <li>確認輸入的 LINE ID 是否正確</li>
-                                  <li>嘗試重新追蹤官方帳號</li>
+                                  <li>嘗試重新追蹤官方號</li>
                                 </ul>
                               </details>
                               <details className="cursor-pointer">
                                 <summary className="font-medium">LINE ID 格式說明</summary>
                                 <ul className="mt-2 ml-5 list-disc text-sm space-y-1">
                                   <li>長度必須在4-20個字元之間</li>
-                                  <li>可使用英文字母、數字、底線(_)和點號(.)</li>
+                                  <li>可使用英文字、數字、底線(_)和點號(.)</li>
                                   <li>不可包含特殊符號或空格</li>
                                 </ul>
                               </details>
@@ -906,7 +944,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         </div>
                       </div>
 
-                      {/* 新增：統一的儲存按鈕區域 */}
+                      {/* 新增：統一的儲存按鈕區 */}
                       <div className="mt-8 flex flex-col space-y-4">
                         {/* 顯示設定狀態訊息 */}
                         {settingsMessage && (
