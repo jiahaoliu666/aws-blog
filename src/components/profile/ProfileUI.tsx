@@ -573,7 +573,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               <FontAwesomeIcon icon={faEnvelope} className="text-blue-600 text-xl" />
                             </div>
                             <div>
-                              <h4 className="text-lg font-semibold text-gray-800">Email 知</h4>
+                              <h4 className="text-lg font-semibold text-gray-800">Email 通知</h4>
                               <p className="text-sm text-gray-500">接收最新文章的 Email 通知</p>
                             </div>
                           </div>
@@ -611,7 +611,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
-                              <p className="text-sm text-gray-500">接收最新文章的 LINE 即時通</p>
+                              <p className="text-sm text-gray-500">接收最新文章的 LINE 即時通知</p>
                             </div>
                           </div>
                           <SwitchField
