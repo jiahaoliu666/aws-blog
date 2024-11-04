@@ -8,6 +8,7 @@ import logActivity from '../../pages/api/profile/activity-log';
 import { lineConfig } from "../../config/line";
 import { logger } from "../../utils/logger";
 import { lineService } from '../../services/lineService';
+import { User } from '../../types/userType';
 
 interface EditableFields {
   username: boolean;
@@ -62,32 +63,41 @@ const checkLineFollowStatus = async (lineId: string): Promise<boolean> => {
   }
 };
 
-export const useProfileLogic = () => {
+interface SaveSettingsResponse {
+  success: boolean;
+  message: string;
+}
+
+interface UseProfileLogicProps {
+  user: User | null;
+}
+
+export const useProfileLogic = ({ user }: UseProfileLogicProps) => {
   const router = useRouter();
-  const { user, logoutUser, updateUser } = useAuthContext();
+  const { logoutUser, updateUser } = useAuthContext();
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [tempAvatar, setTempAvatar] = useState<string | null>(null);
-  const [formData, setFormData] = useState<FormData>({
-    username: user ? user.username : '',
-    email: user ? user.email : '',
-    registrationDate: '[註冊日期]',
-    avatar: 'user.png',
+  const [formData, setFormData] = useState<FormData>(() => ({
+    username: user?.username || '',
+    email: user?.email || '',
+    registrationDate: user?.registrationDate || '',
+    avatar: user?.avatar || '',
     notifications: {
-      line: false,
-      email: false,
+      line: user?.notifications?.line || false,
+      email: user?.notifications?.email || false
     },
     password: '',
     confirmPassword: '',
     feedbackTitle: '',
     feedbackContent: '',
-    feedbackImage: undefined, 
+    feedbackImage: undefined,
     lineSettings: {
       id: '',
       isVerified: false,
     },
-  });
+  }));
   const [oldPassword, setOldPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [isEditable, setIsEditable] = useState<EditableFields>({
@@ -125,6 +135,8 @@ export const useProfileLogic = () => {
   const [lineId, setLineId] = useState('');
   const [lineNotification, setLineNotification] = useState(false);
   const [message, setMessage] = useState('');
+  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
+  const [settingsStatus, setSettingsStatus] = useState<'success' | 'error' | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -152,18 +164,19 @@ export const useProfileLogic = () => {
     // 獲取當前路徑
     const currentPath = router.pathname;
 
-    // 僅在訪問 /profile 頁面時執行重定向
-    if (user === null && currentPath === '/profile') {
+    if (!user && currentPath === '/profile') {
       setShowLoginMessage(true);
       const timer = setTimeout(() => {
         router.push('/auth/login');
       }, 3000);
       return () => clearTimeout(timer);
-    } else if (user) {
+    }
+
+    if (user) {
       setFormData(prevData => ({
         ...prevData,
         username: user.username,
-        email: user.email,
+        email: user.email || '',
       }));
       setShowLoginMessage(false);
 
@@ -172,20 +185,24 @@ export const useProfileLogic = () => {
           const userCommand = new GetUserCommand({ AccessToken: user.accessToken });
           const userResponse = await cognitoClient.send(userCommand);
 
-          const registrationDateAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'custom:registrationDate');
-          const registrationDate = registrationDateAttribute ? registrationDateAttribute.Value : '[註]';
+          const registrationDateAttribute = userResponse.UserAttributes?.find(
+            attr => attr.Name === 'custom:registrationDate'
+          );
+          const registrationDate = registrationDateAttribute?.Value || '[註冊日期]';
 
           setFormData(prevData => ({
             ...prevData,
-            registrationDate: registrationDate || '[註日期]',
+            registrationDate,
           }));
         } catch (error) {
           const err = error as Error;
           if (err.name === 'NotAuthorizedException' && err.message.includes('Access Token has expired')) {
             try {
               const newAccessToken = await refreshAccessToken(user.refreshToken);
-              user.accessToken = newAccessToken;
-              fetchUserDetails();
+              if (newAccessToken) {
+                user.accessToken = newAccessToken;
+                fetchUserDetails();
+              }
             } catch (refreshError) {
               router.push('/auth/login');
             }
@@ -710,9 +727,9 @@ export const useProfileLogic = () => {
         if (data.isFollowing) {
           setLineIdError('');
           setLineIdStatus('success');
-          setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章通知。');
+          setUploadMessage('LINE 帳號驗證成功！您將可以收到最新文章知。');
         } else {
-          setLineIdError('請先追蹤 LINE 官方帳號才能接收通知');
+          setLineIdError('先追蹤 LINE 官方帳號才能接收通知');
           setLineIdStatus('error');
         }
       } catch (error) {
@@ -725,98 +742,154 @@ export const useProfileLogic = () => {
     setLineVerificationTimer(timer);
   };
 
-  const handleSaveNotificationSettings = async (userId: string) => {
-    setIsLoading(true);
+  const validateSettings = (settings: {
+    lineId: string;
+    lineNotification: boolean;
+    emailNotification: boolean;
+  }): { isValid: boolean; message: string } => {
+    if (settings.lineNotification && !settings.lineId.trim()) {
+      return {
+        isValid: false,
+        message: '啟用 LINE 通知時必須提供有效的 LINE ID',
+      };
+    }
+
+    if (!settings.lineNotification && !settings.emailNotification) {
+      return {
+        isValid: false,
+        message: '請至少啟用一種通知方式',
+      };
+    }
+
+    return { isValid: true, message: '' };
+  };
+
+  const handleSaveSettings = async () => {
     try {
-      // 1. 檢查是否啟用 LINE 通知且有輸入 LINE ID
-      if (formData.notifications.line && lineUserId) {
-        const isFollowing = await lineService.checkFollowStatus(lineUserId);
-        if (!isFollowing) {
-          setMessage('請先加入官方帳號為好友');
-          setIsLoading(false);
+      setIsLoading(true);
+      setSettingsMessage(null);
+      setSettingsStatus(null);
+
+      const settings = {
+        lineId: formData.lineSettings.id,
+        lineNotification: formData.notifications.line,
+        emailNotification: formData.notifications.email,
+      };
+
+      // 驗證設定
+      const validation = validateSettings(settings);
+      if (!validation.isValid) {
+        setSettingsMessage(validation.message);
+        setSettingsStatus('error');
+        return;
+      }
+
+      // 如果啟用了 LINE 通知，檢查追蹤狀態
+      if (settings.lineNotification && settings.lineId) {
+        const followStatus = await checkLineFollowStatus(settings.lineId);
+        if (!followStatus) {
+          setSettingsMessage('請先追蹤官方 LINE 帳號才能啟用 LINE 通知');
+          setSettingsStatus('error');
           return;
         }
       }
 
-      // 2. 準備更新資料庫的參數
-      const updateParams = {
-        TableName: 'AWS_Blog_UserNotificationSettings',
-        Key: {
-          userId: { S: userId }
+      // 儲存設定到資料庫
+      const response = await fetch('/api/notifications/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        UpdateExpression: 'SET emailNotification = :email, lineNotification = :line, lineUserId = :lineUserId',
-        ExpressionAttributeValues: {
-          ':email': { BOOL: formData.notifications.email },
-          ':line': { BOOL: formData.notifications.line },
-          ':lineUserId': lineUserId ? { S: lineUserId } : { NULL: true }
-        }
-      };
+        body: JSON.stringify({
+          userId: user?.sub,
+          lineUserId: settings.lineId,
+          lineNotification: settings.lineNotification,
+          emailNotification: settings.emailNotification,
+        }),
+      });
 
-      // 3. 發送更新請求
-      await dynamoClient.send(new UpdateItemCommand(updateParams));
+      const result = await response.json();
 
-      // 4. 更新成功
-      setMessage('設定已成功儲存！');
-      
-      // 5. 記錄活動
-      await logActivity(userId, '更新通知設定');
-
+      if (response.ok) {
+        setSettingsMessage('通知設定已成功儲存');
+        setSettingsStatus('success');
+        
+        // 記錄活動
+        await logActivity(user?.sub || 'default-sub', '更新通知設定');
+      } else {
+        throw new Error(result.error || '儲存設定時發生錯誤');
+      }
     } catch (error) {
-      logger.error('儲存通知設定時發生錯誤:', error);
-      setMessage('儲存設定時發生錯誤，請稍後再試');
+      setSettingsMessage(error instanceof Error ? error.message : '儲存設定時發生錯誤');
+      setSettingsStatus('error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const sendFeedback = async (onSuccess?: () => void) => {
-    if (!formData.feedbackTitle.trim() || !formData.feedbackContent.trim()) {
-      setFeedbackMessage('請填寫反饋標題和內容。');
+  const handleSaveNotificationSettings = async (userId?: string) => {
+    if (!userId) {
+      setUploadMessage('用戶 ID 無效');
       return;
     }
 
     try {
-      let imageBase64 = '';
-      if (formData.feedbackImage) {
-        const validImageTypes = ['image/jpeg', 'image/png'];
-        if (!validImageTypes.includes(formData.feedbackImage.type)) {
-          setFeedbackMessage('上傳失敗：檔案類型不支援，請確認檔案類型是否為 jpeg 或 png。');
-          return;
-        }
-        const reader = new FileReader();
-        reader.readAsDataURL(formData.feedbackImage);
-        imageBase64 = await new Promise<string>((resolve, reject) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = () => reject('Error reading file');
-        });
-      }
-
-      const feedbackData = {
-        title: formData.feedbackTitle,
-        content: formData.feedbackContent,
-        email: formData.email,
-        image: imageBase64,
-      };
-
-      const response = await fetch('/api/profile/sendFeedback', {
+      setIsLoading(true);
+      const response = await fetch('/api/notifications/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(feedbackData),
+        body: JSON.stringify({
+          userId,
+          lineUserId,
+          lineNotification: formData.notifications.line,
+        }),
       });
 
-      if (response.ok) {
-        console.log('反饋已成功發送');
-        setFeedbackMessage('已將反饋成功提交，感謝您寶貴的意見！');
-        resetFeedbackForm();
-        await logActivity(user?.sub || 'default-sub', '提交意見饋');
-        if (onSuccess) onSuccess();
-      } else {
-        setFeedbackMessage('發送反饋時出錯');
+      if (!response.ok) {
+        throw new Error('儲存設定失敗');
       }
+
+      setUploadMessage('通知設定已成功更新');
+      setTimeout(() => setUploadMessage(''), 3000);
     } catch (error) {
-      setFeedbackMessage('發送反饋時發生錯誤');
+      setUploadMessage('儲存設定時發生錯誤');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendFeedback = async (resetFileInput: () => void) => {
+    if (!formData.feedbackTitle || !formData.feedbackContent) {
+      setFeedbackMessage('請填寫標題和內容');
+      return;
+    }
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('title', formData.feedbackTitle);
+      formDataToSend.append('content', formData.feedbackContent);
+      if (formData.feedbackImage) {
+        formDataToSend.append('image', formData.feedbackImage);
+      }
+
+      const response = await fetch('/api/profile/sendFeedback', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error('發送反饋失敗');
+      }
+
+      setFeedbackMessage('反饋已成功提交');
+      resetFeedbackForm();
+      resetFileInput();
+      setTimeout(() => setFeedbackMessage(''), 3000);
+    } catch (error) {
+      setFeedbackMessage('提交反饋時發生錯誤');
     }
   };
 
@@ -906,8 +979,9 @@ export const useProfileLogic = () => {
     resetUsername,
     logRecentArticle,
     toggleNotification,
-    handleSaveNotificationSettings,
-    sendFeedback,
+    handleSaveSettings,
+    settingsMessage,
+    settingsStatus,
     feedbackMessage,
     resetUploadState,
     isMobile,
@@ -922,5 +996,7 @@ export const useProfileLogic = () => {
     setLineNotification,
     message,
     setMessage,
+    handleSaveNotificationSettings,
+    sendFeedback,
   };
 };

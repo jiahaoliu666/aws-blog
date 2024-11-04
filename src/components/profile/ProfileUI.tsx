@@ -80,11 +80,13 @@ interface ProfileUIProps {
   lineIdError: string;
   lineIdStatus: 'validating' | 'success' | 'error';
   handleLineIdChange: (value: string) => void;
+  settingsMessage: string | null;
+  settingsStatus: 'success' | 'error' | null;
+  handleSaveSettings: () => Promise<void>;
 }
 
-const ProfileUI: React.FC<ProfileUIProps> = (props) => {
+const ProfileUI: React.FC<ProfileUIProps> = ({ user, ...props }) => {
   const {
-    user,
     formData,
     recentArticles,
     isEditing,
@@ -132,7 +134,10 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
     lineIdError,
     lineIdStatus,
     handleLineIdChange,
-  } = useProfileLogic();
+    settingsMessage,
+    settingsStatus,
+    handleSaveSettings,
+  } = useProfileLogic({ user });
 
   const [activeTab, setActiveTab] = React.useState('profile');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
@@ -596,7 +601,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                               <FontAwesomeIcon icon={faEnvelope} className="text-blue-600 text-xl" />
                             </div>
                             <div>
-                              <h4 className="text-lg font-semibold text-gray-800">Email 通知</h4>
+                              <h4 className="text-lg font-semibold text-gray-800">Email 知</h4>
                               <p className="text-sm text-gray-500">接收最新文章的 Email 通知</p>
                             </div>
                           </div>
