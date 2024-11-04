@@ -654,7 +654,7 @@ const ProfileUI: React.FC<ProfileUIProps> = (props) => {
                             <li>開啟上方的 LINE 通知開關</li>
                             <li>掃描下方 QR Code 或點擊追蹤按鈕，加入官方帳號好友</li>
                             <li>在下方輸入您的 LINE ID</li>
-                            <li>點擊儲存設��完成設置</li>
+                            <li>點擊儲存設定完成設置</li>
                           </ol>
                         </div>
 

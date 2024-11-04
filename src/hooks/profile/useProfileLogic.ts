@@ -728,9 +728,9 @@ export const useProfileLogic = () => {
   const handleSaveNotificationSettings = async (userId: string) => {
     setIsLoading(true);
     try {
-      // 1. 檢查 LINE ID 是否有效
-      if (lineId) {
-        const isFollowing = await lineService.checkFollowStatus(lineId);
+      // 1. 檢查是否啟用 LINE 通知且有輸入 LINE ID
+      if (formData.notifications.line && lineUserId) {
+        const isFollowing = await lineService.checkFollowStatus(lineUserId);
         if (!isFollowing) {
           setMessage('請先加入官方帳號為好友');
           setIsLoading(false);
@@ -738,27 +738,32 @@ export const useProfileLogic = () => {
         }
       }
 
-      // 2. 更新資料庫設定
-      const response = await fetch('/api/notifications/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      // 2. 準備更新資料庫的參數
+      const updateParams = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Key: {
+          userId: { S: userId }
         },
-        body: JSON.stringify({
-          userId,
-          lineUserId: lineId,
-          lineNotification
-        })
-      });
+        UpdateExpression: 'SET emailNotification = :email, lineNotification = :line, lineUserId = :lineUserId',
+        ExpressionAttributeValues: {
+          ':email': { BOOL: formData.notifications.email },
+          ':line': { BOOL: formData.notifications.line },
+          ':lineUserId': lineUserId ? { S: lineUserId } : { NULL: true }
+        }
+      };
 
-      if (response.ok) {
-        setMessage('設定已儲存');
-      } else {
-        throw new Error('儲存設定失敗');
-      }
+      // 3. 發送更新請求
+      await dynamoClient.send(new UpdateItemCommand(updateParams));
+
+      // 4. 更新成功
+      setMessage('設定已成功儲存！');
+      
+      // 5. 記錄活動
+      await logActivity(userId, '更新通知設定');
+
     } catch (error) {
       logger.error('儲存通知設定時發生錯誤:', error);
-      setMessage('儲存設定時發生錯誤');
+      setMessage('儲存設定時發生錯誤，請稍後再試');
     } finally {
       setIsLoading(false);
     }
