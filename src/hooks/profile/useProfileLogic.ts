@@ -196,7 +196,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   // 如果兩者都沒有，則重定向到登入頁面
   useEffect(() => {
     if (!currentUser) {
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [currentUser, router]);
 
