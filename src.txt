@@ -1,0 +1,120 @@
+src
+├── types
+│   ├── emailTypes.ts                // 定義與電子郵件通知相關的類型
+│   ├── amazon-dax-client.d.ts       // 宣告 Amazon DAX 客戶端模組
+│   ├── newsType.ts                  // 定義新聞相關的類型
+│   ├── lineTypes.ts                 // 定義與 LINE 通訊相關的類型
+│   ├── announcementType.ts          // 定義公告相關的類型
+│   └── userType.ts                  // 定義用戶相關的類型
+├── context
+│   ├── AuthContext.tsx             // 提供用戶認證相關的上下文
+│   ├── AppContext.tsx              // 提供應用程式邏輯相關的上下文
+│   └── LanguageContext.tsx         // 提供語言設定相關的上下文
+├── config
+│   ├── constants.js                // 定義應用程式的常數配置
+│   ├── line.js                     // 設定 LINE 通訊的相關配置
+│   ├── aws.js                      // 設定 AWS 相關的客戶端配置
+│   ├── email.ts                    // 集中管理郵件相關配置
+│   ├── aws.ts                      // 設定 AWS 相關的 TypeScript 客戶端配置
+│   ├── constants.ts                // 定義應用程式的常數配置 (TypeScript 版本)
+│   └── line.ts                     // 設定 LINE 通訊的相關配置 (TypeScript 版本)
+├── utils
+│   ├── errorHandler.ts              // 處理應用程式錯誤的工具，包括自定義錯誤類別和錯誤處理函數
+│   ├── logger.js                    // 提供日誌記錄功能的工具 (JavaScript 版本)
+│   ├── emailTest.js                 // 測試電子郵件發送功能的腳本
+│   ├── lineUtils.ts                 // 與 LINE 通訊相關的工具函數
+│   ├── logger.ts                    // 提供日誌記錄功能的工具 (TypeScript 版本)
+│   ├── cognitoClient.ts             // 設定 AWS Cognito 客戶端的工具
+│   ├── notificationUtils.js         // 處理通知發送的工具，包括重試機制和失敗通知處理
+│   ├── rateLimiter.js               // 實現速率限制功能的工具
+│   ├── apiClient.ts                 // (未提供具體內容)
+│   ├── dynamodb.ts                  // 設定 AWS DynamoDB 客戶端的工具
+│   ├── extractDateFromInfo.ts       // 從字串中提取日期的工具函數
+│   └── cacheUtils.ts                // 管理快取的工具，包括本地快取和 Redis 快取
+├── libs
+│   └── dynamodb.ts                  // 設定 AWS DynamoDB 客戶端的工具
+├── styles
+│   └── globals.css                  // 定義全域的 CSS 樣式
+├── components
+│   ├── common
+│   │   ├── Navbar.tsx               // 導航欄組件，提供網站的導航功能
+│   │   ├── Pagination.tsx           // 分頁組件，用於顯示和控制內容的分頁
+│   │   ├── ErrorMessage.tsx         // 錯誤訊息組件，用於顯示錯誤訊息
+│   │   ├── Footer.tsx               // 頁腳組件，顯示網站的版權信息
+│   │   └── Notification.tsx         // 通知組件，用於顯示用戶通知
+│   ├── profile
+│   │   └── ProfileUI.tsx            // 用戶個人資料界面組件，顯示和編輯用戶信息
+│   └── news
+│       ├── NewsSearch.tsx           // 新聞搜尋組件，提供新聞的搜尋功能
+│       ├── NewsCard.tsx             // 新聞卡片組件，顯示單個新聞項目的信息
+│       └── NewsFilters.tsx          // 新聞過濾器組件，提供新聞的篩選功能
+├── hooks
+│   ├── useNotificationSettings.ts   // 自定義 Hook，用於管理通知設定
+│   ├── useProfileLogic.ts           // 自定義 Hook，提供用戶個人資料的邏輯
+│   ├── useAuth.ts                   // 自定義 Hook，提供用戶認證的邏輯
+│   ├── profile
+│   │   └── useProfileLogic.ts       // 自定義 Hook，提供用戶個人資料的邏輯
+│   ├── news
+│   │   ├── useNewsFavorites.ts      // 自定義 Hook，管理新聞收藏功能
+│   │   ├── useFetchNews.ts          // 自定義 Hook，負責抓取新聞數據
+│   │   └── useNewsPageLogic.ts      // 自定義 Hook，提供新聞頁面的邏輯
+│   ├── useAppLogic.ts               // 自定義 Hook，提供應用程式的邏輯
+│   └── notifications
+│       └── useEmailNotifications.ts // 自定義 Hook，管理電子郵件通知
+├── lambda
+│   ├── updateNews.ts                // Lambda 函數，用於更新新聞
+│   ├── updateNews.js                // Lambda 函數，用於更新新聞 (JavaScript 版本)
+│   ├── fetchNews.js                 // Lambda 函數，用於抓取新聞
+│   └── fetchAnnouncement.js         // Lambda 函數，用於抓取公告
+├── api
+│   └── user.ts                      // API 端點，處理用戶相關的請求
+├── templates
+│   ├── lineTemplates.ts             // LINE 通訊的模板
+│   ├── emailTemplates.js            // 電子郵件的模板
+│   └── lineTemplates.js             // LINE 通訊的模板 (JavaScript 版本)
+├── pages
+│   ├── index.tsx                    // 主頁面
+│   ├── settings
+│   │   └── index.tsx                // 設定頁面
+│   ├── 404.tsx                      // 404 錯誤頁面
+│   ├── auth
+│   │   ├── login.tsx                // 登入頁面
+│   │   ├── register.tsx             // 註冊頁面
+│   │   └── forgot-password.tsx      // 忘記密碼頁面
+│   ├── _document.tsx                // 自定義 Document 組件
+│   ├── profile
+│   │   └── index.tsx                // 用戶個人資料頁面
+│   ├── news
+│   │   └── index.tsx                // 新聞頁面
+│   └── api
+│       ├── profile
+│       │   ├── recent-log.ts        // API 端點，處理用戶最近活動日誌
+│       │   ├── sendFeedback.ts      // API 端點，處理用戶反饋
+│       │   └── activity-log.ts      // API 端點，處理用戶活動日誌
+│       ├── news
+│       │   ├── summary.ts           // API 端點，處理新聞摘要
+│       │   ├── addFavorite.ts       // API 端點，處理添加新聞收藏
+│       │   ├── removeFavorite.ts    // API 端點，處理移除新聞收藏
+│       │   ├── updateNews.js        // API 端點，處理新聞更新 (JavaScript 版本)
+│       │   ├── index.ts             // API 端點，處理新聞相關的請求
+│       │   └── getFavorites.ts      // API 端點，處理獲取新聞收藏
+│       ├── line
+│       │   ├── confirm.ts           // API 端點，處理 LINE 通訊確認
+│       │   ├── verify
+│       │   │   ├── confirm.ts       // API 端點，處理 LINE 通訊驗證確認
+│       │   │   └── request.ts       // API 端點，處理 LINE 通訊驗證請求
+│       │   ├── check-follow-status.ts // API 端點，檢查 LINE 追蹤狀態
+│       │   ├── request.ts           // API 端點，處理 LINE 通訊請求
+│       │   └── webhook.ts           // API 端點，處理 LINE 通訊的 webhook
+│       ├── webhook.ts               // API 端點，處理通用 webhook
+│       └── notifications
+│           ├── settings.ts          // API 端點，處理通知設定
+│           └── sendEmail.ts         // API 端點，處理發送電子郵件
+│   └── _app.tsx                     // 自定義 App 組件
+└── services
+    ├── lineService.js               // LINE 通訊服務 (JavaScript 版本)
+    ├── emailService.js              // 電子郵件服務 (JavaScript 版本)
+    ├── dbService.ts                 // 資料庫服務
+    ├── line.ts                      // LINE 通訊服務
+    ├── emailService.ts              // 電子郵件服務
+    └── lineService.ts               // LINE 通訊服務 (TypeScript 版本)
