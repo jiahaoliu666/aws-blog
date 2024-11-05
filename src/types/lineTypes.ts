@@ -5,6 +5,7 @@ export interface LineConfig {
   basicId: string;
   qrCodeUrl: string;
   officialAccountName: string;
+  apiUrl: string;
 }
 
 interface LineTextContent {
@@ -126,7 +127,7 @@ export interface LineVerification {
 export interface LineVerificationResponse {
   success: boolean;
   message: string;
-  code?: string;
+  profile?: LineProfile;
 }
 
 export interface LineFollowStatus {
@@ -138,4 +139,17 @@ export interface LineVerificationState {
   step: 'idle' | 'verifying' | 'confirming' | 'complete';
   code?: string;
   error?: string;
+}
+
+export interface LineProfile {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
+}
+
+export interface LineSettings {
+  lineId: string;
+  isVerified: boolean;
+  displayName?: string;
 }

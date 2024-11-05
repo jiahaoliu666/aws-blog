@@ -31,4 +31,21 @@ export const errorHandler = {
       code: 'UNKNOWN_ERROR',
     };
   },
-}; 
+};
+
+export class LineError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LineError';
+  }
+}
+
+export function handleLineError(error: unknown): string {
+  if (error instanceof LineError) {
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return '未知錯誤';
+} 

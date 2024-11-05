@@ -215,38 +215,18 @@ export class LineService {
     // 在這裡實現驗證邏輯
   }
 
-  async verifyLineId(userId: string, lineId: string): Promise<boolean> {
-    try {
-      // 1. 檢查快取
-      const cacheKey = `lineVerification:${userId}:${lineId}`;
-      const cachedResult = verificationCache.get<boolean>(cacheKey);
-      if (cachedResult === true || cachedResult === false) {
-        return cachedResult;
-      }
+  async verifyLineId(lineId: string) {
+    // 檢查追蹤狀態的功能可以正常運作
+    // 因為這是使用 LINE Messaging API 而不是 webhook
+    return this.checkFollowStatus(lineId);
+  }
 
-      // 2. 檢查追蹤狀態
-      const followStatus = await this.checkFollowStatus(lineId);
-      if (!followStatus.isFollowing) {
-        return false;
-      }
-
-      // 3. 生成並儲存驗證碼
-      const verificationCode = await this.generateVerificationCode(userId);
-      
-      // 4. 發送驗證訊息
-      await sendLineMessage(lineId, {
-        type: 'text',
-        text: `您的驗證碼是: ${verificationCode}\n請在10分鐘內完成驗證`
-      });
-
-      // 5. 儲存到快取
-      verificationCache.set(cacheKey, true, 600);
-      
-      return true;
-    } catch (error) {
-      logger.error('LINE ID 驗證失敗:', error);
-      return false;
+  async handleWebhook(event: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('開發環境：模擬處理 webhook 事件', event);
+      return;
     }
+    // 生產環境的 webhook 處理邏輯
   }
 }
 

@@ -321,7 +321,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         <div>
                           <p className="text-xl mb-2">用戶名：{formData.username}</p>
                           <p className="text-xl mb-2">電子郵件：{formData.email}</p>
-                          <p className="text-xl">冊日期：{formData.registrationDate}</p>
+                          <p className="text-xl">註冊日期：{formData.registrationDate}</p>
                         </div>
                         <div>
                           <input

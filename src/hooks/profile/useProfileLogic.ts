@@ -190,6 +190,8 @@ interface ProfileLogicReturn {
     status: 'pending' | 'success' | 'error';
   };
   setVerificationStatus: React.Dispatch<React.SetStateAction<VerificationStatus>>;
+  notification: { message: string; status: 'success' | 'error' | null };
+  setNotification: React.Dispatch<React.SetStateAction<{ message: string; status: 'success' | 'error' | null }>>;
 }
 
 interface VerificationStatus {
@@ -284,6 +286,11 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     code: null,
     message: '',
     status: 'pending'
+  });
+
+  const [notification, setNotification] = useState<{ message: string; status: 'success' | 'error' | null }>({
+    message: '',
+    status: null
   });
 
   useEffect(() => {
@@ -486,7 +493,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       }
 
       if (formData.password !== formData.confirmPassword) {
-        throw new Error('新密碼和確認密碼不一致');
+        throw new Error('新密碼和確認密��不一致');
       }
 
       // 密碼強度驗證
@@ -828,50 +835,44 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   };
 
   const handleVerifyLineId = async () => {
+    if (!lineId) {
+      setNotification({ message: '請輸入 LINE ID', status: 'error' });
+      return;
+    }
+
+    setIsVerifying(true);
+
     try {
-      if (!user) {
-        throw new Error('用戶未登入');
-      }
-      
-      if (!lineUserId) {
-        toast.error('請輸入 LINE ID');
-        return;
-      }
-
-      setIsVerifying(true);
-      setLineIdStatus('validating');
-
       const response = await fetch('/api/line/check-follow-status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          lineId: lineUserId.trim(),
-          userId: user.sub || user.userId
-        }),
+        body: JSON.stringify({ lineId }),
       });
 
       const data = await response.json();
-      
+
+      if (!response.ok) {
+        throw new Error(data.message || '驗證失敗');
+      }
+
       if (data.success) {
-        setLineIdStatus('success');
-        toast.success('LINE 號驗證成功！');
-        setFormData(prev => ({
-          ...prev,
-          notifications: {
-            ...prev.notifications,
-            line: true
-          }
-        }));
+        setNotification({ message: '驗證成功！', status: 'success' });
+        // 更新用戶的 LINE 設定
+        await updateUserLineSettings({
+          lineId,
+          isVerified: true,
+          displayName: data.profile.displayName
+        });
       } else {
-        setLineIdStatus('error');
-        toast.error(data.message || '驗證失敗');
+        setNotification({ message: data.message, status: 'error' });
       }
     } catch (error) {
-      setLineIdStatus('error');
-      toast.error('驗證過程發生錯誤');
-      console.error('LINE 驗證錯誤:', error);
+      setNotification({ 
+        message: error instanceof Error ? error.message : '驗證過程發生錯誤',
+        status: 'error' 
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -1109,6 +1110,30 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     }
   };
 
+  const updateUserLineSettings = async ({
+    lineId,
+    isVerified,
+    displayName
+  }: {
+    lineId: string;
+    isVerified: boolean;
+    displayName: string;
+  }) => {
+    const params = {
+      TableName: 'AWS_Blog_UserNotificationSettings',
+      Item: {
+        userId: { S: authUser?.sub || '' },
+        lineId: { S: lineId },
+        isVerified: { BOOL: isVerified },
+        displayName: { S: displayName },
+        updatedAt: { S: new Date().toISOString() }
+      }
+    };
+
+    const command = new PutItemCommand(params);
+    await dynamoClient.send(command);
+  };
+
   return {
     user: authUser,
     formData,
@@ -1183,5 +1208,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     setLineIdStatus,
     verificationStatus,
     setVerificationStatus,
+    notification,
+    setNotification,
   };
 };

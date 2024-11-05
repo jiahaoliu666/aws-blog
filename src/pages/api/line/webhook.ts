@@ -5,7 +5,13 @@ import { logger } from '../../../utils/logger';
 import crypto from 'crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // 驗證 LINE 簽名
+  // 開發環境特殊處理
+  if (process.env.NODE_ENV === 'development') {
+    console.log('開發環境：webhook 事件模擬');
+    return res.status(200).json({ message: 'Webhook received (development)' });
+  }
+
+  // 生產環境的完整處理邏輯
   if (!verifyLineSignature(req)) {
     return res.status(401).json({ message: '無效的簽名' });
   }
