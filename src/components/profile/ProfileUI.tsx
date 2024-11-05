@@ -17,6 +17,7 @@ import { useRouter } from 'next/router';
 import { useAuthContext } from '../../context/AuthContext';
 import { lineService } from '../../services/lineService';
 import toast from 'react-hot-toast';
+import { logger } from '@/utils/logger';
 
 interface NotificationSettings {
   line: boolean;
@@ -40,7 +41,7 @@ interface FormData {
 interface VerificationStatus {
   code: string | null;
   message: string;
-  status: 'pending' | 'success' | 'error';
+  status: 'pending' | 'success' | 'error' | 'validating';
 }
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
@@ -105,6 +106,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     handleVerifyLineId,
     verificationStatus,
     setVerificationStatus,
+    updateUser, // 從 useProfileLogic 中新增這個
   } = useProfileLogic({ user });
 
   const router = useRouter();
@@ -117,6 +119,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   }>({ status: null, message: '' });
   const [lineId, setLineId] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [message, setMessage] = useState({ type: '', content: '' });
 
   useEffect(() => {
     setIsClient(true);
@@ -241,6 +244,74 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
         return 'text-blue-500';
       default:
         return 'text-gray-500';
+    }
+  };
+
+  const handleLineVerification = async () => {
+    try {
+      setVerificationStatus({
+        code: null,
+        message: '驗證中...',
+        status: 'pending'
+      });
+      
+      // 呼叫檢查追蹤狀態的 API
+      const response = await fetch('/api/line/check-follow-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lineId: lineId,
+          userId: user?.userId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('驗證請求失敗');
+      }
+
+      const data = await response.json();
+      
+      // 根據回應更新狀態
+      setVerificationStatus({
+        code: null,
+        message: data.isFollowing ? '驗證成功' : '驗證失敗',
+        status: data.isFollowing ? 'success' : 'error'
+      });
+      
+      // 果成功，更新用戶設定
+      if (data.isFollowing) {
+        updateUser({
+          lineSettings: {
+            id: lineId,
+            isVerified: true,
+            status: 'success'
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('LINE 驗證失敗:', error);
+      setVerificationStatus({
+        code: null,
+        message: '驗證中...',
+        status: 'error'
+      });
+    }
+  };
+
+  // 添加狀態顯示
+  const renderVerificationStatus = () => {
+    switch (verificationStatus.status) {
+      case 'pending':
+        return <span className="text-yellow-500">驗證中...</span>;
+      case 'success':
+        return <span className="text-green-500">驗證成功</span>;
+      case 'error':
+        return <span className="text-red-500">驗證失敗</span>;
+      default:
+        return null;
     }
   };
 
@@ -456,7 +527,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         onClick={() => setShowOldPassword(!showOldPassword)}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                       >
-                        {showOldPassword ? "隱藏" : "顯示"}
+                        {showOldPassword ? "隱" : "顯示"}
                       </button>
                     </div>
                     <div className="mb-4 relative">
@@ -554,7 +625,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                       });
                     }}>
                       <div>
-                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵��</label>
+                        <label htmlFor="feedbackEmail" className="block text-sm font-medium text-gray-700">電子郵</label>
                         <input
                           id="feedbackEmail"
                           name="feedbackEmail"
@@ -721,7 +792,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               <li>開啟上方的 LINE 通知開關</li>
                               <li>掃描下方 QR Code 或點擊追蹤按鈕，加入官方帳號好友</li>
                               <li>在下方輸入您的 LINE ID</li>
-                              <li>點擊儲存設定完成設置</li>
+                              <li>擊儲存設定完成設置</li>
                             </ol>
                           </div>
                           

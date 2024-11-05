@@ -40,12 +40,16 @@ export class LineError extends Error {
   }
 }
 
-export function handleLineError(error: unknown): string {
-  if (error instanceof LineError) {
-    return error.message;
+export const handleLineError = (error: any) => {
+  logger.error('LINE API 錯誤:', {
+    message: error.message,
+    status: error.status,
+    details: error.details
+  });
+  
+  if (error.status === 404) {
+    return '找不到該用戶，請確認 LINE ID 是否正確';
   }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return '未知錯誤';
-} 
+  
+  return '驗證過程發生錯誤，請稍後再試';
+}; 

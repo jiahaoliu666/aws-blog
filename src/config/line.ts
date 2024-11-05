@@ -6,9 +6,7 @@ export const lineConfig: LineConfig = {
   channelSecret: process.env.LINE_CHANNEL_SECRET || '',
   apiUrl: 'https://api.line.me/v2/bot',
   // 開發環境特別處理
-  webhookUrl: process.env.NODE_ENV === 'development'
-    ? `${process.env.NEXT_PUBLIC_API_URL}/api/line/webhook`
-    : process.env.LINE_WEBHOOK_URL || '',
+  webhookUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/line/webhook`,
   basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID || '',
   qrCodeUrl: process.env.NEXT_PUBLIC_LINE_QR_CODE_URL || '',
   officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || ''
@@ -16,7 +14,7 @@ export const lineConfig: LineConfig = {
 
 // 添加配置檢查
 if (!lineConfig.channelAccessToken) {
-  console.warn('LINE Channel Access Token 未設定');
+  console.error('LINE Channel Access Token is missing');
 }
 
 if (!lineConfig.channelSecret) {

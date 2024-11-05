@@ -192,6 +192,7 @@ interface ProfileLogicReturn {
   setVerificationStatus: React.Dispatch<React.SetStateAction<VerificationStatus>>;
   notification: { message: string; status: 'success' | 'error' | null };
   setNotification: React.Dispatch<React.SetStateAction<{ message: string; status: 'success' | 'error' | null }>>;
+  updateUser: (updates: any) => void;
 }
 
 interface VerificationStatus {
@@ -493,7 +494,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       }
 
       if (formData.password !== formData.confirmPassword) {
-        throw new Error('新密碼和確認密��不一致');
+        throw new Error('新密碼和確認密不一致');
       }
 
       // 密碼強度驗證
@@ -1210,5 +1211,6 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     setVerificationStatus,
     notification,
     setNotification,
+    updateUser,
   };
 };
