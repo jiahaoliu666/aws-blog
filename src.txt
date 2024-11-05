@@ -11,22 +11,15 @@ src
 │   ├── AppContext.tsx              // 提供應用程式邏輯相關的上下文
 │   └── LanguageContext.tsx         // 提供語言設定相關的上下文
 ├── config
-│   ├── constants.js                // 定義應用程式的常數配置
-│   ├── line.js                     // 設定 LINE 通訊的相關配置
-│   ├── aws.js                      // 設定 AWS 相關的客戶端配置
 │   ├── email.ts                    // 集中管理郵件相關配置
-│   ├── aws.ts                      // 設定 AWS 相關的 TypeScript 客戶端配置
-│   ├── constants.ts                // 定義應用程式的常數配置 (TypeScript 版本)
-│   └── line.ts                     // 設定 LINE 通訊的相關配置 (TypeScript 版本)
+│   ├── aws.ts                      // 設定 AWS 相關的客戶端配置
+│   ├── constants.ts                // 定義應用程式的常數配置 
+│   └── line.ts                     // 設定 LINE 通訊的相關配置 
 ├── utils
 │   ├── errorHandler.ts              // 處理應用程式錯誤的工具，包括自定義錯誤類別和錯誤處理函數
-│   ├── logger.js                    // 提供日誌記錄功能的工具 (JavaScript 版本)
-│   ├── emailTest.js                 // 測試電子郵件發送功能的腳本
 │   ├── lineUtils.ts                 // 與 LINE 通訊相關的工具函數
-│   ├── logger.ts                    // 提供日誌記錄功能的工具 (TypeScript 版本)
+│   ├── logger.ts                    // 提供日誌記錄功能的工具 
 │   ├── cognitoClient.ts             // 設定 AWS Cognito 客戶端的工具
-│   ├── notificationUtils.js         // 處理通知發送的工具，包括重試機制和失敗通知處理
-│   ├── rateLimiter.js               // 實現速率限制功能的工具
 │   ├── apiClient.ts                 // (未提供具體內容)
 │   ├── dynamodb.ts                  // 設定 AWS DynamoDB 客戶端的工具
 │   ├── extractDateFromInfo.ts       // 從字串中提取日期的工具函數
@@ -63,15 +56,13 @@ src
 │       └── useEmailNotifications.ts // 自定義 Hook，管理電子郵件通知
 ├── lambda
 │   ├── updateNews.ts                // Lambda 函數，用於更新新聞
-│   ├── updateNews.js                // Lambda 函數，用於更新新聞 (JavaScript 版本)
+│   ├── updateNews.js                // Lambda 函數，用於更新新聞 
 │   ├── fetchNews.js                 // Lambda 函數，用於抓取新聞
 │   └── fetchAnnouncement.js         // Lambda 函數，用於抓取公告
 ├── api
 │   └── user.ts                      // API 端點，處理用戶相關的請求
 ├── templates
 │   ├── lineTemplates.ts             // LINE 通訊的模板
-│   ├── emailTemplates.js            // 電子郵件的模板
-│   └── lineTemplates.js             // LINE 通訊的模板 (JavaScript 版本)
 ├── pages
 │   ├── index.tsx                    // 主頁面
 │   ├── settings
@@ -95,7 +86,6 @@ src
 │       │   ├── summary.ts           // API 端點，處理新聞摘要
 │       │   ├── addFavorite.ts       // API 端點，處理添加新聞收藏
 │       │   ├── removeFavorite.ts    // API 端點，處理移除新聞收藏
-│       │   ├── updateNews.js        // API 端點，處理新聞更新 (JavaScript 版本)
 │       │   ├── index.ts             // API 端點，處理新聞相關的請求
 │       │   └── getFavorites.ts      // API 端點，處理獲取新聞收藏
 │       ├── line
@@ -112,9 +102,7 @@ src
 │           └── sendEmail.ts         // API 端點，處理發送電子郵件
 │   └── _app.tsx                     // 自定義 App 組件
 └── services
-    ├── lineService.js               // LINE 通訊服務 (JavaScript 版本)
-    ├── emailService.js              // 電子郵件服務 (JavaScript 版本)
     ├── dbService.ts                 // 資料庫服務
     ├── line.ts                      // LINE 通訊服務
     ├── emailService.ts              // 電子郵件服務
-    └── lineService.ts               // LINE 通訊服務 (TypeScript 版本)
+    └── lineService.ts               // LINE 通訊服務 
