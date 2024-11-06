@@ -727,7 +727,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-700">安全提示</h4>
                         <p className="mt-2 text-sm text-gray-500">
-                          定期更改密碼並免��多個網站使用同的密碼，可以大大提高帳戶安全性。
+                          定期更改密碼並免多個網站使用同的密碼，可以大大提高帳戶安全性。
                         </p>
                       </div>
                     </div>
@@ -893,20 +893,28 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           />
                         </div>
                         
-                        <div className="mt-4">
-                          <label 
-                            htmlFor="notificationEmail" 
-                            className="block text-sm font-medium text-gray-700 mb-2"
-                          >
-                            通知信箱：
-                          </label>
-                          <input
-                            id="notificationEmail"
-                            type="email"
-                            value={formData.email}
-                            disabled
-                            className="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
-                          />
+                        {/* 通知信箱資訊 - 添加動畫效果 */}
+                        <div 
+                          className={`
+                            overflow-hidden transition-all duration-300 ease-in-out
+                            ${formData.notifications.email ? 'max-h-24 opacity-100 mt-4' : 'max-h-0 opacity-0'}
+                          `}
+                        >
+                          <div className="transform transition-transform duration-300 ease-in-out">
+                            <label 
+                              htmlFor="notificationEmail" 
+                              className="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                              通知信箱
+                            </label>
+                            <input
+                              id="notificationEmail"
+                              type="email"
+                              value={formData.email}
+                              disabled
+                              className="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
+                            />
+                          </div>
                         </div>
                       </div>
 
