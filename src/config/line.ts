@@ -42,13 +42,6 @@ export const validateLineConfig = () => {
         channelSecret: process.env.LINE_CHANNEL_SECRET,
         basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID
     };
-
-    console.log('LINE 配置狀態:', {
-        hasToken: !!config.channelAccessToken,
-        hasSecret: !!config.channelSecret,
-        hasBasicId: !!config.basicId
-    });
-
     return config;
 };
 

@@ -19,6 +19,10 @@ import { lineService } from '../../services/lineService';
 import toast from 'react-hot-toast';
 import { logger } from '@/utils/logger';
 import { TextField } from '@aws-amplify/ui-react';
+import { Input } from '@aws-amplify/ui-react';
+import { Button } from '@aws-amplify/ui-react';
+import { ExclamationCircleIcon } from '@heroicons/react/24/solid';
+import Image from 'next/image';
 
 interface NotificationSettings {
   line: boolean;
@@ -30,13 +34,21 @@ interface ProfileUIProps {
 }
 
 interface FormData {
-  // ... 現有的屬性 ...
+  username: string;
+  email: string;
+  registrationDate: string;
+  avatar: string;
   notifications: {
     email: boolean;
     line: boolean;
   };
   showEmailSettings: boolean;
   showLineSettings: boolean;
+  feedbackImage?: File;
+  password?: string;
+  confirmPassword?: string;
+  feedbackTitle?: string;
+  feedbackContent?: string;
 }
 
 interface VerificationStatus {
@@ -45,27 +57,35 @@ interface VerificationStatus {
   status: 'idle' | 'pending' | 'success' | 'error' | 'validating' | 'confirming';
 }
 
+interface Article {
+  timestamp: string;
+  link: string;
+  sourcePage: string;
+  translatedTitle: string;
+}
+
+interface ActivityLog {
+  date: string;
+  action: string;
+}
+
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
   const {
     activeTab,
     setActiveTab,
-    isProfileMenuOpen,
-    setIsProfileMenuOpen,
     isCompactLayout,
     setIsCompactLayout,
     formData,
     recentArticles,
-    isEditing,
-    isPasswordModalOpen,
     showOldPassword,
     showNewPassword,
     isLoading,
     isEditable,
-    setIsEditing,
     setTempAvatar,
     setFormData,
     setOldPassword,
-    setIsPasswordModalOpen,
     setShowOldPassword,
     setShowNewPassword,
     handleSaveProfileChanges,
@@ -98,18 +118,13 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     setLineUserId,
     lineIdError,
     lineIdStatus,
-    handleLineIdChange,
     settingsMessage,
     settingsStatus,
     toggleNotification, // 確保這行加入
     handleSaveNotificationSettings,
     setLineIdStatus,
-    handleVerifyLineId,
-    verificationStatus,
-    setVerificationStatus,
     updateUser, // 從 useProfileLogic 中新增這個
     lineId,
-    confirmVerification
   } = useProfileLogic({ user });
 
   const router = useRouter();
@@ -154,289 +169,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       </div>
     );
   }
-
-  const verifyLineFollowing = async () => {
-    const currentLineId = lineUserId || '';
-    if (!currentLineId.trim()) {
-      setVerificationResult({
-        status: 'error',
-        message: '請先輸 LINE ID'
-      });
-      return;
-    }
-
-    setIsVerifying(true);
-    try {
-      const response = await fetch('/api/line/check-follow-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ lineId: currentLineId, userId: authUser?.sub })
-      });
-
-      const data = await response.json();
-      
-      if (data.isFollowing) {
-        setVerificationResult({
-          status: 'success',
-          message: '驗證成功！您已成功追蹤 LINE 官方帳號'
-        });
-      } else {
-        setVerificationResult({
-          status: 'error',
-          message: '驗證失敗：您尚未追蹤 LINE 官方帳號'
-        });
-      }
-    } catch (error) {
-      setVerificationResult({
-        status: 'error',
-        message: '驗證過程發生錯誤，請稍後再試'
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleVerification = async () => {
-    setIsVerifying(true);
-    try {
-      if (!user?.sub) {
-        throw new Error('使用者ID未定義');
-      }
-      const response = await fetch('/api/line/verify/generate-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId: user.sub })
-      });
-      
-      const { code } = await response.json();
-      setVerificationStatus({
-        code,
-        message: '請將驗證碼傳送給官方帳號',
-        status: 'pending'
-      });
-    } catch (error) {
-      setVerificationStatus({
-        code: null,
-        message: '驗證碼產生失敗，請稍後再試',
-        status: 'error'
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const onVerifyClick = async () => {
-    const lineIdValue = lineId?.toString() ?? '';
-    
-    console.log('開始驗證流程', { lineId: lineIdValue });
-    
-    if (!lineIdValue) {
-      toast.error('請輸入 LINE ID');
-      return;
-    }
-
-    setIsVerifying(true);
-    try {
-      const currentUserId = user?.userId;
-      if (!currentUserId) {
-        throw new Error('使用者未登入');
-      }
-
-      // 檢查 LINE ID 格式
-      if (!lineIdValue.match(/^U[a-zA-Z0-9]{32}$/)) {
-        throw new Error('LINE ID 格式不正確，請確認是否複製完整的 ID');
-      }
-
-      // 發送驗證請求
-      const response = await fetch('/api/line/verify/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: currentUserId,
-          lineId: lineIdValue
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '驗證請求失敗');
-      }
-
-      const data = await response.json();
-      
-      // 更新驗證狀態
-      setVerificationStatus({
-        code: data.verificationCode,
-        status: 'pending',
-        message: '請在 LINE 上確認驗證碼'
-      });
-
-      toast.success('驗證碼已發至您的 LINE 帳號');
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '驗證過程發生錯誤';
-      toast.error(errorMessage);
-      setVerificationStatus({
-        code: null,
-        status: 'error',
-        message: errorMessage
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  // 在 UI 中可以根據狀態顯示不同的視覺反饋
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'text-green-500';
-      case 'error':
-        return 'text-red-500';
-      case 'validating':
-        return 'text-blue-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
-  const handleLineVerification = async () => {
-    try {
-      setVerificationStatus({
-        code: null,
-        message: '驗證中...',
-        status: 'pending'
-      });
-      
-      // 呼叫檢查追蹤狀態的 API
-      const response = await fetch('/api/line/check-follow-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          lineId: lineId,
-          userId: user?.userId
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('驗證請求失敗');
-      }
-
-      const data = await response.json();
-      
-      // 根據回應更新狀態
-      setVerificationStatus({
-        code: null,
-        message: data.isFollowing ? '驗證成功' : '驗證失敗',
-        status: data.isFollowing ? 'success' : 'error'
-      });
-      
-      // 果成功，更新用戶設定
-      if (data.isFollowing) {
-        updateUser({
-          lineSettings: {
-            id: lineId,
-            isVerified: true,
-            status: 'success'
-          }
-        });
-      }
-
-    } catch (error) {
-      console.error('LINE 驗證失敗:', error);
-      setVerificationStatus({
-        code: null,
-        message: '驗證中...',
-        status: 'error'
-      });
-    }
-  };
-
-  // 修改驗證狀態顯示
-  const renderVerificationStatus = () => {
-    const { status, message } = verificationStatus;
-    
-    const steps: { status: VerificationStatus['status'] }[] = [
-      { status: 'pending' },
-      { status: 'validating' },
-      { status: 'confirming' },
-      { status: 'success' }
-    ];
-    
-    return (
-      <div className="mt-4">
-        {/* 驗證進度指示器 */}
-        <div className="flex items-center justify-between mb-6">
-          {steps.map((step, index) => (
-            <div key={step.status} className="flex items-center">
-              <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center
-                ${status === step.status ? 
-                  status === 'success' ? 'bg-green-500 text-white' : 
-                  status === 'error' ? 'bg-red-500 text-white' :
-                  'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-500'}
-              `}>
-                {index + 1}
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`
-                  w-16 h-1 mx-2
-                  ${status === 'success' ? 'bg-green-500' :
-                    index < steps.indexOf(step) 
-                    ? 'bg-blue-500' : 'bg-gray-200'}
-                `} />
-              )}
-            </div>
-          ))}
-        </div>
-        
-        {/* 狀態訊息 */}
-        {status && (
-          <div className={`
-            p-4 rounded-lg mb-4
-            ${status === 'error' ? 'bg-red-50 text-red-700' :
-              status === 'success' ? 'bg-green-50 text-green-700' :
-              'bg-blue-50 text-blue-700'}
-          `}>
-            <p className="text-sm">{message}</p>
-          </div>
-        )}
-
-        {/* 驗證碼輸入區域 */}
-        {status === 'confirming' && (
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              請輸入驗證碼
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                maxLength={6}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="輸入 6 位驗證碼"
-                onChange={(e) => setVerificationCode(e.target.value)}
-              />
-              <button
-                onClick={() => confirmVerification(verificationCode)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                確認
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -600,7 +332,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           <p className="text-lg text-gray-500 text-left">目前沒有任何觀看紀錄。</p>
                         </div>
                       ) : (
-                        recentArticles.map((article, index) => (
+                        recentArticles.map((article: Article, index: number) => (
                           <div
                             key={index}
                             className={`border border-gray-300 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow duration-300`}
@@ -780,10 +512,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           value={formData.feedbackContent}
                           onChange={handleChange}
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="請輸入您的題、意見或建議"
+                          placeholder="請輸入您的問題、意見或建議"
                         />
                       </div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">傳圖片</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">上傳圖片</label>
                       <input
                         id="feedbackImage1"
                         name="feedbackImage1"
@@ -792,7 +524,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         onChange={(e) => {
                           const files = e.target?.files;
                           if (files && files[0]) {
-                            setFormData(prevData => ({ ...prevData, feedbackImage: files[0] }));
+                            setFormData((prevData: FormData) => ({
+                              ...prevData,
+                              feedbackImage: files[0],
+                              password: prevData.password || '',
+                              confirmPassword: prevData.confirmPassword || '',
+                              feedbackTitle: prevData.feedbackTitle || '',
+                              feedbackContent: prevData.feedbackContent || ''
+                            }));
                           }
                         }}
                         className="mt-2 p-2 border border-gray-300 rounded w-full"
@@ -834,7 +573,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                       {activityLog.length === 0 ? (
                         <p className="text-gray-500">目前沒有任何活動日誌。</p>
                       ) : (
-                        activityLog.map((log, index) => (
+                        activityLog.map((log: ActivityLog, index: number) => (
                           <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-lg border-2 border-gray-300">
                             <p className="text-sm text-gray-500">{log.date}</p>
                             <h4 className="text-lg font-semibold mt-2">{log.action}</h4>
@@ -849,7 +588,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                     <h3 className="text-2xl font-bold text-gray-800 mb-6">通知設定</h3>
                     <div className="space-y-6">
                       {/* Email 通知設定 */}
-                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-4">
                             <div className="bg-blue-100 p-3 rounded-full">
@@ -866,208 +605,47 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             onChange={() => toggleNotification('email')}
                           />
                         </div>
+                      </div>
 
-                        {/* Email 設定展開內容 */}
-                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                          formData.notifications.email ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-                        }`}>
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-gray-600">通知接收信箱：</span>
-                            </div>
-                            <div className="mt-2 p-2 bg-gray-100 rounded">
-                              <p className="text-gray-800 font-medium">{formData.email}</p>
-                            </div>
+                      {/* LINE 官方帳號資訊 */}
+                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm">
+                        <div className="flex items-center space-x-4 mb-4">
+                          <div className="bg-green-100 p-3 rounded-full">
+                            <FontAwesomeIcon icon={faCommentDots} className="text-green-600 text-xl" />
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-800">LINE 通知</h4>
+                            <p className="text-sm text-gray-500">加入官方 LINE 帳號接收最新文章通知</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-8 p-6 bg-gray-50 rounded-lg">
+                          <div className="text-center">
+                            <img 
+                              src="/line.png" 
+                              alt="LINE 官方帳號 QR Code" 
+                              className="w-40 h-40 mb-2"
+                            />
+                            <p className="text-sm text-gray-600">掃描 QR Code 加入好友</p>
+                          </div>
+
+                          <div className="text-center">
+                            <a 
+                              href="https://line.me/R/ti/p/@601feiwz"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-6 py-3 bg-[#00B900] text-white rounded-lg hover:bg-[#00A000] transition-colors duration-200"
+                            >
+                              <FontAwesomeIcon icon={faCommentDots} className="mr-2" />
+                              點擊加入好友
+                            </a>
+                            <p className="text-sm text-gray-600 mt-2">或直接點擊加入</p>
                           </div>
                         </div>
                       </div>
 
-                      {/* LINE 通知設定 */}
-                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-4">
-                            <div className="bg-green-100 p-3 rounded-full">
-                              <FontAwesomeIcon icon={faCommentDots} className="text-green-600 text-xl" />
-                            </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-800">Line 通知</h4>
-                              <p className="text-sm text-gray-500">接收最新文章的 LINE 即時通知</p>
-                            </div>
-                          </div>
-                          <SwitchField
-                            label=""
-                            isChecked={formData.notifications.line}
-                            onChange={() => toggleNotification('line')}
-                          />
-                        </div>
-
-                        {/* LINE 設定內容 - 使用動畫過渡 */}
-                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                          formData.showLineSettings ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-                        }`}>
-                          {/* 原有的 LINE 設定內容 */}
-                          <div className="mb-8 bg-blue-50 p-4 rounded-lg">
-                            <h5 className="font-semibold text-blue-800 mb-3">
-                              <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
-                              設定步
-                            </h5>
-                            <ol className="list-decimal list-inside space-y-2 text-blue-700">
-                              <li>開啟上方的 LINE 通知開關</li>
-                              <li>掃描下方 QR Code 或點擊追蹤按鈕，加入官方帳號好友</li>
-                              <li>在下方入您的 LINE ID</li>
-                              <li>擊儲存設定完成設置</li>
-                            </ol>
-                          </div>
-                          
-                          {/* QR Code 和追蹤按鈕區域 */}
-                          <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-8 p-6 bg-gray-50 rounded-lg">
-                            {/* QR Code */}
-                            <div className="text-center">
-                              <img 
-                                src="/line.png" 
-                                alt="LINE 官方帳號 QR Code" 
-                                className="w-40 h-40 mb-2"
-                              />
-                              <p className="text-sm text-gray-600">掃 QR Code 加好友</p>
-                            </div>
-
-                            {/* 直接追蹤按鈕 */}
-                            <div className="text-center">
-                              <a 
-                                href="https://line.me/R/ti/p/@601feiwz"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-6 py-3 bg-[#00B900] text-white rounded-lg hover:bg-[#00A000] transition-colors duration-200"
-                              >
-                                <FontAwesomeIcon icon={faCommentDots} className="mr-2" />
-                                點擊加入好友
-                              </a>
-                              <p className="text-sm text-gray-600 mt-2">或直接擊按加入</p>
-                            </div>
-
-                            {/* 新：驗證按鈕區塊 */}
-                            <div className="text-center">
-                              <button
-                                onClick={handleVerification}
-                                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                                disabled={isVerifying}
-                              >
-                                <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
-                                {isVerifying ? '驗證中...' : '開始驗證'}
-                              </button>
-                              {renderVerificationStatus()}
-                            </div>
-                          </div>
-
-                          {/* LINE ID 輸入區域 */}
-                          <div className="mb-6">
-                            <label htmlFor="lineUserId" className="block text-sm font-medium text-gray-700">
-                              LINE ID
-                            </label>
-                            <div className="mt-1 flex items-center gap-2">
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={lineId || ''}
-                                  onChange={(e) => handleLineIdChange(e.target.value)}
-                                  className={`border rounded-lg p-2 w-full ${
-                                    lineIdStatus === 'success' ? 'border-green-500' : 
-                                    lineIdStatus === 'error' ? 'border-red-500' : 
-                                    lineIdStatus === 'validating' ? 'border-blue-500' : 
-                                    'border-gray-300'
-                                  }`}
-                                  placeholder="請輸入您的 LINE ID"
-                                />
-                                {lineIdStatus !== 'idle' && (
-                                  <span className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${getStatusColor(lineIdStatus)}`}>
-                                    {lineIdStatus === 'success' && '✓'}
-                                    {lineIdStatus === 'error' && '✗'}
-                                    {lineIdStatus === 'validating' && '...'}
-                                  </span>
-                                )}
-                              </div>
-                              <button
-                                onClick={onVerifyClick}
-                                disabled={isVerifying}
-                                className={`px-4 py-2 rounded-md ${
-                                  isVerifying
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                                } text-white`}
-                              >
-                                {isVerifying ? '驗證中...' : '驗證'}
-                              </button>
-                            </div>
-                            
-                            {/* 錯誤訊息 */}
-                            {lineIdError && (
-                              <p className="mt-2 text-sm text-red-600">{lineIdError}</p>
-                            )}
-                            
-                            {/* 成功訊息 */}
-                            {lineIdStatus === 'success' && (
-                              <p className="mt-2 text-sm text-green-600">
-                                LINE 帳號驗證成功您將可以收到最新文章通知。
-                              </p>
-                            )}
-                          </div>
-
-                          {/* 追蹤狀態指示 */}
-                          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex items-center space-x-3">
-                              <div className={`w-3 h-3 rounded-full ${
-                                lineIdStatus === 'success' ? 'bg-green-500' : 
-                                lineIdStatus === 'error' ? 'bg-red-500' : 'bg-gray-400'
-                              }`}></div>
-                              <span className="text-sm font-medium text-gray-700">
-                                追蹤狀態：
-                                {lineIdStatus === 'success' ? '已追蹤' : 
-                                 lineIdStatus === 'error' ? '未追蹤' : 
-                                 lineUserId ? '驗證' : '未設定'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* 問題排解指南 */}
-                          <div className="mt-6 bg-yellow-50 p-4 rounded-lg">
-                            <h5 className="font-semibold text-yellow-800 mb-3 flex items-center">
-                              <FontAwesomeIcon icon={faQuestionCircle} className="mr-2" />
-                              常見問題排解
-                            </h5>
-                            <div className="space-y-3 text-yellow-700">
-                              <details className="cursor-pointer">
-                                <summary className="font-medium">無法收到通知？</summary>
-                                <ul className="mt-2 ml-5 list-disc text-sm space-y-1">
-                                  <li>確認是否已追蹤官方帳號且未封鎖</li>
-                                  <li>確認輸入的 LINE ID 是否正確</li>
-                                  <li>嘗試重新追蹤官方號</li>
-                                </ul>
-                              </details>
-                              <details className="cursor-pointer">
-                                <summary className="font-medium">LINE ID 格式說明</summary>
-                                <ul className="mt-2 ml-5 list-disc text-sm space-y-1">
-                                  <li>長度須在4-20個字元之間</li>
-                                  <li>可使英文字、數字、底線(_)和點號(.)</li>
-                                  <li>不可包含特殊符號或空格</li>
-                                </ul>
-                              </details>
-                              <details className="cursor-pointer">
-                                <summary className="font-medium">需要協？</summary>
-                                <p className="mt-2 text-sm">
-                                  如果您遇到任何問題，請透過以下方式聯繫我們：
-                                  <a href="mailto:support@example.com" className="text-blue-600 hover:underline ml-1">
-                                    support@example.com
-                                  </a>
-                                </p>
-                              </details>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 新增：統一的儲存按鈕區 */}
+                      {/* 設定儲存按鈕 */}
                       <div className="mt-8 flex flex-col space-y-4">
-                        {/* 顯示設定狀態訊息 */}
                         {settingsMessage && (
                           <div className={`p-4 rounded-lg shadow-md ${
                             settingsStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -1082,24 +660,21 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           </div>
                         )}
                         
-                        {/* 儲存按鈕 */}
                         <div className="flex justify-end">
                           <button
                             onClick={() => handleSaveNotificationSettings(user?.sub)}
-                            disabled={isLoading || lineIdStatus === 'error'}
+                            disabled={isLoading}
                             className={`
                               px-6 py-2.5 rounded-full
                               flex items-center space-x-2
-                              ${isLoading || lineIdStatus === 'error'
-                                ? 'bg-gray-400 cursor-not-allowed' 
-                                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'}
+                              ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
                               text-white transition duration-200 shadow-md hover:shadow-lg
                             `}
                           >
                             {isLoading ? (
                               <>
                                 <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
-                                <span>儲存...</span>
+                                <span>儲存中...</span>
                               </>
                             ) : (
                               <>

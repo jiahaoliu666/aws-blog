@@ -60,7 +60,7 @@ src
 │   ├── fetchNews.ts                 // Lambda 函數，用於抓取新聞
 │   └── fetchAnnouncement.ts         // Lambda 函數，用於抓取公告
 ├── api
-│   └── user.ts                      // API 端點，處理用戶相關的請求
+│   └── user.ts                      // 處理用戶相關的請求
 ├── templates
 │   ├── lineTemplates.ts             // LINE 通訊的模板
 ├── pages
@@ -79,27 +79,21 @@ src
 │   │   └── index.tsx                // 新聞頁面
 │   └── api
 │       ├── profile
-│       │   ├── recent-log.ts        // API 端點，處理用戶最近活動日誌
-│       │   ├── sendFeedback.ts      // API 端點，處理用戶反饋
-│       │   └── activity-log.ts      // API 端點，處理用戶活動日誌
+│       │   ├── recent-log.ts        // 處理用戶最近活動日誌
+│       │   ├── sendFeedback.ts      // 處理用戶反饋
+│       │   └── activity-log.ts      // 處理用戶活動日誌
 │       ├── news
-│       │   ├── summary.ts           // API 端點，處理新聞摘要
-│       │   ├── addFavorite.ts       // API 端點，處理添加新聞收藏
-│       │   ├── removeFavorite.ts    // API 端點，處理移除新聞收藏
-│       │   ├── index.ts             // API 端點，處理新聞相關的請求
-│       │   └── getFavorites.ts      // API 端點，處理獲取新聞收藏
+│       │   ├── summary.ts           // 處理新聞摘要
+│       │   ├── addFavorite.ts       // 處理添加新聞收藏
+│       │   ├── removeFavorite.ts    // 處理移除新聞收藏
+│       │   ├── index.ts             // 處理新聞相關的請求
+│       │   └── getFavorites.ts      // 處理獲取新聞收藏
 │       ├── line
-│       │   ├── confirm.ts           // API 端點，處理 LINE 通訊確認
-│       │   ├── verify
-│       │   │   ├── confirm.ts       // API 端點，處理 LINE 通訊驗證確認
-│       │   │   └── request.ts       // API 端點，處理 LINE 通訊驗證請求
-│       │   ├── check-follow-status.ts // API 端點，檢查 LINE 追蹤狀態
-│       │   ├── request.ts           // API 端點，處理 LINE 通訊請求
-│       │   └── webhook.ts           // API 端點，處理 LINE 通訊的 webhook
-│       ├── webhook.ts               // API 端點，處理通用 webhook
+│       │   └── webhook.ts           // 處理 LINE 通訊的 webhook
+│       ├── webhook.ts               // 處理通用 webhook
 │       └── notifications
-│           ├── settings.ts          // API 端點，處理通知設定
-│           └── sendEmail.ts         // API 端點，處理發送電子郵件
+│           ├── settings.ts          // 處理通知設定
+│           └── sendEmail.ts         // 處理發送電子郵件
 │   └── _app.tsx                     // 自定義 App 組件
 └── services
     ├── dbService.ts                 // 資料庫服務

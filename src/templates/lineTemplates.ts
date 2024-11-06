@@ -1,28 +1,23 @@
-import { ArticleData, LineMessage, FlexComponent } from '../types/lineTypes';
+import { ArticleData, LineMessage } from '../types/lineTypes';
 
-export const createNewsNotificationTemplate = (articleData: {
-  title: string;
-  link: string;
-  timestamp: number;
-  summary?: string;
-}): LineMessage => ({
+export const createNewsNotificationTemplate = (articleData: ArticleData): LineMessage => ({
   type: 'flex',
-  altText: `AWS 部落格新文章: ${articleData.title}`,
+  altText: `新文章: ${articleData.title}`,
   contents: {
     type: 'bubble',
-    hero: {
+    header: {
       type: 'box',
       layout: 'vertical',
       contents: [
         {
           type: 'text',
-          text: 'AWS 部落格新文章',
+          text: '📚 新文章發布',
           weight: 'bold',
           size: 'xl',
-          color: '#2c5282'
+          color: '#1a73e8'
         }
       ],
-      backgroundColor: '#f7fafc',
+      backgroundColor: '#f8f9fa',
       paddingAll: '20px'
     },
     body: {
@@ -34,24 +29,23 @@ export const createNewsNotificationTemplate = (articleData: {
           text: articleData.title,
           weight: 'bold',
           size: 'md',
-          wrap: true,
-          color: '#1a202c'
+          wrap: true
         },
         {
           type: 'text',
-          text: new Date(articleData.timestamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+          text: articleData.summary || '點擊下方按鈕��讀全文',
           size: 'sm',
-          color: '#718096',
-          margin: 'md'
-        },
-        ...(articleData.summary ? [{
-          type: 'text' as const,
-          text: articleData.summary,
-          size: 'sm' as const,
-          color: '#4a5568',
+          color: '#666666',
           margin: 'md',
           wrap: true
-        }] : [])
+        },
+        {
+          type: 'text',
+          text: `發布時間: ${new Date(articleData.timestamp).toLocaleString('zh-TW')}`,
+          size: 'xs',
+          color: '#999999',
+          margin: 'md'
+        }
       ],
       paddingAll: '20px'
     },
@@ -63,11 +57,11 @@ export const createNewsNotificationTemplate = (articleData: {
           type: 'button',
           action: {
             type: 'uri',
-            label: '閱讀全文',
+            label: '立即閱讀',
             uri: articleData.link
           },
           style: 'primary',
-          color: '#4299e1'
+          color: '#1a73e8'
         }
       ],
       paddingAll: '20px'
