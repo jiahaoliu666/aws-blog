@@ -603,8 +603,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             label=""
                             isChecked={formData.notifications.email}
                             onChange={() => toggleNotification('email')}
+                            isDisabled={isLoading}
                           />
                         </div>
+                        
+                        
                       </div>
 
                       {/* LINE 官方帳號資訊 */}
@@ -647,19 +650,34 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                       {/* 設定儲存按鈕 */}
                       <div className="mt-8 flex flex-col space-y-4">
                         {settingsMessage && (
-                          <div className={`p-4 rounded-lg shadow-md ${
-                            settingsStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          <div className={`mt-4 p-4 rounded-lg ${
+                            settingsStatus === 'success' ? 'bg-green-50' : 'bg-red-50'
                           }`}>
                             <div className="flex items-center">
                               <FontAwesomeIcon 
                                 icon={settingsStatus === 'success' ? faCheckCircle : faExclamationCircle} 
-                                className="mr-2"
+                                className={`mr-2 ${
+                                  settingsStatus === 'success' ? 'text-green-500' : 'text-red-500'
+                                }`}
                               />
-                              {settingsMessage}
+                              <div>
+                                <p className={
+                                  settingsStatus === 'success' ? 'text-green-700' : 'text-red-700'
+                                }>
+                                  {settingsMessage}
+                                </p>
+                                {settingsStatus === 'success' && (
+                                  <p className="text-sm text-green-600 mt-1">
+                                    {formData.notifications.email 
+                                      ? `您將會收到通知至：${formData.email}`
+                                      : '您將不會收到通知'
+                                    }
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
-                        
                         <div className="flex justify-end">
                           <button
                             onClick={() => handleSaveNotificationSettings(user?.sub)}

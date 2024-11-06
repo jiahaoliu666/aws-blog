@@ -36,7 +36,6 @@ const logActivity = async (userId: string, action: string) => {
     };
     const putCommand = new PutItemCommand(putParams);
     await dynamoClient.send(putCommand);
-    console.log(`Activity logged: ${action} at ${timestamp}`);
 
     // Fetch all activities to check the count
     const queryParams = {
@@ -63,7 +62,6 @@ const logActivity = async (userId: string, action: string) => {
         };
         const deleteCommand = new DeleteItemCommand(deleteParams);
         await dynamoClient.send(deleteCommand);
-        console.log(`Oldest activity deleted with timestamp: ${oldestActivity.timestamp.S}`);
       } else {
         console.error('Error: timestamp is undefined');
       }

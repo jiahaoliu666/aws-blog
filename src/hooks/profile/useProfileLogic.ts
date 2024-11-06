@@ -79,11 +79,13 @@ interface NotificationSettings {
 interface UpdateNotificationSettingsParams {
   userId?: string;
   emailNotification?: boolean;
+  email?: string;
 }
 
 const updateNotificationSettings = async ({
   userId,
-  emailNotification = true
+  emailNotification = true,
+  email = ''
 }: UpdateNotificationSettingsParams) => {
   if (!userId) return;
 
@@ -100,6 +102,7 @@ const updateNotificationSettings = async ({
     Item: {
       userId: { S: userId },
       emailNotification: { BOOL: emailNotification },
+      email: { S: email },
       updatedAt: { S: new Date().toISOString() }
     }
   };
@@ -426,7 +429,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
           ],
         });
         await cognitoClient.send(updateUserCommand);
-        setUploadMessage('用戶名新成功，頁刷新中...');
+        setUploadMessage('用戶名新成功，頁新中...');
         updateUser({ username: localUsername });
         setFormData(prevData => ({ ...prevData, username: localUsername }));
 
@@ -792,31 +795,59 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       notifications: {
         ...prev.notifications,
         [type]: !prev.notifications[type]
-      }
+      },
+      // 當切換 email 通知時，同時更新 showEmailSettings
+      showEmailSettings: type === 'email' ? !prev.notifications[type] : prev.showEmailSettings
     }));
   };
 
   const handleSaveNotificationSettings = async (userId?: string) => {
-    if (!userId) {
-      setSettingsMessage('找不到用戶ID');
-      setSettingsStatus('error');
-      return;
-    }
-
     try {
+      if (!userId) {
+        toast.error('找不到用戶ID');
+        setSettingsMessage('找不到用戶ID');
+        setSettingsStatus('error');
+        return;
+      }
+
+      // 檢查是否有任何設定變更
+      const currentEmailNotification = formData.notifications.email;
+      const originalEmailNotification = notificationSettings.emailNotification;
+      const hasChanges = currentEmailNotification !== originalEmailNotification;
+
+      if (!hasChanges) {
+        toast.info('沒有任何設定變更');
+        setSettingsMessage('沒有任何設定變更');
+        setSettingsStatus('error');
+        return;
+      }
+
       setIsLoading(true);
       
       await updateNotificationSettings({
         userId,
-        emailNotification: formData.notifications.email
+        emailNotification: currentEmailNotification,
+        email: currentEmailNotification ? formData.email : ''
       });
 
+      toast.success('通知設定已成功更新');
       setSettingsMessage('通知設定已成功更新');
       setSettingsStatus('success');
       await logActivity(userId, '更新通知設定');
       
+      // 更新本地狀態
+      setNotificationSettings({
+        emailNotification: currentEmailNotification
+      });
+      
+      // 延遲重新載入頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+
     } catch (error) {
       console.error('保存通知設定時發生錯誤:', error);
+      toast.error('更新通知設定失敗');
       setSettingsMessage('更新通知設定失敗');
       setSettingsStatus('error');
     } finally {
@@ -891,6 +922,47 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       setFeedbackMessage('送出回饋時發生錯誤');
     }
   };
+
+  // 修改 fetchNotificationSettings 函數，確保在獲取設定時同時更新 notificationSettings
+  const fetchNotificationSettings = async (userId: string) => {
+    try {
+      const params = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Key: {
+          userId: { S: userId }
+        }
+      };
+      
+      const command = new GetItemCommand(params);
+      const response = await dynamoClient.send(command);
+      
+      if (response.Item) {
+        const emailNotification = response.Item.emailNotification?.BOOL || false;
+        
+        // 同時更新 formData 和 notificationSettings
+        setFormData(prev => ({
+          ...prev,
+          notifications: {
+            ...prev.notifications,
+            email: emailNotification
+          }
+        }));
+        
+        setNotificationSettings({
+          emailNotification: emailNotification
+        });
+      }
+    } catch (error) {
+      console.error('獲取通知設定時發生錯誤:', error);
+    }
+  };
+
+  // 在 useEffect 中獲取通知設定
+  useEffect(() => {
+    if (authUser?.sub) {
+      fetchNotificationSettings(authUser.sub);
+    }
+  }, [authUser]);
 
   return {
     user: authUser,
