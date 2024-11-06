@@ -55,7 +55,6 @@ src
 │   └── notifications
 │       └── useEmailNotifications.ts // 自定義 Hook，管理電子郵件通知
 ├── lambda
-│   ├── updateNews.ts                // Lambda 函數，用於更新新聞
 │   ├── updateNews.ts                // Lambda 函數，用於更新新聞 
 │   ├── fetchNews.ts                 // Lambda 函數，用於抓取新聞
 │   └── fetchAnnouncement.ts         // Lambda 函數，用於抓取公告
