@@ -1,4 +1,5 @@
 import { User } from './userType';
+import { Dispatch, SetStateAction } from 'react';
 
 export interface LineConfig {
   channelAccessToken: string;
@@ -72,11 +73,11 @@ export interface ProfileLogicReturn {
   };
   verificationState: VerificationState;
   verificationCode: string;
-  setVerificationCode: (code: string) => void;
+  setVerificationCode: Dispatch<SetStateAction<string>>;
   startVerification: () => Promise<void>;
   confirmVerificationCode: (code: string) => Promise<void>;
   lineId: string;
-  setLineId: (id: string) => void;
+  setLineId: Dispatch<SetStateAction<string>>;
 }
 
 export type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';

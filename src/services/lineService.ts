@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import NodeCache from 'node-cache';
 import { LineFollowStatus, ArticleData, LineMessage, LineWebhookEvent, LineUserSettings, VerificationState, LineApiResponse } from "../types/lineTypes";
 import { createClient } from 'redis';
+import crypto from 'crypto';
 
 // 驗證 LINE 設定
 const validateLineMessagingConfig = () => {
@@ -185,47 +186,48 @@ export const lineService: LineServiceInterface = {
       const result = await dynamoClient.send(new GetItemCommand(params));
       
       if (!result.Item) {
-        throw new Error('找不到驗證記錄');
+        logger.error('找不到驗證記錄');
+        return false;
       }
 
-      const storedCode = result.Item.verificationCode.S;
-      const expiry = Number(result.Item.verificationExpiry.N);
-      const lineId = result.Item.lineId.S;
+      const storedCode = result.Item.verificationCode?.S;
+      const expiry = Number(result.Item.verificationExpiry?.N);
+      const lineId = result.Item.lineId?.S;
 
-      // 檢查驗證碼是否正確且未過期
+      // 驗證碼檢查
+      if (!storedCode || !expiry || !lineId) {
+        logger.error('驗證資訊不完整');
+        return false;
+      }
+
+      // 檢查是否過期
       if (Date.now() > expiry) {
-        throw new Error('驗證碼已過期');
+        logger.error('驗證碼已過期');
+        return false;
       }
 
+      // 檢查驗證碼
       if (code !== storedCode) {
-        throw new Error('驗證碼不正確');
+        logger.error('驗證碼不正確');
+        return false;
       }
 
-      if (!lineId) {
-        throw new Error('找不到 LINE ID');
-      }
-      
-      // 驗證成功，更新狀態
-      await this.updateFollowerStatus(lineId, true);
-      
       // 更新驗證狀態
-      const updateParams = {
-        TableName: "AWS_Blog_UserNotificationSettings",
-        Key: {
-          userId: { S: userId }
-        },
-        UpdateExpression: "SET isVerified = :isVerified, updatedAt = :updatedAt",
-        ExpressionAttributeValues: {
-          ":isVerified": { BOOL: true },
-          ":updatedAt": { S: new Date().toISOString() }
-        }
-      };
+      await this.updateUserLineSettings({
+        userId,
+        lineId,
+        isVerified: true
+      });
 
-      await dynamoClient.send(new UpdateItemCommand(updateParams));
-      
+      // 發送歡迎訊息
+      await this.sendMessage(lineId, {
+        type: 'text',
+        text: '🎉 恭喜您完成驗證！\n您現在可以收到最新文章的即時通知了。'
+      });
+
       return true;
     } catch (error) {
-      logger.error('驗證失敗:', error);
+      logger.error('驗證過程發生錯誤:', error);
       return false;
     }
   },
@@ -549,3 +551,28 @@ async function requestVerification(userId: string, lineId: string) {
     throw error;
   }
 }
+
+// 建議加強驗證碼生成的複雜度
+const generateVerificationCode = () => {
+  const length = 6;
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const randomBytes = crypto.randomBytes(length);
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars[randomBytes[i] % chars.length];
+  }
+  return result;
+};
+
+// 建議添加驗證狀態的持久化存儲
+const saveVerificationState = async (userId: string, state: VerificationState) => {
+  const params = {
+    TableName: "AWS_Blog_UserNotificationSettings",
+    Key: { userId: { S: userId } },
+    UpdateExpression: "SET verificationState = :state",
+    ExpressionAttributeValues: {
+      ":state": { S: JSON.stringify(state) }
+    }
+  };
+  await dynamoClient.send(new UpdateItemCommand(params));
+};

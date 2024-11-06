@@ -44,7 +44,6 @@ src
 │       └── NewsFilters.tsx          // 新聞過濾器組件，提供新聞的篩選功能
 ├── hooks
 │   ├── useNotificationSettings.ts   // 用於管理通知設定
-│   ├── useProfileLogic.ts           // 提供用戶個人資料的邏輯
 │   ├── useAuth.ts                   // 提供用戶認證的邏輯
 │   ├── profile
 │   │   └── useProfileLogic.ts       // 提供用戶個人資料的邏輯

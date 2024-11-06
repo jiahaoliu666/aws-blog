@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faUser, faBell, faShieldAlt, faGlobe, faCog, faClock, faCommentDots, faHistory, faEye, faEnvelope, faQuestionCircle, faBolt, faBookmark, faShareAlt, faFile, faTh, faThList, faExclamationCircle, faCheckCircle, faSpinner, faSave, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faUser, faBell, faShieldAlt, faGlobe, faCog, faClock, faCommentDots, faHistory, faEye, faEnvelope, faQuestionCircle, faBolt, faBookmark, faShareAlt, faFile, faTh, faThList, faExclamationCircle, faCheckCircle, faSpinner, faSave, faInfoCircle, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { SwitchField } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
@@ -51,6 +51,8 @@ interface FormData {
   feedbackContent?: string;
 }
 
+type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';
+
 interface VerificationStatus {
   code: string | null;
   message: string;
@@ -68,6 +70,264 @@ interface ActivityLog {
   date: string;
   action: string;
 }
+
+interface VerificationState {
+  step: VerificationStep;
+  status: 'idle' | 'pending' | 'success' | 'error' | 'validating' | 'confirming';
+  message: string;
+  isVerified: boolean;
+}
+
+// 添加進度指示器樣式
+const StepIndicator: React.FC<{ step: VerificationStep }> = ({ step }) => {
+  const steps = [
+    { key: 'idle', label: '輸入 LINE ID' },
+    { key: 'verifying', label: '驗證身份' },
+    { key: 'confirming', label: '確認驗證' },
+    { key: 'complete', label: '完成綁定' }
+  ];
+
+  return (
+    <div className="relative mb-8">
+      {/* 進度條 */}
+      <div className="absolute top-5 w-full h-1 bg-gray-200">
+        <div 
+          className="h-full bg-blue-500 transition-all duration-500"
+          style={{ 
+            width: `${(steps.findIndex(s => s.key === step) / (steps.length - 1)) * 100}%` 
+          }}
+        />
+      </div>
+      
+      {/* 步驟指示器 */}
+      <div className="relative flex justify-between">
+        {steps.map((s, index) => (
+          <div 
+            key={s.key}
+            className="flex flex-col items-center"
+          >
+            <div 
+              className={`
+                w-10 h-10 rounded-full flex items-center justify-center
+                mb-2 transition-colors duration-300 z-10
+                ${step === s.key ? 'bg-blue-500 text-white' : 
+                  steps.findIndex(st => st.key === step) > index 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-gray-200 text-gray-500'}
+              `}
+            >
+              {steps.findIndex(st => st.key === step) > index ? (
+                <FontAwesomeIcon icon={faCheck} />
+              ) : (
+                index + 1
+              )}
+            </div>
+            <span className="text-sm text-gray-600">{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// LINE 通知設定區塊
+const LineNotificationSection: React.FC<{
+  verificationState: VerificationState;
+  lineId: string;
+  setLineId: (value: string) => void;
+  startVerification: () => void;
+  verificationCode: string;
+  setVerificationCode: (value: string) => void;
+  confirmVerificationCode: (code: string) => void;
+  user?: User | null;
+}> = ({
+  verificationState,
+  lineId,
+  setLineId,
+  startVerification,
+  verificationCode,
+  setVerificationCode,
+  confirmVerificationCode,
+  user
+}) => {
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+      {/* 標題區塊 */}
+      <div className="flex items-center space-x-4 mb-6">
+        <div className="bg-green-100 p-3 rounded-full">
+          <FontAwesomeIcon icon={faCommentDots} className="text-green-600 text-xl" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">LINE 通知設定</h3>
+          <p className="text-sm text-gray-500">
+            完成驗證後即可接收最新文章通知
+          </p>
+        </div>
+      </div>
+
+      {/* 進度指示器 */}
+      {!verificationState.isVerified && (
+        <StepIndicator step={verificationState.step} />
+      )}
+
+      {/* 驗證表單 */}
+      <div className="space-y-6">
+        {/* LINE ID 輸入 */}
+        {verificationState.step === 'idle' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                LINE ID
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={lineId}
+                  onChange={(e) => setLineId(e.target.value)}
+                  placeholder="請輸入您的 LINE ID (以 U 開頭)"
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                {lineId && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {/^U[0-9a-f]{32}$/i.test(lineId) ? (
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+                    ) : (
+                      <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {lineId && !/^U[0-9a-f]{32}$/i.test(lineId) && (
+                <p className="mt-2 text-sm text-red-600">
+                  <FontAwesomeIcon icon={faExclamationCircle} className="mr-1" />
+                  LINE ID 格式不正確
+                </p>
+              )}
+            </div>
+            <button
+              onClick={startVerification}
+              disabled={!lineId || !/^U[0-9a-f]{32}$/i.test(lineId) || verificationState.status === 'pending'}
+              className={`
+                w-full py-3 rounded-lg transition-all duration-300
+                flex items-center justify-center space-x-2
+                ${!lineId || !/^U[0-9a-f]{32}$/i.test(lineId) || verificationState.status === 'pending'
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'}
+              `}
+            >
+              {verificationState.status === 'pending' ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                  <span>處理中...</span>
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faCheck} />
+                  <span>開始驗證</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* 驗證指令顯示 */}
+        {verificationState.step === 'verifying' && (
+          <div className="bg-blue-50 p-6 rounded-lg space-y-4">
+            <div className="flex items-center text-blue-700 mb-2">
+              <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
+              <span>請在 LINE 官方帳號中輸入：</span>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-blue-200">
+              <code className="text-blue-700">驗證 {user?.sub}</code>
+            </div>
+            <p className="text-sm text-blue-600">
+              輸入驗證指令後，系統將發送驗證碼給您
+            </p>
+          </div>
+        )}
+
+        {/* 驗證碼輸入 */}
+        {verificationState.step === 'confirming' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                驗證碼
+              </label>
+              <input
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                placeholder="請輸入 LINE 中收到的驗證碼"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                maxLength={6}
+              />
+            </div>
+            <button
+              onClick={() => confirmVerificationCode(verificationCode)}
+              disabled={!verificationCode || verificationCode.length !== 6}
+              className={`
+                w-full py-3 rounded-lg transition-all duration-300
+                flex items-center justify-center space-x-2
+                ${!verificationCode || verificationCode.length !== 6
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'}
+              `}
+            >
+              {verificationState.status === 'validating' ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                  <span>驗證中...</span>
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faCheck} />
+                  <span>確認驗證</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* 驗證完成狀態 */}
+        {verificationState.isVerified && (
+          <div className="bg-green-50 p-6 rounded-lg">
+            <div className="flex items-center mb-4">
+              <div className="bg-green-100 p-2 rounded-full mr-4">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 text-xl" />
+              </div>
+              <div>
+                <h4 className="text-green-800 font-medium">LINE 帳號已驗證</h4>
+                <p className="text-sm text-green-600">
+                  您將可以透過 LINE 接收最新文章通知
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 狀態訊息 */}
+        {verificationState.message && (
+          <div className={`
+            mt-4 p-4 rounded-lg flex items-center
+            ${verificationState.status === 'error' ? 'bg-red-50 text-red-700' : 
+              verificationState.status === 'success' ? 'bg-green-50 text-green-700' : 
+              'bg-blue-50 text-blue-700'}
+          `}>
+            <FontAwesomeIcon 
+              icon={
+                verificationState.status === 'error' ? faExclamationCircle :
+                verificationState.status === 'success' ? faCheckCircle :
+                faInfoCircle
+              } 
+              className="mr-3"
+            />
+            <span>{verificationState.message}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -125,6 +385,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     setLineIdStatus,
     updateUser, // 從 useProfileLogic 中新增這個
     lineId,
+    setLineId,
     multicastMessage,
     setMulticastMessage,
     isMulticasting,
@@ -302,7 +563,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               onChange={() => {
                                 toggleEditableField('username');
                                 if (isEditable.username) {
-                                  resetUsername(); // 開關關閉時用戶名
+                                  resetUsername(); // 開關關時用戶名
                                 }
                               }}
                               className="mr-2"
@@ -621,7 +882,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold text-gray-800">Email 通知</h4>
-                              <p className="text-sm text-gray-500">接收最新文章的 Email 通知</p>
+                              <p className="text-sm text-gray-500">收最新文章的 Email 通知</p>
                             </div>
                           </div>
                           <SwitchField
@@ -642,7 +903,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             <FontAwesomeIcon icon={faCommentDots} className="text-green-600 text-xl" />
                           </div>
                           <div>
-                            <h4 className="text-lg font-semibold text-gray-800">LINE 通知</h4>
+                            <h4 className="text-lg font-semibold text-gray-800">LINE 通</h4>
                             <p className="text-sm text-gray-500">加官方 LINE 帳號接收最新文章通知</p>
                           </div>
                         </div>
@@ -667,7 +928,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               <FontAwesomeIcon icon={faCommentDots} className="mr-2" />
                               點擊加入好友
                             </a>
-                            <p className="text-sm text-gray-600 mt-2">或直接點擊加入</p>
+                            <p className="text-sm text-gray-600 mt-2">或直點擊加入</p>
                           </div>
                         </div>
                       </div>
@@ -763,7 +1024,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 {settingsStatus === 'success' && (
                                   <p className="text-sm text-green-600 mt-1">
                                     {formData.notifications.email 
-                                      ? `將會發送最新文章至：${formData.email}`
+                                      ? `將會發送最新文章至${formData.email}`
                                       : '已取消訂閱，您將不會收到通知'
                                     }
                                   </p>

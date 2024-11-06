@@ -70,7 +70,7 @@ interface SaveSettingsResponse {
 }
 
 interface UseProfileLogicProps {
-  user: User | null;
+  user?: User | null;
 }
 
 interface NotificationSettings {
@@ -165,6 +165,7 @@ interface ProfileLogicReturn {
   setLineIdStatus: (status: 'idle' | 'validating' | 'success' | 'error') => void;
   updateUser: (user: Partial<User>) => void;
   lineId: string;
+  setLineId: React.Dispatch<React.SetStateAction<string>>;
   feedbackMessage: string | null;
   multicastMessage: string;
   setMulticastMessage: React.Dispatch<React.SetStateAction<string>>;
@@ -189,7 +190,7 @@ interface Article {
   sourcePage: string;
 }
 
-export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): ProfileLogicReturn => {
+export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): ProfileLogicReturn => {
   const { user: authUser, updateUser, logoutUser } = useAuthContext();
   const router = useRouter();
   
@@ -285,8 +286,24 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   const [verificationState, setVerificationState] = useState<VerificationState>({
     step: 'idle',
     status: 'idle',
-    message: ''
+    message: '請先輸入您的 LINE ID 開始驗證'
   });
+
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRY = 3;
+
+  const handleVerificationRetry = async () => {
+    if (retryCount >= MAX_RETRY) {
+      setVerificationState({
+        step: 'idle',
+        status: 'error',
+        message: '已超過最大重試次數，請稍後再試'
+      });
+      return;
+    }
+    setRetryCount(prev => prev + 1);
+    await startVerification();
+  };
 
   const handleMulticast = async () => {
     if (!multicastMessage.trim()) {
@@ -367,7 +384,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       return;
     }
 
-    // 始化表單資料
+    // 始表單資料
     const currentUser = authUser || (storedUser ? JSON.parse(storedUser) : null);
     if (currentUser) {
       setFormData(prevData => ({
@@ -515,7 +532,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
 
   const handleChangePassword = async () => {
     try {
-      // 基本驗證
+      // 基本證
       if (!oldPassword || !formData.password) {
         throw new Error('請輸入舊密碼和新密碼');
       }
@@ -541,7 +558,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       
       // 成功處理
       setPasswordMessage('密碼變更成功，請重新登入');
-      await logActivity(authUser?.sub || 'default-sub', '變更密碼');
+      await logActivity(authUser?.sub || 'default-sub', '變更碼');
       
       // 延遲登出
       setTimeout(handleLogout, 3000);
@@ -856,7 +873,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
         ...prev.notifications,
         [type]: !prev.notifications[type]
       },
-      // 當切換 email 通知時，同時��新 showEmailSettings
+      // 當切換 email 通知時，同時新 showEmailSettings
       showEmailSettings: type === 'email' ? !prev.notifications[type] : prev.showEmailSettings
     }));
   };
@@ -947,7 +964,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       }
       
       await handleSaveNotificationSettings(authUser.sub);
-      setSettingsMessage('設定已成功儲存');
+      setSettingsMessage('定已成功儲存');
       setSettingsStatus('success');
     } catch (error) {
       setSettingsMessage('儲存設定失敗');
@@ -1024,10 +1041,10 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     }
   }, [authUser]);
 
-  // 開始驗證流程
+  // 修改 startVerification 函數
   const startVerification = async () => {
     try {
-      if (!authUser?.sub) {
+      if (!user?.sub) {
         throw new Error('找不到用戶ID');
       }
 
@@ -1058,10 +1075,10 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     }
   };
 
-  // 確認驗證碼
+  // 修改 confirmVerificationCode 函數
   const confirmVerificationCode = async (code: string) => {
     try {
-      if (!authUser?.sub) {
+      if (!user?.sub) {
         throw new Error('找不到用戶ID');
       }
 
@@ -1077,7 +1094,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: authUser.sub,
+          userId: user.sub,
           lineId,
           code
         })
@@ -1099,8 +1116,6 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
           displayName: user?.username || ''
         });
 
-        // 重新獲取通知設定
-        await fetchNotificationSettings(authUser.sub);
       } else {
         throw new Error(data.message || '驗證失敗');
       }
@@ -1166,6 +1181,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     setLineIdStatus,
     updateUser,
     lineId,
+    setLineId,
     feedbackMessage,
     multicastMessage,
     setMulticastMessage,
@@ -1176,6 +1192,6 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     verificationCode,
     setVerificationCode,
     startVerification,
-    confirmVerificationCode
+    confirmVerificationCode,
   };
 };
