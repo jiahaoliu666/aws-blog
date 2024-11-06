@@ -734,7 +734,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold text-gray-800">Email 通知</h4>
-                              <p className="text-sm text-gray-500">接收最新文的 Email 通知</p>
+                              <p className="text-sm text-gray-500">接收最新文章的 Email 通知</p>
                             </div>
                           </div>
                           <SwitchField
