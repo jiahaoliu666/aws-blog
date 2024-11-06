@@ -160,7 +160,7 @@ interface ProfileLogicReturn {
   lineIdStatus: 'idle' | 'validating' | 'success' | 'error';
   settingsMessage: string | null;
   settingsStatus: 'success' | 'error' | null;
-  toggleNotification: (type: 'email') => void;
+  toggleNotification: (type: 'email' | 'line') => void;
   handleSaveNotificationSettings: (userId?: string) => Promise<void>;
   setLineIdStatus: (status: 'idle' | 'validating' | 'success' | 'error') => void;
   updateUser: (user: Partial<User>) => void;
@@ -866,15 +866,13 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     }
   };
 
-  const toggleNotification = (type: 'email') => {
+  const toggleNotification = (type: 'email' | 'line') => {
     setFormData(prev => ({
       ...prev,
       notifications: {
         ...prev.notifications,
         [type]: !prev.notifications[type]
-      },
-      // 當切換 email 通知時，同時新 showEmailSettings
-      showEmailSettings: type === 'email' ? !prev.notifications[type] : prev.showEmailSettings
+      }
     }));
   };
 
