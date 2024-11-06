@@ -1,11 +1,11 @@
 src
 ├── types
-│   ├── emailTypes.ts                // 定義與電子郵件通知相關的類型
-│   ├── amazon-dax-client.d.ts       // 宣告 Amazon DAX 客戶端模組
-│   ├── newsType.ts                  // 定義新聞相關的類型
-│   ├── lineTypes.ts                 // 定義與 LINE 通訊相關的類型
-│   ├── announcementType.ts          // 定義公告相關的類型
-│   └── userType.ts                  // 定義用戶相關的類型
+│   ├── emailTypes.ts               // 定義與電子郵件通知相關的類型
+│   ├── amazon-dax-client.d.ts      // 宣告 Amazon DAX 客戶端模組
+│   ├── newsType.ts                 // 定義新聞相關的類型
+│   ├── lineTypes.ts                // 定義與 LINE 通訊相關的類型
+│   ├── announcementType.ts         // 定義公告相關的類型
+│   └── userType.ts                 // 定義用戶相關的類型
 ├── context
 │   ├── AuthContext.tsx             // 提供用戶認證相關的上下文
 │   ├── AppContext.tsx              // 提供應用程式邏輯相關的上下文
@@ -16,87 +16,96 @@ src
 │   ├── constants.ts                // 定義應用程式的常數配置 
 │   └── line.ts                     // 設定 LINE 通訊的相關配置 
 ├── utils
-│   ├── errorHandler.ts              // 處理應用程式錯誤的工具，包括自定義錯誤類別和錯誤處理函數
-│   ├── lineUtils.ts                 // 與 LINE 通訊相關的工具函數
-│   ├── logger.ts                    // 提供日誌記錄功能的工具 
-│   ├── cognitoClient.ts             // 設定 AWS Cognito 客戶端的工具
-│   ├── dynamodb.ts                  // 設定 AWS DynamoDB 客戶端的工具
-│   ├── extractDateFromInfo.ts       // 從字串中提取日期的工具函數
-│   ├── redis.ts                     // Redis 客戶端配置，確保只在伺服器端使用
-│   └── cacheUtils.ts                // 管理快取的工具，包括本地快取和 Redis 快取
-│   └── notificationUtils.ts         // 處理通知重試機制的工具，包括失敗通知的追蹤和重試邏輯
+│   ├── errorHandler.ts             // 處理應用程式錯誤的工具
+│   ├── lineUtils.ts                // 與 LINE 通訊相關的工具函數
+│   ├── logger.ts                   // 提供日誌記錄功能的工具 
+│   ├── cognitoClient.ts            // 設定 AWS Cognito 客戶端的工具
+│   ├── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
+│   ├── extractDateFromInfo.ts      // 從字串中提取日期的工具函數
+│   ├── redis.ts                    // Redis 客戶端配置
+│   ├── cacheUtils.ts               // 管理快取的工具
+│   └── notificationUtils.ts        // 處理通知重試機制的工具
 ├── libs
-│   └── dynamodb.ts                  // 設定 AWS DynamoDB 客戶端的工具
+│   └── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
 ├── styles
-│   └── globals.css                  // 定義全域的 CSS 樣式
+│   └── globals.css                 // 定義全域的 CSS 樣式
 ├── components
 │   ├── common
-│   │   ├── Navbar.tsx               // 導航欄組件，提供網站的導航功能
-│   │   ├── Pagination.tsx           // 分頁組件，用於顯示和控制內容的分頁
-│   │   ├── ErrorMessage.tsx         // 錯誤訊息組件，用於顯示錯誤訊息
-│   │   ├── Footer.tsx               // 頁腳組件，顯示網站的版權信息
-│   │   └── Notification.tsx         // 通知組件，用於顯示用戶通知
+│   │   ├── Navbar.tsx              // 導航欄組件
+│   │   ├── Pagination.tsx          // 分頁組件
+│   │   ├── ErrorMessage.tsx        // 錯誤訊息組件
+│   │   ├── Footer.tsx              // 頁腳組件
+│   │   └── Notification.tsx        // 通知組件
 │   ├── profile
-│   │   └── ProfileUI.tsx            // 用戶個人資料界面組件，顯示和編輯用戶信息
+│   │   ├── ProfileLayout.tsx       // 個人資料頁面布局
+│   │   ├── ProfileSidebar.tsx      // 側邊欄組件
+│   │   ├── ProfileContent.tsx  // 內容區域組件
+│   │   └── tabs
+│   │       ├── ProfileInfo.tsx     // 個人資料標籤頁
+│   │       ├── PasswordChange.tsx  // 密碼修改標籤頁
+│   │       ├── NotificationSettings.tsx // 通知設定標籤頁
+│   │       ├── Settings.tsx        // 偏好設定標籤頁
+│   │       ├── ActivityHistory.tsx // 觀看記錄標籤頁
+│   │       ├── Feedback.tsx        // 意見反饋標籤頁
+│   │       └── ActivityLog.tsx     // 活動日誌標籤頁
 │   └── news
-│       ├── NewsSearch.tsx           // 新聞搜尋組件，提供新聞的搜尋功能
-│       ├── NewsCard.tsx             // 新聞卡片組件，顯示單個新聞項目的信息
-│       └── NewsFilters.tsx          // 新聞過濾器組件，提供新聞的篩選功能
+│       ├── NewsSearch.tsx          // 新聞搜尋組件
+│       ├── NewsCard.tsx            // 新聞卡片組件
+│       └── NewsFilters.tsx         // 新聞過濾器組件
 ├── hooks
-│   ├── useNotificationSettings.ts   // 用於管理通知設定
-│   ├── useAuth.ts                   // 提供用戶認證的邏輯
+│   ├── useNotificationSettings.ts  // 通知設定 Hook
+│   ├── useAuth.ts                  // 用戶認證 Hook
 │   ├── profile
-│   │   └── useProfileLogic.ts       // 提供用戶個人資料的邏輯
+│   │   └── useProfileLogic.ts      // 個人資料邏輯 Hook
 │   ├── news
-│   │   ├── useNewsFavorites.ts      // 管理新聞收藏功能
-│   │   ├── useFetchNews.ts          // 負責抓取新聞數據
-│   │   └── useNewsPageLogic.ts      // 提供新聞頁面的邏輯
-│   ├── useAppLogic.ts               // 提供應用程式的邏輯
+│   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
+│   │   ├── useFetchNews.ts         // 新聞獲取 Hook
+│   │   └── useNewsPageLogic.ts     // 新聞頁面邏輯 Hook
+│   ├── useAppLogic.ts              // 應用程式邏輯 Hook
 │   └── notifications
-│       └── useEmailNotifications.ts // 管理電子郵件通知
+│       └── useEmailNotifications.ts // 電子郵件通知 Hook
 ├── lambda
-│   ├── updateNews.ts                // Lambda 函數，用於更新新聞 
-│   ├── fetchNews.ts                 // Lambda 函數，用於抓取新聞
-│   └── fetchAnnouncement.ts         // Lambda 函數，用於抓取公告
+│   ├── updateNews.ts               // 更新新聞 Lambda
+│   ├── fetchNews.ts                // 獲取新聞 Lambda
+│   └── fetchAnnouncement.ts        // 獲取公告 Lambda
 ├── api
-│   └── user.ts                      // 處理用戶相關的請求
+│   └── user.ts                     // 用戶 API
 ├── templates
-│   ├── lineTemplates.ts             // LINE 通訊的模板
+│   └── lineTemplates.ts            // LINE 訊息模板
 ├── pages
-│   ├── index.tsx                    // 主頁面
+│   ├── index.tsx                   // 首頁
 │   ├── settings
-│   │   └── index.tsx                // 設定頁面
-│   ├── 404.tsx                      // 404 錯誤頁面
+│   │   └── index.tsx               // 設定頁面
+│   ├── 404.tsx                     // 404 頁面
 │   ├── auth
-│   │   ├── login.tsx                // 登入頁面
-│   │   ├── register.tsx             // 註冊頁面
-│   │   └── forgot-password.tsx      // 忘記密碼頁面
-│   ├── _document.tsx                // 自定義 Document 組件
+│   │   ├── login.tsx               // 登入頁面
+│   │   ├── register.tsx            // 註冊頁面
+│   │   └── forgot-password.tsx     // 忘記密碼頁面
+│   ├── _document.tsx               // Document 組件
 │   ├── profile
-│   │   └── index.tsx                // 用戶個人資料頁面
+│   │   └── index.tsx               // 個人資料頁面
 │   ├── news
-│   │   └── index.tsx                // 新聞頁面
-│   └── api
-│       ├── profile
-│       │   ├── recent-log.ts        // 處理用戶最近活動日誌
-│       │   ├── sendFeedback.ts      // 處理用戶反饋
-│       │   └── activity-log.ts      // 處理用戶活動日誌
-│       ├── news
-│       │   ├── summary.ts           // 處理新聞摘要
-│       │   ├── addFavorite.ts       // 處理添加新聞收藏
-│       │   ├── removeFavorite.ts    // 處理移除新聞收藏
-│       │   ├── index.ts             // 處理新聞相關的請求
-│       │   └── getFavorites.ts      // 處理獲取新聞收藏
-│       ├── line
-│       │   └── webhook.ts           // 處理 LINE 通訊的 webhook
-│       │   └── verify.ts            // 處理 LINE 帳號驗證的 API 端點
-│       ├── webhook.ts               // 處理通用 webhook
-│       └── notifications
-│           ├── settings.ts          // 處理通知設定
-│           └── sendEmail.ts         // 處理發送電子郵件
-│   └── _app.tsx                     // 自定義 App 組件
+│   │   └── index.tsx               // 新聞頁面
+│   ├── api
+│   │   ├── profile
+│   │   │   ├── recent-log.ts       // 最近活動 API
+│   │   │   ├── sendFeedback.ts     // 反饋 API
+│   │   │   └── activity-log.ts     // 活動日誌 API
+│   │   ├── news
+│   │   │   ├── summary.ts          // 新聞摘要 API
+│   │   │   ├── addFavorite.ts      // 添加收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除收藏 API
+│   │   │   ├── index.ts            // 新聞 API
+│   │   │   └── getFavorites.ts     // 獲取收藏 API
+│   │   ├── line
+│   │   │   ├── webhook.ts          // LINE Webhook
+│   │   │   └── verify.ts           // LINE 驗證 API
+│   │   ├── webhook.ts              // 通用 Webhook
+│   │   └── notifications
+│   │       ├── settings.ts         // 通知設定 API
+│   │       └── sendEmail.ts        // 發送郵件 API
+│   └── _app.tsx                    // App 組件
 └── services
-    ├── dbService.ts                 // 資料庫服務
-    ├── line.ts                      // LINE 通訊服務
-    ├── emailService.ts              // 電子郵件服務
-    └── lineService.ts               // LINE 通訊服務 
+    ├── dbService.ts                // 資料庫服務
+    ├── emailService.ts             // 郵件服務
+    └── lineService.ts              // LINE 服務
