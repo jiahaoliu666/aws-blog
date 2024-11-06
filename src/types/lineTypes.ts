@@ -47,10 +47,9 @@ export interface LineNotificationResponse {
 
 export interface LineFollowStatus {
   isFollowing: boolean;
+  followed: boolean;
   message: string;
   displayName: string;
-  isVerified?: boolean;
-  verificationStatus?: VerificationState;
 }
 
 export interface ProfileLogicReturn {

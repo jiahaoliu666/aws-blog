@@ -868,7 +868,46 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     }
   };
 
-  const toggleNotification = (type: 'email' | 'line') => {
+  const [isLineFollowed, setIsLineFollowed] = useState(false);
+
+  // 檢查用戶是否已加入 LINE 好友
+  const checkLineFollowStatus = async (userId: string) => {
+    try {
+      const response = await lineService.checkFollowStatus(userId);
+      setIsLineFollowed(response.isFollowing);
+      
+      // 如果已經加入好友，自動更新驗證狀態到第二步
+      if (response.isFollowing) {
+        setVerificationState(prev => ({
+          ...prev,
+          step: 'verifying',
+          message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號'
+        }));
+      } else {
+        setVerificationState(prev => ({
+          ...prev,
+          step: 'idle',
+          message: '請先加入 LINE 官方帳號為好友'
+        }));
+      }
+    } catch (error) {
+      console.error('檢查 LINE 好友狀態失敗:', error);
+      toast.error('檢查 LINE 好友狀態失敗，請稍後重試');
+    }
+  };
+
+  // 當用戶開啟 LINE 通知時
+  const toggleNotification = async (type: 'email' | 'line') => {
+    if (type === 'line') {
+      // 如果是開啟 LINE 通知
+      if (!formData.notifications.line) {
+        // 檢查好友狀態
+        if (user?.sub) {
+          await checkLineFollowStatus(user.sub);
+        }
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       notifications: {
@@ -876,6 +915,41 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
         [type]: !prev.notifications[type]
       }
     }));
+  };
+
+  // 開始驗證流程
+  const startVerification = async () => {
+    try {
+      if (!user?.sub) {
+        throw new Error('找不到用戶ID');
+      }
+
+      // 驗證 LINE ID 格式
+      if (!lineId.match(/^U[0-9a-f]{32}$/i)) {
+        throw new Error('請輸入有效的 LINE ID');
+      }
+
+      setVerificationState({
+        step: 'verifying',
+        status: 'pending',
+        message: `請在 LINE 官方帳號中發送：驗證 ${user.sub}`
+      });
+
+      // 儲存 LINE ID 到資料庫
+      await updateUserLineSettings({
+        lineId,
+        isVerified: false,
+        displayName: user?.username || ''
+      });
+
+    } catch (error) {
+      setVerificationState({
+        step: 'idle',
+        status: 'error',
+        message: error instanceof Error ? error.message : '開始驗證失敗'
+      });
+      toast.error(error instanceof Error ? error.message : '開始驗證失敗');
+    }
   };
 
   const handleSaveNotificationSettings = async (userId?: string) => {
@@ -1040,40 +1114,6 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       fetchNotificationSettings(authUser.sub);
     }
   }, [authUser]);
-
-  // 修改 startVerification 函數
-  const startVerification = async () => {
-    try {
-      if (!user?.sub) {
-        throw new Error('找不到用戶ID');
-      }
-
-      // 驗證 LINE ID 格式
-      if (!lineId.match(/^U[0-9a-f]{32}$/)) {
-        throw new Error('請輸入有效的 LINE ID');
-      }
-
-      setVerificationState({
-        step: 'verifying',
-        status: 'pending',
-        message: '請在 LINE 官方帳號中發送驗證指令'
-      });
-
-      // 儲存 LINE ID 到資料庫
-      await updateUserLineSettings({
-        lineId,
-        isVerified: false,
-        displayName: user?.username || ''
-      });
-
-    } catch (error) {
-      setVerificationState({
-        step: 'idle',
-        status: 'error',
-        message: error instanceof Error ? error.message : '開始驗證失敗'
-      });
-    }
-  };
 
   // 修改 confirmVerificationCode 函數
   const confirmVerificationCode = async (code: string) => {

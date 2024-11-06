@@ -110,15 +110,18 @@ export const lineService: LineServiceInterface = {
         }
       });
 
+      const isFollowing = response.ok;
       return {
-        isFollowing: response.ok,
-        message: response.ok ? '已追蹤官方帳號' : '尚未追蹤官方帳號',
-        displayName: response.ok ? (await response.json()).displayName : ''
+        isFollowing,
+        followed: isFollowing,
+        message: isFollowing ? '已追蹤官方帳號' : '尚未追蹤官方帳號',
+        displayName: isFollowing ? (await response.json()).displayName : ''
       };
     } catch (error) {
       logger.error('檢查 LINE 追蹤狀態時發生錯誤:', error);
       return {
         isFollowing: false,
+        followed: false,
         message: '檢查追蹤狀態時發生錯誤',
         displayName: ''
       };
