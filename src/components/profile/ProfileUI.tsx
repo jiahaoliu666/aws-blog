@@ -125,6 +125,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     setLineIdStatus,
     updateUser, // 從 useProfileLogic 中新增這個
     lineId,
+    multicastMessage,
+    setMulticastMessage,
+    isMulticasting,
+    multicastResult,
+    handleMulticast,
   } = useProfileLogic({ user });
 
   const router = useRouter();
@@ -634,7 +639,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           </div>
                           <div>
                             <h4 className="text-lg font-semibold text-gray-800">LINE 通知</h4>
-                            <p className="text-sm text-gray-500">加入官方 LINE 帳號接收最新文章通知</p>
+                            <p className="text-sm text-gray-500">加官方 LINE 帳號接收最新文章通知</p>
                           </div>
                         </div>
 
@@ -659,6 +664,75 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               點擊加入好友
                             </a>
                             <p className="text-sm text-gray-600 mt-2">或直接點擊加入</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 新增的 LINE Multicast 功能區 */}
+                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm mt-6">
+                        <div className="flex items-center space-x-4 mb-4">
+                          <div className="bg-blue-100 p-3 rounded-full">
+                            <FontAwesomeIcon icon={faBolt} className="text-blue-600 text-xl" />
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-800">LINE 群發訊息</h4>
+                            <p className="text-sm text-gray-500">向所有追蹤者發送群發訊息</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <textarea
+                              value={multicastMessage}
+                              onChange={(e) => setMulticastMessage(e.target.value)}
+                              placeholder="輸入要群發的訊息內容..."
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              rows={4}
+                            />
+                          </div>
+
+                          {multicastResult.status && (
+                            <div className={`p-4 rounded-lg ${
+                              multicastResult.status === 'success' 
+                                ? 'bg-green-50 text-green-700' 
+                                : 'bg-red-50 text-red-700'
+                            }`}>
+                              <div className="flex items-center">
+                                <FontAwesomeIcon 
+                                  icon={multicastResult.status === 'success' ? faCheckCircle : faExclamationCircle} 
+                                  className="mr-2"
+                                />
+                                <span>{multicastResult.message}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex justify-end">
+                            <button
+                              onClick={handleMulticast}
+                              disabled={isMulticasting || !multicastMessage.trim()}
+                              className={`
+                                px-6 py-2.5 rounded-full
+                                flex items-center space-x-2
+                                ${isMulticasting || !multicastMessage.trim() 
+                                  ? 'bg-gray-400 cursor-not-allowed' 
+                                  : 'bg-blue-600 hover:bg-blue-700'
+                                }
+                                text-white transition duration-200 shadow-md hover:shadow-lg
+                              `}
+                            >
+                              {isMulticasting ? (
+                                <>
+                                  <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
+                                  <span>發送中...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FontAwesomeIcon icon={faBolt} className="mr-2" />
+                                  <span>發送群發訊息</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         </div>
                       </div>

@@ -8,13 +8,6 @@ ngrok http 3000
 find src > src.txt
 
 
-# 1. 停止目前的開發伺服器
 
-# 2. 清除快取
-rm -rf .next
 
-# 3. 重新安裝依賴
-npm install
-
-# 4. 重新啟動開發伺服器
-npm run dev
+使用 Multicast

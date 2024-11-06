@@ -243,6 +243,167 @@ export const lineService = {
       logger.error('發送新聞通知失敗:', error);
       throw error;
     }
+  },
+
+  async getFollowers(): Promise<string[]> {
+    try {
+      validateLineMessagingConfig();
+      
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        FilterExpression: "isFollowing = :isFollowing",
+        ExpressionAttributeValues: {
+          ":isFollowing": { BOOL: true }
+        }
+      };
+
+      const command = new ScanCommand(params);
+      const result = await dynamoClient.send(command);
+      
+      return result.Items?.map(item => item.lineId.S).filter(Boolean) as string[] || [];
+    } catch (error) {
+      logger.error('獲取追蹤者清單失敗:', error);
+      throw error;
+    }
+  },
+
+  async sendMulticast(message: string | LineMessage): Promise<{ success: boolean; message: string }> {
+    try {
+      validateLineMessagingConfig();
+
+      // 獲取所有追蹤者的 LINE ID
+      const followers = await this.getFollowers();
+      
+      if (followers.length === 0) {
+        return {
+          success: false,
+          message: '目前沒有追蹤者'
+        };
+      }
+
+      // 將訊息格式化為 LINE Message 物件
+      const messageObject = typeof message === 'string' 
+        ? { type: 'text', text: message }
+        : message;
+
+      // 分批發送（LINE 限制每次最多 500 個收件者）
+      const batchSize = 500;
+      for (let i = 0; i < followers.length; i += batchSize) {
+        const batch = followers.slice(i, i + batchSize);
+        
+        const response = await fetch(`${lineConfig.apiUrl}/message/multicast`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+          },
+          body: JSON.stringify({
+            to: batch,
+            messages: [messageObject]
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || '發送失敗');
+        }
+
+        // 記錄發送日誌
+        logger.info('成功發送群發訊息', {
+          recipientCount: batch.length,
+          batchNumber: Math.floor(i / batchSize) + 1,
+          totalBatches: Math.ceil(followers.length / batchSize)
+        });
+
+        // 如果有多批次，等待一小段時間再發送下一批
+        if (followers.length > batchSize && i + batchSize < followers.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      return {
+        success: true,
+        message: `成功發送給 ${followers.length} 位追蹤者`
+      };
+    } catch (error) {
+      logger.error('發送群發訊息失敗:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : '發送失敗'
+      };
+    }
+  },
+
+  async sendMulticastWithTemplate(articleData: ArticleData): Promise<{ success: boolean; message: string }> {
+    try {
+      const template = createNewsNotificationTemplate({
+        ...articleData,
+        timestamp: new Date(articleData.timestamp).getTime().toString()
+      });
+
+      // 使用一般的 multicast 方法發送模板訊息
+      return await this.sendMulticast(template);
+    } catch (error) {
+      logger.error('發送模板群發訊息失敗:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : '發送失敗'
+      };
+    }
+  },
+
+  // 新增一個方法來更新追蹤者狀態
+  async updateFollowerStatus(lineId: string, isFollowing: boolean): Promise<void> {
+    try {
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          lineId: { S: lineId }
+        },
+        UpdateExpression: "SET isFollowing = :isFollowing, updatedAt = :updatedAt",
+        ExpressionAttributeValues: {
+          ":isFollowing": { BOOL: isFollowing },
+          ":updatedAt": { S: new Date().toISOString() }
+        }
+      };
+
+      await dynamoClient.send(new UpdateItemCommand(params));
+      logger.info(`已更新用戶 ${lineId} 的追蹤狀態為 ${isFollowing}`);
+    } catch (error) {
+      logger.error('更新追蹤者狀態失敗:', error);
+      throw error;
+    }
+  },
+
+  async requestVerification(lineId: string, userId: string): Promise<{ success: boolean; verificationCode: string }> {
+    try {
+      // 生成驗證碼
+      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // 儲存驗證碼到 DynamoDB
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Item: {
+          userId: { S: userId },
+          lineId: { S: lineId },
+          verificationCode: { S: verificationCode },
+          verificationExpiry: { N: (Date.now() + 300000).toString() }, // 5分鐘過期
+          isVerified: { BOOL: false },
+          isFollowing: { BOOL: false },
+          createdAt: { S: new Date().toISOString() }
+        }
+      };
+
+      await dynamoClient.send(new PutItemCommand(params));
+
+      return {
+        success: true,
+        verificationCode
+      };
+    } catch (error) {
+      logger.error('請求驗證失敗:', error);
+      throw error;
+    }
   }
 };
 
