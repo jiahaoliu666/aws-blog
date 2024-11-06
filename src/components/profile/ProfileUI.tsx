@@ -130,6 +130,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     isMulticasting,
     multicastResult,
     handleMulticast,
+    verificationState,
+    verificationCode,
+    setVerificationCode,
+    startVerification,
+    confirmVerificationCode,
   } = useProfileLogic({ user });
 
   const router = useRouter();
@@ -142,7 +147,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   }>({ status: null, message: '' });
   const [errorMessage, setErrorMessage] = useState('');
   const [message, setMessage] = useState({ type: '', content: '' });
-  const [verificationCode, setVerificationCode] = useState<string>('');
   const [showSettingsMessage, setShowSettingsMessage] = useState(false);
 
   useEffect(() => {
@@ -392,7 +396,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         id="oldPassword"
                         name="oldPassword"
                         type={showOldPassword ? "text" : "password"}
-                        placeholder="輸入舊密碼"
+                        placeholder="入舊密碼"
                         value={oldPassword}
                         onChange={(e) => setOldPassword(e.target.value)}
                         required
@@ -533,7 +537,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           value={formData.feedbackContent}
                           onChange={handleChange}
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="請輸入您的問題、意見或建議"
+                          placeholder="請輸入您的問題、意見建議"
                         />
                       </div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">上傳圖片</label>

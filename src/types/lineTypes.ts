@@ -18,10 +18,20 @@ export interface ArticleData {
 }
 
 export interface LineMessage {
-  type: string;
+  type: 'text' | 'template' | 'flex';
   text?: string;
   altText?: string;
   contents?: any;
+  template?: {
+    type: string;
+    text?: string;
+    actions?: Array<{
+      type: string;
+      label: string;
+      uri?: string;
+      data?: string;
+    }>;
+  };
 }
 
 export interface BroadcastMessagePayload {
@@ -38,6 +48,8 @@ export interface LineFollowStatus {
   isFollowing: boolean;
   message: string;
   displayName: string;
+  isVerified?: boolean;
+  verificationStatus?: VerificationState;
 }
 
 export interface ProfileLogicReturn {
@@ -58,4 +70,76 @@ export interface ProfileLogicReturn {
     showEmailSettings: boolean;
     showLineSettings: boolean;
   };
+  verificationState: VerificationState;
+  verificationCode: string;
+  setVerificationCode: (code: string) => void;
+  startVerification: () => Promise<void>;
+  confirmVerificationCode: (code: string) => Promise<void>;
+  lineId: string;
+  setLineId: (id: string) => void;
+}
+
+export type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';
+export type VerificationStatus = 'idle' | 'validating' | 'pending' | 'error' | 'success';
+
+export interface VerificationState {
+  step: VerificationStep;
+  status: VerificationStatus;
+  message?: string;
+  isVerified?: boolean;
+  error?: string;
+}
+
+export interface VerificationRequest {
+  userId: string;
+  lineId: string;
+  verificationCode: string;
+  expiry: number;
+}
+
+export interface VerificationResponse {
+  success: boolean;
+  verificationCode?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface LineWebhookEvent {
+  type: 'message' | 'follow' | 'unfollow' | 'join' | 'leave' | 'postback';
+  replyToken?: string;
+  source: {
+    userId: string;
+    type: 'user' | 'group' | 'room';
+    groupId?: string;
+    roomId?: string;
+  };
+  timestamp: number;
+  message?: {
+    type: string;
+    id: string;
+    text?: string;
+  };
+  postback?: {
+    data: string;
+  };
+}
+
+export interface LineApiResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  data?: any;
+}
+
+export interface LineUserSettings {
+  userId: string;
+  lineId: string;
+  isVerified: boolean;
+  isFollowing: boolean;
+  notificationPreferences: {
+    news: boolean;
+    announcements: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
 }

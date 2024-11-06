@@ -10,6 +10,7 @@ import { logger } from "../../utils/logger";
 import { lineService } from '../../services/lineService';
 import { User } from '../../types/userType';
 import { toast } from 'react-toastify';
+import { VerificationState, LineUserSettings } from '../../types/lineTypes';
 
 interface EditableFields {
   username: boolean;
@@ -173,6 +174,11 @@ interface ProfileLogicReturn {
     message: string;
   };
   handleMulticast: () => Promise<void>;
+  verificationState: VerificationState;
+  verificationCode: string;
+  setVerificationCode: React.Dispatch<React.SetStateAction<string>>;
+  startVerification: () => Promise<void>;
+  confirmVerificationCode: (code: string) => Promise<void>;
 }
 
 // 新增 Article 介面定義
@@ -275,6 +281,12 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     status: 'success' | 'error' | null;
     message: string;
   }>({ status: null, message: '' });
+
+  const [verificationState, setVerificationState] = useState<VerificationState>({
+    step: 'idle',
+    status: 'idle',
+    message: ''
+  });
 
   const handleMulticast = async () => {
     if (!multicastMessage.trim()) {
@@ -844,7 +856,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
         ...prev.notifications,
         [type]: !prev.notifications[type]
       },
-      // 當切換 email 通知時，同時更新 showEmailSettings
+      // 當切換 email 通知時，同時��新 showEmailSettings
       showEmailSettings: type === 'email' ? !prev.notifications[type] : prev.showEmailSettings
     }));
   };
@@ -1012,6 +1024,95 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     }
   }, [authUser]);
 
+  // 開始驗證流程
+  const startVerification = async () => {
+    try {
+      if (!authUser?.sub) {
+        throw new Error('找不到用戶ID');
+      }
+
+      // 驗證 LINE ID 格式
+      if (!lineId.match(/^U[0-9a-f]{32}$/)) {
+        throw new Error('請輸入有效的 LINE ID');
+      }
+
+      setVerificationState({
+        step: 'verifying',
+        status: 'pending',
+        message: '請在 LINE 官方帳號中發送驗證指令'
+      });
+
+      // 儲存 LINE ID 到資料庫
+      await updateUserLineSettings({
+        lineId,
+        isVerified: false,
+        displayName: user?.username || ''
+      });
+
+    } catch (error) {
+      setVerificationState({
+        step: 'idle',
+        status: 'error',
+        message: error instanceof Error ? error.message : '開始驗證失敗'
+      });
+    }
+  };
+
+  // 確認驗證碼
+  const confirmVerificationCode = async (code: string) => {
+    try {
+      if (!authUser?.sub) {
+        throw new Error('找不到用戶ID');
+      }
+
+      setVerificationState({
+        step: 'confirming',
+        status: 'validating',
+        message: '正在驗證...'
+      });
+
+      const response = await fetch('/api/line/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: authUser.sub,
+          lineId,
+          code
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setVerificationState({
+          step: 'complete',
+          status: 'success',
+          message: '驗證成功！您現在可以接收 LINE 通知了'
+        });
+        
+        // 更新設定
+        await updateUserLineSettings({
+          lineId,
+          isVerified: true,
+          displayName: user?.username || ''
+        });
+
+        // 重新獲取通知設定
+        await fetchNotificationSettings(authUser.sub);
+      } else {
+        throw new Error(data.message || '驗證失敗');
+      }
+    } catch (error) {
+      setVerificationState({
+        step: 'confirming',
+        status: 'error',
+        message: error instanceof Error ? error.message : '驗證失敗，請稍後重試'
+      });
+    }
+  };
+
   return {
     user: authUser,
     formData,
@@ -1071,5 +1172,10 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     isMulticasting,
     multicastResult,
     handleMulticast,
+    verificationState,
+    verificationCode,
+    setVerificationCode,
+    startVerification,
+    confirmVerificationCode
   };
 };

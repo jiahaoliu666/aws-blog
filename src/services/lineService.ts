@@ -4,7 +4,7 @@ import { createWelcomeTemplate, createNewsNotificationTemplate } from '../templa
 import { DynamoDBClient, UpdateItemCommand, ScanCommand, PutItemCommand, QueryCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '../utils/logger';
 import NodeCache from 'node-cache';
-import { LineFollowStatus, ArticleData, LineMessage } from "../types/lineTypes";
+import { LineFollowStatus, ArticleData, LineMessage, LineWebhookEvent, LineUserSettings, VerificationState, LineApiResponse } from "../types/lineTypes";
 import { createClient } from 'redis';
 
 // 驗證 LINE 設定
@@ -22,7 +22,7 @@ const lineStatusCache = new NodeCache({ stdTTL: 300 }); // 5分鐘快取
 const verificationCache = new NodeCache({ stdTTL: 600 }); // 10分鐘過期
 
 const validateLineId = (lineId: string): boolean => {
-    // 確保 lineId 存在且為字串
+    // 確保 lineId 存在且為串
     if (!lineId || typeof lineId !== 'string') {
         return false;
     }
@@ -80,7 +80,25 @@ const updateUserLineStatus = async (lineId: string, isFollowing: boolean) => {
   await dynamoClient.send(new UpdateItemCommand(params));
 };
 
-export const lineService = {
+interface LineServiceInterface {
+  sendMessage(lineId: string, message: string | LineMessage): Promise<boolean>;
+  sendWelcomeMessage(lineId: string): Promise<boolean>;
+  broadcastMessage(message: LineMessage | LineMessage[]): Promise<LineApiResponse>;
+  sendMulticast(message: string | LineMessage): Promise<LineApiResponse>;
+  sendMulticastWithTemplate(articleData: ArticleData): Promise<LineApiResponse>;
+  updateFollowerStatus(lineId: string, isFollowing: boolean): Promise<void>;
+  requestVerification(lineId: string, userId: string): Promise<{ success: boolean; verificationCode: string }>;
+  verifyCode(userId: string, code: string): Promise<boolean>;
+  getFollowers(): Promise<string[]>;
+  checkFollowStatus(lineId: string): Promise<LineFollowStatus>;
+  updateUserLineSettings(params: { userId: string; lineId: string; isVerified: boolean }): Promise<void>;
+  getUserLineSettings(userId: string): Promise<{ lineId: string; isVerified: boolean } | null>;
+  broadcastNewsNotification(articleData: ArticleData): Promise<boolean>;
+  sendNewsNotification(articleData: ArticleData): Promise<LineApiResponse>;
+  generateVerificationCode(userId: string, lineId: string): Promise<string>;
+}
+
+export const lineService: LineServiceInterface = {
   async checkFollowStatus(lineId: string): Promise<LineFollowStatus> {
     try {
       validateLineMessagingConfig();
@@ -140,10 +158,14 @@ export const lineService = {
       };
 
       const result = await dynamoClient.send(new GetItemCommand(params));
-      return result.Item ? {
+      if (!result.Item?.lineId?.S || !result.Item?.isVerified?.BOOL) {
+        return null;
+      }
+      
+      return {
         lineId: result.Item.lineId.S,
         isVerified: result.Item.isVerified.BOOL
-      } : null;
+      };
     } catch (error) {
       logger.error('獲取用戶 LINE 設定失敗:', error);
       throw error;
@@ -152,17 +174,58 @@ export const lineService = {
 
   async verifyCode(userId: string, code: string): Promise<boolean> {
     try {
-      const response = await fetch('/api/line/verify/confirm', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // 從 DynamoDB 獲取驗證資訊
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
+        }
+      };
+
+      const result = await dynamoClient.send(new GetItemCommand(params));
+      
+      if (!result.Item) {
+        throw new Error('找不到驗證記錄');
+      }
+
+      const storedCode = result.Item.verificationCode.S;
+      const expiry = Number(result.Item.verificationExpiry.N);
+      const lineId = result.Item.lineId.S;
+
+      // 檢查驗證碼是否正確且未過期
+      if (Date.now() > expiry) {
+        throw new Error('驗證碼已過期');
+      }
+
+      if (code !== storedCode) {
+        throw new Error('驗證碼不正確');
+      }
+
+      if (!lineId) {
+        throw new Error('找不到 LINE ID');
+      }
+      
+      // 驗證成功，更新狀態
+      await this.updateFollowerStatus(lineId, true);
+      
+      // 更新驗證狀態
+      const updateParams = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
         },
-        body: JSON.stringify({ userId, code }),
-      });
-      const data = await response.json();
-      return data.success;
+        UpdateExpression: "SET isVerified = :isVerified, updatedAt = :updatedAt",
+        ExpressionAttributeValues: {
+          ":isVerified": { BOOL: true },
+          ":updatedAt": { S: new Date().toISOString() }
+        }
+      };
+
+      await dynamoClient.send(new UpdateItemCommand(updateParams));
+      
+      return true;
     } catch (error) {
-      console.error('證碼確認失敗:', error);
+      logger.error('驗證失敗:', error);
       return false;
     }
   },
@@ -206,7 +269,7 @@ export const lineService = {
     }
   },
 
-  async broadcastMessage(message: LineMessage | LineMessage[]) {
+  async broadcastMessage(message: LineMessage | LineMessage[]): Promise<LineApiResponse> {
     try {
       validateLineMessagingConfig();
       
@@ -225,14 +288,17 @@ export const lineService = {
         throw new Error('發送廣播訊息失敗');
       }
 
-      return true;
+      return {
+        success: true,
+        message: `成功發送給 ${Array.isArray(message) ? message.length : 1} 位追蹤者`
+      };
     } catch (error) {
       logger.error('發送廣播訊息失敗:', error);
       throw error;
     }
   },
 
-  async sendNewsNotification(articleData: ArticleData) {
+  async sendNewsNotification(articleData: ArticleData): Promise<LineApiResponse> {
     try {
       const template = createNewsNotificationTemplate({
         ...articleData,
@@ -267,7 +333,7 @@ export const lineService = {
     }
   },
 
-  async sendMulticast(message: string | LineMessage): Promise<{ success: boolean; message: string }> {
+  async sendMulticast(message: string | LineMessage): Promise<LineApiResponse> {
     try {
       validateLineMessagingConfig();
 
@@ -334,7 +400,7 @@ export const lineService = {
     }
   },
 
-  async sendMulticastWithTemplate(articleData: ArticleData): Promise<{ success: boolean; message: string }> {
+  async sendMulticastWithTemplate(articleData: ArticleData): Promise<LineApiResponse> {
     try {
       const template = createNewsNotificationTemplate({
         ...articleData,
@@ -380,7 +446,7 @@ export const lineService = {
       // 生成驗證碼
       const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-      // 儲存驗證碼到 DynamoDB
+      // 儲存驗證資訊到 DynamoDB
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Item: {
@@ -389,7 +455,7 @@ export const lineService = {
           verificationCode: { S: verificationCode },
           verificationExpiry: { N: (Date.now() + 300000).toString() }, // 5分鐘過期
           isVerified: { BOOL: false },
-          isFollowing: { BOOL: false },
+          isFollowing: { BOOL: true }, // 因為需要先加入好友才能發驗證指令
           createdAt: { S: new Date().toISOString() }
         }
       };
@@ -404,7 +470,62 @@ export const lineService = {
       logger.error('請求驗證失敗:', error);
       throw error;
     }
-  }
+  },
+
+  async sendMessage(lineId: string, message: string | LineMessage): Promise<boolean> {
+    try {
+      validateLineMessagingConfig();
+      
+      const messageObject = typeof message === 'string' 
+        ? { type: 'text', text: message }
+        : message;
+
+      const response = await fetch(`${lineConfig.apiUrl}/message/push`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+        },
+        body: JSON.stringify({
+          to: lineId,
+          messages: [messageObject]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('發送訊息失敗');
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('發送訊息失敗:', error);
+      throw error;
+    }
+  },
+
+  async sendWelcomeMessage(lineId: string): Promise<boolean> {
+    try {
+      const welcomeMessage: LineMessage = {
+        type: 'text' as const,  // 明確指定為字面量類型
+        text: '感謝您追蹤我們！請在網站上完成驗證程序以接收通知。'
+      };
+
+      return await this.sendMessage(lineId, welcomeMessage);
+    } catch (error) {
+      logger.error('發送歡迎訊息失敗:', error);
+      throw error;
+    }
+  },
+
+  async generateVerificationCode(userId: string, lineId: string): Promise<string> {
+    try {
+      const { verificationCode } = await this.requestVerification(lineId, userId);
+      return verificationCode;
+    } catch (error) {
+      logger.error('生成驗證碼失敗:', error);
+      throw error;
+    }
+  },
 };
 
 async function requestVerification(userId: string, lineId: string) {

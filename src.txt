@@ -90,6 +90,7 @@ src
 │       │   └── getFavorites.ts      // 處理獲取新聞收藏
 │       ├── line
 │       │   └── webhook.ts           // 處理 LINE 通訊的 webhook
+│       │   └── verify.ts            // 處理 LINE 帳號驗證的 API 端點
 │       ├── webhook.ts               // 處理通用 webhook
 │       └── notifications
 │           ├── settings.ts          // 處理通知設定
