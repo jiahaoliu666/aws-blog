@@ -453,7 +453,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           onClick={() => handleSaveProfileChanges(localUsername)} 
                           className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200"
                         >
-                          保存改
+                          保存更改
                         </button>
                       </div>
                     </div>

@@ -12,20 +12,31 @@ export const lineConfig: LineConfig = {
   officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || ''
 };
 
-// 添加配置檢查
-if (!lineConfig.channelAccessToken) {
-  console.error('LINE Channel Access Token is missing');
-}
+// 改進環境變數檢查邏輯
+const validateLineConfig = () => {
+  const missingVars = [];
+  
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+    missingVars.push('LINE_CHANNEL_ACCESS_TOKEN');
+  }
+  
+  if (!process.env.LINE_CHANNEL_SECRET) {
+    missingVars.push('LINE_CHANNEL_SECRET');
+  }
+  
+  if (process.env.NODE_ENV === 'development') {
+    if (!process.env.NGROK_URL) {
+      console.warn('⚠️ 開發環境提示: 請設置 NGROK_URL 以接收 LINE Webhook 事件');
+    }
+  } else if (missingVars.length > 0) {
+    // 只在非開發環境拋出錯誤
+    throw new Error(`❌ LINE 設定錯誤: 以下環境變數未設定: ${missingVars.join(', ')}`);
+  }
+};
 
-if (!lineConfig.channelSecret) {
-  console.warn('LINE Channel Secret 未設定');
-}
+// 執行驗證
+validateLineConfig();
 
 export const LINE_MESSAGE_MAX_LENGTH = 2000;
 export const LINE_RETRY_COUNT = 3;
 export const LINE_RETRY_DELAY = 1000; // milliseconds
-
-// 開發環境提示
-if (process.env.NODE_ENV === 'development' && !process.env.NGROK_URL) {
-  console.warn('開發環境建議設置 NGROK_URL 以接收 LINE Webhook 事件');
-}
