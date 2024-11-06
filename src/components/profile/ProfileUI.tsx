@@ -138,6 +138,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [message, setMessage] = useState({ type: '', content: '' });
   const [verificationCode, setVerificationCode] = useState<string>('');
+  const [showSettingsMessage, setShowSettingsMessage] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -153,6 +154,21 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       return () => clearTimeout(timer);
     }
   }, [authUser, router, isClient]);
+
+  useEffect(() => {
+    if (settingsMessage) {
+      setShowSettingsMessage(true);
+      const timer = setTimeout(() => {
+        setShowSettingsMessage(false);
+        
+        if (settingsStatus !== 'success') {
+          window.location.reload();
+        }
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [settingsMessage, settingsStatus]);
 
   // 修改條件渲染
   if (!isClient) {
@@ -205,7 +221,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                 {[
                   { tab: 'profile', label: '個人資訊', icon: faUser },
                   { tab: 'changePassword', label: '修改密碼', icon: faLock },
-                  { tab: 'notificationSettings', label: '通知設定', icon: faBell },
+                  { tab: 'notificationSettings', label: '訂閱通知', icon: faBell },
                   { tab: 'settings', label: '偏好設定', icon: faCog }, 
                   { tab: 'activity', label: '觀看紀錄', icon: faEye },
                   { tab: 'feedback', label: '意見反饋', icon: faCommentDots },
@@ -585,7 +601,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                 )}
                 {activeTab === 'notificationSettings' && (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6">通知設定</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6">訂閱通知</h3>
                     <div className="space-y-6">
                       {/* Email 通知設定 */}
                       <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm">
@@ -625,7 +641,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8 p-6 bg-gray-50 rounded-lg">
                           <div className="text-center">
                             <img 
-                              src="/line.png" 
+                              src="/Line-QR-Code.png" 
                               alt="LINE 官方帳號 QR Code" 
                               className="w-40 h-40 mb-2"
                             />
@@ -649,10 +665,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
 
                       {/* 設定儲存按鈕 */}
                       <div className="mt-8 flex flex-col space-y-4">
-                        {settingsMessage && (
+                        {showSettingsMessage && settingsMessage && (
                           <div className={`mt-4 p-4 rounded-lg ${
                             settingsStatus === 'success' ? 'bg-green-50' : 'bg-red-50'
-                          }`}>
+                          } transition-opacity duration-300 ${showSettingsMessage ? 'opacity-100' : 'opacity-0'}`}>
                             <div className="flex items-center">
                               <FontAwesomeIcon 
                                 icon={settingsStatus === 'success' ? faCheckCircle : faExclamationCircle} 
@@ -669,8 +685,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 {settingsStatus === 'success' && (
                                   <p className="text-sm text-green-600 mt-1">
                                     {formData.notifications.email 
-                                      ? `您將會收到通知至：${formData.email}`
-                                      : '您將不會收到通知'
+                                      ? `將會發送最新文章至：${formData.email}`
+                                      : '已取消訂閱，您將不會收到通知'
                                     }
                                   </p>
                                 )}
