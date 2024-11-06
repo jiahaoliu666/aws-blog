@@ -187,7 +187,7 @@ interface ProfileLogicReturn {
   verificationStatus: {
     code: string | null;
     message: string;
-    status: 'pending' | 'success' | 'error';
+    status: 'pending' | 'success' | 'error' | 'validating';
   };
   setVerificationStatus: React.Dispatch<React.SetStateAction<VerificationStatus>>;
   notification: { message: string; status: 'success' | 'error' | null };
@@ -198,7 +198,7 @@ interface ProfileLogicReturn {
 interface VerificationStatus {
   code: string | null;
   message: string;
-  status: 'pending' | 'success' | 'error';
+  status: 'pending' | 'success' | 'error' | 'validating';
 }
 
 export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): ProfileLogicReturn => {
@@ -1133,6 +1133,56 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
 
     const command = new PutItemCommand(params);
     await dynamoClient.send(command);
+  };
+
+  const handleLineVerification = async (lineId: string) => {
+    logger.info('開始 LINE 驗證流程', { lineId });
+    
+    try {
+      setVerificationStatus(prev => ({
+        ...prev,
+        status: 'validating',
+        message: '驗證中...'
+      }));
+
+      // 檢查 LINE ID 格式
+      if (!lineId || lineId.trim().length === 0) {
+        throw new Error('請輸入有效的 LINE ID');
+      }
+
+      // 發送驗證請求
+      const response = await fetch('/api/line/verify/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lineId,
+          userId: user?.userId
+        })
+      });
+
+      const data = await response.json();
+      logger.info('收到驗證響應', { status: response.status, data });
+
+      if (!response.ok) {
+        throw new Error(data.message || '驗證請求失敗');
+      }
+
+      // 更新驗證狀態
+      setVerificationStatus(prev => ({
+        ...prev,
+        status: 'pending',
+        message: '請在 LINE 上確認驗證碼',
+        code: data.verificationCode
+      }));
+
+    } catch (error) {
+      logger.error('驗證過程發生錯誤', error);
+      setVerificationStatus(prev => ({
+        ...prev,
+        status: 'error',
+        message: error instanceof Error ? error.message : '驗證過程發生錯誤'
+      }));
+    }
   };
 
   return {

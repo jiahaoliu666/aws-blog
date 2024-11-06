@@ -15,73 +15,82 @@ export const lineConfig: LineConfig = {
 
 // 添加環境變數檢查函數
 const checkEnvVariables = () => {
-  console.log('環境變數載入狀態：', {
+  const envStatus = {
     NODE_ENV: process.env.NODE_ENV,
-    ENV_FILE_LOADED: process.env.NEXT_PUBLIC_ENV_LOADED || '未載入',
+    ENV_FILE_LOADED: '已載入',
     LINE_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN ? '已設置' : '未設置',
     LINE_SECRET: process.env.LINE_CHANNEL_SECRET ? '已設置' : '未設置',
     TOKEN_LENGTH: process.env.LINE_CHANNEL_ACCESS_TOKEN?.length || 0,
     SECRET_LENGTH: process.env.LINE_CHANNEL_SECRET?.length || 0,
-  });
+    WEBHOOK_URL: process.env.NODE_ENV === 'development'
+      ? `${process.env.NGROK_URL || ''}/api/line/webhook`
+      : `${process.env.NEXT_PUBLIC_API_URL || ''}/api/line/webhook`,
+  };
 
-  // 檢查環境變數格式
-  if (process.env.LINE_CHANNEL_ACCESS_TOKEN?.includes('"') || 
-      process.env.LINE_CHANNEL_SECRET?.includes('"')) {
-    console.error('⚠️ 環境變數包含引號，請移除引號');
+  console.log('環境變數載入狀態：', envStatus);
+
+  // 改進 Webhook URL 檢查邏輯
+  if (process.env.NODE_ENV === 'development') {
+    if (!process.env.NGROK_URL) {
+      console.warn('⚠️ 開發環境中未設置 NGROK_URL，請按照以下步驟設置：');
+      console.warn('1. 安裝 ngrok: npm install ngrok -D');
+      console.warn('2. 啟動 ngrok: npx ngrok http 3000');
+      console.warn('3. 將生成的 URL 設置到 .env.local 中：');
+      console.warn('   NGROK_URL=https://你的ngrok網址');
+      console.warn('4. 在 LINE Developers Console 中更新 Webhook URL');
+    } else {
+      const webhookUrl = `${process.env.NGROK_URL}/api/line/webhook`;
+      console.log('✅ 開發環境 Webhook URL:', webhookUrl);
+      console.log('請確保此 URL 已在 LINE Developers Console 中設置');
+    }
   }
 
-  if (process.env.LINE_CHANNEL_ACCESS_TOKEN?.includes(' ') || 
-      process.env.LINE_CHANNEL_SECRET?.includes(' ')) {
-    console.error('⚠️ 環境變數包含空格，請移除空格');
+  // 檢查選填的環境變數
+  const optionalVars = {
+    NEXT_PUBLIC_LINE_BASIC_ID: process.env.NEXT_PUBLIC_LINE_BASIC_ID,
+    NEXT_PUBLIC_LINE_QR_CODE_URL: process.env.NEXT_PUBLIC_LINE_QR_CODE_URL,
+    NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME
+  };
+
+  const missingOptionalVars = Object.entries(optionalVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingOptionalVars.length > 0) {
+    console.info('ℹ️ 以下選填的環境變數未設置：', missingOptionalVars.join('、'));
   }
+
+  return envStatus;
 };
 
 const validateLineConfig = () => {
-  // 在驗證開始時檢查環境變數
-  checkEnvVariables();
+  const requiredVars = {
+    LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+    LINE_CHANNEL_SECRET: process.env.LINE_CHANNEL_SECRET,
+    NEXT_PUBLIC_LINE_BASIC_ID: process.env.NEXT_PUBLIC_LINE_BASIC_ID
+  };
 
-  try {
-    const requiredVars = {
-      LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-      LINE_CHANNEL_SECRET: process.env.LINE_CHANNEL_SECRET
-    };
-    
-    const missingVars = Object.entries(requiredVars)
-      .filter(([_, value]) => !value)
-      .map(([key]) => key);
+  const missingVars = Object.entries(requiredVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
 
-    if (missingVars.length > 0) {
-      const errorMessage = `缺少必要的 LINE 環境變數：${missingVars.join('、')}`;
-      console.error(`❌ ${errorMessage}`);
-      console.warn('請確認以下事項：');
-      console.warn('1. .env.local 檔案是否存在於專案根目錄');
-      console.warn('2. 環境變數是否正確設置（不要有引號或空格）');
-      console.warn('3. 是否重新啟動了開發伺服器');
-      return {
-        isValid: false,
-        missingVars
-      };
-    }
-
-    console.log('✅ LINE 設定驗證成功');
-    return {
-      isValid: true,
-      missingVars: []
-    };
-  } catch (error) {
-    console.error('❌ LINE 設定驗證過程發生錯誤：', error);
-    return {
-      isValid: false,
-      missingVars: [],
-      error
-    };
+  if (missingVars.length > 0) {
+    console.error('缺少必要的 LINE 環境變數:', missingVars.join(', '));
+    return false;
   }
+
+  return true;
 };
+
+// 在配置導出前進行驗證
+if (!validateLineConfig()) {
+  console.warn('LINE 配置驗證失敗，部分功能可能無法正常運作');
+}
 
 export const lineConfigValidation = validateLineConfig();
 
-// 導出驗證狀態供其他模組使用
-export const isLineConfigValid = lineConfigValidation.isValid;
+// 直接使用 lineConfigValidation，因為它本身就是一個布林值
+export const isLineConfigValid = lineConfigValidation;
 
 if (!isLineConfigValid) {
   console.warn('⚠️ LINE 設定驗證失敗，部分功能可能無法正常運作。請確認環境變數設定是否正確。');
@@ -90,3 +99,32 @@ if (!isLineConfigValid) {
 export const LINE_MESSAGE_MAX_LENGTH = 2000;
 export const LINE_RETRY_COUNT = 3;
 export const LINE_RETRY_DELAY = 1000; // milliseconds
+
+const validateWebhookUrl = () => {
+  if (process.env.NODE_ENV === 'development') {
+    const ngrokUrl = process.env.NGROK_URL;
+    if (!ngrokUrl) {
+      return {
+        isValid: false,
+        message: '開發環境需要設置 NGROK_URL'
+      };
+    }
+    return {
+      isValid: true,
+      url: `${ngrokUrl}/api/line/webhook`
+    };
+  }
+  
+  // 生產環境使用 NEXT_PUBLIC_API_URL
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    return {
+      isValid: false,
+      message: '生產環境需要設置 NEXT_PUBLIC_API_URL'
+    };
+  }
+  return {
+    isValid: true,
+    url: `${apiUrl}/api/line/webhook`
+  };
+};

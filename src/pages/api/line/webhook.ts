@@ -5,34 +5,55 @@ import { logger } from '../../../utils/logger';
 import crypto from 'crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('收到 LINE Webhook 請求:', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body
+  });
+
   // 開發環境特殊處理
   if (process.env.NODE_ENV === 'development') {
     console.log('開發環境：webhook 事件模擬');
     return res.status(200).json({ message: 'Webhook received (development)' });
   }
 
-  // 生產環境的完整處理邏輯
+  // 驗證 LINE 簽名
   if (!verifyLineSignature(req)) {
+    console.error('LINE 簽名驗證失敗');
     return res.status(401).json({ message: '無效的簽名' });
   }
 
-  const events = req.body.events;
-  
-  for (const event of events) {
-    switch (event.type) {
-      case 'follow':
-        // 用戶追蹤時的處理
-        await lineService.handleFollow(event.source.userId);
-        break;
-        
-      case 'unfollow':
-        // 用戶取消追蹤時的處理
-        await lineService.handleUnfollow(event.source.userId);
-        break;
-    }
-  }
+  try {
+    const events = req.body.events;
+    console.log('處理 LINE 事件:', events);
+    
+    for (const event of events) {
+      try {
+        switch (event.type) {
+          case 'follow':
+            console.log('處理追蹤事件', { userId: event.source.userId });
+            await lineService.handleFollow(event.source.userId);
+            break;
+            
+          case 'unfollow':
+            console.log('處理取消追蹤事件', { userId: event.source.userId });
+            await lineService.handleUnfollow(event.source.userId);
+            break;
 
-  res.status(200).json({ message: 'OK' });
+          default:
+            console.log('未處理的事件類型', { type: event.type });
+        }
+      } catch (error) {
+        console.error('處理 LINE 事件時發生錯誤:', error);
+        return res.status(500).json({ message: '內部伺服器錯誤' });
+      }
+    }
+
+    res.status(200).json({ message: 'OK' });
+  } catch (error) {
+    console.error('處理 webhook 請求時發生錯誤:', error);
+    return res.status(500).json({ message: '內部伺服器錯誤' });
+  }
 }
 
 function verifyLineSignature(req: NextApiRequest): boolean {

@@ -15,29 +15,39 @@ export const useProfileLogic = (user: {
   }>({ step: 'idle' });
 
   const handleLineVerification = async (lineId: string) => {
-    logger.info(`開始 LINE ID 驗證流程`, { lineId });
+    console.log('開始 LINE ID 驗證流程', { lineId });
     
     try {
       setVerificationState(prev => ({
         ...prev,
+        step: 'verifying',
         status: 'validating',
         message: '驗證中...'
       }));
-      logger.info('驗證狀態已更新為驗證中');
 
       // 檢查 LINE ID 格式
       if (!lineId || lineId.trim().length === 0) {
-        logger.warn('LINE ID 為空');
-        setVerificationState(prev => ({
-          ...prev,
-          status: 'error',
-          message: '請輸入有效的 LINE ID'
-        }));
-        return;
+        throw new Error('請輸入有效的 LINE ID');
       }
 
-      logger.info('發送驗證請求到後端');
-      const response = await fetch('/api/line/request', {
+      // 先檢查追蹤狀態
+      const followResponse = await fetch('/api/line/check-follow-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lineId,
+          userId: user?.userId
+        })
+      });
+
+      const followData = await followResponse.json();
+      
+      if (!followData.isFollowing) {
+        throw new Error('請先追蹤官方帳號後再進行驗證');
+      }
+
+      // 發送驗證請求
+      const response = await fetch('/api/line/verify/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -47,90 +57,28 @@ export const useProfileLogic = (user: {
       });
 
       const data = await response.json();
-      logger.info('收到後端驗證響應', {
-        status: response.status,
-        data
-      });
 
       if (!response.ok) {
-        logger.error('驗證請求失敗', {
-          status: response.status,
-          error: data.error
-        });
-        setVerificationState(prev => ({
-          ...prev,
-          status: 'error',
-          message: data.error || '驗證失敗，請稍後重試'
-        }));
-        return;
+        throw new Error(data.message || '驗證請求失敗');
       }
 
-      logger.info('驗證請求成功，等待用戶確認');
       setVerificationState(prev => ({
         ...prev,
-        status: 'success',
-        message: '驗證碼已發送，請在 LINE 上確認'
+        step: 'confirming',
+        code: data.verificationCode,
+        message: '請在 LINE 上確認驗證碼'
       }));
 
       // 開始輪詢確認狀態
-      logger.info('開始輪詢確認狀態');
-      const pollInterval = setInterval(async () => {
-        try {
-          const checkResponse = await fetch('/api/line/check-follow-status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              lineId,
-              userId: user?.userId
-            })
-          });
-
-          const checkData = await checkResponse.json();
-          logger.info('輪詢狀態響應', {
-            status: checkResponse.status,
-            data: checkData
-          });
-
-          if (checkData.isVerified) {
-            logger.info('用戶已確認驗證');
-            clearInterval(pollInterval);
-            setVerificationState(prev => ({
-              ...prev,
-              status: 'success',
-              message: 'LINE 通知已成功開啟'
-            }));
-            // 更新用戶設定
-            updateUser({
-              ...user,
-              lineSettings: {
-                ...(user.lineSettings || {}),
-                isVerified: true,
-                id: lineId
-              }
-            });
-          }
-        } catch (error) {
-          logger.error('輪詢過程中發生錯誤', { error });
-        }
-      }, 5000);
-
-      // 設置超時
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        logger.info('驗證超時');
-        setVerificationState(prev => ({
-          ...prev,
-          status: 'error',
-          message: '驗證超時，請重試'
-        }));
-      }, 300000); // 5分鐘超時
+      startPolling(lineId);
 
     } catch (error) {
-      logger.error('驗證過程發生錯誤', { error });
+      console.error('驗證過程發生錯誤:', error);
       setVerificationState(prev => ({
         ...prev,
+        step: 'idle',
         status: 'error',
-        message: '驗證過程發生錯誤，請稍後重試'
+        message: error instanceof Error ? error.message : '驗證過程發生錯誤'
       }));
     }
   };
@@ -208,6 +156,38 @@ export const useProfileLogic = (user: {
         status: 'idle'
       }));
     }
+  };
+
+  const startPolling = async (lineId: string) => {
+    const checkStatus = async () => {
+      const response = await fetch('/api/line/verify/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineId, userId: user.userId })
+      });
+      const data = await response.json();
+      
+      if (data.isVerified) {
+        setVerificationState({ step: 'complete' });
+        return true;
+      }
+      return false;
+    };
+
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const poll = async () => {
+      if (attempts >= maxAttempts) return;
+      
+      const isComplete = await checkStatus();
+      if (!isComplete) {
+        attempts++;
+        setTimeout(poll, 3000); // 每3秒檢查一次
+      }
+    };
+
+    poll();
   };
 
   return { verificationState, handleLineVerification, confirmVerification, checkLineFollowStatus };

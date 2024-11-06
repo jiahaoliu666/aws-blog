@@ -224,12 +224,18 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       return;
     }
     
+    setIsVerifying(true);
     try {
-      await handleVerifyLineId();
-      setLineUserId(lineId);
+      await handleLineVerification();
+      
+      await logActivity(authUser?.sub || 'default-sub', '驗證 LINE ID');
+      
+      console.log('LINE ID 驗證請求已發送:', lineId);
     } catch (error) {
       console.error('驗證處理失敗:', error);
       toast.error('驗證處理失敗，請稍後再試');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
