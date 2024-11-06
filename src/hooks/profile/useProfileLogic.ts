@@ -176,8 +176,9 @@ interface ProfileLogicReturn {
   };
   handleMulticast: () => Promise<void>;
   verificationState: VerificationState;
+  setVerificationState: React.Dispatch<React.SetStateAction<VerificationState>>;
   verificationCode: string;
-  setVerificationCode: React.Dispatch<React.SetStateAction<string>>;
+  setVerificationCode: (code: string) => void;
   startVerification: () => Promise<void>;
   confirmVerificationCode: (code: string) => Promise<void>;
 }
@@ -286,7 +287,8 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
   const [verificationState, setVerificationState] = useState<VerificationState>({
     step: 'idle',
     status: 'idle',
-    message: '請先輸入您的 LINE ID 開始驗證'
+    message: '',
+    isVerified: false
   });
 
   const [retryCount, setRetryCount] = useState(0);
@@ -987,7 +989,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       
       // 修正: 確保返回完整的 FormData 結構
       setFormData(prevData => ({
-        ...prevData,  // 保留所有現有屬性
+        ...prevData,  // 保留有現有屬性
         feedbackTitle: '',
         feedbackContent: '',
         feedbackImage: undefined
@@ -1187,6 +1189,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     multicastResult,
     handleMulticast,
     verificationState,
+    setVerificationState,
     verificationCode,
     setVerificationCode,
     startVerification,

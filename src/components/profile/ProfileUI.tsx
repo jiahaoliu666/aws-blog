@@ -78,14 +78,27 @@ interface VerificationState {
   isVerified: boolean;
 }
 
-// 添加進度指示器樣式
+// 修改進度指示器的步驟定義
 const StepIndicator: React.FC<{ step: VerificationStep }> = ({ step }) => {
   const steps = [
-    { key: 'idle', label: '輸入 LINE ID' },
-    { key: 'verifying', label: '驗證身份' },
-    { key: 'confirming', label: '確認驗證' },
+    { key: 'idle', label: '加入好友' },
+    { key: 'verifying', label: '輸入 LINE ID' },
+    { key: 'confirming', label: '驗證身份' },
     { key: 'complete', label: '完成綁定' }
   ];
+
+  // 根據當前步驟計算進度
+  const getStepProgress = (currentStep: VerificationStep) => {
+    const stepOrder = {
+      'idle': 0,
+      'verifying': 1,
+      'confirming': 2,
+      'complete': 3
+    };
+    return stepOrder[currentStep];
+  };
+
+  const currentProgress = getStepProgress(step);
 
   return (
     <div className="relative mb-8">
@@ -94,37 +107,43 @@ const StepIndicator: React.FC<{ step: VerificationStep }> = ({ step }) => {
         <div 
           className="h-full bg-blue-500 transition-all duration-500"
           style={{ 
-            width: `${(steps.findIndex(s => s.key === step) / (steps.length - 1)) * 100}%` 
+            width: `${(currentProgress / (steps.length - 1)) * 100}%` 
           }}
         />
       </div>
       
       {/* 步驟指示器 */}
       <div className="relative flex justify-between">
-        {steps.map((s, index) => (
-          <div 
-            key={s.key}
-            className="flex flex-col items-center"
-          >
+        {steps.map((s, index) => {
+          const isCompleted = currentProgress > index;
+          const isCurrent = currentProgress === index;
+          
+          return (
             <div 
-              className={`
-                w-10 h-10 rounded-full flex items-center justify-center
-                mb-2 transition-colors duration-300 z-10
-                ${step === s.key ? 'bg-blue-500 text-white' : 
-                  steps.findIndex(st => st.key === step) > index 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-gray-200 text-gray-500'}
-              `}
+              key={s.key}
+              className="flex flex-col items-center"
             >
-              {steps.findIndex(st => st.key === step) > index ? (
-                <FontAwesomeIcon icon={faCheck} />
-              ) : (
-                index + 1
-              )}
+              <div 
+                className={`
+                  w-10 h-10 rounded-full flex items-center justify-center
+                  mb-2 transition-colors duration-300 z-10
+                  ${isCurrent ? 'bg-blue-500 text-white' : 
+                    isCompleted ? 'bg-green-500 text-white' : 
+                    'bg-gray-200 text-gray-500'}
+                `}
+              >
+                {isCompleted ? (
+                  <FontAwesomeIcon icon={faCheck} />
+                ) : (
+                  index + 1
+                )}
+              </div>
+              <span className={`text-sm ${isCurrent ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                {s.label}
+              </span>
             </div>
-            <span className="text-sm text-gray-600">{s.label}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -200,7 +219,7 @@ const LineNotificationSection: React.FC<{
               {lineId && !/^U[0-9a-f]{32}$/i.test(lineId) && (
                 <p className="mt-2 text-sm text-red-600">
                   <FontAwesomeIcon icon={faExclamationCircle} className="mr-1" />
-                  LINE ID 格式不正確
+                  LINE ID 格式正確
                 </p>
               )}
             </div>
@@ -331,6 +350,7 @@ const LineNotificationSection: React.FC<{
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const {
     activeTab,
@@ -392,6 +412,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     multicastResult,
     handleMulticast,
     verificationState,
+    setVerificationState,
     verificationCode,
     setVerificationCode,
     startVerification,
@@ -400,7 +421,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
 
   const router = useRouter();
   const { user: authUser } = useAuthContext();
-  const [isClient, setIsClient] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
     status: 'success' | 'error' | null;
@@ -410,6 +430,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   const [message, setMessage] = useState({ type: '', content: '' });
   const [showSettingsMessage, setShowSettingsMessage] = useState(false);
 
+  // 將所有 useEffect 集中在這裡
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -424,6 +445,33 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       return () => clearTimeout(timer);
     }
   }, [authUser, router, isClient]);
+
+  useEffect(() => {
+    if (formData.notifications.line) {
+      setVerificationState(prev => ({
+        ...prev,
+        step: 'verifying'
+      }));
+    }
+  }, [formData.notifications.line, setVerificationState]);
+
+  useEffect(() => {
+    if (lineId && /^U[0-9a-f]{32}$/i.test(lineId)) {
+      setVerificationState(prev => ({
+        ...prev,
+        step: 'confirming'
+      }));
+    }
+  }, [lineId, setVerificationState]);
+
+  useEffect(() => {
+    if (verificationState.isVerified) {
+      setVerificationState(prev => ({
+        ...prev,
+        step: 'complete'
+      }));
+    }
+  }, [verificationState.isVerified, setVerificationState]);
 
   useEffect(() => {
     if (settingsMessage) {
