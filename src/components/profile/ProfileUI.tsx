@@ -975,7 +975,44 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             {!verificationState.isVerified ? (
                               <div className="mt-6">
                                 <StepIndicator step={verificationState.step} />
-                                {/* 原有的驗證表單內容 */}
+                                
+                                {/* LINE ID 輸入區域 - 移到這裡 */}
+                                <div className="mt-6">
+                                  <label 
+                                    htmlFor="lineId" 
+                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                  >
+                                    LINE ID
+                                  </label>
+                                  <div className="relative">
+                                    <input
+                                      id="lineId"
+                                      type="text"
+                                      value={lineId}
+                                      onChange={(e) => setLineId(e.target.value)}
+                                      placeholder="請輸入您的 LINE ID (以 U 開頭)"
+                                      className="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600"
+                                      disabled={verificationState.isVerified}
+                                    />
+                                    {lineId && (
+                                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                        {/^U[0-9a-f]{32}$/i.test(lineId) ? (
+                                          <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+                                        ) : (
+                                          <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {lineId && !/^U[0-9a-f]{32}$/i.test(lineId) && (
+                                    <p className="mt-2 text-sm text-red-600">
+                                      <FontAwesomeIcon icon={faExclamationCircle} className="mr-1" />
+                                      LINE ID 格式不正確
+                                    </p>
+                                  )}
+                                </div>
+                                
+                                {/* 其他驗證表單內容 */}
                                 {/* ... */}
                               </div>
                             ) : (
