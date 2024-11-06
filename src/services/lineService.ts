@@ -258,6 +258,25 @@ export class LineService {
       throw error;
     }
   }
+
+  async saveVerificationInfo(verificationData: LineVerification): Promise<void> {
+    const params = {
+      TableName: "AWS_Blog_UserNotificationSettings",
+      Key: {
+        userId: { S: verificationData.userId }
+      },
+      UpdateExpression: "SET verificationCode = :code, verificationExpiry = :expiry, lineId = :lineId, updatedAt = :updatedAt, createdAt = :createdAt",
+      ExpressionAttributeValues: {
+        ":code": { S: verificationData.code },
+        ":expiry": { N: (Date.now() + 600000).toString() },
+        ":lineId": { S: verificationData.lineId },
+        ":updatedAt": { S: new Date().toISOString() },
+        ":createdAt": { S: verificationData.createdAt }
+      }
+    };
+
+    await dynamoClient.send(new UpdateItemCommand(params));
+  }
 }
 
 export const lineService = new LineService();

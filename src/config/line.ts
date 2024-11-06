@@ -6,7 +6,9 @@ export const lineConfig: LineConfig = {
   channelSecret: process.env.LINE_CHANNEL_SECRET || '',
   apiUrl: 'https://api.line.me/v2/bot',
   webhookUrl: process.env.NODE_ENV === 'development' 
-    ? `${process.env.NGROK_URL || ''}/api/line/webhook`
+    ? process.env.NGROK_URL 
+      ? `${process.env.NGROK_URL}/api/line/webhook`
+      : '/api/line/webhook'
     : `${process.env.NEXT_PUBLIC_API_URL || ''}/api/line/webhook`,
   basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID || '',
   qrCodeUrl: process.env.NEXT_PUBLIC_LINE_QR_CODE_URL || '',
@@ -17,48 +19,18 @@ export const lineConfig: LineConfig = {
 const checkEnvVariables = () => {
   const envStatus = {
     NODE_ENV: process.env.NODE_ENV,
-    ENV_FILE_LOADED: '已載入',
+    ENV_FILE_LOADED: process.env.LINE_CHANNEL_ACCESS_TOKEN ? '已載入' : '未載入',
     LINE_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN ? '已設置' : '未設置',
     LINE_SECRET: process.env.LINE_CHANNEL_SECRET ? '已設置' : '未設置',
     TOKEN_LENGTH: process.env.LINE_CHANNEL_ACCESS_TOKEN?.length || 0,
-    SECRET_LENGTH: process.env.LINE_CHANNEL_SECRET?.length || 0,
-    WEBHOOK_URL: process.env.NODE_ENV === 'development'
-      ? `${process.env.NGROK_URL || ''}/api/line/webhook`
-      : `${process.env.NEXT_PUBLIC_API_URL || ''}/api/line/webhook`,
+    SECRET_LENGTH: process.env.LINE_CHANNEL_SECRET?.length || 0
   };
 
-  console.log('環境變數載入狀態：', envStatus);
-
-  // 改進 Webhook URL 檢查邏輯
-  if (process.env.NODE_ENV === 'development') {
-    if (!process.env.NGROK_URL) {
-      console.warn('⚠️ 開發環境中未設置 NGROK_URL，請按照以下步驟設置：');
-      console.warn('1. 安裝 ngrok: npm install ngrok -D');
-      console.warn('2. 啟動 ngrok: npx ngrok http 3000');
-      console.warn('3. 將生成的 URL 設置到 .env.local 中：');
-      console.warn('   NGROK_URL=https://你的ngrok網址');
-      console.warn('4. 在 LINE Developers Console 中更新 Webhook URL');
-    } else {
-      const webhookUrl = `${process.env.NGROK_URL}/api/line/webhook`;
-      console.log('✅ 開發環境 Webhook URL:', webhookUrl);
-      console.log('請確保此 URL 已在 LINE Developers Console 中設置');
-    }
-  }
-
-  // 檢查選填的環境變數
-  const optionalVars = {
-    NEXT_PUBLIC_LINE_BASIC_ID: process.env.NEXT_PUBLIC_LINE_BASIC_ID,
-    NEXT_PUBLIC_LINE_QR_CODE_URL: process.env.NEXT_PUBLIC_LINE_QR_CODE_URL,
-    NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME
-  };
-
-  const missingOptionalVars = Object.entries(optionalVars)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key);
-
-  if (missingOptionalVars.length > 0) {
-    console.info('ℹ️ 以下選填的環境變數未設置：', missingOptionalVars.join('、'));
-  }
+  // 添加更詳細的日誌
+  console.log('LINE 配置狀態:', {
+    ...envStatus,
+    webhookUrl: lineConfig.webhookUrl
+  });
 
   return envStatus;
 };

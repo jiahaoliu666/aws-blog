@@ -1086,28 +1086,40 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
 
   const handleVerifyCode = async () => {
     try {
-      const response = await fetch('/api/line/verify-code', {
+      setIsVerifying(true);
+      
+      const response = await fetch('/api/line/verify/confirm', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user?.userId || authUser?.sub,
-          code: verificationCode
+          code: verificationCode,
+          lineId: lineId
         }),
       });
 
       const data = await response.json();
       
       if (data.success) {
-        setShowVerificationInput(false);
+        setVerificationStatus({
+          code: null,
+          message: '驗證成功',
+          status: 'success'
+        });
         toast.success('LINE 帳號驗證成功！');
-        // 更新用戶狀態
+        
+        // 更新用戶設定
+        await handleSaveNotificationSettings(user?.userId || authUser?.sub);
       } else {
         toast.error(data.message || '驗證碼錯誤');
       }
     } catch (error) {
-      toast.error('驗證過程發生誤');
+      console.error('驗證確認失敗:', error);
+      toast.error('驗證過程發生錯誤');
+    } finally {
+      setIsVerifying(false);
     }
   };
 

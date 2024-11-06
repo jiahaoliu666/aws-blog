@@ -102,8 +102,9 @@ export interface LineProfile extends Pick<LineUser, 'userId'> {
 // 驗證相關
 export interface LineVerification {
   userId: string;
+  lineId: string;
   code: string;
-  expireAt: number;
+  createdAt: string;
 }
 
 export type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';

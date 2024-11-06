@@ -226,11 +226,29 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     
     setIsVerifying(true);
     try {
-      await handleLineVerification();
+      console.log('開始驗證流程...');
       
+      const response = await fetch('/api/line/verify/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lineId: lineId,
+          userId: user?.userId || authUser?.sub
+        })
+      });
+
+      console.log('驗證請求回應:', await response.json());
+
+      if (!response.ok) {
+        throw new Error('驗證請求失敗');
+      }
+
       await logActivity(authUser?.sub || 'default-sub', '驗證 LINE ID');
       
-      console.log('LINE ID 驗證請求已發送:', lineId);
+      toast.success('驗證請求已發送，請查看 LINE 訊息');
+      
     } catch (error) {
       console.error('驗證處理失敗:', error);
       toast.error('驗證處理失敗，請稍後再試');
@@ -468,7 +486,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                 {activeTab === 'activity' && (
                   <>
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-2xl font-bold text-gray-800">最觀看紀錄</h3>
+                      <h3 className="text-2xl font-bold text-gray-800">最觀紀錄</h3>
                       <button
                         onClick={() => setIsCompactLayout(!isCompactLayout)}
                         className="bg-blue-600 text-white py-2 px-3 rounded-full hover:bg-blue-700 transition duration-200 flex items-center"

@@ -15,7 +15,7 @@ export const useProfileLogic = (user: {
   }>({ step: 'idle' });
 
   const handleLineVerification = async (lineId: string) => {
-    console.log('開始 LINE ID 驗證流程', { lineId });
+    logger.info('開始 LINE 驗證流程', { lineId });
     
     try {
       setVerificationState(prev => ({
@@ -30,37 +30,31 @@ export const useProfileLogic = (user: {
         throw new Error('請輸入有效的 LINE ID');
       }
 
-      // 先檢查追蹤狀態
-      const followResponse = await fetch('/api/line/check-follow-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lineId,
-          userId: user?.userId
-        })
-      });
-
-      const followData = await followResponse.json();
-      
-      if (!followData.isFollowing) {
-        throw new Error('請先追蹤官方帳號後再進行驗證');
+      // 先檢查環境變數
+      if (!process.env.NEXT_PUBLIC_LINE_BASIC_ID) {
+        throw new Error('LINE 配置未完成，請聯繫管理員');
       }
 
       // 發送驗證請求
       const response = await fetch('/api/line/verify/request', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Line-Basic-Id': process.env.NEXT_PUBLIC_LINE_BASIC_ID
+        },
         body: JSON.stringify({
           lineId,
           userId: user?.userId
         })
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || '驗證請求失敗');
+        const errorData = await response.json();
+        throw new Error(errorData.message || '驗證請求失敗');
       }
+
+      const data = await response.json();
+      logger.info('收到驗證響應', data);
 
       setVerificationState(prev => ({
         ...prev,
@@ -73,7 +67,7 @@ export const useProfileLogic = (user: {
       startPolling(lineId);
 
     } catch (error) {
-      console.error('驗證過程發生錯誤:', error);
+      logger.error('驗證過程發生錯誤:', error);
       setVerificationState(prev => ({
         ...prev,
         step: 'idle',
