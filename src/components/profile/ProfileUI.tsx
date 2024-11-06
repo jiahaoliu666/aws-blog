@@ -903,10 +903,44 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             <FontAwesomeIcon icon={faCommentDots} className="text-green-600 text-xl" />
                           </div>
                           <div>
-                            <h4 className="text-lg font-semibold text-gray-800">LINE 通</h4>
-                            <p className="text-sm text-gray-500">加官方 LINE 帳號接收最新文章通知</p>
+                            <h4 className="text-lg font-semibold text-gray-800">LINE 通知</h4>
+                            <p className="text-sm text-gray-500">加入官方 LINE 帳號接收最新文章通知</p>
                           </div>
                         </div>
+
+                        {/* 驗證狀態進度指示器 */}
+                        {!verificationState.isVerified && (
+                          <div className="relative mb-8">
+                            <div className="absolute top-5 w-full h-1 bg-gray-200">
+                              <div 
+                                className="h-full bg-blue-500 transition-all duration-500"
+                                style={{ 
+                                  width: `${
+                                    verificationState.step === 'idle' ? '0%' :
+                                    verificationState.step === 'verifying' ? '50%' :
+                                    verificationState.step === 'confirming' ? '75%' :
+                                    '100%'
+                                  }` 
+                                }}
+                              />
+                            </div>
+                            <div className="relative flex justify-between">
+                              {['輸入 LINE ID', '驗證身份', '確認驗證'].map((step, index) => (
+                                <div key={step} className="flex flex-col items-center">
+                                  <div className={`
+                                    w-10 h-10 rounded-full flex items-center justify-center mb-2 z-10
+                                    ${index < ['idle', 'verifying', 'confirming'].indexOf(verificationState.step) + 1
+                                      ? 'bg-blue-500 text-white'
+                                      : 'bg-gray-200 text-gray-500'}
+                                  `}>
+                                    {index + 1}
+                                  </div>
+                                  <span className="text-sm text-gray-600">{step}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8 p-6 bg-gray-50 rounded-lg">
                           <div className="text-center">
@@ -928,135 +962,115 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               <FontAwesomeIcon icon={faCommentDots} className="mr-2" />
                               點擊加入好友
                             </a>
-                            <p className="text-sm text-gray-600 mt-2">或直點擊加入</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 新增的 LINE Multicast 功能區 */}
-                      <div className="bg-white p-6 border border-gray-200 rounded-lg shadow-sm mt-6">
-                        <div className="flex items-center space-x-4 mb-4">
-                          <div className="bg-blue-100 p-3 rounded-full">
-                            <FontAwesomeIcon icon={faBolt} className="text-blue-600 text-xl" />
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-semibold text-gray-800">LINE 群發訊息</h4>
-                            <p className="text-sm text-gray-500">向所有追蹤者發送群發訊息</p>
+                            <p className="text-sm text-gray-600 mt-2">或直接點擊加入</p>
                           </div>
                         </div>
 
-                        <div className="space-y-4">
-                          <div>
-                            <textarea
-                              value={multicastMessage}
-                              onChange={(e) => setMulticastMessage(e.target.value)}
-                              placeholder="輸入要群發的訊息內容..."
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              rows={4}
-                            />
-                          </div>
-
-                          {multicastResult.status && (
-                            <div className={`p-4 rounded-lg ${
-                              multicastResult.status === 'success' 
-                                ? 'bg-green-50 text-green-700' 
-                                : 'bg-red-50 text-red-700'
-                            }`}>
-                              <div className="flex items-center">
-                                <FontAwesomeIcon 
-                                  icon={multicastResult.status === 'success' ? faCheckCircle : faExclamationCircle} 
-                                  className="mr-2"
-                                />
-                                <span>{multicastResult.message}</span>
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="flex justify-end">
-                            <button
-                              onClick={handleMulticast}
-                              disabled={isMulticasting || !multicastMessage.trim()}
-                              className={`
-                                px-6 py-2.5 rounded-full
-                                flex items-center space-x-2
-                                ${isMulticasting || !multicastMessage.trim() 
-                                  ? 'bg-gray-400 cursor-not-allowed' 
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                                }
-                                text-white transition duration-200 shadow-md hover:shadow-lg
-                              `}
-                            >
-                              {isMulticasting ? (
-                                <>
-                                  <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
-                                  <span>發送中...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <FontAwesomeIcon icon={faBolt} className="mr-2" />
-                                  <span>發送群發訊息</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 設定儲存按鈕 */}
-                      <div className="mt-8 flex flex-col space-y-4">
-                        {showSettingsMessage && settingsMessage && (
-                          <div className={`mt-4 p-4 rounded-lg ${
-                            settingsStatus === 'success' ? 'bg-green-50' : 'bg-red-50'
-                          } transition-opacity duration-300 ${showSettingsMessage ? 'opacity-100' : 'opacity-0'}`}>
-                            <div className="flex items-center">
-                              <FontAwesomeIcon 
-                                icon={settingsStatus === 'success' ? faCheckCircle : faExclamationCircle} 
-                                className={`mr-2 ${
-                                  settingsStatus === 'success' ? 'text-green-500' : 'text-red-500'
-                                }`}
-                              />
+                        {/* 驗證表單區域 */}
+                        {!verificationState.isVerified && (
+                          <div className="mt-6 space-y-4">
+                            {verificationState.step === 'idle' && (
                               <div>
-                                <p className={
-                                  settingsStatus === 'success' ? 'text-green-700' : 'text-red-700'
-                                }>
-                                  {settingsMessage}
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  LINE ID
+                                </label>
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    value={lineId}
+                                    onChange={(e) => setLineId(e.target.value)}
+                                    placeholder="請輸入您的 LINE ID (以 U 開頭)"
+                                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                  />
+                                  {lineId && (
+                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                      {/^U[0-9a-f]{32}$/i.test(lineId) ? (
+                                        <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+                                      ) : (
+                                        <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={startVerification}
+                                  disabled={!lineId || !/^U[0-9a-f]{32}$/i.test(lineId)}
+                                  className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors"
+                                >
+                                  開始驗證
+                                </button>
+                              </div>
+                            )}
+
+                            {verificationState.step === 'verifying' && (
+                              <div className="bg-blue-50 p-6 rounded-lg">
+                                <div className="flex items-center text-blue-700 mb-4">
+                                  <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
+                                  <span>請在 LINE 官方帳號中輸入：</span>
+                                </div>
+                                <div className="bg-white p-4 rounded-lg border border-blue-200">
+                                  <code className="text-blue-700">驗證 {user?.sub}</code>
+                                </div>
+                              </div>
+                            )}
+
+                            {verificationState.step === 'confirming' && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  驗證碼
+                                </label>
+                                <input
+                                  type="text"
+                                  value={verificationCode}
+                                  onChange={(e) => setVerificationCode(e.target.value)}
+                                  placeholder="請輸入 LINE 中收到的驗證碼"
+                                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button
+                                  onClick={() => confirmVerificationCode(verificationCode)}
+                                  className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors"
+                                >
+                                  確認驗證
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 驗證成功狀態 */}
+                        {verificationState.isVerified && (
+                          <div className="mt-4 bg-green-50 p-4 rounded-lg">
+                            <div className="flex items-center">
+                              <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 mr-3" />
+                              <div>
+                                <h4 className="text-green-800 font-medium">LINE 帳號已驗證</h4>
+                                <p className="text-sm text-green-600">
+                                  您將可以透過 LINE 接收最新文章通知
                                 </p>
-                                {settingsStatus === 'success' && (
-                                  <p className="text-sm text-green-600 mt-1">
-                                    {formData.notifications.email 
-                                      ? `將會發送最新文章至${formData.email}`
-                                      : '已取消訂閱，您將不會收到通知'
-                                    }
-                                  </p>
-                                )}
                               </div>
                             </div>
                           </div>
                         )}
-                        <div className="flex justify-end">
-                          <button
-                            onClick={() => handleSaveNotificationSettings(user?.sub)}
-                            disabled={isLoading}
-                            className={`
-                              px-6 py-2.5 rounded-full
-                              flex items-center space-x-2
-                              ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
-                              text-white transition duration-200 shadow-md hover:shadow-lg
-                            `}
-                          >
-                            {isLoading ? (
-                              <>
-                                <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
-                                <span>儲存中...</span>
-                              </>
-                            ) : (
-                              <>
-                                <FontAwesomeIcon icon={faSave} className="mr-2" />
-                                <span>儲存設定</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
+
+                        {/* 狀態訊息 */}
+                        {verificationState.message && (
+                          <div className={`
+                            mt-4 p-4 rounded-lg flex items-center
+                            ${verificationState.status === 'error' ? 'bg-red-50 text-red-700' : 
+                              verificationState.status === 'success' ? 'bg-green-50 text-green-700' : 
+                              'bg-blue-50 text-blue-700'}
+                          `}>
+                            <FontAwesomeIcon 
+                              icon={
+                                verificationState.status === 'error' ? faExclamationCircle :
+                                verificationState.status === 'success' ? faCheckCircle :
+                                faInfoCircle
+                              } 
+                              className="mr-3"
+                            />
+                            <span>{verificationState.message}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </>
