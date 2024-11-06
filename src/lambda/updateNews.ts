@@ -1,34 +1,76 @@
-require("dotenv").config({ path: ".env.local" });
-
-const {
+import dotenv from 'dotenv';
+import {
   DynamoDBClient,
   PutItemCommand,
   ScanCommand,
-} = require("@aws-sdk/client-dynamodb");
-const puppeteer = require("puppeteer");
-const { v4: uuidv4 } = require("uuid");
-const OpenAI = require("openai");
-const axios = require("axios").default;
-const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
-const { sendEmailNotification } = require("../services/emailService");
-const {
+  AttributeValue
+} from "@aws-sdk/client-dynamodb";
+import puppeteer, { Browser, Page } from "puppeteer";
+import { v4 as uuidv4 } from "uuid";
+import OpenAI from "openai";
+import axios, { AxiosResponse } from "axios";
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import { sendEmailNotification } from "../services/emailService";
+import {
   sendEmailWithRetry,
   failedNotifications,
   processFailedNotifications,
-} = require("../utils/notificationUtils");
-const { logger } = require("../utils/logger");
-const { sendArticleNotification } = require("../services/lineService");
+} from "@/utils/notificationUtils";
+import { logger } from "../utils/logger";
+import { lineService } from "../services/lineService";
 
-// 設定要爬取的文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 10;
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
-  throw new Error(
-    "Microsoft Translator API Key is missing or empty. Please check your .env.local file."
-  );
+// 介面定義
+interface Article {
+  title: string;
+  info: string;
+  description: string;
+  link: string;
 }
 
+interface ArticleData {
+  title: string;
+  link: string;
+  timestamp: number;
+  summary: string;
+}
+
+interface EmailData {
+  to: string;
+  subject: string;
+  content: string;
+  articleData: {
+    title: string;
+    link: string;
+    timestamp: string;
+  };
+}
+
+interface DynamoDBArticle {
+  article_id: { S: string };
+  translated_title: { S: string };
+  link: { S: string };
+  published_at: { N: string };
+}
+
+interface NotificationUser {
+  userId: { S: string };
+  email: { S: string };
+}
+
+interface TranslatorResponse {
+  translations: Array<{
+    text: string;
+  }>;
+}
+
+// 環境變數配置
+dotenv.config({ path: ".env.local" });
+
+// 常量定義
+const NUMBER_OF_ARTICLES_TO_FETCH = 10;
+
+// 初始化客戶端
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const dbClient = new DynamoDBClient({
   region: "ap-northeast-1",
 });
@@ -36,9 +78,23 @@ const dbClient = new DynamoDBClient({
 let insertedCount = 0;
 let skippedCount = 0;
 
-const dynamoClient = new DynamoDBClient({ region: "ap-northeast-1" });
+// 環境變數檢查
+const requiredEnvVars = [
+  "NEXT_PUBLIC_AWS_ACCESS_KEY_ID",
+  "NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY",
+  "NEXT_PUBLIC_SES_SENDER_EMAIL",
+  "OPENAI_API_KEY",
+  "MICROSOFT_TRANSLATOR_API_KEY",
+] as const;
 
-async function getNotificationUsers() {
+requiredEnvVars.forEach((varName) => {
+  if (!process.env[varName]) {
+    throw new Error(`Missing required environment variable: ${varName}`);
+  }
+});
+
+// 主要功能函數
+async function getNotificationUsers(): Promise<NotificationUser[]> {
   const params = {
     TableName: "AWS_Blog_UserNotificationSettings",
     FilterExpression: "emailNotification = :true",
@@ -50,15 +106,18 @@ async function getNotificationUsers() {
 
   try {
     const command = new ScanCommand(params);
-    const response = await dynamoClient.send(command);
-    return response.Items?.filter((item) => item.email?.S) || [];
+    const response = await dbClient.send(command);
+    return (response.Items || []).map(item => ({
+      userId: { S: item.userId.S || '' },
+      email: { S: item.email.S || '' }
+    })) as NotificationUser[];
   } catch (error) {
     console.error("獲取通知用戶列表時發生錯誤:", error);
     return [];
   }
 }
 
-async function checkIfExists(title) {
+async function checkIfExists(title: string): Promise<boolean | string> {
   const scanParams = {
     TableName: "AWS_Blog_News",
     FilterExpression: "#title = :title",
@@ -74,7 +133,7 @@ async function checkIfExists(title) {
     const data = await dbClient.send(new ScanCommand(scanParams));
     if (data.Items && data.Items.length > 0) {
       const existingItem = data.Items[0];
-      return existingItem.summary && existingItem.summary.S;
+      return existingItem.summary?.S || false;
     }
     return false;
   } catch (error) {
@@ -83,7 +142,7 @@ async function checkIfExists(title) {
   }
 }
 
-async function summarizeArticle(url, index) {
+async function summarizeArticle(url: string, index: number): Promise<string> {
   const maxTokens = 300;
   const prompt = `使用繁體中文總結這篇文章的內容：${url}`;
 
@@ -100,14 +159,14 @@ async function summarizeArticle(url, index) {
       max_tokens: maxTokens,
     });
     console.log(`第${index + 1}篇文章總結完成`);
-    return response.choices[0].message.content.trim();
+    return response.choices[0]?.message?.content?.trim() || "無法獲取總結";
   } catch (error) {
     console.error("總結文章時發生錯誤:", error);
     return "無法獲取總結";
   }
 }
 
-async function translateText(text) {
+async function translateText(text: string): Promise<string> {
   const endpoint = "https://api.cognitive.microsofttranslator.com";
   const subscriptionKey = process.env.MICROSOFT_TRANSLATOR_API_KEY;
   const location = process.env.MICROSOFT_TRANSLATOR_REGION;
@@ -121,48 +180,40 @@ async function translateText(text) {
         "Ocp-Apim-Subscription-Key": subscriptionKey,
         "Ocp-Apim-Subscription-Region": location,
         "Content-type": "application/json",
-        "X-ClientTraceId": uuidv4().toString(),
+        "X-ClientTraceId": uuidv4(),
       },
       params: {
         "api-version": "3.0",
         from: "en",
         to: "zh-Hant",
       },
-      data: [
-        {
-          text: text,
-        },
-      ],
+      data: [{ text }],
       responseType: "json",
     });
 
-    const translatedText = response.data[0].translations[0].text;
-    return translatedText;
+    return response.data[0].translations[0].text;
   } catch (error) {
     console.error(
       "翻譯時發生錯誤:",
-      error.response ? error.response.data : error.message
+      error instanceof Error ? error.message : String(error)
     );
     return text;
   }
 }
 
-async function saveToDynamoDB(article, translatedTitle, summary) {
+async function saveToDynamoDB(
+  article: Article,
+  translatedTitle: string,
+  summary: string
+): Promise<boolean> {
   console.log(`處理文章: ${article.title}`);
-  // 確保所有必要的值都存在
-  if (
-    !article.title ||
-    !article.link ||
-    !article.description ||
-    !article.info
-  ) {
+  
+  if (!article.title || !article.link || !article.description || !article.info) {
     logger.error("文章缺少必要欄位:", { article });
     return false;
   }
 
-  // 確保 translatedTitle 和 summary 有預設值
-  const finalTranslatedTitle =
-    translatedTitle || (await translateText(article.title));
+  const finalTranslatedTitle = translatedTitle || await translateText(article.title);
   const finalSummary = summary || "暫無摘要";
   const translatedDescription = await translateText(article.description);
 
@@ -187,19 +238,17 @@ async function saveToDynamoDB(article, translatedTitle, summary) {
     await dbClient.send(new PutItemCommand(params));
     insertedCount++;
 
-    // 準備文章資料
-    const articleData = {
+    const articleData: ArticleData = {
       title: finalTranslatedTitle,
       link: article.link,
       timestamp: Date.now(),
       summary: finalSummary,
     };
 
-    // 發送 LINE 通知
     const lineUsers = await getLineNotificationUsers();
     if (lineUsers.length > 0) {
       try {
-        await sendArticleNotification(articleData);
+        await lineService.sendArticleNotification(articleData);
         logger.info(`成功發送 LINE 通知給 ${lineUsers.length} 位用戶`);
       } catch (error) {
         logger.error("發送 LINE 通知失敗:", error);
@@ -214,7 +263,12 @@ async function saveToDynamoDB(article, translatedTitle, summary) {
   }
 }
 
-async function gotoWithRetry(page, url, options, retries = 3) {
+async function gotoWithRetry(
+  page: Page,
+  url: string,
+  options: Parameters<Page['goto']>[1],
+  retries: number = 3
+): Promise<void> {
   for (let i = 0; i < retries; i++) {
     try {
       await page.goto(url, options);
@@ -227,14 +281,10 @@ async function gotoWithRetry(page, url, options, retries = 3) {
   }
 }
 
-async function scrapeAWSBlog() {
-  let browser = null;
+async function scrapeAWSBlog(): Promise<void> {
+  let browser: Browser | null = null;
 
-  // 添加環境變數檢查
-  if (
-    !process.env.OPENAI_API_KEY ||
-    !process.env.MICROSOFT_TRANSLATOR_API_KEY
-  ) {
+  if (!process.env.OPENAI_API_KEY || !process.env.MICROSOFT_TRANSLATOR_API_KEY) {
     logger.error("缺少必要的環境變數");
     throw new Error("缺少必要的環境變數");
   }
@@ -247,7 +297,7 @@ async function scrapeAWSBlog() {
       timeout: 60000,
     });
 
-    const pageData = await page.evaluate((numArticles) => {
+    const pageData = await page.evaluate((numArticles: number) => {
       const titles = document.querySelectorAll(".m-card-title");
       const infos = document.querySelectorAll(".m-card-info");
       const descriptions = document.querySelectorAll(".m-card-description");
@@ -256,24 +306,22 @@ async function scrapeAWSBlog() {
       return Array.from(titles)
         .slice(0, numArticles)
         .map((titleElem, index) => ({
-          title: titleElem.innerText || "沒有標題",
-          info: infos[index]?.innerText || "沒有資訊",
-          description: descriptions[index]?.innerText || "沒有描述",
-          link: links[index]?.href || "沒有鏈接",
+          title: (titleElem as HTMLElement).innerText || "沒有標題",
+          info: (infos[index] as HTMLElement)?.innerText || "沒有資訊",
+          description: (descriptions[index] as HTMLElement)?.innerText || "沒有述",
+          link: (links[index] as HTMLAnchorElement)?.href || "沒有鏈接",
         }));
     }, NUMBER_OF_ARTICLES_TO_FETCH);
 
     for (const [index, article] of pageData.entries()) {
       try {
-        // 先檢查文章是否存在
         const exists = await checkIfExists(article.title);
         if (exists) {
           skippedCount++;
           console.log(`第${index + 1}篇 ⏭️ 文章已存在，跳過`);
-          continue; // 跳過後續的翻譯和總結步驟
+          continue;
         }
 
-        // 只有新文章才執行翻譯和總結
         const translatedTitle = await translateText(article.title);
         const summary = await summarizeArticle(article.link, index);
         const saved = await saveToDynamoDB(article, translatedTitle, summary);
@@ -290,13 +338,12 @@ async function scrapeAWSBlog() {
       }
     }
 
-    // 只保留簡單統計
     console.log(`\n📊 爬蟲統計:`);
     console.log(`✅ 新文章: ${insertedCount} 篇`);
     console.log(`⏭️ 已存在: ${skippedCount} 篇`);
     console.log(`總計處理: ${insertedCount + skippedCount} 篇\n`);
   } catch (error) {
-    console.error("❌ 爬蟲失敗:", error?.message || "未知錯誤");
+    console.error("❌ 爬蟲失敗:", (error as Error)?.message || "未知錯誤");
     throw error;
   } finally {
     if (browser !== null) {
@@ -305,7 +352,7 @@ async function scrapeAWSBlog() {
   }
 }
 
-async function getAllUserIds() {
+async function getAllUserIds(): Promise<string[]> {
   const params = {
     TableName: "AWS_Blog_UserProfiles",
     ProjectionExpression: "userId",
@@ -314,14 +361,14 @@ async function getAllUserIds() {
   try {
     const command = new ScanCommand(params);
     const response = await dbClient.send(command);
-    return response.Items?.map((item) => item.userId.S) || [];
+    return response.Items?.map((item) => item.userId.S as string) || [];
   } catch (error) {
     console.error("獲取用戶 ID 時發生錯誤:", error);
     return [];
   }
 }
 
-async function addNotification(userId, articleId) {
+async function addNotification(userId: string, articleId: string): Promise<void> {
   const params = {
     TableName: "AWS_Blog_UserNotifications",
     Item: {
@@ -341,8 +388,7 @@ async function addNotification(userId, articleId) {
   }
 }
 
-// 修改郵件模板生成函數
-function generateNewsNotificationEmail(articleData) {
+function generateNewsNotificationEmail(articleData: ArticleData): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #2c5282;">AWS 部落格新文章通知</h2>
@@ -358,33 +404,38 @@ function generateNewsNotificationEmail(articleData) {
         </a>
       </div>
       <p style="color: #718096; font-size: 12px; margin-top: 20px;">
-        此為系統自動發送的郵件，請勿直回覆。
+        此為系統自動發送的郵件，請直回覆。
       </p>
     </div>
   `;
 }
 
-// 修改發送通知的函數
-async function sendNotifications(users, articleData) {
+async function sendNotifications(
+  users: NotificationUser[],
+  articleData: DynamoDBArticle
+): Promise<void> {
   for (const user of users) {
     try {
-      const emailData = {
+      const emailData: EmailData = {
         to: user.email.S,
+        subject: "AWS 部落格新文章通知",
+        content: generateNewsNotificationEmail({
+          title: articleData.translated_title.S,
+          link: articleData.link.S,
+          timestamp: parseInt(articleData.published_at.N) * 1000,
+          summary: ""
+        }),
         articleData: {
           title: articleData.translated_title.S,
           link: articleData.link.S,
-          timestamp: new Date(
-            parseInt(articleData.published_at.N) * 1000
-          ).toLocaleString(),
-        },
+          timestamp: String(parseInt(articleData.published_at.N) * 1000),
+        }
       };
 
-      // 使用重試機制發送郵件
       await sendEmailWithRetry(emailData);
     } catch (error) {
       console.error(`發送通知給 ${user.email.S} 失敗:`, error);
 
-      // 添加到失敗隊列，使用 article_id 而不是 id
       failedNotifications.push({
         userId: user.userId.S,
         articleId: articleData.article_id.S,
@@ -394,34 +445,16 @@ async function sendNotifications(users, articleData) {
     }
   }
 
-  // 處理失敗隊列
   if (failedNotifications.length > 0) {
     await processFailedNotifications();
   }
 }
 
-// 添加日誌記錄函數
-const logError = (error, context) => {
+const logError = (error: Error | unknown, context: string): void => {
   console.error(`[${new Date().toISOString()}] ${context}:`, error);
-  // 可以添加錯誤追蹤或監控服務的整合
 };
 
-// 在檔案開頭添加
-const requiredEnvVars = [
-  "NEXT_PUBLIC_AWS_ACCESS_KEY_ID",
-  "NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY",
-  "NEXT_PUBLIC_SES_SENDER_EMAIL",
-  "OPENAI_API_KEY",
-  "MICROSOFT_TRANSLATOR_API_KEY",
-];
-
-requiredEnvVars.forEach((varName) => {
-  if (!process.env[varName]) {
-    throw new Error(`Missing required environment variable: ${varName}`);
-  }
-});
-
-async function getLineNotificationUsers() {
+async function getLineNotificationUsers(): Promise<NotificationUser[]> {
   const params = {
     TableName: "AWS_Blog_UserNotificationSettings",
     FilterExpression: "lineNotification = :true",
@@ -432,21 +465,25 @@ async function getLineNotificationUsers() {
 
   try {
     const command = new ScanCommand(params);
-    const response = await dynamoClient.send(command);
-    return response.Items || [];
+    const response = await dbClient.send(command);
+    return (response.Items || []).map(item => ({
+      userId: { S: item.userId.S || '' },
+      email: { S: item.email.S || '' }
+    })) as NotificationUser[];
   } catch (error) {
     logger.error("獲取 Line 通知用戶時發生錯誤:", error);
     return [];
   }
 }
 
+// 主程序執行
 (async () => {
   try {
     await scrapeAWSBlog();
   } catch (error) {
     logger.error("執行爬蟲時發生錯誤:", {
-      message: error?.message || "未知錯誤",
-      stack: error?.stack,
+      message: (error as Error)?.message || "未知錯誤",
+      stack: (error as Error)?.stack,
     });
     process.exit(1);
   }

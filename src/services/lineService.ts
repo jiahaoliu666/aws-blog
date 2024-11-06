@@ -228,6 +228,36 @@ export class LineService {
     }
     // 生產環境的 webhook 處理邏輯
   }
+
+  // 新增文章通知函數
+  async sendArticleNotification(articleData: any) {
+    try {
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        FilterExpression: "isFollowing = :true",
+        ExpressionAttributeValues: {
+          ":true": { BOOL: true }
+        }
+      };
+
+      const result = await dynamoClient.send(new ScanCommand(params));
+      
+      if (!result.Items?.length) return;
+
+      for (const user of result.Items) {
+        const lineId = user.lineId.S;
+        if (lineId) {
+          await sendLineMessage(lineId, {
+            type: "text",
+            text: `新文章通知：${articleData.title}\n${articleData.url}`
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('發送文章通知時發生錯誤:', error);
+      throw error;
+    }
+  }
 }
 
 export const lineService = new LineService();

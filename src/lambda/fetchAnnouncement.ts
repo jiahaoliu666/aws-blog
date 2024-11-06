@@ -1,14 +1,28 @@
-require("dotenv").config({ path: ".env.local" });
-
-const {
+import dotenv from 'dotenv';
+import {
   DynamoDBClient,
   PutItemCommand,
   ScanCommand,
-} = require("@aws-sdk/client-dynamodb");
-const puppeteer = require("puppeteer");
-const { v4: uuidv4 } = require("uuid");
-const readline = require("readline");
-const OpenAI = require("openai");
+} from "@aws-sdk/client-dynamodb";
+import * as puppeteer from "puppeteer";
+import { v4 as uuidv4 } from "uuid";
+import readline from "readline";
+import OpenAI from "openai";
+
+dotenv.config({ path: ".env.local" });
+
+// 定義介面
+interface Article {
+  title: string;
+  info: string;
+  link: string;
+}
+
+interface PageData {
+  title: string;
+  info: string;
+  link: string;
+}
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -24,7 +38,7 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-async function checkIfExists(title) {
+async function checkIfExists(title: string): Promise<string | boolean> {
   const scanParams = {
     TableName: "AWS_Blog_Announcement",
     FilterExpression: "#title = :title",
@@ -40,7 +54,7 @@ async function checkIfExists(title) {
     const data = await dbClient.send(new ScanCommand(scanParams));
     if (data.Items && data.Items.length > 0) {
       const existingItem = data.Items[0];
-      return existingItem.summary && existingItem.summary.S;
+      return existingItem.summary?.S || false;
     }
     return false;
   } catch (error) {
@@ -49,7 +63,7 @@ async function checkIfExists(title) {
   }
 }
 
-async function countArticlesInDatabase() {
+async function countArticlesInDatabase(): Promise<number> {
   const scanParams = {
     TableName: "AWS_Blog_Announcement",
   };
@@ -63,7 +77,7 @@ async function countArticlesInDatabase() {
   }
 }
 
-async function summarizeArticle(url) {
+async function summarizeArticle(url: string): Promise<string> {
   const maxTokens = 300;
   const prompt = `使用繁體中文總結這篇文章的內容：${url}`;
 
@@ -80,14 +94,14 @@ async function summarizeArticle(url) {
       max_tokens: maxTokens,
     });
     console.log(`已獲取文章總結: ${url}`);
-    return response.choices[0].message.content.trim();
+    return response.choices[0]?.message?.content?.trim() || "無法獲取總結";
   } catch (error) {
     console.error("總結文章時發生錯誤:", error);
     return "無法獲取總結";
   }
 }
 
-async function saveToDynamoDB(article) {
+async function saveToDynamoDB(article: Article): Promise<boolean> {
   console.log(`開始處理文章: ${article.title}`);
   const exists = await checkIfExists(article.title);
   if (exists) {
@@ -122,7 +136,7 @@ async function saveToDynamoDB(article) {
   }
 }
 
-async function gotoWithRetry(page, url, options, retries = 3) {
+async function gotoWithRetry(page: puppeteer.Page, url: string, options: puppeteer.WaitForOptions & { timeout?: number }, retries = 3): Promise<void> {
   for (let i = 0; i < retries; i++) {
     try {
       await page.goto(url, options);
@@ -135,8 +149,8 @@ async function gotoWithRetry(page, url, options, retries = 3) {
   }
 }
 
-async function scrapeAWSBlog(targetNumberOfArticles) {
-  let browser = null;
+async function scrapeAWSBlog(targetNumberOfArticles: number): Promise<void> {
+  let browser: puppeteer.Browser | null = null;
   try {
     const initialTotalArticles = await countArticlesInDatabase();
     console.log(`資料庫初始文章數量: ${initialTotalArticles}`);
@@ -165,9 +179,9 @@ async function scrapeAWSBlog(targetNumberOfArticles) {
         const links = document.querySelectorAll(".m-card-title a");
 
         return Array.from(titles).map((titleElem, index) => ({
-          title: titleElem.innerText || "沒有標題",
-          info: infos[index]?.innerText || "沒有資訊",
-          link: links[index]?.href || "沒有鏈接",
+          title: (titleElem as HTMLElement).innerText || "沒有標題",
+          info: (infos[index] as HTMLElement)?.innerText || "沒有資訊",
+          link: (links[index] as HTMLAnchorElement)?.href || "沒有鏈接",
         }));
       });
 
@@ -199,7 +213,7 @@ async function scrapeAWSBlog(targetNumberOfArticles) {
     totalArticlesInDatabase = await countArticlesInDatabase();
     console.log(`爬取後資料庫文章總數: ${totalArticlesInDatabase}`);
   } catch (error) {
-    console.error("爬取過程中發生錯誤:", error.message);
+    console.error("爬取過程中發生錯誤:", error instanceof Error ? error.message : String(error));
   } finally {
     if (browser !== null) {
       await browser.close();
@@ -215,4 +229,4 @@ rl.question("請輸入需要爬取的文章數量: ", async (answer) => {
     await scrapeAWSBlog(numberOfArticles);
   }
   rl.close();
-});
+}); 
