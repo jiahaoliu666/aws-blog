@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { lineService } from '../../../services/lineService';
 import { logger } from '../../../utils/logger';
 import crypto from 'crypto';
+import { createUserIdTemplate } from '../../../templates/lineTemplates';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('收到 LINE Webhook 請求:', {
@@ -32,12 +33,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         switch (event.type) {
           case 'follow':
             console.log('處理追蹤事件', { userId: event.source.userId });
-            await lineService.handleFollow(event.source.userId);
+            await lineService.checkFollowStatus(event.source.userId);
             break;
             
           case 'unfollow':
             console.log('處理取消追蹤事件', { userId: event.source.userId });
-            await lineService.handleUnfollow(event.source.userId);
+            // 暫時移除 handleUnfollow 的呼叫，因為 lineService 中尚未實作此方法
+            break;
+
+          case 'message':
+            if (event.message.type === 'text' && event.message.text === '/id') {
+                const userIdMessage = createUserIdTemplate(event.source.userId);
+                await lineService.sendMessage(event.source.userId, userIdMessage);
+            }
             break;
 
           default:

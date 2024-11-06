@@ -18,6 +18,7 @@ import { useAuthContext } from '../../context/AuthContext';
 import { lineService } from '../../services/lineService';
 import toast from 'react-hot-toast';
 import { logger } from '@/utils/logger';
+import { TextField } from '@aws-amplify/ui-react';
 
 interface NotificationSettings {
   line: boolean;
@@ -41,7 +42,7 @@ interface FormData {
 interface VerificationStatus {
   code: string | null;
   message: string;
-  status: 'pending' | 'success' | 'error' | 'validating';
+  status: 'idle' | 'pending' | 'success' | 'error' | 'validating' | 'confirming';
 }
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
@@ -107,6 +108,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     verificationStatus,
     setVerificationStatus,
     updateUser, // 從 useProfileLogic 中新增這個
+    lineId,
+    confirmVerification
   } = useProfileLogic({ user });
 
   const router = useRouter();
@@ -117,9 +120,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     status: 'success' | 'error' | null;
     message: string;
   }>({ status: null, message: '' });
-  const [lineId, setLineId] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState('');
   const [message, setMessage] = useState({ type: '', content: '' });
+  const [verificationCode, setVerificationCode] = useState<string>('');
 
   useEffect(() => {
     setIsClient(true);
@@ -157,7 +160,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     if (!currentLineId.trim()) {
       setVerificationResult({
         status: 'error',
-        message: '請先輸入 LINE ID'
+        message: '請先輸 LINE ID'
       });
       return;
     }
@@ -201,7 +204,15 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
       if (!user?.sub) {
         throw new Error('使用者ID未定義');
       }
-      const code = await lineService.generateVerificationCode(user.sub);
+      const response = await fetch('/api/line/verify/generate-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: user.sub })
+      });
+      
+      const { code } = await response.json();
       setVerificationStatus({
         code,
         message: '請將驗證碼傳送給官方帳號',
@@ -219,39 +230,63 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
   };
 
   const onVerifyClick = async () => {
-    if (!lineId?.trim()) {
+    const lineIdValue = lineId?.toString() ?? '';
+    
+    console.log('開始驗證流程', { lineId: lineIdValue });
+    
+    if (!lineIdValue) {
       toast.error('請輸入 LINE ID');
       return;
     }
-    
+
     setIsVerifying(true);
     try {
-      console.log('開始驗證流程...');
-      
+      const currentUserId = user?.userId;
+      if (!currentUserId) {
+        throw new Error('使用者未登入');
+      }
+
+      // 檢查 LINE ID 格式
+      if (!lineIdValue.match(/^U[a-zA-Z0-9]{32}$/)) {
+        throw new Error('LINE ID 格式不正確，請確認是否複製完整的 ID');
+      }
+
+      // 發送驗證請求
       const response = await fetch('/api/line/verify/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          lineId: lineId,
-          userId: user?.userId || authUser?.sub
-        })
+          userId: currentUserId,
+          lineId: lineIdValue
+        }),
       });
 
-      console.log('驗證請求回應:', await response.json());
-
       if (!response.ok) {
-        throw new Error('驗證請求失敗');
+        const errorData = await response.json();
+        throw new Error(errorData.message || '驗證請求失敗');
       }
 
-      await logActivity(authUser?.sub || 'default-sub', '驗證 LINE ID');
+      const data = await response.json();
       
-      toast.success('驗證請求已發送，請查看 LINE 訊息');
-      
+      // 更新驗證狀態
+      setVerificationStatus({
+        code: data.verificationCode,
+        status: 'pending',
+        message: '請在 LINE 上確認驗證碼'
+      });
+
+      toast.success('驗證碼已發至您的 LINE 帳號');
+
     } catch (error) {
-      console.error('驗證處理失敗:', error);
-      toast.error('驗證處理失敗，請稍後再試');
+      const errorMessage = error instanceof Error ? error.message : '驗證過程發生錯誤';
+      toast.error(errorMessage);
+      setVerificationStatus({
+        code: null,
+        status: 'error',
+        message: errorMessage
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -325,18 +360,82 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
     }
   };
 
-  // 添加狀態顯示
+  // 修改驗證狀態顯示
   const renderVerificationStatus = () => {
-    switch (verificationStatus.status) {
-      case 'pending':
-        return <span className="text-yellow-500">驗證中...</span>;
-      case 'success':
-        return <span className="text-green-500">驗證成功</span>;
-      case 'error':
-        return <span className="text-red-500">驗證失敗</span>;
-      default:
-        return null;
-    }
+    const { status, message } = verificationStatus;
+    
+    const steps: { status: VerificationStatus['status'] }[] = [
+      { status: 'pending' },
+      { status: 'validating' },
+      { status: 'confirming' },
+      { status: 'success' }
+    ];
+    
+    return (
+      <div className="mt-4">
+        {/* 驗證進度指示器 */}
+        <div className="flex items-center justify-between mb-6">
+          {steps.map((step, index) => (
+            <div key={step.status} className="flex items-center">
+              <div className={`
+                w-8 h-8 rounded-full flex items-center justify-center
+                ${status === step.status ? 
+                  status === 'success' ? 'bg-green-500 text-white' : 
+                  status === 'error' ? 'bg-red-500 text-white' :
+                  'bg-blue-500 text-white' 
+                  : 'bg-gray-200 text-gray-500'}
+              `}>
+                {index + 1}
+              </div>
+              {index < steps.length - 1 && (
+                <div className={`
+                  w-16 h-1 mx-2
+                  ${status === 'success' ? 'bg-green-500' :
+                    index < steps.indexOf(step) 
+                    ? 'bg-blue-500' : 'bg-gray-200'}
+                `} />
+              )}
+            </div>
+          ))}
+        </div>
+        
+        {/* 狀態訊息 */}
+        {status && (
+          <div className={`
+            p-4 rounded-lg mb-4
+            ${status === 'error' ? 'bg-red-50 text-red-700' :
+              status === 'success' ? 'bg-green-50 text-green-700' :
+              'bg-blue-50 text-blue-700'}
+          `}>
+            <p className="text-sm">{message}</p>
+          </div>
+        )}
+
+        {/* 驗證碼輸入區域 */}
+        {status === 'confirming' && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              請輸入驗證碼
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                maxLength={6}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="輸入 6 位驗證碼"
+                onChange={(e) => setVerificationCode(e.target.value)}
+              />
+              <button
+                onClick={() => confirmVerification(verificationCode)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                確認
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -591,7 +690,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                       >
-                        {showNewPassword ? "隱藏" : "顯示"}
+                        {showNewPassword ? "" : "顯示"}
                       </button>
                     </div>
                     <div className="space-y-4">
@@ -604,7 +703,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             style={{ width: `${calculatePasswordStrength(formData.password) * 20}%` }}
                           ></div>
                         </div>
-                        <p className="mt-4 text-sm text-gray-500">用大小寫字母、、特殊符來增強密碼安性</p>
+                        <p className="mt-4 text-sm text-gray-500">用小寫字母、、特殊符來增強密碼安性</p>
                       </div>
                       {/* 安全 */}
                       <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
@@ -656,7 +755,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           type="email"
                           value={formData.email}
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="入您的電子郵件"
+                          placeholder="入您的電子郵"
                           disabled
                         />
                       </div>
@@ -681,7 +780,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                           value={formData.feedbackContent}
                           onChange={handleChange}
                           className="mt-2 p-2 border border-gray-300 rounded w-full"
-                          placeholder="請輸入您的問題、意見或建議"
+                          placeholder="請輸入您的題、意見或建議"
                         />
                       </div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">傳圖片</label>
@@ -711,7 +810,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             resetUploadState(); // 重置上傳狀態
                             const feedbackImageInput = document.getElementById('feedbackImage1') as HTMLInputElement;
                             if (feedbackImageInput) {
-                              feedbackImageInput.value = ''; // 清空選擇的檔案
+                              feedbackImageInput.value = ''; // 清空選的檔案
                             }
                           }}
                           className="bg-gray-300 py-2 px-4 rounded-full hover:bg-gray-400 transition duration-200"
@@ -735,7 +834,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                       {activityLog.length === 0 ? (
                         <p className="text-gray-500">目前沒有任何活動日誌。</p>
                       ) : (
-                        activityLog.slice(0, 12).map((log, index) => (
+                        activityLog.map((log, index) => (
                           <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-lg border-2 border-gray-300">
                             <p className="text-sm text-gray-500">{log.date}</p>
                             <h4 className="text-lg font-semibold mt-2">{log.action}</h4>
@@ -815,7 +914,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                             <ol className="list-decimal list-inside space-y-2 text-blue-700">
                               <li>開啟上方的 LINE 通知開關</li>
                               <li>掃描下方 QR Code 或點擊追蹤按鈕，加入官方帳號好友</li>
-                              <li>在下方輸入您的 LINE ID</li>
+                              <li>在下方入您的 LINE ID</li>
                               <li>擊儲存設定完成設置</li>
                             </ol>
                           </div>
@@ -843,10 +942,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 <FontAwesomeIcon icon={faCommentDots} className="mr-2" />
                                 點擊加入好友
                               </a>
-                              <p className="text-sm text-gray-600 mt-2">或直接擊按鈕加入</p>
+                              <p className="text-sm text-gray-600 mt-2">或直接擊按加入</p>
                             </div>
 
-                            {/* 新增：驗證按鈕區塊 */}
+                            {/* 新：驗證按鈕區塊 */}
                             <div className="text-center">
                               <button
                                 onClick={handleVerification}
@@ -856,14 +955,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
                                 {isVerifying ? '驗證中...' : '開始驗證'}
                               </button>
-                              {verificationStatus.code && (
-                                <div className="mt-4 p-4 bg-white rounded-lg border shadow-sm">
-                                  <p className="font-medium">驗證碼：{verificationStatus.code}</p>
-                                  <p className="text-sm text-gray-600 mt-2">
-                                    請將此驗證碼傳送給官方帳號
-                                  </p>
-                                </div>
-                              )}
+                              {renderVerificationStatus()}
                             </div>
                           </div>
 
@@ -876,14 +968,15 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               <div className="relative">
                                 <input
                                   type="text"
-                                  value={lineId}
-                                  onChange={(e) => setLineId(e.target.value)}
+                                  value={lineId || ''}
+                                  onChange={(e) => handleLineIdChange(e.target.value)}
                                   className={`border rounded-lg p-2 w-full ${
                                     lineIdStatus === 'success' ? 'border-green-500' : 
                                     lineIdStatus === 'error' ? 'border-red-500' : 
                                     lineIdStatus === 'validating' ? 'border-blue-500' : 
                                     'border-gray-300'
                                   }`}
+                                  placeholder="請輸入您的 LINE ID"
                                 />
                                 {lineIdStatus !== 'idle' && (
                                   <span className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${getStatusColor(lineIdStatus)}`}>
@@ -895,14 +988,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               </div>
                               <button
                                 onClick={onVerifyClick}
-                                disabled={verificationStatus.status === 'pending'}
+                                disabled={isVerifying}
                                 className={`px-4 py-2 rounded-md ${
-                                  verificationStatus.status === 'pending'
+                                  isVerifying
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-blue-600 hover:bg-blue-700'
                                 } text-white`}
                               >
-                                {verificationStatus.status === 'pending' ? '驗證中...' : '驗證'}
+                                {isVerifying ? '驗證中...' : '驗證'}
                               </button>
                             </div>
                             
@@ -930,7 +1023,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                 追蹤狀態：
                                 {lineIdStatus === 'success' ? '已追蹤' : 
                                  lineIdStatus === 'error' ? '未追蹤' : 
-                                 lineUserId ? '驗證中' : '未設定'}
+                                 lineUserId ? '驗證' : '未設定'}
                               </span>
                             </div>
                           </div>
@@ -953,13 +1046,13 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                               <details className="cursor-pointer">
                                 <summary className="font-medium">LINE ID 格式說明</summary>
                                 <ul className="mt-2 ml-5 list-disc text-sm space-y-1">
-                                  <li>長度必須在4-20個字元之間</li>
+                                  <li>長度須在4-20個字元之間</li>
                                   <li>可使英文字、數字、底線(_)和點號(.)</li>
                                   <li>不可包含特殊符號或空格</li>
                                 </ul>
                               </details>
                               <details className="cursor-pointer">
-                                <summary className="font-medium">需要協助？</summary>
+                                <summary className="font-medium">需要協？</summary>
                                 <p className="mt-2 text-sm">
                                   如果您遇到任何問題，請透過以下方式聯繫我們：
                                   <a href="mailto:support@example.com" className="text-blue-600 hover:underline ml-1">

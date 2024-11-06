@@ -35,23 +35,21 @@ const checkEnvVariables = () => {
   return envStatus;
 };
 
-const validateLineConfig = () => {
-  const requiredVars = {
-    LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-    LINE_CHANNEL_SECRET: process.env.LINE_CHANNEL_SECRET,
-    NEXT_PUBLIC_LINE_BASIC_ID: process.env.NEXT_PUBLIC_LINE_BASIC_ID
-  };
+// 添加配置驗證
+export const validateLineConfig = () => {
+    const config = {
+        channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+        channelSecret: process.env.LINE_CHANNEL_SECRET,
+        basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID
+    };
 
-  const missingVars = Object.entries(requiredVars)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key);
+    console.log('LINE 配置狀態:', {
+        hasToken: !!config.channelAccessToken,
+        hasSecret: !!config.channelSecret,
+        hasBasicId: !!config.basicId
+    });
 
-  if (missingVars.length > 0) {
-    console.error('缺少必要的 LINE 環境變數:', missingVars.join(', '));
-    return false;
-  }
-
-  return true;
+    return config;
 };
 
 // 在配置導出前進行驗證
@@ -99,4 +97,19 @@ const validateWebhookUrl = () => {
     isValid: true,
     url: `${apiUrl}/api/line/webhook`
   };
+};
+
+// 新增驗證 LINE 配置的函數
+export const validateLineMessagingConfig = () => {
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+    throw new Error('LINE Channel Access Token 未設置');
+  }
+  if (!process.env.LINE_CHANNEL_SECRET) {
+    throw new Error('LINE Channel Secret 未設置');
+  }
+  
+  // 驗證 token 格式
+  if (process.env.LINE_CHANNEL_ACCESS_TOKEN.length < 100) {
+    throw new Error('LINE Channel Access Token 格式不正確');
+  }
 };

@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { logger } from '@/utils/logger';
 import { updateUser } from '../api/user';
+import { toast } from 'react-toastify';
+
+type VerificationState = {
+  step: 'idle' | 'verifying' | 'confirming' | 'complete';
+  status: 'idle' | 'validating' | 'pending' | 'error' | 'success';
+  message?: string;
+  isVerified?: boolean;
+  error?: string;
+};
 
 export const useProfileLogic = (user: { 
   userId: string;
@@ -9,71 +18,67 @@ export const useProfileLogic = (user: {
     id?: string;
   };
 }) => {
-  const [verificationState, setVerificationState] = useState<{
-    step: 'idle' | 'verifying' | 'confirming' | 'complete';
-    code?: string;
-  }>({ step: 'idle' });
+  const [verificationState, setVerificationState] = useState<VerificationState>({
+    step: 'idle',
+    status: 'idle',
+    message: ''
+  });
 
   const handleLineVerification = async (lineId: string) => {
-    logger.info('開始 LINE 驗證流程', { lineId });
-    
     try {
-      setVerificationState(prev => ({
-        ...prev,
+      // 1. 初始驗證
+      setVerificationState({
         step: 'verifying',
         status: 'validating',
-        message: '驗證中...'
-      }));
+        message: '正在驗證 LINE ID...'
+      });
 
-      // 檢查 LINE ID 格式
-      if (!lineId || lineId.trim().length === 0) {
-        throw new Error('請輸入有效的 LINE ID');
+      // 2. 格式驗證
+      if (!lineId.match(/^U[a-zA-Z0-9]{32}$/)) {
+        throw new Error('LINE ID 格式不正確，請確認是否完整複製 ID');
       }
 
-      // 先檢查環境變數
-      if (!process.env.NEXT_PUBLIC_LINE_BASIC_ID) {
-        throw new Error('LINE 配置未完成，請聯繫管理員');
+      // 3. 檢查追蹤狀態
+      const followStatus = await checkLineFollowStatus(lineId);
+      if (!followStatus.isFollowing) {
+        setVerificationState({
+          step: 'idle',
+          status: 'error',
+          message: '請先加入官方帳號為好友，再進行驗證'
+        });
+        return;
       }
 
-      // 發送驗證請求
+      // 4. 發送驗證請求
+      setVerificationState({
+        step: 'verifying',
+        status: 'validating',
+        message: '正在發送驗證碼...'
+      });
+
       const response = await fetch('/api/line/verify/request', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Line-Basic-Id': process.env.NEXT_PUBLIC_LINE_BASIC_ID
-        },
-        body: JSON.stringify({
-          lineId,
-          userId: user?.userId
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineId, userId: user.userId })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '驗證請求失敗');
+        throw new Error('驗證碼發送失敗，請稍後再試');
       }
 
-      const data = await response.json();
-      logger.info('收到驗證響應', data);
-
-      setVerificationState(prev => ({
-        ...prev,
+      // 5. 等待用戶確認
+      setVerificationState({
         step: 'confirming',
-        code: data.verificationCode,
-        message: '請在 LINE 上確認驗證碼'
-      }));
-
-      // 開始輪詢確認狀態
-      startPolling(lineId);
+        status: 'pending',
+        message: '驗證碼已發送至您的 LINE，請查收並在下方輸入'
+      });
 
     } catch (error) {
-      logger.error('驗證過程發生錯誤:', error);
-      setVerificationState(prev => ({
-        ...prev,
+      setVerificationState({
         step: 'idle',
         status: 'error',
         message: error instanceof Error ? error.message : '驗證過程發生錯誤'
-      }));
+      });
     }
   };
 
@@ -89,7 +94,10 @@ export const useProfileLogic = (user: {
         throw new Error('驗證碼確認失敗');
       }
 
-      setVerificationState({ step: 'complete' });
+      setVerificationState({ 
+        step: 'complete',
+        status: 'success'
+      });
     } catch (error) {
       logger.error('驗證碼確認失敗:', error);
     }
@@ -116,34 +124,23 @@ export const useProfileLogic = (user: {
 
       const data = await response.json();
       
-      // 更新狀態處理邏輯
-      if (data.isFollowing) {
-        setVerificationState(prev => ({
-          ...prev,
-          isVerified: true,
-          status: 'success'
-        }));
-      } else {
-        setVerificationState(prev => ({
-          ...prev,
-          isVerified: false,
-          status: 'error'
-        }));
-        setVerificationState(prev => ({
-          ...prev,
-          error: '請先追蹤官方帳號'
-        }));
-      }
+      // 更新狀態
+      setVerificationState(prev => ({
+        ...prev,
+        isVerified: data.isFollowing,
+        status: data.isFollowing ? 'success' : 'error',
+        error: data.isFollowing ? undefined : '請先追蹤官方帳號'
+      }));
+
+      return { isFollowing: data.isFollowing };
     } catch (error) {
       setVerificationState(prev => ({
         ...prev,
         isVerified: false,
-        status: 'error'
-      }));
-      setVerificationState(prev => ({
-        ...prev,
+        status: 'error',
         error: '檢查追蹤狀態時發生錯誤'
       }));
+      return { isFollowing: false };
     } finally {
       setVerificationState(prev => ({
         ...prev,
@@ -162,7 +159,10 @@ export const useProfileLogic = (user: {
       const data = await response.json();
       
       if (data.isVerified) {
-        setVerificationState({ step: 'complete' });
+        setVerificationState({ 
+          step: 'complete',
+          status: 'success'
+        });
         return true;
       }
       return false;

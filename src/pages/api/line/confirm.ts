@@ -13,7 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isValid = await lineService.verifyCode(userId, code);
     if (isValid) {
       // 更新用戶的 LINE 設定
-      await lineService.updateLineSettings(userId, req.body.lineId, true);
+      await lineService.updateUserLineSettings({
+        userId,
+        lineId: req.body.lineId,
+        isVerified: true
+      });
       return res.status(200).json({ success: true });
     }
     return res.status(400).json({ success: false, message: '驗證碼無效或已過期' });

@@ -105,14 +105,18 @@ export interface LineVerification {
   lineId: string;
   code: string;
   createdAt: string;
+  status: VerificationStatus;
+  message?: string;
 }
 
-export type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';
+// 統一驗證狀態類型
+export type VerificationStatus = 'pending' | 'validating' | 'confirming' | 'success' | 'error';
 
-export interface LineVerificationState {
-  step: VerificationStep;
-  code?: string;
-  error?: string;
+// 驗證狀態介面
+export interface VerificationState {
+  code: string | null;
+  status: VerificationStatus;
+  message: string;
 }
 
 // 文章相關

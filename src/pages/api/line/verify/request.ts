@@ -1,56 +1,57 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { lineService } from '@/services/lineService';
+import { redis } from '@/utils/redis';
 import { logger } from '@/utils/logger';
+import { lineService } from '@/services/lineService';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: '方法不允許' });
-  }
-
-  try {
-    const { userId, lineId } = req.body;
-    
-    if (!userId || !lineId) {
-      return res.status(400).json({ 
-        success: false,
-        message: '缺少必要參數：需要 userId 和 lineId' 
-      });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: '僅支援 POST 請求' });
     }
 
-    logger.info('開始生成驗證碼', { userId, lineId });
+    try {
+        // 確保 Redis 連接
+        if (!redis?.isOpen) {
+            await redis?.connect();
+        }
 
-    const code = await lineService.generateVerificationCode(userId);
-    
-    await lineService.saveVerificationInfo({
-      userId,
-      lineId,
-      code,
-      createdAt: new Date().toISOString()
-    });
+        const { lineId, userId } = req.body;
 
-    logger.info('驗證碼生成成功', { userId, code });
-    
-    res.status(200).json({
-      success: true,
-      code,
-      message: '驗證碼已生成，請在 LINE 上查收'
-    });
-  } catch (error) {
-    logger.error('生成驗證碼時發生錯誤:', error);
-    res.status(500).json({
-      success: false,
-      message: '生成驗證碼失敗，請稍後再試'
-    });
-  }
+        if (!lineId || !userId) {
+            return res.status(400).json({ error: '缺少必要參數' });
+        }
+
+        // 檢查追蹤狀態
+        const followStatus = await lineService.checkFollowStatus(lineId);
+        if (!followStatus.isFollowing) {
+            return res.status(400).json({ error: '請先追蹤官方帳號' });
+        }
+
+        // 生成驗證碼
+        const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        // 儲存驗證碼到 Redis
+        const redisKey = `line_verify:${userId}`;
+        await redis?.setEx(redisKey, 300, JSON.stringify({
+            code: verificationCode,
+            lineId,
+            timestamp: Date.now()
+        }));
+
+        // 發送驗證訊息到 LINE
+        await lineService.sendVerificationMessage(lineId, verificationCode);
+
+        res.status(200).json({ success: true, verificationCode });
+
+    } catch (error) {
+        logger.error('驗證請求失敗:', error);
+        res.status(500).json({ error: '驗證請求失敗' });
+    }
 }
 
 export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '1mb'
+    api: {
+        bodyParser: {
+            sizeLimit: '1mb'
+        }
     }
-  }
 }; 

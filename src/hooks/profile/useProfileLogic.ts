@@ -10,6 +10,7 @@ import { logger } from "../../utils/logger";
 import { lineService } from '../../services/lineService';
 import { User } from '../../types/userType';
 import { toast } from 'react-toastify';
+import { VerificationStatus, VerificationState } from '@/types/lineTypes';
 
 interface EditableFields {
   username: boolean;
@@ -184,21 +185,12 @@ interface ProfileLogicReturn {
   handleVerifyCode: () => Promise<void>;
   isVerifying: boolean;
   setLineIdStatus: React.Dispatch<React.SetStateAction<'idle' | 'validating' | 'success' | 'error'>>;
-  verificationStatus: {
-    code: string | null;
-    message: string;
-    status: 'pending' | 'success' | 'error' | 'validating';
-  };
-  setVerificationStatus: React.Dispatch<React.SetStateAction<VerificationStatus>>;
+  verificationStatus: VerificationState;
+  setVerificationStatus: React.Dispatch<React.SetStateAction<VerificationState>>;
   notification: { message: string; status: 'success' | 'error' | null };
   setNotification: React.Dispatch<React.SetStateAction<{ message: string; status: 'success' | 'error' | null }>>;
   updateUser: (updates: any) => void;
-}
-
-interface VerificationStatus {
-  code: string | null;
-  message: string;
-  status: 'pending' | 'success' | 'error' | 'validating';
+  confirmVerification: (code: string) => Promise<void>;
 }
 
 export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): ProfileLogicReturn => {
@@ -283,10 +275,10 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
 
   const [settings, setSettings] = useState(null);
 
-  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
+  const [verificationStatus, setVerificationStatus] = useState<VerificationState>({
     code: null,
-    message: '',
-    status: 'pending'
+    status: 'pending',
+    message: ''
   });
 
   const [notification, setNotification] = useState<{ message: string; status: 'success' | 'error' | null }>({
@@ -552,7 +544,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗檔類型不支援，請確認檔案類型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗檔類型不支援，請認檔案類型是否為 jpeg 或 png。');
         return;
       }
 
@@ -880,8 +872,8 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   };
 
   const handleLineIdChange = (value: string) => {
-    setLineUserId(value);
-    setLineIdError('');
+    setLineId(value);
+    // 重置狀態
     setLineIdStatus('idle');
   };
 
@@ -946,7 +938,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
 
       setSettingsMessage('設定已成功儲存');
       setSettingsStatus('success');
-      await logActivity(authUser?.sub || 'default-sub', '更新通知設定');
+      await logActivity(authUser?.sub || 'default-sub', '更新通知定');
 
     } catch (error) {
       setSettingsMessage(error instanceof Error ? error.message : '儲存設定時發生錯誤');
@@ -1026,7 +1018,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
             }));
           }
         } catch (error) {
-          console.error('獲取通知設置時發生錯誤:', error);
+          console.error('獲取通知設置時��生錯誤:', error);
         }
       }
     };
@@ -1046,7 +1038,7 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
       
       // 檢查 LINE 通知設定
       if (formData.notifications.line && !lineUserId) {
-        setSettingsMessage('啟用 LINE 通知時必須提供有效的 LINE ID');
+        setSettingsMessage('啟用 LINE 通知時必須提供有的 LINE ID');
         setSettingsStatus('error');
         return;
       }
@@ -1148,52 +1140,191 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
   };
 
   const handleLineVerification = async (lineId: string) => {
-    logger.info('開始 LINE 驗證流程', { lineId });
-    
     try {
-      setVerificationStatus(prev => ({
-        ...prev,
-        status: 'validating',
-        message: '驗證中...'
-      }));
+      // 1. 檢查基本式
+      if (!lineId.match(/^U[a-zA-Z0-9]{32}$/)) {
+        throw new Error('LINE ID 格式不正確');
+      }
 
-      // 檢查 LINE ID 格式
-      if (!lineId || lineId.trim().length === 0) {
-        throw new Error('請輸入有效的 LINE ID');
+      // 2. 檢查追蹤狀態
+      const followStatus = await fetch('/api/line/check-follow-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineId })
+      }).then(res => res.json());
+
+      if (!followStatus.isFollowing) {
+        throw new Error('請先追蹤官方帳號');
+      }
+
+      // 3. 發送驗證請求
+      const verificationResponse = await fetch('/api/line/verify/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineId, userId: user?.userId || authUser?.sub || '' })
+      });
+
+      if (!verificationResponse.ok) {
+        throw new Error('驗證請求失敗');
+      }
+      // 4. 開始輪詢驗證狀態
+      startPollingVerificationStatus(user?.userId || authUser?.sub || '');
+      
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '驗證過程發生錯誤');
+    }
+  };
+
+  const startPollingVerificationStatus = (userId: string) => {
+    let attempts = 0;
+    const maxAttempts = 20; // 最多檢查 20 次
+    const interval = 15000; // 每 15 秒檢查一次
+
+    const checkStatus = async () => {
+      try {
+        const isVerified = await lineService.verifyCode(userId, verificationCode);
+        if (isVerified) {
+          setVerificationStatus({
+            code: null,
+            message: '驗證成功！',
+            status: 'success'
+          });
+          return true;
+        }
+      } catch (error) {
+        console.error('檢查驗證狀態時發生錯誤:', error);
+      }
+      return false;
+    };
+
+    const poll = async () => {
+      if (attempts >= maxAttempts) {
+        setVerificationStatus({
+          code: null,
+          message: '驗證超時，請重新嘗試',
+          status: 'error'
+        });
+        return;
+      }
+
+      const isComplete = await checkStatus();
+      if (!isComplete) {
+        attempts++;
+        setTimeout(poll, interval);
+      }
+    };
+
+    poll();
+  };
+
+  const handleVerifyClick = async () => {
+    if (!lineId) {
+      toast.error('請輸入 LINE ID');
+      return;
+    }
+
+    // 驗證 LINE ID 格式
+    if (!lineId.match(/^U[a-zA-Z0-9]{32}$/)) {
+      toast.error('LINE ID 格式不正確，請輸入正確的 LINE User ID');
+      setLineIdStatus('error');
+      return;
+    }
+
+    setIsVerifying(true);
+    setLineIdStatus('validating');
+
+    try {
+      logger.info('開始驗證流程', { lineId });
+
+      // 先檢查是否已追蹤官方帳號
+      const followCheckResponse = await fetch('/api/line/check-follow-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lineId }),
+      });
+
+      const followData = await followCheckResponse.json();
+      
+      if (!followData.isFollowing) {
+        throw new Error('請先追蹤官方 LINE 帳號');
       }
 
       // 發送驗證請求
       const response = await fetch('/api/line/verify/request', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          lineId,
-          userId: user?.userId
-        })
+          userId: user?.userId || authUser?.sub,
+          lineId
+        }),
       });
 
       const data = await response.json();
-      logger.info('收到驗證響應', { status: response.status, data });
 
       if (!response.ok) {
         throw new Error(data.message || '驗證請求失敗');
       }
 
       // 更新驗證狀態
-      setVerificationStatus(prev => ({
-        ...prev,
+      setVerificationStatus({
+        code: data.verificationCode,
         status: 'pending',
-        message: '請在 LINE 上確認驗證碼',
-        code: data.verificationCode
-      }));
+        message: '驗證碼已發送至您的 LINE，請查收並確認'
+      });
+
+      // 開始輪詢驗證狀態
+      const userId = user?.userId || authUser?.sub;
+      if (!userId) {
+        throw new Error('找不到用戶ID');
+      }
+
+      startPollingVerificationStatus(userId);
+      setLineIdStatus('success');
+      toast.success('驗證碼已發送至您的 LINE');
+      setShowVerificationInput(true); // 顯示驗證碼輸入框
 
     } catch (error) {
-      logger.error('驗證過程發生錯誤', error);
-      setVerificationStatus(prev => ({
-        ...prev,
+      logger.error('驗證過程發生錯誤:', error);
+      setLineIdStatus('error');
+      toast.error(error instanceof Error ? error.message : '驗證過程發生錯誤');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const confirmVerification = async (code: string) => {
+    try {
+      const response = await fetch('/api/line/verify/confirm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          userId: user?.sub,
+          lineId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('驗證失敗');
+      }
+
+      setVerificationStatus({
+        code: null,
+        status: 'success',
+        message: '驗證成功'
+      });
+    } catch (error) {
+      setVerificationStatus({
+        code: null,
         status: 'error',
-        message: error instanceof Error ? error.message : '驗證過程發生錯誤'
-      }));
+        message: '驗證失敗，請重試'
+      });
     }
   };
 
@@ -1274,5 +1405,6 @@ export const useProfileLogic = ({ user = null }: { user?: User | null } = {}): P
     notification,
     setNotification,
     updateUser,
+    confirmVerification,
   };
 };

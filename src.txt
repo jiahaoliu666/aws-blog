@@ -22,6 +22,7 @@ src
 │   ├── cognitoClient.ts             // 設定 AWS Cognito 客戶端的工具
 │   ├── dynamodb.ts                  // 設定 AWS DynamoDB 客戶端的工具
 │   ├── extractDateFromInfo.ts       // 從字串中提取日期的工具函數
+│   ├── redis.ts                     // Redis 客戶端配置，確保只在伺服器端使用
 │   └── cacheUtils.ts                // 管理快取的工具，包括本地快取和 Redis 快取
 │   └── notificationUtils.ts         // 處理通知重試機制的工具，包括失敗通知的追蹤和重試邏輯
 ├── libs
