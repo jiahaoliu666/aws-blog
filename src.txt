@@ -43,18 +43,18 @@ src
 │       ├── NewsCard.tsx             // 新聞卡片組件，顯示單個新聞項目的信息
 │       └── NewsFilters.tsx          // 新聞過濾器組件，提供新聞的篩選功能
 ├── hooks
-│   ├── useNotificationSettings.ts   // 自定義 Hook，用於管理通知設定
-│   ├── useProfileLogic.ts           // 自定義 Hook，提供用戶個人資料的邏輯
-│   ├── useAuth.ts                   // 自定義 Hook，提供用戶認證的邏輯
+│   ├── useNotificationSettings.ts   // 用於管理通知設定
+│   ├── useProfileLogic.ts           // 提供用戶個人資料的邏輯
+│   ├── useAuth.ts                   // 提供用戶認證的邏輯
 │   ├── profile
-│   │   └── useProfileLogic.ts       // 自定義 Hook，提供用戶個人資料的邏輯
+│   │   └── useProfileLogic.ts       // 提供用戶個人資料的邏輯
 │   ├── news
-│   │   ├── useNewsFavorites.ts      // 自定義 Hook，管理新聞收藏功能
-│   │   ├── useFetchNews.ts          // 自定義 Hook，負責抓取新聞數據
-│   │   └── useNewsPageLogic.ts      // 自定義 Hook，提供新聞頁面的邏輯
-│   ├── useAppLogic.ts               // 自定義 Hook，提供應用程式的邏輯
+│   │   ├── useNewsFavorites.ts      // 管理新聞收藏功能
+│   │   ├── useFetchNews.ts          // 負責抓取新聞數據
+│   │   └── useNewsPageLogic.ts      // 提供新聞頁面的邏輯
+│   ├── useAppLogic.ts               // 提供應用程式的邏輯
 │   └── notifications
-│       └── useEmailNotifications.ts // 自定義 Hook，管理電子郵件通知
+│       └── useEmailNotifications.ts // 管理電子郵件通知
 ├── lambda
 │   ├── updateNews.ts                // Lambda 函數，用於更新新聞 
 │   ├── fetchNews.ts                 // Lambda 函數，用於抓取新聞
