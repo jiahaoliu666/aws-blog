@@ -8,36 +8,38 @@ export interface LineConfig {
   apiUrl: string;
 }
 
-interface LineTextContent {
-  type: string;
-  text: string;
-  weight?: string;
-  size: string;
-  color: string;
+// Message 元件相關
+export type FlexLayoutType = 'horizontal' | 'vertical' | 'baseline';
+export type FlexComponentType = 'text' | 'button' | 'image' | 'separator' | 'spacer';
+export type FlexActionType = 'uri' | 'message' | 'postback';
+export type FlexContainerType = 'bubble' | 'carousel';
+export type FlexSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl';
+export type FlexButtonStyle = 'primary' | 'secondary' | 'link';
+
+export interface FlexAction {
+  type: FlexActionType;
+  label?: string;
+  uri?: string;
+  text?: string;
+  data?: string;
+}
+
+export interface FlexComponent {
+  type: FlexComponentType;
+  text?: string;
+  weight?: 'regular' | 'bold';
+  size?: FlexSize;
+  color?: string;
   margin?: string;
+  style?: FlexButtonStyle;
+  action?: FlexAction;
   wrap?: boolean;
-}
-
-interface LineButtonContent {
-  type: string;
-  style: string;
-  action: {
-    type: string;
-    label: string;
-    uri: string;
-  };
-  margin?: string;
-}
-
-interface LineBoxContent {
-  type: string;
-  layout: string;
-  contents: Array<LineTextContent | LineButtonContent>;
+  paddingAll?: string;
 }
 
 // 定義 Flex Message 的類型
 export interface FlexContainer {
-  type: 'bubble' | 'carousel';
+  type: FlexContainerType;
   header?: FlexBox;
   hero?: FlexBox;
   body?: FlexBox;
@@ -47,31 +49,11 @@ export interface FlexContainer {
 
 export interface FlexBox {
   type: 'box';
-  layout: 'horizontal' | 'vertical' | 'baseline';
+  layout: FlexLayoutType;
   contents: FlexComponent[];
   backgroundColor?: string;
   paddingAll?: string;
   margin?: string;
-}
-
-export interface FlexComponent {
-  type: 'text' | 'button' | 'image' | 'separator' | 'spacer';
-  text?: string;
-  weight?: 'regular' | 'bold';
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl';
-  color?: string;
-  margin?: string;
-  style?: 'primary' | 'secondary' | 'link';
-  action?: FlexAction;
-  wrap?: boolean;
-  paddingAll?: string;
-}
-
-export interface FlexAction {
-  type: 'uri' | 'message' | 'postback';
-  label?: string;
-  uri?: string;
-  data?: string;
 }
 
 export interface FlexStyles {
@@ -105,6 +87,34 @@ export interface LineNotificationPayload {
   messages: LineMessage[];
 }
 
+// 使用者相關
+export interface LineUser {
+  userId: string;
+  lineNotification: boolean;
+}
+
+export interface LineProfile extends Pick<LineUser, 'userId'> {
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
+}
+
+// 驗證相關
+export interface LineVerification {
+  userId: string;
+  code: string;
+  expireAt: number;
+}
+
+export type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';
+
+export interface LineVerificationState {
+  step: VerificationStep;
+  code?: string;
+  error?: string;
+}
+
+// 文章相關
 export interface ArticleData {
   title: string;
   link: string;
@@ -113,43 +123,14 @@ export interface ArticleData {
   lineUserIds?: string[];
 }
 
-export interface LineUser {
-  userId: string;
-  lineNotification: boolean;
-}
-
-export interface LineVerification {
-  userId: string;
-  code: string;
-  expireAt: number;
-}
-
-export interface LineVerificationResponse {
-  success: boolean;
-  message: string;
-  profile?: LineProfile;
-}
-
-export interface LineFollowStatus {
-  isFollowing: boolean;
-  message: string;
-}
-
-export interface LineVerificationState {
-  step: 'idle' | 'verifying' | 'confirming' | 'complete';
-  code?: string;
-  error?: string;
-}
-
-export interface LineProfile {
-  userId: string;
-  displayName: string;
-  pictureUrl?: string;
-  statusMessage?: string;
-}
-
 export interface LineSettings {
   lineId: string;
   isVerified: boolean;
   displayName?: string;
+}
+
+// 追蹤狀態相關
+export interface LineFollowStatus {
+  isFollowing: boolean;
+  message: string;
 }

@@ -20,7 +20,6 @@ src
 │   ├── lineUtils.ts                 // 與 LINE 通訊相關的工具函數
 │   ├── logger.ts                    // 提供日誌記錄功能的工具 
 │   ├── cognitoClient.ts             // 設定 AWS Cognito 客戶端的工具
-│   ├── apiClient.ts                 // (未提供具體內容)
 │   ├── dynamodb.ts                  // 設定 AWS DynamoDB 客戶端的工具
 │   ├── extractDateFromInfo.ts       // 從字串中提取日期的工具函數
 │   └── cacheUtils.ts                // 管理快取的工具，包括本地快取和 Redis 快取
