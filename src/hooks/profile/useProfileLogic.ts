@@ -12,6 +12,9 @@ import { User } from '../../types/userType';
 import { toast } from 'react-toastify';
 import { VerificationState, LineUserSettings } from '../../types/lineTypes';
 
+type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';
+type VerificationStatus = 'idle' | 'validating' | 'success' | 'error';
+
 interface EditableFields {
   username: boolean;
   password: boolean;
@@ -321,7 +324,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       if (response.success) {
         setMulticastResult({
           status: 'success',
-          message: '訊息發送成功'
+          message: '訊發送成功'
         });
         setMulticastMessage(''); // 清空訊息
         toast.success('群發訊息已成功發送');
@@ -546,7 +549,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       // 密碼強度
       const strength = calculatePasswordStrength(formData.password);
       if (strength < 3) {
-        throw new Error('密碼強不足，請包含大小字母、數字特殊符號');
+        throw new Error('密碼強不足，包含大小字母、數字特殊符號');
       }
 
       // 變密碼
@@ -598,7 +601,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
 
       const validImageTypes = ['image/jpeg', 'image/png'];
       if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗檔類型不支援，請認檔案類型是否為 jpeg 或 png。');
+        setUploadMessage('上傳失敗類型不支援，請認檔案類型是否為 jpeg 或 png。');
         return;
       }
 
@@ -665,7 +668,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
         }, 3000);
       } catch (error) {
         console.error('Error uploading file or updating profile:', error);
-        setUploadMessage('上傳失敗：稍後再試。');
+        setUploadMessage('上傳失敗：稍再試。');
       }
     }
   };
@@ -876,19 +879,34 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       const response = await lineService.checkFollowStatus(userId);
       setIsLineFollowed(response.isFollowing);
       
-      // 如果已經加入好友，自動更新驗證狀態到第二步
-      if (response.isFollowing) {
-        setVerificationState(prev => ({
-          ...prev,
-          step: 'verifying',
-          message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號'
-        }));
-      } else {
-        setVerificationState(prev => ({
-          ...prev,
-          step: 'idle',
-          message: '請先加入 LINE 官方帳號為好友'
-        }));
+      const newState = response.isFollowing ? {
+        step: 'verifying' as VerificationStep,
+        status: 'idle',
+        message: '請輸入您的 LINE ID，然後發送「驗證 {的用戶ID}」到 LINE 官方帳號',
+        isVerified: false
+      } : {
+        step: 'idle',
+        status: 'idle',
+        message: '請先加入 LINE 官方帳號為好',
+        isVerified: false
+      };
+
+      setVerificationState(prev => ({
+        ...prev,
+        step: newState.step as VerificationStep,
+        status: newState.status as 'idle' | 'validating' | 'success' | 'error',
+        message: newState.message,
+        isVerified: newState.isVerified
+      }));
+
+      // 更新資料庫
+      if (lineId) {
+        await updateUserLineSettings({
+          lineId,
+          isVerified: false,
+          displayName: user?.username || '',
+          verificationState: newState as VerificationState
+        });
       }
     } catch (error) {
       console.error('檢查 LINE 好友狀態失敗:', error);
@@ -920,35 +938,43 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
   // 開始驗證流程
   const startVerification = async () => {
     try {
+      setVerificationState(prev => ({
+        ...prev,
+        step: 'verifying',
+        status: 'pending',
+        message: '正在處理驗證請求...'
+      }));
+
       if (!user?.sub) {
         throw new Error('找不到用戶ID');
       }
 
-      // 驗證 LINE ID 格式
       if (!lineId.match(/^U[0-9a-f]{32}$/i)) {
-        throw new Error('請輸入有效的 LINE ID');
+        throw new Error('請入有效的 LINE ID');
       }
 
-      setVerificationState({
+      const newState: VerificationState = {
         step: 'verifying',
-        status: 'pending',
-        message: `請在 LINE 官方帳號中發送：驗證 ${user.sub}`
-      });
+        status: 'idle',
+        message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
+        isVerified: false
+      };
 
-      // 儲存 LINE ID 到資料庫
+      setVerificationState(newState);
+
       await updateUserLineSettings({
         lineId,
         isVerified: false,
-        displayName: user?.username || ''
+        displayName: user?.username || '',
+        verificationState: newState
       });
 
     } catch (error) {
-      setVerificationState({
-        step: 'idle',
+      setVerificationState(prev => ({
+        ...prev,
         status: 'error',
-        message: error instanceof Error ? error.message : '開始驗證失敗'
-      });
-      toast.error(error instanceof Error ? error.message : '開始驗證失敗');
+        message: '驗證請求失敗，請稍後重試'
+      }));
     }
   };
 
@@ -968,7 +994,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
 
       if (!hasChanges) {
         toast.info('沒有任何設定變更');
-        setSettingsMessage('沒有任何設定變更');
+        setSettingsMessage('沒有任何設定更');
         setSettingsStatus('error');
         return;
       }
@@ -1010,25 +1036,43 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
   const updateUserLineSettings = async ({
     lineId,
     isVerified,
-    displayName
+    displayName,
+    verificationState
   }: {
     lineId: string;
     isVerified: boolean;
     displayName: string;
+    verificationState?: VerificationState;
   }) => {
-    const params = {
-      TableName: 'AWS_Blog_UserNotificationSettings',
-      Item: {
-        userId: { S: authUser?.sub || '' },
-        lineId: { S: lineId },
-        isVerified: { BOOL: isVerified },
-        displayName: { S: displayName },
-        updatedAt: { S: new Date().toISOString() }
-      }
-    };
+    try {
+      const params = {
+        TableName: 'AWS_Blog_UserNotificationSettings',
+        Item: {
+          userId: { S: authUser?.sub || '' },
+          lineId: { S: lineId },
+          isVerified: { BOOL: isVerified },
+          displayName: { S: displayName },
+          updatedAt: { S: new Date().toISOString() },
+          verificationStep: { S: verificationState?.step || 'idle' },
+          verificationStatus: { S: verificationState?.status || 'idle' },
+          verificationMessage: { S: verificationState?.message || '' },
+          lineNotificationEnabled: { BOOL: formData.notifications.line }
+        }
+      };
 
-    const command = new PutItemCommand(params);
-    await dynamoClient.send(command);
+      const command = new PutItemCommand(params);
+      await dynamoClient.send(command);
+      
+      logger.info('已更新用戶 LINE 設定:', {
+        userId: authUser?.sub,
+        lineId,
+        isVerified,
+        verificationState
+      });
+    } catch (error) {
+      logger.error('更新用戶 LINE 設定失敗:', error);
+      throw error;
+    }
   };
 
   const handleSaveSettings = async (): Promise<void> => {
@@ -1115,29 +1159,39 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     }
   }, [authUser]);
 
-  // 修改 confirmVerificationCode 函數
+  // 確認驗證碼
   const confirmVerificationCode = async (code: string) => {
     try {
+      setVerificationState(prev => ({
+        ...prev,
+        status: 'validating',
+        message: '正在驗證...'
+      }));
+
       if (!user?.sub) {
         throw new Error('找不到用戶ID');
       }
 
-      setVerificationState({
-        step: 'confirming',
-        status: 'validating',
-        message: '正在驗證...'
+      const validatingState: VerificationState = {
+        step: 'confirming' as VerificationStep,
+        status: 'validating' as VerificationStatus,
+        message: '正在驗證...',
+        isVerified: false
+      };
+
+      setVerificationState(validatingState);
+
+      await updateUserLineSettings({
+        lineId,
+        isVerified: false,
+        displayName: user?.username || '',
+        verificationState: validatingState
       });
 
       const response = await fetch('/api/line/verify', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.sub,
-          lineId,
-          code
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.sub, lineId, code })
       });
 
       const data = await response.json();
@@ -1146,25 +1200,35 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
         setVerificationState({
           step: 'complete',
           status: 'success',
-          message: '驗證成功！您現在可以接收 LINE 通知了'
+          message: '驗證成功！',
+          isVerified: true
         });
-        
-        // 更新設定
+
         await updateUserLineSettings({
           lineId,
           isVerified: true,
-          displayName: user?.username || ''
+          displayName: user?.username || '',
+          verificationState: {
+            step: 'complete',
+            status: 'success',
+            message: '驗證成功！',
+            isVerified: true
+          }
         });
 
       } else {
-        throw new Error(data.message || '驗證失敗');
+        setVerificationState(prev => ({
+          ...prev,
+          status: 'error',
+          message: data.message || '驗證失敗'
+        }));
       }
     } catch (error) {
-      setVerificationState({
-        step: 'confirming',
+      setVerificationState(prev => ({
+        ...prev,
         status: 'error',
-        message: error instanceof Error ? error.message : '驗證失敗，請稍後重試'
-      });
+        message: '驗證過程發生錯誤'
+      }));
     }
   };
 
