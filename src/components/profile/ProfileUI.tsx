@@ -1079,6 +1079,32 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user }) => {
                                           </div>
                                         )}
                                       </div>
+                                      
+                                      {/* 添加開始驗證按鈕 */}
+                                      <button
+                                        onClick={startVerification}
+                                        disabled={!lineId || !/^U[0-9a-f]{32}$/i.test(lineId) || verificationState.status === 'pending'}
+                                        className={`
+                                          mt-4 w-full py-3 rounded-lg transition-all duration-300
+                                          flex items-center justify-center space-x-2
+                                          ${!lineId || !/^U[0-9a-f]{32}$/i.test(lineId) || verificationState.status === 'pending'
+                                            ? 'bg-gray-300 cursor-not-allowed'
+                                            : 'bg-blue-500 hover:bg-blue-600 text-white'}
+                                        `}
+                                      >
+                                        {verificationState.status === 'pending' ? (
+                                          <>
+                                            <FontAwesomeIcon icon={faSpinner} spin />
+                                            <span>處理中...</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <FontAwesomeIcon icon={faCheck} />
+                                            <span>開始驗證</span>
+                                          </>
+                                        )}
+                                      </button>
+
                                       {verificationState.message && (
                                         <p className={`mt-2 text-sm ${
                                           verificationState.status === 'error' ? 'text-red-600' : 'text-gray-600'

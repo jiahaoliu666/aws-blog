@@ -887,7 +887,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       } : {
         step: 'idle',
         status: 'idle',
-        message: '請先加入 LINE 官方帳號為好',
+        message: '請先加入 LINE 官方帳號為好友',
         isVerified: false
       };
 
