@@ -6,6 +6,7 @@ src
 │   ├── lineTypes.ts                // 定義與 LINE 通訊相關的類型
 │   ├── announcementType.ts         // 定義公告相關的類型
 │   └── userType.ts                 // 定義用戶相關的類型
+│   └── profileTypes.ts             // 個人資料相關類型定義
 ├── context
 │   ├── AuthContext.tsx             // 提供用戶認證相關的上下文
 │   ├── AppContext.tsx              // 提供應用程式邏輯相關的上下文
@@ -36,11 +37,21 @@ src
 │   │   ├── ErrorMessage.tsx        // 錯誤訊息組件
 │   │   ├── Footer.tsx              // 頁腳組件
 │   │   └── Notification.tsx        // 通知組件
-│   ├── profile
-│   │   ├── ProfileLayout.tsx       // 個人資料頁面布局
-│   │   ├── ProfileSidebar.tsx      // 側邊欄組件
-│   │   ├── ProfileContent.tsx  // 內容區域組件
-│   │   └── tabs
+│   └── profile/                    // 個人資料相關組件
+│       ├── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
+│       ├── common/                 // 共用組件
+│       │   ├── Sidebar.tsx         // 側邊欄導航組件，包含用戶基本信息和菜單
+│       │   └── StepIndicator.tsx   // LINE 驗證步驟指示器組件
+│       ├── line/
+│       │   └── LineVerification.tsx   // LINE 帳號驗證流程組件
+│       └── sections/               // 各個功能區塊組件
+│           ├── ProfileSection.tsx     // 基本資料編輯區塊
+│           ├── PasswordSection.tsx    // 密碼修改區塊
+│           ├── NotificationSection.tsx   // 通知設定區塊
+│           ├── SettingsSection.tsx    // 系統偏好設定區塊
+│           ├── FeedbackSection.tsx    // 意見反饋區塊
+│           └── ActivityLogSection.tsx  // 活動日誌區塊
+│   │    tabs
 │   │       ├── ProfileInfo.tsx     // 個人資料標籤頁
 │   │       ├── PasswordChange.tsx  // 密碼修改標籤頁
 │   │       ├── NotificationSettings.tsx // 通知設定標籤頁

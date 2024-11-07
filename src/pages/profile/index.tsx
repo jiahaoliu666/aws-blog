@@ -12,6 +12,11 @@ const ProfilePage: React.FC = () => {
         uploadMessage={profileLogic.uploadMessage || ''} 
         passwordMessage={profileLogic.passwordMessage || ''} 
         setIsEditable={() => {}} 
+        user={profileLogic.user ? {
+          ...profileLogic.user,
+          email: profileLogic.user.email || '',
+          avatar: profileLogic.user.avatar || ''
+        } : null}
       />
     </div>
   );

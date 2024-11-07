@@ -39,34 +39,6 @@ interface FormData {
   showLineSettings: boolean;
 }
 
-const checkLineFollowStatus = async (lineId: string): Promise<boolean> => {
-  try {
-    const response = await fetch(
-      `https://api.line.me/v2/bot/profile/${lineId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${lineConfig.channelAccessToken}`,
-        },
-      }
-    );
-
-    if (response.ok) {
-      return true;
-    }
-
-    const error = await response.json();
-    if (error.message?.includes('not found')) {
-      logger.info(`用戶 ${lineId} 未追蹤方帳號`);
-      return false;
-    }
-
-    throw new Error(error.message);
-  } catch (error) {
-    logger.error('檢查 LINE 追蹤狀態時發生錯誤:', error);
-    return false;
-  }
-};
-
 interface SaveSettingsResponse {
   success: boolean;
   message: string;
@@ -78,6 +50,9 @@ interface UseProfileLogicProps {
 
 interface NotificationSettings {
   emailNotification: boolean;
+  browser?: boolean;
+  mobile?: boolean;
+  line?: boolean;
 }
 
 interface UpdateNotificationSettingsParams {
@@ -184,6 +159,12 @@ interface ProfileLogicReturn {
   setVerificationCode: (code: string) => void;
   startVerification: () => Promise<void>;
   confirmVerificationCode: (code: string) => Promise<void>;
+  feedback: string;
+  setFeedback: (feedback: string) => void;
+  handleSubmitFeedback: () => Promise<void>;
+  isSubmitting: boolean;
+  settings: Record<string, any>;
+  handleSettingChange: (key: string, value: any) => void;
 }
 
 // 新增 Article 介面定義
@@ -265,7 +246,10 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
   const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
   const [settingsStatus, setSettingsStatus] = useState<'success' | 'error' | null>(null);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    emailNotification: false
+    emailNotification: false,
+    browser: false,
+    mobile: false,
+    line: false
   });
   const [isClient, setIsClient] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
@@ -493,7 +477,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     let changesSuccessful = true;
 
     if (!localUsername.trim()) {
-      setUploadMessage('戶名不為空。');
+      setUploadMessage('��名不為空。');
       return;
     }
 
@@ -873,43 +857,50 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
 
   const [isLineFollowed, setIsLineFollowed] = useState(false);
 
-  // 檢查用戶是否已加入 LINE 好友
-  const checkLineFollowStatus = async (userId: string) => {
+  // 檢用戶是否已加入 LINE 好友
+  const checkLineFollowStatus = async () => {
     try {
-      const response = await lineService.checkFollowStatus(userId);
-      setIsLineFollowed(response.isFollowing);
-      
-      const newState = response.isFollowing ? {
-        step: 'verifying' as VerificationStep,
-        status: 'idle',
-        message: '請輸入您的 LINE ID，然後發送「驗證 {的用戶ID}」到 LINE 官方帳號',
-        isVerified: false
-      } : {
-        step: 'idle',
-        status: 'idle',
-        message: '請先加入 LINE 官方帳號為好友',
-        isVerified: false
-      };
+      if (!lineId) {
+        toast.error('請先輸入 LINE ID');
+        return;
+      }
 
-      setVerificationState(prev => ({
-        ...prev,
-        step: newState.step as VerificationStep,
-        status: newState.status as 'idle' | 'validating' | 'success' | 'error',
-        message: newState.message,
-        isVerified: newState.isVerified
-      }));
+      if (user?.sub) {
+        const response = await lineService.checkFollowStatus(lineId);
+        setIsLineFollowed(response.isFollowing);
+        
+        const newState = response.isFollowing ? {
+          step: 'verifying' as VerificationStep,
+          status: 'idle',
+          message: '請輸入您的 LINE ID，然後發送「驗證 {的用戶ID}」到 LINE 官方帳號',
+          isVerified: false
+        } : {
+          step: 'idle',
+          status: 'idle',
+          message: '請先加入 LINE 官方帳號為好友',
+          isVerified: false
+        };
 
-      // 更新資料庫
-      if (lineId) {
-        await updateUserLineSettings({
-          lineId,
-          isVerified: false,
-          displayName: user?.username || '',
-          verificationState: newState as VerificationState
-        });
+        setVerificationState(prev => ({
+          ...prev,
+          step: newState.step as VerificationStep,
+          status: newState.status as 'idle' | 'validating' | 'success' | 'error',
+          message: newState.message,
+          isVerified: newState.isVerified
+        }));
+
+        // 更新資料庫
+        if (lineId) {
+          await updateUserLineSettings({
+            lineId,
+            isVerified: false,
+            displayName: user?.username || '',
+            verificationState: newState as VerificationState
+          });
+        }
       }
     } catch (error) {
-      console.error('檢查 LINE 好友狀態失敗:', error);
+      console.error('查 LINE 好友狀態失敗:', error);
       toast.error('檢查 LINE 好友狀態失敗，請稍後重試');
     }
   };
@@ -921,7 +912,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       if (!formData.notifications.line) {
         // 檢查好友狀態
         if (user?.sub) {
-          await checkLineFollowStatus(user.sub);
+          await checkLineFollowStatus();
         }
       }
     }
@@ -1133,18 +1124,15 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       
       if (response.Item) {
         const emailNotification = response.Item.emailNotification?.BOOL || false;
-        
-        // 同時更新 formData 和 notificationSettings
-        setFormData(prev => ({
-          ...prev,
-          notifications: {
-            ...prev.notifications,
-            email: emailNotification
-          }
-        }));
+        const browserNotification = response.Item.browserNotification?.BOOL || false;
+        const mobileNotification = response.Item.mobileNotification?.BOOL || false;
+        const lineNotification = response.Item.lineNotification?.BOOL || false;
         
         setNotificationSettings({
-          emailNotification: emailNotification
+          emailNotification: emailNotification,
+          browser: browserNotification,
+          mobile: mobileNotification,
+          line: lineNotification
         });
       }
     } catch (error) {
@@ -1220,7 +1208,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
         setVerificationState(prev => ({
           ...prev,
           status: 'error',
-          message: data.message || '驗證失敗'
+          message: '驗證失敗'
         }));
       }
     } catch (error) {
@@ -1298,5 +1286,11 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     setVerificationCode,
     startVerification,
     confirmVerificationCode,
+    feedback: '',
+    setFeedback: (feedback: string) => {},
+    handleSubmitFeedback: async () => {},
+    isSubmitting: false,
+    settings: {},
+    handleSettingChange: (key: string, value: any) => {},
   };
 };

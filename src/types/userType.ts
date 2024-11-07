@@ -3,6 +3,7 @@ import { ExtendedNews } from './newsType'; // 確保引入 ExtendedNews 類型
 
 // 用戶基本資料介面
 export interface User {
+  id: string;
   accessToken: string;
   refreshToken: string;
   username: string;
