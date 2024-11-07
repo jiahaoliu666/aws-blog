@@ -1,11 +1,12 @@
-src
+src/
 ├── types
 │   ├── emailTypes.ts               // 定義與電子郵件通知相關的類型
 │   ├── amazon-dax-client.d.ts      // 宣告 Amazon DAX 客戶端模組
 │   ├── newsType.ts                 // 定義新聞相關的類型
 │   ├── lineTypes.ts                // 定義與 LINE 通訊相關的類型
 │   ├── announcementType.ts         // 定義公告相關的類型
-│   └── userType.ts                 // 定義用戶相關的類型
+│   ├── userType.ts                 // 定義用戶相關的類型
+│   ├── profileTypes.ts             // 個人資料相關類型定義
 │   └── profileTypes.ts             // 個人資料相關類型定義
 ├── context
 │   ├── AuthContext.tsx             // 提供用戶認證相關的上下文
@@ -51,14 +52,7 @@ src
 │           ├── SettingsSection.tsx    // 系統偏好設定區塊
 │           ├── FeedbackSection.tsx    // 意見反饋區塊
 │           └── ActivityLogSection.tsx  // 活動日誌區塊
-│   │    tabs
-│   │       ├── ProfileInfo.tsx     // 個人資料標籤頁
-│   │       ├── PasswordChange.tsx  // 密碼修改標籤頁
-│   │       ├── NotificationSettings.tsx // 通知設定標籤頁
-│   │       ├── Settings.tsx        // 偏好設定標籤頁
-│   │       ├── ActivityHistory.tsx // 觀看記錄標籤頁
-│   │       ├── Feedback.tsx        // 意見反饋標籤頁
-│   │       └── ActivityLog.tsx     // 活動日誌標籤頁
+│           └── HistorySection.tsx  // 觀看紀錄區塊
 │   └── news
 │       ├── NewsSearch.tsx          // 新聞搜尋組件
 │       ├── NewsCard.tsx            // 新聞卡片組件
@@ -66,8 +60,16 @@ src
 ├── hooks
 │   ├── useNotificationSettings.ts  // 通知設定 Hook
 │   ├── useAuth.ts                  // 用戶認證 Hook
-│   ├── profile
-│   │   └── useProfileLogic.ts      // 個人資料邏輯 Hook
+│   ├── profile/                    // 個人資料相關 Hooks
+│   │   ├── index.ts                // 統一導出個人資料相關 Hooks
+│   │   ├── useProfileLogic.ts      // 主要的個人資料邏輯 Hook
+│   │   ├── useProfileForm.ts       // 個人資料表單相關 Hook
+│   │   ├── useProfileAvatar.ts     // 個人資料頭像相關 Hook
+│   │   ├── useProfilePassword.ts   // 個人資料密碼相關 Hook
+│   │   ├── useProfileActivity.ts   // 個人資料活動記錄相關 Hook
+│   │   ├── useProfileNotification.ts // 個人資料通知設定相關 Hook
+│   │   ├── useProfileLine.ts       // 個人資料 LINE 相關 Hook
+│   │   └── useProfileArticles.ts   // 個人資料最近文章相關 Hook
 │   ├── news
 │   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
 │   │   ├── useFetchNews.ts         // 新聞獲取 Hook

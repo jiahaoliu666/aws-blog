@@ -13,6 +13,7 @@ import NotificationSection from './sections/NotificationSection';
 import SettingsSection from './sections/SettingsSection';
 import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
+import HistorySection from './sections/HistorySection';
 
 interface ProfileUIProps {
   user: {
@@ -185,6 +186,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
               description: log.action,
               timestamp: log.date,
             }))} />
+          )}
+
+          {profileLogic.activeTab === 'history' && (
+            <HistorySection 
+              recentArticles={profileLogic.recentArticles}
+            />
           )}
         </div>
       </div>

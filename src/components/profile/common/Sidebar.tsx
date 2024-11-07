@@ -31,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { tab: 'changePassword', label: '修改密碼', icon: faLock },
     { tab: 'notificationSettings', label: '訂閱通知', icon: faBell },
     { tab: 'settings', label: '偏好設定', icon: faCog },
+    { tab: 'history', label: '觀看紀錄', icon: faEye },
     { tab: 'feedback', label: '意見反饋', icon: faCommentDots },
     { tab: 'activityLog', label: '活動日誌', icon: faClock }
   ];
