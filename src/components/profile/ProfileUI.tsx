@@ -8,7 +8,7 @@ import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
 import Navbar from '../common/Navbar'; 
 import Footer from '../common/Footer'; 
 import logActivity from '../../pages/api/profile/activity-log';
-import { Switch } from '@headlessui/react';  // 其他 UI 庫的 Switch 組件
+import { Switch } from '@headlessui/react';  
 import { checkLineFollowStatus } from '../../services/lineService';
 import { useAuth } from '../../hooks/useAuth';
 import { MouseEvent } from 'react';
