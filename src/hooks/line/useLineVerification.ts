@@ -5,6 +5,21 @@ import { logger } from '@/utils/logger';
 import { User } from '@/types/userType';
 import { VerificationState } from '@/types/lineTypes';
 
+enum VerificationStep {
+  IDLE = 'idle',
+  VERIFYING = 'verifying',
+  CONFIRMING = 'confirming',
+  COMPLETE = 'complete'
+}
+
+enum VerificationStatus {
+  IDLE = 'idle',
+  PENDING = 'pending',
+  VALIDATING = 'validating',
+  SUCCESS = 'success',
+  ERROR = 'error'
+}
+
 interface UseLineVerificationProps {
   user: User | null;
   updateUserLineSettings: (settings: any) => Promise<void>;
@@ -22,6 +37,20 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
   const [isLineFollowed, setIsLineFollowed] = useState(false);
   const MAX_RETRY = 3;
 
+  const handleVerificationStateUpdate = async (newState: VerificationState) => {
+    try {
+      await updateUserLineSettings({
+        lineId,
+        isVerified: newState.isVerified || false,
+        displayName: user?.username || '',
+        verificationState: newState
+      });
+      setVerificationState(newState);
+    } catch (error) {
+      logger.error('更新驗證狀態失敗:', error);
+    }
+  };
+
   const checkLineFollowStatus = async () => {
     try {
       if (!lineId) {
@@ -29,36 +58,25 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
         return;
       }
 
-      if (user?.sub) {
-        const response = await lineService.checkFollowStatus(lineId);
-        setIsLineFollowed(response.isFollowing);
-        
-        const newState = response.isFollowing ? {
-          step: 'verifying' as const,
-          status: 'idle' as const,
-          message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
-          isVerified: false
-        } : {
-          step: 'idle' as const,
-          status: 'idle' as const,
-          message: '請先加入 LINE 官方帳號為好友',
-          isVerified: false
-        };
+      const response = await lineService.checkFollowStatus(lineId);
+      setIsLineFollowed(response.isFollowing);
+      
+      const newState = response.isFollowing ? {
+        step: VerificationStep.VERIFYING,
+        status: VerificationStatus.IDLE,
+        message: '請在LINE上發送「驗證」開始驗證流程',
+        isVerified: false
+      } : {
+        step: VerificationStep.IDLE,
+        status: VerificationStatus.ERROR,
+        message: '請先加入LINE官方帳號為好友',
+        isVerified: false
+      };
 
-        setVerificationState(newState);
-        
-        if (lineId) {
-          await updateUserLineSettings({
-            lineId,
-            isVerified: false,
-            displayName: user?.username || '',
-            verificationState: newState
-          });
-        }
-      }
+      await handleVerificationStateUpdate(newState);
     } catch (error) {
-      logger.error('檢查 LINE 好友狀態失敗:', error);
-      toast.error('檢查 LINE 好友狀態失敗，請稍後重試');
+      logger.error('檢查LINE好友狀態失敗:', error);
+      toast.error('檢查LINE好友狀態失敗，請稍後重試');
     }
   };
 

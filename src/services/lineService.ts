@@ -97,6 +97,10 @@ interface LineServiceInterface {
   broadcastNewsNotification(articleData: ArticleData): Promise<boolean>;
   sendNewsNotification(articleData: ArticleData): Promise<LineApiResponse>;
   generateVerificationCode(userId: string, lineId: string): Promise<string>;
+  updateNotificationSettings(userId: string, settings: {
+    lineNotification: boolean;
+    lineId?: string;
+  }): Promise<void>;
 }
 
 export const lineService: LineServiceInterface = {
@@ -178,55 +182,17 @@ export const lineService: LineServiceInterface = {
 
   async verifyCode(lineId: string, code: string): Promise<{ success: boolean; message?: string }> {
     try {
-      // 從 DynamoDB 獲取驗證資訊
-      const params = {
-        TableName: "AWS_Blog_UserNotificationSettings",
-        Key: {
-          lineId: { S: lineId }
-        }
-      };
-
-      const result = await dynamoClient.send(new GetItemCommand(params));
-      
-      if (!result.Item) {
-        return { success: false, message: '找不到驗證記錄' };
-      }
-
-      const storedCode = result.Item.verificationCode?.S;
-      const expiry = Number(result.Item.verificationExpiry?.N);
-
-      // 驗證碼檢查
-      if (!storedCode || !expiry) {
-        return { success: false, message: '驗證資訊不完整' };
-      }
-
-      // 檢查是否過期
-      if (Date.now() > expiry) {
-        return { success: false, message: '驗證碼已過期' };
-      }
-
-      // 檢查驗證碼
-      if (code !== storedCode) {
-        return { success: false, message: '驗證碼不正確' };
-      }
-
-      // 檢查 userId 是否存在
-      const userId = result.Item.userId?.S;
-      if (!userId) {
-        return { success: false, message: '找不到用戶資訊' };
-      }
-
-      // 更新驗證狀態
-      await this.updateUserLineSettings({
-        lineId,
-        isVerified: true,
-        userId
+      const response = await fetch('/api/line/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineId, code })
       });
 
-      return { success: true, message: '驗證成功' };
+      const data = await response.json();
+      return data;
     } catch (error) {
-      logger.error('驗證過程發生錯誤:', error);
-      return { success: false, message: '驗證過程發生錯誤' };
+      logger.error('驗證碼驗證失敗:', error);
+      return { success: false, message: '驗證失敗，請稍後重試' };
     }
   },
 
@@ -542,6 +508,25 @@ export const lineService: LineServiceInterface = {
       throw error;
     }
   },
+
+  async updateNotificationSettings(userId: string, settings: {
+    lineNotification: boolean;
+    lineId?: string;
+  }): Promise<void> {
+    try {
+      await fetch('/api/notifications/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          ...settings
+        })
+      });
+    } catch (error) {
+      logger.error('更新通知設定失敗:', error);
+      throw error;
+    }
+  }
 };
 
 async function requestVerification(userId: string, lineId: string) {

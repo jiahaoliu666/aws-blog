@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).end();
   }
 
-  const { userId, lineUserId, lineNotification } = req.body;
+  const { userId, lineId, lineNotification } = req.body;
 
   try {
     const updateParams = {
@@ -25,33 +25,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Key: {
         userId: { S: userId }
       },
-      UpdateExpression: 'SET lineUserId = :lineUserId, lineNotification = :lineNotification',
+      UpdateExpression: 'SET lineId = :lineId, lineNotification = :lineNotification, updatedAt = :updatedAt',
       ExpressionAttributeValues: {
-        ':lineUserId': { S: lineUserId },
-        ':lineNotification': { BOOL: lineNotification }
+        ':lineId': { S: lineId || '' },
+        ':lineNotification': { BOOL: lineNotification },
+        ':updatedAt': { S: new Date().toISOString() }
       }
     };
 
     await dynamoClient.send(new UpdateItemCommand(updateParams));
 
+    // 更新 Redis 快取
     const CACHE_KEY = `settings:${userId}`;
     const CACHE_DURATION = 300; // 5分鐘
-
-    // 從 DynamoDB 獲取設定
-    const params = {
-      TableName: 'AWS_Blog_UserNotificationSettings',
-      Key: { userId: { S: userId } }
-    };
-    
-    const result = await dynamoClient.send(new GetItemCommand(params));
-    const settings = result.Item;
-
-    // 儲存到 Redis
-    await redis.setex(CACHE_KEY, CACHE_DURATION, JSON.stringify(settings));
+    await redis.setex(CACHE_KEY, CACHE_DURATION, JSON.stringify({
+      lineId,
+      lineNotification,
+      updatedAt: new Date().toISOString()
+    }));
 
     res.status(200).json({ message: '設定已更新' });
   } catch (error) {
-    logger.error('更新通知設定時發生錯誤:', error);
+    logger.error('更新通知設定失敗:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 } 
