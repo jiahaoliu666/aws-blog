@@ -5,11 +5,15 @@ import {
   faSpinner,
   faEnvelope,
   faDesktop,
-  faMobile
+  faMobile,
+  // 移除這行，因為我們要使用 brands 版本的 LINE 圖標
+  // faLine 
 } from '@fortawesome/free-solid-svg-icons';
+import { faLine } from '@fortawesome/free-brands-svg-icons';
 import LineVerification from '../line/LineVerification';
 import { User } from '../../../types/userType';
 import { NotificationSettings } from '../../../types/profileTypes';
+import { lineConfig } from '../../../config/line';
 
 interface NotificationSectionProps {
   user: User | null;
@@ -47,6 +51,32 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
         {/* LINE 通知設定 */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">LINE 通知設定</h2>
+          
+          {/* LINE QR Code 區塊 */}
+          <div className="flex flex-col md:flex-row items-center gap-6 mb-8 p-6 bg-gray-50 rounded-lg">
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="font-medium text-lg mb-2">加入 LINE 官方帳號</h3>
+              <p className="text-gray-600 mb-4">請掃描 QR Code 加入好友以接收通知</p>
+              <a
+                href={`https://line.me/R/ti/p/${lineConfig.basicId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-6 py-2.5 bg-[#00B900] text-white rounded-lg hover:bg-[#009900] transition-colors"
+              >
+                <FontAwesomeIcon icon={faLine} className="mr-2" />
+                加入好友
+              </a>
+            </div>
+            
+            <div className="qr-code-container bg-white p-4 rounded-lg shadow-sm">
+              <img 
+                src="/Line-QR-Code.png"
+                alt="LINE QR Code" 
+                className="w-32 h-32 md:w-40 md:h-40"
+              />
+            </div>
+          </div>
+
           <LineVerification
             verificationState={verificationState}
             lineId={lineId}
@@ -59,7 +89,6 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
 
         {/* 其他通知設定 */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">其他通知設定</h2>
           <div className="space-y-4">
             {/* 電子郵件通知 */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">

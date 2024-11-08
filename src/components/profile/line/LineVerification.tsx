@@ -34,34 +34,69 @@ const LineVerification: React.FC<LineVerificationProps> = ({
 
       {verificationState === 'idle' && (
         <div className="text-center space-y-4">
-          <img 
-            src="/images/line-qr.png" 
-            alt="LINE QR Code" 
-            className="mx-auto w-48 h-48"
-          />
-          <h3 className="text-xl font-semibold">第一步：加入官方 LINE 好友</h3>
-          <p className="text-gray-600">掃描上方 QR Code 或點擊下方按鈕加入好友</p>
-          <a
-            href="https://line.me/R/ti/p/@XXX"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition duration-200"
-          >
-            加入 LINE 好友
-          </a>
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <img 
+              src="/images/line-qr.png" 
+              alt="LINE QR Code" 
+              className="mx-auto w-48 h-48 mb-4"
+            />
+            <div className="flex items-center justify-center space-x-4">
+              <a
+                href="https://line.me/R/ti/p/@XXX"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-6 py-3 bg-[#00B900] text-white rounded-full hover:bg-[#009900] transition duration-200"
+              >
+                <img src="/images/line-icon.png" alt="LINE" className="w-5 h-5 mr-2" />
+                加入 LINE 好友
+              </a>
+              <button
+                onClick={() => checkLineFollowStatus && checkLineFollowStatus(user?.id || '')}
+                className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200"
+              >
+                已加入好友，下一步
+              </button>
+            </div>
+          </div>
+          
+          <div className="mt-6 text-left">
+            <h4 className="font-medium mb-2">溫馨提醒</h4>
+            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+              <li>加入好友後請勿封鎖或刪除，否則將無法接收通知</li>
+              <li>若您已是好友，可直接點擊「下一步」</li>
+              <li>遇到問題可以重新掃描 QR Code 或重新加入</li>
+            </ul>
+          </div>
         </div>
       )}
 
       {verificationState === 'verifying' && (
-        <div className="space-y-4">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">第二步：輸入您的 LINE ID</h3>
+        <div className="space-y-6">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 mt-1" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-blue-800 font-medium">如何取得 LINE ID?</h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  1. 開啟 LINE 應用程式<br/>
+                  2. 點擊「主頁」→「設定」<br/>
+                  3. 選擇「個人檔案」<br/>
+                  4. 您的 LINE ID 格式為 U 開頭的 33 位字元
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-medium mb-4">輸入您的 LINE ID</h3>
             <div className="space-y-4">
               <input
                 type="text"
                 value={lineId}
                 onChange={(e) => setLineId(e.target.value)}
-                placeholder="請輸入您的 LINE ID"
+                placeholder="例如: U1234..."
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               <button
@@ -101,7 +136,7 @@ const LineVerification: React.FC<LineVerificationProps> = ({
           <p className="text-gray-600">請確認您已加入官方 LINE 好友並重試</p>
           <button
             onClick={() => checkLineFollowStatus && checkLineFollowStatus(user?.id || '')}
-            className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition duration-200"
+            className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200"
           >
             重新驗證
           </button>
