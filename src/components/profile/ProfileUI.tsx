@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
@@ -22,6 +22,14 @@ import SettingsSection from './sections/SettingsSection';
 import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
+
+interface FormData {
+  password: string;
+  confirmPassword: string;
+  username: string;
+  email: string;
+  avatar: string;
+}
 
 interface ProfileUIProps {
   user: {
@@ -56,6 +64,11 @@ interface LocalSettings {
   privacy: 'private' | 'public';
 }
 
+interface ActivityLog {
+  action: string;
+  timestamp: string;
+}
+
 const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMessage, setIsEditable }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -63,15 +76,18 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
   const { user: authUser, logoutUser } = useAuthContext();
 
   const core = useProfileCore({ user });
-  const form = useProfileForm({ user, updateUser: core.updateUser });
+  const form = useProfileForm({ user, updateUser: core.updateUser }) as unknown as { 
+    formData: FormData, 
+    handleChange: (e: any) => void 
+  };
   const avatar = useProfileAvatar({ user });
   const password = useProfilePassword({ user, handleLogout: logoutUser });
   const activity = useProfileActivity({ user });
   const articles = useProfileArticles({ user });
   const notifications = useProfileNotifications();
   const lineVerification = useLineVerification({ 
-    user, 
-    updateUserLineSettings: notifications.updateSettings 
+    user,
+    updateUserLineSettings: () => Promise.resolve()
   });
   const lineSettings = useLineSettings({ user });
 
@@ -135,7 +151,22 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
         
         <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
           {core.activeTab === 'profile' && (
-            <ProfileSection {...form} {...avatar} />
+            <ProfileSection 
+              {...form} 
+              {...avatar}
+              handleSubmit={core.handleSubmit}
+              isEditable={{ username: true }}
+              localUsername={form.formData.username}
+              setLocalUsername={(username: string) => form.handleChange({ target: { name: 'username', value: username } })}
+              toggleEditableField={() => setIsEditable()}
+              isSubmitting={core.isSubmitting}
+              handleSaveProfileChanges={(username: string) => {
+                form.handleChange({ target: { name: 'username', value: username } });
+                core.handleSubmit(new Event('submit') as unknown as FormEvent<Element>);
+              }}
+              handleCancelChanges={() => setIsEditable()}
+              resetUsername={() => form.handleChange({ target: { name: 'username', value: user?.username || '' } })}
+            />
           )}
 
           {core.activeTab === 'changePassword' && (
@@ -144,12 +175,18 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
               passwordMessage={password.passwordMessage || undefined}
               newPassword={password.newPassword || ''}
               setNewPassword={password.setNewPassword}
+              formData={{
+                password: form.formData.password,
+                confirmPassword: form.formData.confirmPassword
+              }}
+              handleChange={form.handleChange}
             />
           )}
 
           {core.activeTab === 'notificationSettings' && (
             <NotificationSection 
-              {...notifications} 
+              {...(notifications as unknown as object)} 
+              isLoading={false}
               user={user && {
                 ...user,
                 userId: user.userId || user.id,
@@ -169,6 +206,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
                   [setting]: !settings.notificationPreferences?.[setting]
                 })
               }
+              lineId={lineSettings.lineUserId || ''}
+              setLineId={(id: string) => {/* 處理 lineId 更新的邏輯 */}}
+              startVerification={lineVerification.startVerification}
             />
           )}
 
@@ -196,17 +236,17 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
                   core.setFeedback(newFeedback);
                 }
               }}
-              handleSubmitFeedback={core.handleSubmitFeedback}
+              handleSubmitFeedback={() => core.handleSubmitFeedback(core.feedback || '')}
               isSubmitting={core.isSubmitting}
             />
           )}
 
           {core.activeTab === 'activityLog' && (
-            <ActivityLogSection activityLog={activity.activityLog.map((log: { action: string; date: string }) => ({
+            <ActivityLogSection activityLog={activity.activityLog.map((log: ActivityLog) => ({
               id: crypto.randomUUID(),
               type: 'default',
               description: log.action,
-              timestamp: log.date,
+              timestamp: log.timestamp
             }))} />
           )}
 

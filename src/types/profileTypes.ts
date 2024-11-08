@@ -1,5 +1,5 @@
 export interface FormData {
-  avatar: string;
+  avatar?: string;
   username: string;
   email: string;
   registrationDate?: string;

@@ -23,6 +23,9 @@ interface ProfileSectionProps {
   resetUsername: () => void;
   isLoading?: boolean;
   uploadMessage?: string | null;
+  handleSubmit: (e: React.FormEvent) => void;
+  isSubmitting: boolean;
+  errorMessage?: string;
 }
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({
@@ -36,7 +39,10 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   handleCancelChanges,
   resetUsername,
   isLoading,
-  uploadMessage
+  uploadMessage,
+  handleSubmit,
+  isSubmitting,
+  errorMessage
 }) => {
   return (
     <div className="space-y-8">

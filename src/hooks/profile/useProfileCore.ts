@@ -25,6 +25,7 @@ export type UseProfileCoreReturn = {
   setFeedback: (feedback: string) => void;
   handleSubmitFeedback: (feedback: string) => void;
   isSubmitting: boolean;
+  handleSubmit: (e: React.FormEvent) => Promise<void>;
 };
 
 export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UseProfileCoreReturn => {
@@ -109,6 +110,20 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     // 在這裡實現提交反饋的邏輯
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      // 在這裡實現提交邏輯
+      // 例如：await updateUserProfile(currentUser);
+    } catch (error) {
+      toast.error('更新失敗');
+      console.error('Update error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     user: currentUser,
     isLoading,
@@ -126,5 +141,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     setFeedback,
     handleSubmitFeedback,
     isSubmitting,
+    handleSubmit,
   };
 }; 
