@@ -9,6 +9,7 @@ export interface LineConfig {
   qrCodeUrl: string;
   officialAccountName: string;
   apiUrl: string;
+  validateConfig: () => void;
 }
 
 export interface ArticleData {

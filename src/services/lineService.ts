@@ -117,16 +117,15 @@ export class LineService implements LineServiceInterface {
     this.channelAccessToken = token;
   }
 
-  async replyMessage(replyToken: string, messages: any[]) {
+  async replyMessage(replyToken: string, messages: any) {
     try {
-      // 添加日誌來追蹤
       logger.info('準備發送 LINE 回覆:', { replyToken, messages });
-
-      const response = await fetch(`${lineConfig.apiUrl}/message/reply`, {
+      
+      const response = await fetch('https://api.line.me/v2/bot/message/reply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+          'Authorization': `Bearer ${this.channelAccessToken}`
         },
         body: JSON.stringify({
           replyToken,
@@ -134,14 +133,15 @@ export class LineService implements LineServiceInterface {
         })
       });
 
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        logger.error('LINE API 回覆失敗:', errorData);
-        throw new Error(`LINE API 錯誤: ${errorData.message}`);
+        logger.error('LINE API 回覆失敗:', responseData);
+        throw new Error(`LINE API 錯誤: ${responseData.message}`);
       }
 
-      logger.info('LINE 回覆發送成功');
-      return response.json();
+      logger.info('LINE 回覆發送成功:', responseData);
+      return responseData;
     } catch (error) {
       logger.error('發送 LINE 回覆時發生錯誤:', error);
       throw error;

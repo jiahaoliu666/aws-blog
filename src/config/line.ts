@@ -14,7 +14,17 @@ export const lineConfig: LineConfig = {
     : `${process.env.NEXT_PUBLIC_API_URL || ''}/api/line/webhook`,
   basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID || '',
   qrCodeUrl: process.env.NEXT_PUBLIC_LINE_QR_CODE_URL || '',
-  officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || ''
+  officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || '',
+
+  // 添加配置驗證
+  validateConfig() {
+    if (!this.channelAccessToken) {
+      throw new Error('LINE_CHANNEL_ACCESS_TOKEN 未設定');
+    }
+    if (!this.channelSecret) {
+      throw new Error('LINE_CHANNEL_SECRET 未設定');
+    }
+  }
 };
 
 // 檢查 LINE 設定是否完整

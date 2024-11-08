@@ -56,49 +56,47 @@ function createVerificationTemplate(code: string) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    // 1. 添加請求日誌
-    logger.info('收到 LINE Webhook 請求', {
-      body: req.body,
-      headers: req.headers
-    });
-
-    // 2. 驗證簽章
+    // 驗證 LINE 簽章
     if (!verifyLineSignature(req)) {
       logger.error('LINE 簽章驗證失敗');
       return res.status(401).json({ error: '無效的簽章' });
     }
 
     const events = req.body.events;
-    
-    // 3. 處理文字訊息事件
     for (const event of events) {
+      // 添加日誌追蹤
+      logger.info('收到 LINE 事件:', { event });
+
       if (event.type === 'message' && 
           event.message?.type === 'text' && 
           event.message.text.trim() === '驗證') {
-        
+          
         const userId = event.source.userId;
         const replyToken = event.replyToken;
-
-        try {
-            // 生成驗證碼
-            const verificationCode = generateVerificationCode();
-            
-          // 儲存驗證資訊
-            await saveVerificationInfo(userId, verificationCode);
-            
-            // 使用 lineTemplates 建立回覆訊息
-            const verificationMessage = createVerificationTemplate(verificationCode);
-            
-            // 發送回覆
-            await lineService.replyMessage(replyToken, [verificationMessage]);
-            
-        } catch (error) {
-            logger.error('處理驗證請求失敗:', error);
+        
+        if (!replyToken) {
+          logger.error('缺少 replyToken');
+          continue;
         }
+
+        // 生成驗證碼
+        const verificationCode = generateVerificationCode();
+        
+        // 儲存驗證資訊
+        await saveVerificationInfo(userId, verificationCode);
+        
+        // 建立回覆訊息
+        const messages = [
+          createUserIdTemplate(userId),
+          createVerificationTemplate(verificationCode)
+        ];
+        
+        // 發送回覆
+        await lineService.replyMessage(replyToken, messages);
       }
     }
 
-    res.status(200).json({ message: 'OK' });
+    res.status(200).json({ success: true });
   } catch (error) {
     logger.error('Webhook 處理失敗:', error);
     res.status(500).json({ error: '內部伺服器錯誤' });
