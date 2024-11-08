@@ -119,24 +119,28 @@ export class LineService implements LineServiceInterface {
 
   async replyMessage(replyToken: string, messages: any[]) {
     try {
-      const response = await fetch(`${this.apiUrl}/message/reply`, {
+      // 添加日誌來追蹤
+      logger.info('準備發送 LINE 回覆:', { replyToken, messages });
+
+      const response = await fetch(`${lineConfig.apiUrl}/message/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.channelAccessToken}`
+          'Authorization': `Bearer ${lineConfig.channelAccessToken}`
         },
         body: JSON.stringify({
           replyToken,
-          messages
+          messages: Array.isArray(messages) ? messages : [messages]
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         logger.error('LINE API 回覆失敗:', errorData);
-        throw new Error(errorData.message);
+        throw new Error(`LINE API 錯誤: ${errorData.message}`);
       }
 
+      logger.info('LINE 回覆發送成功');
       return response.json();
     } catch (error) {
       logger.error('發送 LINE 回覆時發生錯誤:', error);

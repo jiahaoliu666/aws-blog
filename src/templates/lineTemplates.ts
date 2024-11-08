@@ -166,9 +166,9 @@ export const createUserIdTemplate = (userId: string) => ({
   }
 });
 
-export const createVerificationTemplate = (code: string) => ({
+export const createVerificationTemplate = (userId: string, verificationCode: string) => ({
   type: 'flex',
-  altText: '驗證碼',
+  altText: '驗證資訊',
   contents: {
     type: 'bubble',
     body: {
@@ -177,15 +177,29 @@ export const createVerificationTemplate = (code: string) => ({
       contents: [
         {
           type: 'text',
-          text: '驗證碼',
+          text: '您的 LINE ID',
           weight: 'bold',
-          size: 'xl'
+          size: 'lg'
         },
         {
           type: 'text',
-          text: code,
+          text: userId,
           margin: 'md',
-          size: 'xxl',
+          size: 'md',
+          wrap: true
+        },
+        {
+          type: 'text',
+          text: '驗證碼',
+          weight: 'bold',
+          size: 'lg',
+          margin: 'lg'
+        },
+        {
+          type: 'text',
+          text: verificationCode,
+          margin: 'md',
+          size: 'xl',
           weight: 'bold'
         }
       ]

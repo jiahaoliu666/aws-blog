@@ -17,6 +17,14 @@ export const lineConfig: LineConfig = {
   officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || ''
 };
 
+// 檢查 LINE 設定是否完整
+if (!lineConfig.channelAccessToken || !lineConfig.channelSecret) {
+  logger.error('LINE 設定不完整:', {
+    hasToken: !!lineConfig.channelAccessToken,
+    hasSecret: !!lineConfig.channelSecret
+  });
+}
+
 // 簡化驗證函數
 export const validateLineConfig = (): boolean => {
   const envStatus = {
