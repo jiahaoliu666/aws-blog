@@ -6,7 +6,7 @@ import { logger } from '@/utils/logger';
 
 interface UseProfilePasswordProps {
   user: User | null;
-  handleLogout: () => Promise<void>;
+  handleLogout: () => void;
 }
 
 export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps) => {
@@ -52,16 +52,12 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     );
   };
 
-  const handleChangePassword = async (newPassword: string, confirmPassword: string) => {
+  const handleChangePassword = async () => {
     setIsLoading(true);
     try {
       // 基本驗證
       if (!oldPassword || !newPassword) {
         throw new Error('請輸入舊密碼和新密碼');
-      }
-
-      if (newPassword !== confirmPassword) {
-        throw new Error('新密碼和確認密碼不一致');
       }
 
       if (!validatePassword(newPassword)) {

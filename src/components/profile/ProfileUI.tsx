@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { useRouter } from 'next/router';
-import { useAuthContext } from '../../context/AuthContext';
-import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
-import { Settings as ProfileSettings } from '@/types/profileTypes';
+import { useAuthContext } from '@/context/AuthContext';
+import {
+  useProfileCore,
+  useProfileForm,
+  useProfileAvatar,
+  useProfilePassword,
+  useProfileActivity,
+  useProfileArticles,
+  useProfileNotifications
+} from '@/hooks/profile';
+import { useLineVerification, useLineSettings } from '@/hooks/line';
 import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 import Sidebar from './common/Sidebar';
@@ -52,8 +60,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
-  const { user: authUser } = useAuthContext();
-  const profileLogic = useProfileLogic({ user });
+  const { user: authUser, logoutUser } = useAuthContext();
+
+  const core = useProfileCore({ user });
+  const form = useProfileForm({ user, updateUser: core.updateUser });
+  const avatar = useProfileAvatar({ user });
+  const password = useProfilePassword({ user, handleLogout: logoutUser });
+  const activity = useProfileActivity({ user });
+  const articles = useProfileArticles({ user });
+  const notifications = useProfileNotifications();
+  const lineVerification = useLineVerification({ 
+    user, 
+    updateUserLineSettings: notifications.updateSettings 
+  });
+  const lineSettings = useLineSettings({ user });
 
   useEffect(() => {
     setIsClient(true);
@@ -98,7 +118,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
     privacy: 'private'
   };
 
-  const settings: LocalSettings = profileLogic.settings as LocalSettings || defaultSettings;
+  const settings: LocalSettings = core.settings as LocalSettings || defaultSettings;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -106,36 +126,36 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
       
       <div className="flex-grow container mx-auto px-2 sm:px-6 lg:px-8 py-4 lg:py-8 flex flex-col lg:flex-row gap-3 lg:gap-6">
         <Sidebar 
-          activeTab={profileLogic.activeTab}
-          setActiveTab={profileLogic.setActiveTab}
+          activeTab={core.activeTab}
+          setActiveTab={core.setActiveTab}
           isProfileMenuOpen={isProfileMenuOpen}
           setIsProfileMenuOpen={setIsProfileMenuOpen}
-          formData={profileLogic.formData}
+          formData={form.formData}
         />
         
         <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
-          {profileLogic.activeTab === 'profile' && (
-            <ProfileSection {...profileLogic} />
+          {core.activeTab === 'profile' && (
+            <ProfileSection {...form} {...avatar} />
           )}
 
-          {profileLogic.activeTab === 'changePassword' && (
+          {core.activeTab === 'changePassword' && (
             <PasswordSection 
-              {...profileLogic} 
-              passwordMessage={profileLogic.passwordMessage || undefined}
-              newPassword={profileLogic.newPassword || ''}
-              setNewPassword={profileLogic.setNewPassword}
+              {...password} 
+              passwordMessage={password.passwordMessage || undefined}
+              newPassword={password.newPassword || ''}
+              setNewPassword={password.setNewPassword}
             />
           )}
 
-          {profileLogic.activeTab === 'notificationSettings' && (
+          {core.activeTab === 'notificationSettings' && (
             <NotificationSection 
-              {...profileLogic} 
+              {...notifications} 
               user={user && {
                 ...user,
                 userId: user.userId || user.id,
                 sub: user.sub || ''
               }}
-              verificationState={String(profileLogic.verificationState)}
+              verificationState={String(lineVerification.verificationState)}
               checkLineFollowStatus={() => Promise.resolve(false)}
               notificationSettings={{
                 email: settings.notificationPreferences?.email ?? false,
@@ -144,7 +164,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
                 mobile: settings.notificationPreferences?.mobile ?? false
               }}
               handleNotificationChange={(setting: keyof NotificationSettings) => 
-                profileLogic.handleSettingChange('notificationPreferences', { 
+                core.handleSettingChange('notificationPreferences', { 
                   ...settings.notificationPreferences!,
                   [setting]: !settings.notificationPreferences?.[setting]
                 })
@@ -152,37 +172,37 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
             />
           )}
 
-          {profileLogic.activeTab === 'settings' && (
+          {core.activeTab === 'settings' && (
             <SettingsSection 
-              {...profileLogic}
+              {...core}
               settings={settings}
-              handleSettingChange={profileLogic.handleSettingChange}
+              handleSettingChange={core.handleSettingChange}
             />
           )}
 
-          {profileLogic.activeTab === 'feedback' && (
+          {core.activeTab === 'feedback' && (
             <FeedbackSection 
-              {...profileLogic}
+              {...core}
               feedback={{
                 rating: 0,
                 category: '',
-                message: profileLogic.feedback || ''
+                message: core.feedback || ''
               }}
-              feedbackMessage={profileLogic.feedback || undefined}
+              feedbackMessage={core.feedback || undefined}
               setFeedback={(newFeedback) => {
                 if (typeof newFeedback === 'object' && 'message' in newFeedback) {
-                  profileLogic.setFeedback(newFeedback.message);
+                  core.setFeedback(newFeedback.message);
                 } else if (typeof newFeedback === 'string') {
-                  profileLogic.setFeedback(newFeedback);
+                  core.setFeedback(newFeedback);
                 }
               }}
-              handleSubmitFeedback={profileLogic.handleSubmitFeedback}
-              isSubmitting={profileLogic.isSubmitting}
+              handleSubmitFeedback={core.handleSubmitFeedback}
+              isSubmitting={core.isSubmitting}
             />
           )}
 
-          {profileLogic.activeTab === 'activityLog' && (
-            <ActivityLogSection activityLog={profileLogic.activityLog.map((log: { action: string; date: string }) => ({
+          {core.activeTab === 'activityLog' && (
+            <ActivityLogSection activityLog={activity.activityLog.map((log: { action: string; date: string }) => ({
               id: crypto.randomUUID(),
               type: 'default',
               description: log.action,
@@ -190,9 +210,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
             }))} />
           )}
 
-          {profileLogic.activeTab === 'history' && (
+          {core.activeTab === 'history' && (
             <HistorySection 
-              recentArticles={profileLogic.recentArticles}
+              recentArticles={articles.recentArticles}
             />
           )}
         </div>

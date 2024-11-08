@@ -7,8 +7,8 @@ import { toast } from 'react-toastify';
 
 interface UseProfileAvatarProps {
   user: User | null;
-  updateUser: (data: Partial<User>) => void;
-  setFormData: (data: any) => void;
+  updateUser?: (data: Partial<User>) => void;
+  setFormData?: (data: any) => void;
 }
 
 export type UseProfileAvatarReturn = {
@@ -108,7 +108,9 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       await dynamoClient.send(updateCommand);
 
       // 更新本地狀態
-      updateUser({ avatar: avatarUrl });
+      if (updateUser) {
+        updateUser({ avatar: avatarUrl });
+      }
       setUploadMessage('頭像上傳成功');
       toast.success('頭像已更新');
 
