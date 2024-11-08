@@ -102,7 +102,7 @@ interface LineServiceInterface {
     lineNotification: boolean;
     lineId?: string;
   }): Promise<void>;
-  replyMessage(replyToken: string, message: LineMessage): Promise<void>;
+  replyMessage(replyToken: string, messages: any | any[]): Promise<any>;
 }
 
 export class LineService implements LineServiceInterface {
@@ -116,9 +116,17 @@ export class LineService implements LineServiceInterface {
     };
   }
 
-  async replyMessage(replyToken: string, message: any) {
+  async replyMessage(replyToken: string, messages: any | any[]): Promise<any> {
     try {
-      const response = await fetch(`${lineConfig.apiUrl}/message/reply`, {
+      // 確保 messages 是陣列
+      const messageArray = Array.isArray(messages) ? messages : [messages];
+      
+      logger.info('準備發送 LINE 回覆', {
+        replyToken,
+        messageCount: messageArray.length
+      });
+
+      const response = await fetch(`${lineConfig.apiUrl}/v2/bot/message/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,19 +134,23 @@ export class LineService implements LineServiceInterface {
         },
         body: JSON.stringify({
           replyToken,
-          messages: [message]
+          messages: messageArray
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        logger.error('LINE API 回覆訊息失敗:', errorData);
-        throw new Error(`LINE API 錯誤: ${errorData.message}`);
+        logger.error('LINE API 回覆失敗', errorData);
+        throw new Error(`LINE API 錯誤: ${JSON.stringify(errorData)}`);
       }
 
+      logger.info('LINE 回覆發送成功');
       return response.json();
     } catch (error) {
-      logger.error('發送 LINE 回覆時發生錯誤:', error);
+      logger.error('發送 LINE 回覆失敗', {
+        error: error instanceof Error ? error.message : '未知錯誤',
+        replyToken
+      });
       throw error;
     }
   }
@@ -338,23 +350,25 @@ const saveVerificationState = async (userId: string, state: VerificationState) =
   await dynamoClient.send(new UpdateItemCommand(params));
 };
 
-const saveVerificationInfo = async (lineId: string, verificationCode: string) => {
-  try {
-    const params = {
-      TableName: 'AWS_Blog_UserNotificationSettings',
-      Item: {
-        lineId: { S: lineId },
-        verificationCode: { S: verificationCode },
-        verificationExpiry: { N: (Date.now() + 5 * 60 * 1000).toString() }, // 5分鐘後過期
-        createdAt: { S: new Date().toISOString() }
-      }
-    };
+async function saveVerificationInfo(lineUserId: string, verificationCode: string) {
+  const params = {
+    TableName: 'line_verifications',
+    Item: {
+      lineUserId: { S: lineUserId },
+      verificationCode: { S: verificationCode },
+      createdAt: { S: new Date().toISOString() },
+      expiresAt: { N: (Math.floor(Date.now() / 1000) + 600).toString() } // 10分鐘後過期
+    }
+  };
 
+  try {
     await dynamoClient.send(new PutItemCommand(params));
-    logger.info('驗證資訊已儲存:', { lineId, verificationCode });
-    return true;
+    logger.info('驗證資訊已儲存', { lineUserId, verificationCode });
   } catch (error) {
-    logger.error('儲存驗證資訊失敗:', error);
+    logger.error('儲存驗證資訊失敗', {
+      error: error instanceof Error ? error.message : '未知錯誤',
+      lineUserId
+    });
     throw error;
   }
-};
+}

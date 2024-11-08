@@ -37,14 +37,31 @@ const checkEnvVariables = () => {
   return envStatus;
 };
 
-// 添加配置驗證
-export const validateLineConfig = () => {
-    const config = {
-        channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-        channelSecret: process.env.LINE_CHANNEL_SECRET,
-        basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID
-    };
-    return config;
+// 修改驗證函數以返回布林值
+export const validateLineConfig = (): boolean => {
+  try {
+    const requiredEnvVars = [
+      'LINE_CHANNEL_ACCESS_TOKEN',
+      'LINE_CHANNEL_SECRET',
+      'LINE_API_URL'
+    ];
+
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      throw new Error(`缺少必要的環境變數: ${missingVars.join(', ')}`);
+    }
+
+    // 驗證 token 格式
+    if (process.env.LINE_CHANNEL_ACCESS_TOKEN!.length < 100) {
+      throw new Error('LINE Channel Access Token 格式不正確');
+    }
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 };
 
 // 在配置導出前進行驗證

@@ -188,7 +188,7 @@ export const createUserIdTemplate = (userId: string) => ({
 
 export const createVerificationTemplate = (code: string) => ({
   type: 'flex',
-  altText: '驗證碼',
+  altText: '您的驗證碼',
   contents: {
     type: 'bubble',
     body: {
@@ -218,14 +218,6 @@ export const createVerificationTemplate = (code: string) => ({
           align: 'center',
           margin: 'md',
           color: '#888888'
-        },
-        {
-          type: 'text',
-          text: '驗證碼將在 5 分鐘後失效',
-          size: 'xs',
-          align: 'center',
-          margin: 'md',
-          color: '#FF0000'
         }
       ]
     }

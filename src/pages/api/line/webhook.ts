@@ -5,6 +5,7 @@ import { lineService } from '@/services/lineService';
 import { logger } from '@/utils/logger';
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { lineConfig } from '@/config/line';
+import crypto from 'crypto';
 
 // 添加 LINE Webhook 事件類型定義
 type LineWebhookEvent = {
@@ -38,7 +39,7 @@ const errorHandler = (error: any, res: NextApiResponse) => {
   // 回傳適當的錯誤響應
   res.status(500).json({
     success: false,
-    message: '處理請求時發生錯誤'
+    message: '處理請發生錯誤'
   });
 };
 
@@ -63,7 +64,13 @@ async function saveVerificationInfo(lineUserId: string, verificationCode: string
     }
   });
 
-  return dynamoClient.send(command);
+  try {
+    await dynamoClient.send(command);
+    logger.info('驗證資訊已儲存', { lineUserId, verificationCode });
+  } catch (error) {
+    logger.error('儲存驗證資訊失敗', error);
+    throw error;
+  }
 }
 
 // 添加驗證碼訊息模板函數
@@ -71,6 +78,14 @@ function createVerificationTemplate(code: string) {
   return {
     type: 'text',
     text: `您的驗證碼是：${code}\n請在10分鐘內完成驗證。`
+  };
+}
+
+// 添加 LINE ID 訊息模板函數
+function createUserIdTemplate(userId: string) {
+  return {
+    type: 'text',
+    text: `您的 LINE ID 是：${userId}`
   };
 }
 
@@ -82,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         signature: req.headers['x-line-signature'],
         body: req.body
       });
-      return res.status(401).json({ message: '簽章驗證失敗' });
+      return res.status(401).json({ message: '章驗證失敗' });
     }
 
     const events = req.body.events as LineWebhookEvent[];
@@ -95,38 +110,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         userId: event.source.userId
       });
 
-      if (event.type === 'message' && 
-          event.message?.type === 'text' && 
-          event.message.text === '驗證') {
-        
-        try {
-          // 獲取用戶 LINE ID
-          const lineUserId = event.source.userId;
-          
-          // 生成驗證碼
-          const verificationCode = generateVerificationCode(6); // 確保這個函數存在
-          
-          // 記錄驗證資訊
-          logger.info('驗證請求:', {
-            lineUserId,
-            verificationCode,
-            timestamp: new Date().toISOString()
-          });
+      if (event.type === 'message' && event.message?.type === 'text') {
+        const messageText = event.message.text;
+        logger.info('收到文字訊息:', {
+          text: messageText,
+          userId: event.source.userId
+        });
 
-          // 儲存驗證資訊到 DynamoDB
-          await saveVerificationInfo(lineUserId, verificationCode);
+        if (messageText === '驗證') {
+          try {
+            const lineUserId = event.source.userId;
+            if (!lineUserId) {
+              throw new Error('無法獲取用戶 LINE ID');
+            }
 
-          // 發送驗證碼給用戶
-          const verificationTemplate = createVerificationTemplate(verificationCode);
-          await lineService.replyMessage(event.replyToken!, verificationTemplate);
+            // 生成驗證碼
+            const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+            
+            // 儲存驗證資訊
+            await saveVerificationInfo(lineUserId, verificationCode);
 
-        } catch (error) {
-          logger.error('處理驗證請求失敗:', error);
-          // 發送錯誤訊息給用戶
-          await lineService.replyMessage(event.replyToken!, {
-            type: 'text',
-            text: '驗證處理失敗，請稍後重試'
-          });
+            // 發送兩個訊息：LINE ID 和驗證碼
+            await lineService.replyMessage(event.replyToken!, [
+              createUserIdTemplate(lineUserId),
+              createVerificationTemplate(verificationCode)
+            ]);
+
+            logger.info('驗證訊息發送成功', {
+              lineUserId,
+              verificationCode
+            });
+          } catch (error) {
+            logger.error('驗證處理失敗', {
+              error: error instanceof Error ? error.message : '未知錯誤',
+              userId: event.source.userId
+            });
+            
+            // 發送錯誤訊息
+            if (event.replyToken) {
+              await lineService.replyMessage(event.replyToken, [{
+                type: 'text',
+                text: '驗證處理失敗，請稍後重試'
+              }]);
+            }
+          }
         }
       }
     }
