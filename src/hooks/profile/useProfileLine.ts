@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '../../types/userType';
-import { VerificationState } from '../../types/lineTypes';
+import { VerificationState, VerificationStep, VerificationStatus } from '../../types/lineTypes';
 import { lineService } from '../../services/lineService';
 import { toast } from 'react-toastify';
 import { logger } from '../../utils/logger';
@@ -11,10 +11,12 @@ export const useProfileLine = (user: User | null) => {
   const [lineIdError, setLineIdError] = useState('');
   const [lineIdStatus, setLineIdStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
   const [verificationState, setVerificationState] = useState<VerificationState>({
-    step: 'idle',
-    status: 'idle',
+    step: VerificationStep.IDLE,
+    status: VerificationStatus.IDLE,
     message: '',
-    isVerified: false
+    isVerified: false,
+    progress: 0,
+    currentStep: 0
   });
   const [verificationCode, setVerificationCode] = useState('');
   const [isLineFollowed, setIsLineFollowed] = useState(false);
@@ -82,15 +84,19 @@ export const useProfileLine = (user: User | null) => {
         setIsLineFollowed(response.isFollowing);
         
         const newState = response.isFollowing ? {
-          step: 'verifying' as const,
-          status: 'idle' as const,
+          step: VerificationStep.VERIFYING,
+          status: VerificationStatus.IDLE,
           message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
-          isVerified: false
+          isVerified: false,
+          progress: 0,
+          currentStep: 0
         } : {
-          step: 'idle' as const,
-          status: 'idle' as const,
+          step: VerificationStep.IDLE,
+          status: VerificationStatus.IDLE,
           message: '請先加入 LINE 官方帳號為好友',
-          isVerified: false
+          isVerified: false,
+          progress: 0,
+          currentStep: 0
         };
 
         setVerificationState(newState);
@@ -114,8 +120,8 @@ export const useProfileLine = (user: User | null) => {
     try {
       setVerificationState(prev => ({
         ...prev,
-        step: 'verifying',
-        status: 'pending',
+        step: VerificationStep.VERIFYING,
+        status: VerificationStatus.PENDING,
         message: '正在處理驗證請求...'
       }));
 
@@ -128,10 +134,12 @@ export const useProfileLine = (user: User | null) => {
       }
 
       const newState: VerificationState = {
-        step: 'verifying',
-        status: 'idle',
+        step: VerificationStep.VERIFYING,
+        status: VerificationStatus.IDLE,
         message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
-        isVerified: false
+        isVerified: false,
+        progress: 0,
+        currentStep: 0
       };
 
       setVerificationState(newState);
@@ -144,11 +152,14 @@ export const useProfileLine = (user: User | null) => {
       });
 
     } catch (error) {
-      setVerificationState(prev => ({
-        ...prev,
-        status: 'error',
-        message: '驗證請求失敗，請稍後重試'
-      }));
+      setVerificationState({
+        step: VerificationStep.IDLE,
+        status: VerificationStatus.ERROR,
+        message: '驗證請求失敗，請稍後重試',
+        progress: 0,
+        currentStep: 0,
+        isVerified: false
+      });
     }
   };
 
@@ -156,7 +167,7 @@ export const useProfileLine = (user: User | null) => {
     try {
       setVerificationState(prev => ({
         ...prev,
-        status: 'validating',
+        status: VerificationStatus.VALIDATING,
         message: '正在驗證...'
       }));
 
@@ -174,10 +185,12 @@ export const useProfileLine = (user: User | null) => {
 
       if (data.success) {
         const successState: VerificationState = {
-          step: 'complete',
-          status: 'success',
+          step: VerificationStep.COMPLETE,
+          status: VerificationStatus.SUCCESS,
           message: '驗證成功！',
-          isVerified: true
+          isVerified: true,
+          progress: 100,
+          currentStep: 2
         };
 
         setVerificationState(successState);
@@ -193,7 +206,7 @@ export const useProfileLine = (user: User | null) => {
     } catch (error) {
       setVerificationState(prev => ({
         ...prev,
-        status: 'error',
+        status: VerificationStatus.ERROR,
         message: '驗證過程發生錯誤'
       }));
     }
@@ -202,10 +215,12 @@ export const useProfileLine = (user: User | null) => {
   const handleVerificationRetry = async () => {
     if (retryCount >= MAX_RETRY) {
       setVerificationState({
-        step: 'idle',
-        status: 'error',
+        step: VerificationStep.IDLE,
+        status: VerificationStatus.ERROR,
         message: '已超過最大重試次數，請稍後再試',
-        isVerified: false
+        isVerified: false,
+        progress: 0,
+        currentStep: 0
       });
       return;
     }

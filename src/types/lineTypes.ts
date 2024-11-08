@@ -80,8 +80,21 @@ export interface ProfileLogicReturn {
   setLineId: Dispatch<SetStateAction<string>>;
 }
 
-export type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';
-export type VerificationStatus = 'idle' | 'validating' | 'pending' | 'error' | 'success';
+export enum VerificationStep {
+  IDLE = 'IDLE',
+  ADD_FRIEND = 'ADD_FRIEND',
+  INPUT_INFO = 'INPUT_INFO',
+  VERIFYING = 'VERIFYING',
+  COMPLETE = 'COMPLETE'
+}
+
+export enum VerificationStatus {
+  IDLE = 'IDLE',
+  PENDING = 'PENDING',
+  VALIDATING = 'VALIDATING',
+  SUCCESS = 'SUCCESS',
+  ERROR = 'ERROR'
+}
 
 export interface VerificationState {
   step: VerificationStep;
@@ -89,6 +102,8 @@ export interface VerificationState {
   message?: string;
   isVerified?: boolean;
   error?: string;
+  progress: number;
+  currentStep: number;
 }
 
 export interface VerificationRequest {
@@ -166,6 +181,36 @@ interface AWS_Blog_UserNotificationSettings {
   createdAt: string;       // 創建時間
   updatedAt: string;       // 更新時間
 }
+
+export interface VerificationStepInfo {
+  number: number;
+  title: string;
+  description: string;
+  icon?: string;
+}
+
+export const VERIFICATION_STEPS: VerificationStepInfo[] = [
+  {
+    number: 1,
+    title: '準備開始',
+    description: '開始驗證流程'
+  },
+  {
+    number: 2,
+    title: '加入好友',
+    description: '掃描 QR Code 加入 LINE 好友'
+  },
+  {
+    number: 3,
+    title: '輸入驗證',
+    description: '輸入 LINE ID 與驗證碼'
+  },
+  {
+    number: 4,
+    title: '完成驗證',
+    description: '驗證完成並啟用通知'
+  }
+];
 
 export interface LineVerificationProps {
   verificationState: VerificationState;

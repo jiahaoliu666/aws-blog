@@ -67,7 +67,10 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
           {/* 驗證表單 */}
           <LineVerification
-            verificationState={verificationState}
+            verificationState={{
+              ...verificationState,
+              progress: verificationState.step === VerificationStep.COMPLETE ? 100 : 50
+            }}
             lineId={lineId || ''}
             setLineId={setLineId}
             verificationCode={verificationCode || ''}

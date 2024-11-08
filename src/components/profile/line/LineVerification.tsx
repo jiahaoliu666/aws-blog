@@ -15,6 +15,8 @@ interface LineVerificationProps {
     status: string;
     message?: string;
     isVerified?: boolean;
+    progress: number;
+    currentStep?: number;
   };
   lineId: string;
   setLineId: (value: string) => void;
@@ -35,8 +37,70 @@ const LineVerification: React.FC<LineVerificationProps> = ({
   userId,
   onCopyUserId,
 }) => {
+  // 新增步驟定義
+  const VERIFICATION_STEPS = [
+    { number: 1, title: '準備開始', description: '開始驗證流程' },
+    { number: 2, title: '加入好友', description: '掃描 QR Code 加入 LINE 好友' },
+    { number: 3, title: '輸入驗證', description: '輸入 LINE ID 與驗證碼' },
+    { number: 4, title: '完成驗證', description: '驗證完成並啟用通知' }
+  ];
+
+  // 在 LineVerification 組件中加入新的進度條
+  const StepProgress = () => {
+    const currentStep = verificationState.currentStep || 1;
+    
+    return (
+      <div className="mb-8">
+        <div className="relative">
+          {/* 進度條背景 */}
+          <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2" />
+          
+          {/* 進度條前景 */}
+          <div 
+            className="absolute top-1/2 left-0 h-1 bg-blue-500 -translate-y-1/2 transition-all duration-500"
+            style={{ width: `${((currentStep - 1) / (VERIFICATION_STEPS.length - 1)) * 100}%` }}
+          />
+          
+          {/* 步驟點 */}
+          <div className="relative flex justify-between">
+            {VERIFICATION_STEPS.map((step, index) => {
+              const isActive = currentStep >= step.number;
+              const isCompleted = currentStep > step.number;
+              
+              return (
+                <div key={step.number} className="flex flex-col items-center">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 
+                      ${isActive ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-500'}
+                      ${isCompleted ? 'bg-blue-500 border-blue-500' : ''} 
+                      transition-all duration-300`}
+                  >
+                    {isCompleted ? (
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-white" />
+                    ) : (
+                      <span className="text-sm font-medium">{step.number}</span>
+                    )}
+                  </div>
+                  <div className="mt-2 text-center">
+                    <div className={`text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                      {step.title}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 hidden sm:block">
+                      {step.description}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      <StepProgress />
       {/* 步驟 1: 加入好友 */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div className="flex gap-4 items-start">

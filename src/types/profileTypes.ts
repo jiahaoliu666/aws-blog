@@ -1,3 +1,5 @@
+import { VerificationStep } from './lineTypes';
+
 export interface FormData {
   avatar?: string;
   username: string;
@@ -20,8 +22,6 @@ export type ActivityLogExtended = {
   details?: string;
   status?: string;
 }
-
-export type VerificationStep = 'idle' | 'verifying' | 'confirming' | 'complete';
 
 export interface Settings {
   theme: 'light' | 'dark' | 'system';

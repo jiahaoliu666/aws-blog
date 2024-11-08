@@ -3,28 +3,18 @@ import { lineService } from '@/services/lineService';
 import { toast } from 'react-toastify';
 import { logger } from '@/utils/logger';
 import { User } from '@/types/userType';
-import { VerificationState } from '@/types/lineTypes';
+import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
 import docClient from '@/libs/dynamodb';
 import { GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
-enum VerificationStep {
-  IDLE = 'idle',
-  VERIFYING = 'verifying',
-  CONFIRMING = 'confirming',
-  COMPLETE = 'complete'
-}
-
-enum VerificationStatus {
-  IDLE = 'idle',
-  PENDING = 'pending',
-  VALIDATING = 'validating',
-  SUCCESS = 'success',
-  ERROR = 'error'
-}
-
 interface UseLineVerificationProps {
   user: User | null;
-  updateUserLineSettings: (settings: any) => Promise<void>;
+  updateUserLineSettings: (settings: {
+    lineId: string;
+    isVerified: boolean;
+    verificationStep: VerificationStep;
+    verificationStatus: VerificationStatus;
+  }) => Promise<void>;
 }
 
 const createVerificationTemplate = (code: string) => {
@@ -33,10 +23,12 @@ const createVerificationTemplate = (code: string) => {
 
 export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVerificationProps) => {
   const [verificationState, setVerificationState] = useState<VerificationState>({
-    step: 'idle',
-    status: 'idle',
+    step: VerificationStep.IDLE,
+    status: VerificationStatus.IDLE,
     message: '',
-    isVerified: false
+    isVerified: false,
+    progress: 0,
+    currentStep: 1
   });
   const [lineId, setLineId] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -51,10 +43,12 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
       
       if (data.isVerified) {
         setVerificationState({
-          step: 'complete',
-          status: 'success',
+          step: VerificationStep.COMPLETE,
+          status: VerificationStatus.SUCCESS,
           message: '驗證成功',
-          isVerified: true
+          isVerified: true,
+          progress: 100,
+          currentStep: 4
         });
       }
     } catch (error) {
@@ -65,13 +59,22 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
   // 驗證 LINE ID 和驗證碼
   const verifyLineIdAndCode = async (lineId: string, verificationCode: string) => {
     try {
-      setVerificationState({
-        step: 'verifying',
-        status: 'validating',
-        message: '正在驗證...'
-      });
+      setVerificationState(prev => ({
+        ...prev,
+        step: VerificationStep.VERIFYING,
+        status: VerificationStatus.VALIDATING,
+        message: '正在驗證...',
+        currentStep: 3,
+        progress: 75
+      }));
 
-      // 檢查 DynamoDB 中的驗證碼
+      setTimeout(() => {
+        setVerificationState(prev => ({
+          ...prev,
+          progress: 60
+        }));
+      }, 500);
+
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Key: {
@@ -82,37 +85,43 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
       const result = await docClient.send(new GetItemCommand(params));
       
       if (result.Item?.verificationCode?.S === verificationCode) {
-        // 驗證成功，更新狀態
         await updateUserLineSettings({
           lineId,
           isVerified: true,
-          verificationStep: 'complete',
-          verificationStatus: 'success'
+          verificationStep: VerificationStep.COMPLETE,
+          verificationStatus: VerificationStatus.SUCCESS
         });
 
-        setVerificationState({
-          step: 'complete',
-          status: 'success',
-          message: '驗證成功！'
-        });
+        setVerificationState(prev => ({
+          ...prev,
+          step: VerificationStep.COMPLETE,
+          status: VerificationStatus.SUCCESS,
+          message: '驗證成功！',
+          currentStep: 4,
+          progress: 100
+        }));
 
         toast.success('LINE 帳號驗證成功');
       } else {
-        setVerificationState({
-          step: 'verifying',
-          status: 'error',
-          message: '驗證碼不正確，請重新確認'
-        });
+        setVerificationState(prev => ({
+          ...prev,
+          step: VerificationStep.VERIFYING,
+          status: VerificationStatus.ERROR,
+          message: '驗證碼不正確，請重新確認',
+          progress: 0
+        }));
         
         toast.error('驗證碼不正確');
       }
     } catch (error) {
       logger.error('驗證失敗:', error);
-      setVerificationState({
-        step: 'verifying',
-        status: 'error',
-        message: '驗證過程發生錯誤'
-      });
+      setVerificationState(prev => ({
+        ...prev,
+        step: VerificationStep.VERIFYING,
+        status: VerificationStatus.ERROR,
+        message: '驗證過程發生錯誤',
+        progress: 0
+      }));
       toast.error('驗證失敗，請稍後重試');
     }
   };
