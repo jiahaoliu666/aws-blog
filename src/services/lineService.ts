@@ -102,55 +102,44 @@ interface LineServiceInterface {
     lineNotification: boolean;
     lineId?: string;
   }): Promise<void>;
-  replyMessage(replyToken: string, messages: any | any[]): Promise<any>;
+  replyMessage(replyToken: string, messages: any[]): Promise<any>;
 }
 
 export class LineService implements LineServiceInterface {
-  private headers: { [key: string]: string };
+  private readonly channelAccessToken: string;
+  private readonly apiUrl: string = 'https://api.line.me/v2/bot';
 
   constructor() {
-    validateLineMessagingConfig();
-    this.headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${lineConfig.channelAccessToken}`
-    };
+    const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+    if (!token) {
+      throw new Error('LINE Channel Access Token is not set');
+    }
+    this.channelAccessToken = token;
   }
 
-  async replyMessage(replyToken: string, messages: any | any[]): Promise<any> {
+  async replyMessage(replyToken: string, messages: any[]) {
     try {
-      // 確保 messages 是陣列
-      const messageArray = Array.isArray(messages) ? messages : [messages];
-      
-      logger.info('準備發送 LINE 回覆', {
-        replyToken,
-        messageCount: messageArray.length
-      });
-
-      const response = await fetch(`${lineConfig.apiUrl}/v2/bot/message/reply`, {
+      const response = await fetch(`${this.apiUrl}/message/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+          'Authorization': `Bearer ${this.channelAccessToken}`
         },
         body: JSON.stringify({
           replyToken,
-          messages: messageArray
+          messages
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        logger.error('LINE API 回覆失敗', errorData);
-        throw new Error(`LINE API 錯誤: ${JSON.stringify(errorData)}`);
+        logger.error('LINE API 回覆失敗:', errorData);
+        throw new Error(errorData.message);
       }
 
-      logger.info('LINE 回覆發送成功');
       return response.json();
     } catch (error) {
-      logger.error('發送 LINE 回覆失敗', {
-        error: error instanceof Error ? error.message : '未知錯誤',
-        replyToken
-      });
+      logger.error('發送 LINE 回覆時發生錯誤:', error);
       throw error;
     }
   }
@@ -173,9 +162,12 @@ export class LineService implements LineServiceInterface {
 
   private async pushMessage(to: string, message: LineMessage): Promise<void> {
     try {
-      const response = await fetch(`${lineConfig.apiUrl}/message/push`, {
+      const response = await fetch(`${this.apiUrl}/message/push`, {
         method: 'POST',
-        headers: this.headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.channelAccessToken}`
+        },
         body: JSON.stringify({
           to,
           messages: [message]
@@ -194,9 +186,12 @@ export class LineService implements LineServiceInterface {
 
   async checkFollowStatus(lineUserId: string): Promise<LineFollowStatus> {
     try {
-      const response = await fetch(`${lineConfig.apiUrl}/friendship/status`, {
+      const response = await fetch(`${this.apiUrl}/friendship/status`, {
         method: 'GET',
-        headers: this.headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.channelAccessToken}`
+        },
       });
 
       if (!response.ok) {

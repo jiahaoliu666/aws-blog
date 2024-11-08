@@ -82,8 +82,7 @@ export interface ProfileLogicReturn {
 
 export enum VerificationStep {
   IDLE = 'IDLE',
-  ADD_FRIEND = 'ADD_FRIEND',
-  INPUT_INFO = 'INPUT_INFO',
+  SENDING = 'SENDING',
   VERIFYING = 'VERIFYING',
   COMPLETE = 'COMPLETE'
 }
@@ -92,6 +91,7 @@ export enum VerificationStatus {
   IDLE = 'IDLE',
   PENDING = 'PENDING',
   VALIDATING = 'VALIDATING',
+  SENT = 'SENT',
   SUCCESS = 'SUCCESS',
   ERROR = 'ERROR'
 }

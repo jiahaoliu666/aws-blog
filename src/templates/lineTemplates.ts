@@ -142,7 +142,7 @@ export const createVerificationSuccessTemplate = () => ({
 
 export const createUserIdTemplate = (userId: string) => ({
   type: 'flex',
-  altText: '您的 LINE User ID',
+  altText: '您的 LINE ID',
   contents: {
     type: 'bubble',
     body: {
@@ -151,44 +151,24 @@ export const createUserIdTemplate = (userId: string) => ({
       contents: [
         {
           type: 'text',
-          text: '🆔 您的 LINE User ID',
+          text: '您的 LINE ID',
           weight: 'bold',
-          size: 'xl',
-          color: '#2c5282'
+          size: 'xl'
         },
         {
           type: 'text',
           text: userId,
           margin: 'md',
-          size: 'md',
-          weight: 'bold',
           wrap: true
-        },
-        {
-          type: 'text',
-          text: '請複製上方 ID 並貼到網站的驗證欄位中',
-          margin: 'sm',
-          size: 'sm',
-          color: '#718096'
-        },
-        {
-          type: 'text',
-          text: '⚠️ 請勿分享此 ID 給他人',
-          margin: 'lg',
-          size: 'xs',
-          color: '#e53e3e',
-          weight: 'bold'
         }
-      ],
-      backgroundColor: '#f7fafc',
-      paddingAll: '20px'
+      ]
     }
   }
 });
 
 export const createVerificationTemplate = (code: string) => ({
   type: 'flex',
-  altText: '您的驗證碼',
+  altText: '驗證碼',
   contents: {
     type: 'bubble',
     body: {
@@ -197,27 +177,16 @@ export const createVerificationTemplate = (code: string) => ({
       contents: [
         {
           type: 'text',
-          text: '您的驗證碼',
+          text: '驗證碼',
           weight: 'bold',
-          size: 'xl',
-          align: 'center'
+          size: 'xl'
         },
         {
           type: 'text',
           text: code,
-          weight: 'bold',
-          size: '3xl',
-          align: 'center',
           margin: 'md',
-          color: '#1DB446'
-        },
-        {
-          type: 'text',
-          text: '請在網站輸入此驗證碼',
-          size: 'sm',
-          align: 'center',
-          margin: 'md',
-          color: '#888888'
+          size: 'xxl',
+          weight: 'bold'
         }
       ]
     }

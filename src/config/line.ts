@@ -2,77 +2,58 @@
 import { LineConfig } from '../types/lineTypes';
 // 添加 logger 導入
 import { logger } from '../utils/logger';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const lineConfig: LineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
   channelSecret: process.env.LINE_CHANNEL_SECRET || '',
   apiUrl: 'https://api.line.me/v2/bot',
   webhookUrl: process.env.NODE_ENV === 'development' 
-    ? process.env.NGROK_URL 
-      ? `${process.env.NGROK_URL}/api/line/webhook`
-      : '/api/line/webhook'
+    ? `${process.env.NGROK_URL || ''}/api/line/webhook`
     : `${process.env.NEXT_PUBLIC_API_URL || ''}/api/line/webhook`,
   basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID || '',
   qrCodeUrl: process.env.NEXT_PUBLIC_LINE_QR_CODE_URL || '',
   officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || ''
 };
 
-// 添加環境變數檢查函數
-const checkEnvVariables = () => {
+// 簡化驗證函數
+export const validateLineConfig = (): boolean => {
   const envStatus = {
-    NODE_ENV: process.env.NODE_ENV,
-    ENV_FILE_LOADED: process.env.LINE_CHANNEL_ACCESS_TOKEN ? '已載入' : '未載入',
-    LINE_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN ? '已設置' : '未設置',
-    LINE_SECRET: process.env.LINE_CHANNEL_SECRET ? '已設置' : '未設置',
-    TOKEN_LENGTH: process.env.LINE_CHANNEL_ACCESS_TOKEN?.length || 0,
-    SECRET_LENGTH: process.env.LINE_CHANNEL_SECRET?.length || 0
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.LINE_CHANNEL_SECRET
   };
 
-  // 添加更詳細的日誌
-  console.log('LINE 配置狀態:', {
-    ...envStatus,
-    webhookUrl: lineConfig.webhookUrl
+  // 記錄環境變數狀態
+  logger.info('LINE 配置狀態:', {
+    tokenExists: !!envStatus.channelAccessToken,
+    secretExists: !!envStatus.channelSecret,
+    nodeEnv: process.env.NODE_ENV
   });
 
-  return envStatus;
-};
-
-// 修改驗證函數以返回布林值
-export const validateLineConfig = (): boolean => {
-  try {
-    const requiredEnvVars = [
-      'LINE_CHANNEL_ACCESS_TOKEN',
-      'LINE_CHANNEL_SECRET',
-      'LINE_API_URL'
-    ];
-
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
-    if (missingVars.length > 0) {
-      throw new Error(`缺少必要的環境變數: ${missingVars.join(', ')}`);
+  // 如果在開發環境，使用警告而不是錯誤
+  if (process.env.NODE_ENV === 'development') {
+    if (!envStatus.channelAccessToken || !envStatus.channelSecret) {
+      logger.warn('開發環境中缺少 LINE 配置，部分功能可能無法使用');
+      return false;
     }
-
-    // 驗證 token 格式
-    if (process.env.LINE_CHANNEL_ACCESS_TOKEN!.length < 100) {
-      throw new Error('LINE Channel Access Token 格式不正確');
+  } else {
+    // 在生產環境中強制要求配置
+    if (!envStatus.channelAccessToken || !envStatus.channelSecret) {
+      throw new Error(
+        '缺少必要的 LINE 環境變數: ' + 
+        [
+          !envStatus.channelAccessToken && 'LINE_CHANNEL_ACCESS_TOKEN',
+          !envStatus.channelSecret && 'LINE_CHANNEL_SECRET'
+        ].filter(Boolean).join(', ')
+      );
     }
-
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
   }
+
+  return true;
 };
 
-// 在配置導出前進行驗證
-if (!validateLineConfig()) {
-  console.warn('LINE 配置驗證失敗，部分功能可能無法正常運作');
-}
-
-export const lineConfigValidation = validateLineConfig();
-
-// 直接使用 lineConfigValidation，因為它本身就是一個布林值
-export const isLineConfigValid = lineConfigValidation;
+export const isLineConfigValid = validateLineConfig();
 
 if (!isLineConfigValid) {
   console.warn('⚠️ LINE 設定驗證失敗，部分功能可能無法正常運作。請確認環境變數設定是否正確。');

@@ -126,6 +126,64 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
     }
   };
 
+  const handleVerification = async () => {
+    if (!lineId.trim()) {
+      toast.error('請輸入 LINE ID');
+      return;
+    }
+
+    try {
+      setVerificationState(prev => ({
+        ...prev,
+        step: VerificationStep.SENDING,
+        status: VerificationStatus.PENDING,
+        message: '正在發送驗證碼...',
+        currentStep: 2,
+        progress: 50
+      }));
+
+      // 生成驗證碼
+      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // 儲存驗證碼到 DynamoDB
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Item: {
+          lineId: { S: lineId },
+          verificationCode: { S: verificationCode },
+          verificationExpiry: { N: String(Date.now() + 5 * 60 * 1000) }, // 5分鐘有效期
+          userId: { S: user?.sub || '' }
+        }
+      };
+
+      await docClient.send(new PutItemCommand(params));
+
+      // 發送驗證碼訊息
+      const message = createVerificationTemplate(verificationCode);
+      await lineService.sendMessage(lineId, message);
+
+      setVerificationState(prev => ({
+        ...prev,
+        step: VerificationStep.VERIFYING,
+        status: VerificationStatus.SENT,
+        message: '驗證碼已發送，請查看 LINE 訊息',
+        currentStep: 3,
+        progress: 75
+      }));
+
+      toast.success('驗證碼已發送');
+    } catch (error) {
+      logger.error('發送驗證碼失敗:', error);
+      setVerificationState(prev => ({
+        ...prev,
+        status: VerificationStatus.ERROR,
+        message: '發送驗證碼失敗',
+        progress: 0
+      }));
+      toast.error('發送驗證碼失敗，請稍後重試');
+    }
+  };
+
   useEffect(() => {
     checkVerificationStatus();
   }, [user?.sub]);
@@ -136,7 +194,8 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
     setLineId,
     verificationCode,
     setVerificationCode,
-    verifyLineIdAndCode
+    verifyLineIdAndCode,
+    handleVerification
   };
 };
 
