@@ -50,6 +50,7 @@ export interface LineFollowStatus {
   followed: boolean;
   message: string;
   displayName: string;
+  timestamp: string;
 }
 
 export interface ProfileLogicReturn {

@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import { logger } from '@/utils/logger';
 import { User } from '@/types/userType';
 import { VerificationState } from '@/types/lineTypes';
+import docClient from '@/libs/dynamodb';
+import { GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
 enum VerificationStep {
   IDLE = 'idle',
@@ -29,7 +31,7 @@ const createVerificationTemplate = (code: string) => {
   return `您的驗證碼是：${code}\n請在網頁上輸入此驗證碼完成驗證。`;
 };
 
-export const useLineVerification = (user: User | null) => {
+export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVerificationProps) => {
   const [verificationState, setVerificationState] = useState<VerificationState>({
     step: 'idle',
     status: 'idle',
@@ -61,49 +63,57 @@ export const useLineVerification = (user: User | null) => {
   };
 
   // 驗證 LINE ID 和驗證碼
-  const verifyLineIdAndCode = async () => {
-    if (!user?.sub || !lineId || !verificationCode) {
-      toast.error('請輸入 LINE ID 和驗證碼');
-      return;
-    }
-
+  const verifyLineIdAndCode = async (lineId: string, verificationCode: string) => {
     try {
-      setVerificationState(prev => ({
-        ...prev,
+      setVerificationState({
+        step: 'verifying',
         status: 'validating',
         message: '正在驗證...'
-      }));
-
-      const response = await fetch('/api/line/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.sub,
-          lineId,
-          verificationCode
-        })
       });
 
-      const data = await response.json();
+      // 檢查 DynamoDB 中的驗證碼
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          lineId: { S: lineId }
+        }
+      };
 
-      if (data.success) {
+      const result = await docClient.send(new GetItemCommand(params));
+      
+      if (result.Item?.verificationCode?.S === verificationCode) {
+        // 驗證成功，更新狀態
+        await updateUserLineSettings({
+          lineId,
+          isVerified: true,
+          verificationStep: 'complete',
+          verificationStatus: 'success'
+        });
+
         setVerificationState({
           step: 'complete',
           status: 'success',
-          message: '驗證成功！',
-          isVerified: true
+          message: '驗證成功！'
         });
-        toast.success('LINE 驗證成功');
+
+        toast.success('LINE 帳號驗證成功');
       } else {
-        throw new Error(data.message || '驗證失敗');
+        setVerificationState({
+          step: 'verifying',
+          status: 'error',
+          message: '驗證碼不正確，請重新確認'
+        });
+        
+        toast.error('驗證碼不正確');
       }
     } catch (error) {
-      setVerificationState(prev => ({
-        ...prev,
+      logger.error('驗證失敗:', error);
+      setVerificationState({
+        step: 'verifying',
         status: 'error',
-        message: error instanceof Error ? error.message : '驗證失敗'
-      }));
-      toast.error('驗證失敗，請確認 LINE ID 和驗證碼是否正確');
+        message: '驗證過程發生錯誤'
+      });
+      toast.error('驗證失敗，請稍後重試');
     }
   };
 
