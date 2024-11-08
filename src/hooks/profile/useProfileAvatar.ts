@@ -60,6 +60,26 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
     return true;
   };
 
+  const updateDynamoDB = async (userId: string, avatarUrl: string) => {
+    const updateCommand = new UpdateItemCommand({
+      TableName: 'AWS_Blog_UserProfiles',
+      Key: {
+        userId: { S: userId }
+      },
+      UpdateExpression: 'SET avatarUrl = :avatarUrl',
+      ExpressionAttributeValues: {
+        ':avatarUrl': { S: avatarUrl }
+      }
+    });
+    
+    try {
+      await dynamoClient.send(updateCommand);
+    } catch (error) {
+      logger.error('更新 DynamoDB 失敗:', error);
+      throw error;
+    }
+  };
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.sub) return;
@@ -91,34 +111,25 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
 
       // 更新用戶資料
       const avatarUrl = `https://aws-blog-avatar.s3.amazonaws.com/${fileKey}`;
-      const updateParams = {
-        TableName: 'AWS_Blog_UserProfiles',
-        Key: {
-          userId: { S: user.sub }
-        },
-        UpdateExpression: 'SET avatarUrl = :avatarUrl, updatedAt = :updatedAt',
-        ExpressionAttributeValues: {
-          ':avatarUrl': { S: avatarUrl },
-          ':updatedAt': { S: new Date().toISOString() }
-        }
-      };
+      
+      // 更新 DynamoDB
+      await updateDynamoDB(user.sub, avatarUrl);
 
-      const updateCommand = new UpdateItemCommand(updateParams);
-      await dynamoClient.send(updateCommand);
-      logger.info('DynamoDB 更新成功');
-
-      // 更新本地狀態
+      // 更新本地存儲
+      localStorage.setItem('userAvatar', avatarUrl);
+      
+      // 更新所有相關狀態
+      setTempAvatar(avatarUrl);
       if (updateUser) {
         updateUser({ avatar: avatarUrl });
       }
       if (setFormData) {
-        setFormData((prevData: FormData) => ({ ...prevData, avatar: avatarUrl }));
-        logger.info('formData 更新成功', { avatar: avatarUrl });
+        setFormData((prevData: any) => ({ ...prevData, avatar: avatarUrl }));
       }
-      
-      // 更新臨時頭像為新的 URL
-      setTempAvatar(avatarUrl);
-      
+
+      // 觸發全局事件
+      window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: avatarUrl }));
+
       setUploadMessage('頭像上傳成功');
       toast.success('頭像已更新');
 
@@ -137,11 +148,10 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
   };
 
   const loadAvatarFromStorage = () => {
-    if (typeof window === 'undefined') return;
-    
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
       setTempAvatar(savedAvatar);
+      window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: savedAvatar }));
     }
   };
 

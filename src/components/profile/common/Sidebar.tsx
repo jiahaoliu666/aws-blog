@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faUser, 
@@ -28,6 +28,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   formData,
   tempAvatar
 }) => {
+  const [currentAvatar, setCurrentAvatar] = useState(tempAvatar || formData.avatar);
+
+  useEffect(() => {
+    const handleAvatarUpdate = (event: CustomEvent) => {
+      setCurrentAvatar(event.detail);
+    };
+
+    window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+    };
+  }, []);
+
   const menuItems = [
     { tab: 'profile', label: '個人資訊', icon: faUser },
     { tab: 'changePassword', label: '修改密碼', icon: faLock },
@@ -43,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* 用戶資訊 */}
       <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-700 rounded-lg">
         <img
-          src={tempAvatar || formData.avatar || '/images/default-avatar.png'}
+          src={currentAvatar || '/images/default-avatar.png'}
           alt="Profile"
           className="w-12 h-12 rounded-full object-cover border-2 border-blue-500"
         />

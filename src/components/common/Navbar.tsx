@@ -30,6 +30,12 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   useEffect(() => {
     const fetchAvatar = async () => {
       if (user) {
+        const localAvatar = localStorage.getItem('userAvatar');
+        if (localAvatar) {
+          setAvatarUrl(localAvatar);
+          return;
+        }
+
         const dynamoClient = new DynamoDBClient({
           region: 'ap-northeast-1',
           credentials: {
@@ -49,17 +55,17 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
         try {
           const command = new QueryCommand(queryParams);
           const response = await dynamoClient.send(command);
-          let fetchedAvatarUrl = 'user.png'; // 默認頭像
+          let fetchedAvatarUrl = '/images/default-avatar.png'; // 修改默認頭像路徑
 
           if (response.Items && response.Items.length > 0) {
             const avatarFromDB = response.Items[0].avatarUrl?.S;
             if (avatarFromDB) {
               fetchedAvatarUrl = avatarFromDB;
+              localStorage.setItem('userAvatar', fetchedAvatarUrl);
             }
           }
 
           setAvatarUrl(fetchedAvatarUrl);
-          localStorage.setItem('avatarUrl', fetchedAvatarUrl);
         } catch (error) {
           console.error('Error fetching avatar from DynamoDB:', error);
         }
@@ -139,6 +145,18 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
       setUnreadCount(0); // 當通知面板關閉時，將未讀計數設為 0
     }
   };
+
+  useEffect(() => {
+    const handleAvatarUpdate = (event: CustomEvent) => {
+      setAvatarUrl(event.detail);
+    };
+
+    window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+    };
+  }, []);
 
   return (  
     <div id="navbar">  

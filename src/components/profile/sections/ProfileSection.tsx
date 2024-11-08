@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCamera, 
@@ -27,6 +27,7 @@ interface ProfileSectionProps {
   isSubmitting: boolean;
   errorMessage?: string;
   tempAvatar?: string | null;
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
 }
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({
@@ -44,8 +45,33 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   handleSubmit,
   isSubmitting,
   errorMessage,
-  tempAvatar
+  tempAvatar,
+  setFormData
 }) => {
+  useEffect(() => {
+    const handleAvatarUpdate = (event: CustomEvent) => {
+      if (setFormData) {
+        setFormData((prev: any) => ({
+          ...prev,
+          avatar: event.detail
+        }));
+      }
+    };
+
+    window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+    };
+  }, [setFormData]);
+
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar && setFormData) {
+      setFormData(prev => ({ ...prev, avatar: savedAvatar }));
+    }
+  }, []);
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">個人資訊</h1>
