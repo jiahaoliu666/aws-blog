@@ -7,6 +7,7 @@ import {
   faDesktop,
   faMobile,
   faInfoCircle,
+  faCopy,
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import LineVerification from '../line/LineVerification';
@@ -15,6 +16,7 @@ import { NotificationSettings } from '../../../types/profileTypes';
 import { lineConfig } from '../../../config/line';
 import { Switch } from '@mui/material';
 import { VerificationStep } from '../../../types/lineTypes';
+import { toast } from 'react-toastify';
 
 interface NotificationSectionProps {
   user: User | null;
@@ -56,71 +58,159 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
             <FontAwesomeIcon icon={faLine} className="text-[#00B900]" />
             LINE 通知設定
           </h2>
-          
-          {/* 步驟說明 */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
-              <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500" />
-              <span className="font-medium">設定步驟</span>
+
+          {/* 新增：用戶 ID 顯示區塊 */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-start gap-3">
+              <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 mt-1" />
+              <div>
+                <h3 className="font-medium text-gray-700 mb-2">您的用戶 ID</h3>
+                <div className="flex items-center gap-2">
+                  <code className="bg-white px-3 py-1 rounded border text-blue-600 font-mono select-all">
+                    {user?.sub || '未登入'}
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(user?.sub || '');
+                      toast.success('已複製用戶 ID');
+                    }}
+                    className="text-sm px-2 py-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faCopy} className="mr-1" />
+                    複製
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  請在 LINE 上輸入「驗證」取得 LINE ID，並將其填入下方欄位
+                </p>
+              </div>
             </div>
-            <ol className="list-decimal list-inside space-y-2 text-gray-600 ml-4">
-              <li>掃描下方 QR Code 加入官方帳號為好友</li>
-              <li>在 LINE 上輸入「驗證」取得 LINE ID</li>
-              <li>將 LINE ID 填入下方欄位進行驗證</li>
-            </ol>
           </div>
           
-          {/* LINE QR Code 區塊 */}
-          <div className="flex flex-col md:flex-row items-center gap-6 mb-8 p-6 bg-gray-50 rounded-lg">
-            <div className="flex-1 text-center md:text-left">
-              <h3 className="font-medium text-lg mb-2">加入 LINE 官方帳號</h3>
-              <p className="text-gray-600 mb-4">請掃描 QR Code 加入好友以接收通知</p>
-              <a
-                href={`https://line.me/R/ti/p/${lineConfig.basicId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-2.5 bg-[#00B900] text-white rounded-lg hover:bg-[#009900] transition-colors"
-              >
-                <FontAwesomeIcon icon={faLine} className="mr-2" />
-                加入好友
-              </a>
+          {/* 驗證流程說明 */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 text-gray-700 mb-4">
+              <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 text-xl" />
+              <h3 className="font-medium text-lg">驗證流程說明</h3>
             </div>
             
-            <div className="qr-code-container bg-white p-4 rounded-lg shadow-sm">
-              <img 
-                src="/Line-QR-Code.png"
-                alt="LINE QR Code" 
-                className="w-32 h-32 md:w-40 md:h-40"
-              />
+            <div className="space-y-6">
+              {/* 步驟 1 */}
+              <div className="flex gap-4 items-start">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  1
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-1">加入 LINE 官方帳號</h4>
+                  <p className="text-gray-600 mb-2">
+                    掃描下方 QR Code 或點擊「加入好友」按鈕，將我們的 LINE 官方帳號加為好友
+                  </p>
+                  <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="qr-code-container bg-white p-3 rounded-lg shadow-sm">
+                      <img 
+                        src="/Line-QR-Code.png"
+                        alt="LINE QR Code" 
+                        className="w-24 h-24"
+                      />
+                    </div>
+                    <a
+                      href={`https://line.me/R/ti/p/${lineConfig.basicId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 bg-[#00B900] text-white rounded-lg hover:bg-[#009900] transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faLine} className="mr-2" />
+                      加入好友
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* 步驟 2 */}
+              <div className="flex gap-4 items-start">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  2
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-1">取得 LINE ID</h4>
+                  <p className="text-gray-600 mb-2">
+                    在 LINE 聊天室中輸入「驗證」，機器人會回傳您的 LINE ID
+                  </p>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <FontAwesomeIcon icon={faLine} className="text-[#00B900]" />
+                      <span className="font-mono bg-white px-2 py-1 rounded">驗證</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 步驟 3 */}
+              <div className="flex gap-4 items-start">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  3
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-1">輸入 LINE ID</h4>
+                  <p className="text-gray-600 mb-2">
+                    將機器人回傳的 LINE ID 複製並貼到下方的輸入欄位中
+                  </p>
+                  <div className="flex flex-col space-y-2">
+                    <input
+                      id="lineId"
+                      type="text"
+                      value={lineId}
+                      onChange={(e) => setLineId(e.target.value)}
+                      placeholder="請輸入您的 LINE ID"
+                      className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <button
+                      onClick={startVerification}
+                      disabled={!lineId || isLoading}
+                      className={`px-4 py-2 rounded-lg text-white transition-colors ${
+                        !lineId || isLoading 
+                          ? 'bg-gray-400 cursor-not-allowed' 
+                          : 'bg-blue-500 hover:bg-blue-600'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <>
+                          <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
+                          驗證中...
+                        </>
+                      ) : (
+                        '開始驗證'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 步驟 4 */}
+              <div className="flex gap-4 items-start">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  4
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-1">完成驗證</h4>
+                  <p className="text-gray-600">
+                    輸入 LINE ID 後，系統會發送驗證碼到您的 LINE。請將收到的驗證碼輸入到驗證欄位中完成設定。
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* LINE 驗證組件 */}
-          <div className="space-y-4">
-            <div className="flex flex-col space-y-2">
-              <label htmlFor="lineId" className="font-medium text-gray-700">
-                LINE ID
-              </label>
-              <input
-                id="lineId"
-                type="text"
-                value={lineId}
-                onChange={(e) => setLineId(e.target.value)}
-                placeholder="請輸入您的 LINE ID"
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            
-            <LineVerification
-              verificationState={verificationState}
-              lineId={lineId}
-              setLineId={setLineId}
-              startVerification={startVerification}
-              user={user}
-              checkLineFollowStatus={checkLineFollowStatus}
-              confirmVerificationCode={confirmVerificationCode}
-            />
-          </div>
+          <LineVerification
+            verificationState={verificationState}
+            lineId={lineId}
+            setLineId={setLineId}
+            startVerification={startVerification}
+            user={user}
+            checkLineFollowStatus={checkLineFollowStatus}
+            confirmVerificationCode={confirmVerificationCode}
+          />
         </div>
 
         {/* 其他通知設定 */}

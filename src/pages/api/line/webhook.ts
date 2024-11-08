@@ -2,7 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { lineService } from '../../../services/lineService';
 import { logger } from '../../../utils/logger';
-import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
@@ -53,37 +53,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // 處理文字訊息
       if (event.type === 'message' && event.message.type === 'text') {
         const messageText = event.message.text;
-        const userId = event.source.userId;
+        const lineUserId = event.source.userId;
 
         // 處理驗證命令
         if (messageText.startsWith('驗證')) {
           try {
-            // 更新資料庫中的驗證進度
-            const updateParams = {
-              TableName: 'AWS_Blog_UserNotificationSettings',
-              Key: {
-                userId: { S: userId }
-              },
-              UpdateExpression: 'SET verificationStep = :step, verificationStatus = :status, updatedAt = :updatedAt',
-              ExpressionAttributeValues: {
-                ':step': { S: 'follow_completed' },
-                ':status': { S: 'success' },
-                ':updatedAt': { S: new Date().toISOString() }
-              }
+            // 從訊息中提取用戶ID
+            const verificationMatch = messageText.match(/驗證\s+(\S+)/);
+            const userIdFromMessage = verificationMatch?.[1];
+
+            if (!userIdFromMessage) {
+                await lineService.replyMessage(event.replyToken, {
+                    type: 'text',
+                    text: '❌ 驗證格式錯誤！請使用「驗證 {您的用戶ID}」格式'
+                });
+                return;
+            }
+
+            // 儲存到 DynamoDB
+            const params = {
+                TableName: "AWS_Blog_UserNotificationSettings",
+                Item: {
+                    userId: { S: userIdFromMessage },
+                    lineId: { S: lineUserId },
+                    lineNotification: { BOOL: true },
+                    isVerified: { BOOL: true },
+                    updatedAt: { S: new Date().toISOString() }
+                }
             };
 
-            await dynamoClient.send(new UpdateItemCommand(updateParams));
+            await dynamoClient.send(new PutItemCommand(params));
 
             // 回覆用戶
             await lineService.replyMessage(event.replyToken, {
-              type: 'text',
-              text: '✅ 已確認您的驗證請求！\n請回到網頁繼續完成驗證流程。'
+                type: 'text',
+                text: '✅ 已確認您的驗證請求！\n請回到網頁繼續完成驗證流程。'
             });
+
           } catch (error) {
-            logger.error('處理驗證命令時發生錯誤:', error);
+            logger.error('儲存 LINE 設定失敗:', error);
             await lineService.replyMessage(event.replyToken, {
               type: 'text',
-              text: '❌ 處理驗證請求時發生錯誤，請稍後再試。'
+              text: '❌ 驗證過程發生錯誤，請稍後重試。'
             });
           }
         }
