@@ -33,7 +33,7 @@ export const createNewsNotificationTemplate = (articleData: ArticleData): LineMe
         },
         {
           type: 'text',
-          text: articleData.summary || '點擊下方按鈕��讀全文',
+          text: articleData.summary || '點擊下方按鈕讀全文',
           size: 'sm',
           color: '#666666',
           margin: 'md',
@@ -69,9 +69,9 @@ export const createNewsNotificationTemplate = (articleData: ArticleData): LineMe
   }
 });
 
-export const createWelcomeTemplate = (userName: string) => ({
+export const createWelcomeTemplate = () => ({
   type: 'flex',
-  altText: `歡迎訂閱 AWS 部落格通知`,
+  altText: '歡迎加入 AWS 部落格通知',
   contents: {
     type: 'bubble',
     body: {
@@ -80,50 +80,30 @@ export const createWelcomeTemplate = (userName: string) => ({
       contents: [
         {
           type: 'text',
-          text: '🎉 歡迎訂閱 AWS 部落格通知',
+          text: '🎉 歡迎加入 AWS 部落格通知',
           weight: 'bold',
           size: 'xl',
           color: '#2c5282'
         },
         {
           type: 'text',
-          text: '取得您的 LINE ID：',
+          text: '請輸入「驗證」取得您的 LINE ID 和驗證碼',
           margin: 'md',
           size: 'md',
-          weight: 'bold'
+          color: '#4a5568'
         },
         {
           type: 'text',
-          text: '1. 在下方輸入「/id」\n2. 複製機器人回覆的 ID\n3. 將 ID 貼到網站驗證欄位',
-          margin: 'sm',
-          size: 'sm',
-          color: '#4a5568',
-          wrap: true
-        },
-        {
-          type: 'separator',
-          margin: 'lg'
-        },
-        {
-          type: 'text',
-          text: '訂閱後您將收到：',
+          text: '完成驗證後您將收到：',
           margin: 'lg',
           size: 'md'
         },
         {
           type: 'text',
-          text: '• 新文章發布通知\n• 重要更新提醒\n• 精選內容推薦',
+          text: '• AWS 新文章發布通知\n• 重要更新提醒\n• 精選內容推薦',
           margin: 'sm',
           size: 'sm',
           color: '#718096',
-          wrap: true
-        },
-        {
-          type: 'text',
-          text: '您可以隨時在設定頁面調整通知選項，或輸入「取消訂閱」來停止接收通知。',
-          margin: 'lg',
-          size: 'xs',
-          color: '#a0aec0',
           wrap: true
         }
       ]
@@ -206,9 +186,9 @@ export const createUserIdTemplate = (userId: string) => ({
   }
 });
 
-export const createVerificationTemplate = (code: string) => ({
+export const createVerificationTemplate = (lineId: string, code: string) => ({
   type: 'flex',
-  altText: '驗證碼',
+  altText: '驗證資訊',
   contents: {
     type: 'bubble',
     body: {
@@ -217,34 +197,66 @@ export const createVerificationTemplate = (code: string) => ({
       contents: [
         {
           type: 'text',
-          text: '🔐 驗證碼',
+          text: '🔐 驗證資訊',
           weight: 'bold',
           size: 'xl',
           color: '#2c5282'
         },
         {
-          type: 'text',
-          text: code,
-          weight: 'bold',
-          size: '3xl',
-          margin: 'md',
-          color: '#4a5568',
-          align: 'center'
+          type: 'box',
+          layout: 'vertical',
+          margin: 'lg',
+          contents: [
+            {
+              type: 'text',
+              text: '您的 LINE ID:',
+              size: 'sm',
+              color: '#4a5568'
+            },
+            {
+              type: 'text',
+              text: lineId,
+              weight: 'bold',
+              size: 'md',
+              margin: 'sm'
+            }
+          ]
+        },
+        {
+          type: 'box',
+          layout: 'vertical',
+          margin: 'lg',
+          contents: [
+            {
+              type: 'text',
+              text: '驗證碼:',
+              size: 'sm',
+              color: '#4a5568'
+            },
+            {
+              type: 'text',
+              text: code,
+              weight: 'bold',
+              size: '2xl',
+              margin: 'sm',
+              color: '#2c5282'
+            }
+          ]
         },
         {
           type: 'text',
-          text: '請在網站驗證欄位輸入此驗證碼',
+          text: '請將以上資訊填入網站驗證表單',
+          margin: 'xl',
           size: 'sm',
           color: '#718096',
-          margin: 'lg',
           wrap: true
         },
         {
           type: 'text',
           text: '⚠️ 驗證碼將在 5 分鐘後失效',
+          margin: 'md',
           size: 'xs',
-          color: '#e53e3e',
-          margin: 'md'
+          color: '#e53e3e'
         }
       ]
     }

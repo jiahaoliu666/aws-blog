@@ -47,4 +47,25 @@ export interface Feedback {
 export interface EditableFields {
   username: boolean;
   [key: string]: boolean;
+}
+
+export interface NotificationSectionProps extends NotificationSettings {
+  onSettingsChange?: (settings: NotificationSettings) => void;
+  verificationState: {
+    step: VerificationStep;
+    status: string;
+    message?: string;
+    isVerified?: boolean;
+  };
+  user?: any;
+  lineId?: string;
+  setLineId: (lineId: string) => void;
+  verificationCode: string;
+  setVerificationCode: (code: string) => void;
+  verifyLineIdAndCode: () => void;
+  isLoading: boolean;
+  handleNotificationChange: (type: keyof NotificationSettings) => void;
+  notificationSettings: {
+    email: boolean;
+  };
 } 

@@ -144,3 +144,24 @@ export interface LineUserSettings {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface LineVerificationRecord {
+  lineId: string;
+  userId?: string;
+  verificationCode: string;
+  verificationExpiry: number;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// DynamoDB 資料表結構
+interface AWS_Blog_UserNotificationSettings {
+  lineId: string;          // 主鍵
+  userId?: string;         // 用戶 ID (驗證成功後填入)
+  verificationCode: string; // 驗證碼
+  verificationExpiry: number; // 驗證碼過期時間戳
+  isVerified: boolean;     // 是否已驗證
+  createdAt: string;       // 創建時間
+  updatedAt: string;       // 更新時間
+}

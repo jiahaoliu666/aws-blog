@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { lineService } from '@/services/lineService';
 import { toast } from 'react-toastify';
 import { logger } from '@/utils/logger';
@@ -29,106 +29,44 @@ const createVerificationTemplate = (code: string) => {
   return `您的驗證碼是：${code}\n請在網頁上輸入此驗證碼完成驗證。`;
 };
 
-export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVerificationProps) => {
-  const [lineId, setLineId] = useState('');
+export const useLineVerification = (user: User | null) => {
   const [verificationState, setVerificationState] = useState<VerificationState>({
     step: 'idle',
     status: 'idle',
     message: '',
     isVerified: false
   });
-  const [retryCount, setRetryCount] = useState(0);
-  const [isLineFollowed, setIsLineFollowed] = useState(false);
-  const MAX_RETRY = 3;
+  const [lineId, setLineId] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
 
-  const handleVerificationStateUpdate = async (newState: VerificationState) => {
+  // 檢查驗證狀態
+  const checkVerificationStatus = async () => {
+    if (!user?.sub) return;
+    
     try {
-      await updateUserLineSettings({
-        lineId,
-        isVerified: newState.isVerified || false,
-        displayName: user?.username || '',
-        verificationState: newState
-      });
-      setVerificationState(newState);
-    } catch (error) {
-      logger.error('更新驗證狀態失敗:', error);
-    }
-  };
-
-  const checkLineFollowStatus = async () => {
-    try {
-      if (!lineId) {
-        toast.error('請先輸入 LINE ID');
-        return;
-      }
-
-      const response = await lineService.checkFollowStatus(lineId);
-      setIsLineFollowed(response.isFollowing);
+      const response = await fetch(`/api/line/verify/status?userId=${user.sub}`);
+      const data = await response.json();
       
-      const newState = response.isFollowing ? {
-        step: VerificationStep.VERIFYING,
-        status: VerificationStatus.IDLE,
-        message: '請在LINE上發送「驗證」開始驗證流程',
-        isVerified: false
-      } : {
-        step: VerificationStep.IDLE,
-        status: VerificationStatus.ERROR,
-        message: '請先加入LINE官方帳號為好友',
-        isVerified: false
-      };
-
-      await handleVerificationStateUpdate(newState);
+      if (data.isVerified) {
+        setVerificationState({
+          step: 'complete',
+          status: 'success',
+          message: '驗證成功',
+          isVerified: true
+        });
+      }
     } catch (error) {
-      logger.error('檢查LINE好友狀態失敗:', error);
-      toast.error('檢查LINE好友狀態失敗，請稍後重試');
+      logger.error('檢查驗證狀態失敗:', error);
     }
   };
 
-  const startVerification = async () => {
-    try {
-      setVerificationState(prev => ({
-        ...prev,
-        step: 'verifying',
-        status: 'pending',
-        message: '正在處理驗證請求...'
-      }));
-
-      if (!user?.sub) {
-        throw new Error('找不到用戶ID');
-      }
-
-      if (!lineId.match(/^U[0-9a-f]{32}$/i)) {
-        throw new Error('請輸入有效的 LINE ID');
-      }
-
-      const followStatus = await lineService.checkFollowStatus(lineId);
-      if (!followStatus.isFollowing) {
-        throw new Error('請先加入 LINE 官方帳號為好友');
-      }
-
-      const verificationCode = await lineService.generateVerificationCode(user.sub, lineId);
-      
-      await lineService.sendMessage(lineId, createVerificationTemplate(verificationCode));
-
-      const newState: VerificationState = {
-        step: 'verifying',
-        status: 'idle',
-        message: '請查看 LINE 訊息並輸入驗證碼',
-        isVerified: false
-      };
-
-      setVerificationState(newState);
-
-    } catch (error) {
-      setVerificationState(prev => ({
-        ...prev,
-        status: 'error',
-        message: error instanceof Error ? error.message : '驗證請求失敗，請稍後重試'
-      }));
+  // 驗證 LINE ID 和驗證碼
+  const verifyLineIdAndCode = async () => {
+    if (!user?.sub || !lineId || !verificationCode) {
+      toast.error('請輸入 LINE ID 和驗證碼');
+      return;
     }
-  };
 
-  const confirmVerificationCode = async (code: string) => {
     try {
       setVerificationState(prev => ({
         ...prev,
@@ -136,81 +74,50 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
         message: '正在驗證...'
       }));
 
-      if (!user?.sub) {
-        throw new Error('找不到用戶ID');
-      }
-
-      const validatingState: VerificationState = {
-        step: 'confirming',
-        status: 'validating',
-        message: '正在驗證...',
-        isVerified: false
-      };
-
-      setVerificationState(validatingState);
-
-      await updateUserLineSettings({
-        lineId,
-        isVerified: false,
-        displayName: user?.username || '',
-        verificationState: validatingState
+      const response = await fetch('/api/line/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.sub,
+          lineId,
+          verificationCode
+        })
       });
 
-      const response = await lineService.verifyCode(lineId, code);
+      const data = await response.json();
 
-      if (response.success) {
-        const successState: VerificationState = {
+      if (data.success) {
+        setVerificationState({
           step: 'complete',
           status: 'success',
           message: '驗證成功！',
           isVerified: true
-        };
-
-        setVerificationState(successState);
-
-        await updateUserLineSettings({
-          lineId,
-          isVerified: true,
-          displayName: user?.username || '',
-          verificationState: successState
         });
-
+        toast.success('LINE 驗證成功');
       } else {
-        throw new Error(response.message || '驗證失敗');
+        throw new Error(data.message || '驗證失敗');
       }
-
     } catch (error) {
       setVerificationState(prev => ({
         ...prev,
         status: 'error',
-        message: '驗證過程發生錯誤'
+        message: error instanceof Error ? error.message : '驗證失敗'
       }));
+      toast.error('驗證失敗，請確認 LINE ID 和驗證碼是否正確');
     }
   };
 
-  const handleVerificationRetry = async () => {
-    if (retryCount >= MAX_RETRY) {
-      setVerificationState({
-        step: 'idle',
-        status: 'error',
-        message: '已超過最大重試次數，請稍後再試'
-      });
-      return;
-    }
-    
-    setRetryCount(prev => prev + 1);
-    await startVerification();
-  };
+  useEffect(() => {
+    checkVerificationStatus();
+  }, [user?.sub]);
 
   return {
+    verificationState,
     lineId,
     setLineId,
-    verificationState,
-    isLineFollowed,
-    checkLineFollowStatus,
-    startVerification,
-    confirmVerificationCode,
-    handleVerificationRetry
+    verificationCode,
+    setVerificationCode,
+    verifyLineIdAndCode
   };
 };
 
