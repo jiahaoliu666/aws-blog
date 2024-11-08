@@ -45,19 +45,20 @@ const LineVerification: React.FC<LineVerificationProps> = ({
             <p className="text-gray-600 mb-4">
               掃描 QR Code 或點擊按鈕加入好友
             </p>
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="bg-white p-3 rounded-lg shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              <div className="bg-white p-2 border border-gray-200 rounded-lg">
                 <img 
-                  src={lineConfig.qrCodeUrl}
+                  src="/Line-QR-Code.png"
                   alt="LINE QR Code" 
-                  className="w-32 h-32"
+                  className="w-32 h-32 object-contain"
+                  loading="lazy"
                 />
               </div>
               <a
-                href={`https://line.me/R/ti/p/${lineConfig.basicId}`}
+                href="https://line.me/R/ti/p/@601feiwz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-3 bg-[#00B900] text-white rounded-lg hover:bg-[#009900] transition-colors"
+                className="inline-flex items-center px-6 py-2 bg-[#06C755] text-white rounded-md hover:bg-[#05B54A] transition-colors"
               >
                 <FontAwesomeIcon icon={faLine} className="mr-2" />
                 加入好友
