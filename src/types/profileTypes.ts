@@ -49,7 +49,12 @@ export interface EditableFields {
   [key: string]: boolean;
 }
 
-export interface NotificationSectionProps extends NotificationSettings {
+export interface NotificationSectionProps {
+  email?: boolean;
+  line?: boolean;
+  browser?: boolean;
+  mobile?: boolean;
+  
   onSettingsChange?: (settings: NotificationSettings) => void;
   verificationState: {
     step: VerificationStep;
@@ -68,4 +73,7 @@ export interface NotificationSectionProps extends NotificationSettings {
   notificationSettings: {
     email: boolean;
   };
+  handleVerification: () => Promise<void>;
+  onCopyUserId: () => void;
+  userId: string;
 } 

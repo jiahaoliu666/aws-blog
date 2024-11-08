@@ -4,6 +4,8 @@ import {
   faInfoCircle,
   faCopy,
   faEnvelope,
+  faExclamationCircle,
+  faCheckCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -12,20 +14,44 @@ import LineVerification from '../line/LineVerification';
 import { NotificationSectionProps } from '@/types/profileTypes';
 import { VerificationStep } from '@/types/lineTypes';
 
-// 功能性組件
-const NotificationSection: React.FC<NotificationSectionProps> = ({
-  user,
+// 純 UI 組件
+const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   verificationState,
   lineId,
   setLineId,
   verificationCode,
   setVerificationCode,
-  verifyLineIdAndCode,
-  isLoading,
+  handleVerification,
+  onCopyUserId,
+  userId,
   notificationSettings,
   handleNotificationChange,
+  isLoading
 }) => {
-  const verificationStateObject = verificationState;
+  const renderVerificationStatus = () => {
+    if (verificationState.status === 'error') {
+      return (
+        <div className="bg-red-50 p-4 rounded-lg">
+          <div className="flex items-center gap-2 text-red-600">
+            <FontAwesomeIcon icon={faExclamationCircle} />
+            <span>{verificationState.message || '驗證失敗'}</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (verificationState.isVerified) {
+      return (
+        <div className="bg-green-50 p-6 rounded-lg text-center">
+          <FontAwesomeIcon icon={faCheckCircle} className="text-4xl text-green-500 mb-3" />
+          <h3 className="text-xl font-semibold text-green-600">驗證成功！</h3>
+          <p className="text-green-600">您已成功開啟 LINE 通知功能</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="space-y-8">
@@ -47,36 +73,34 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
                 <h3 className="font-medium text-gray-700 mb-2">您的用戶 ID</h3>
                 <div className="flex items-center gap-2">
                   <code className="bg-white px-3 py-1 rounded border text-blue-600 font-mono select-all">
-                    {user?.sub || '未登入'}
+                    {userId || '未登入'}
                   </code>
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(user?.sub || '');
-                      toast.success('已複製用戶 ID');
-                    }}
+                    onClick={onCopyUserId}
                     className="text-sm px-2 py-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                   >
                     <FontAwesomeIcon icon={faCopy} className="mr-1" />
                     複製
                   </button>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  請在 LINE 上輸入「驗證」取得 LINE ID，並將其填入下方欄位
-                </p>
               </div>
             </div>
           </div>
 
-          {/* LINE 驗證組件 */}
+          {/* 驗證表單 */}
           <LineVerification
-            verificationState={verificationStateObject}
+            verificationState={verificationState}
             lineId={lineId || ''}
             setLineId={setLineId}
             verificationCode={verificationCode || ''}
             setVerificationCode={setVerificationCode}
-            verifyLineIdAndCode={verifyLineIdAndCode}
+            verifyLineIdAndCode={handleVerification}
+            onCopyUserId={onCopyUserId}
+            userId={userId}
           />
         </div>
+
+        {renderVerificationStatus()}
 
         {/* 其他通知設定 */}
         <div className="bg-white p-6 rounded-lg shadow-md">
@@ -117,4 +141,4 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
   );
 };
 
-export default NotificationSection; 
+export default NotificationSectionUI; 

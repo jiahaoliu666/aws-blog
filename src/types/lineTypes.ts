@@ -165,3 +165,14 @@ interface AWS_Blog_UserNotificationSettings {
   createdAt: string;       // 創建時間
   updatedAt: string;       // 更新時間
 }
+
+export interface LineVerificationProps {
+  verificationState: VerificationState;
+  lineId: string;
+  setLineId: Dispatch<SetStateAction<string>>;
+  verificationCode: string;
+  setVerificationCode: Dispatch<SetStateAction<string>>;
+  verifyLineIdAndCode: () => Promise<void>;
+  userId: string;
+  onCopyUserId: () => void;
+}
