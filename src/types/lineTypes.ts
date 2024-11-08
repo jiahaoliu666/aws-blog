@@ -136,6 +136,7 @@ export interface LineUserSettings {
   lineId: string;
   isVerified: boolean;
   isFollowing: boolean;
+  displayName: string;
   notificationPreferences: {
     news: boolean;
     announcements: boolean;

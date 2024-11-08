@@ -89,7 +89,7 @@ interface LineServiceInterface {
   sendMulticastWithTemplate(articleData: ArticleData): Promise<LineApiResponse>;
   updateFollowerStatus(lineId: string, isFollowing: boolean): Promise<void>;
   requestVerification(lineId: string, userId: string): Promise<{ success: boolean; verificationCode: string }>;
-  verifyCode(userId: string, code: string): Promise<boolean>;
+  verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }>;
   getFollowers(): Promise<string[]>;
   checkFollowStatus(lineId: string): Promise<LineFollowStatus>;
   updateUserLineSettings(params: { userId: string; lineId: string; isVerified: boolean }): Promise<void>;
@@ -176,7 +176,7 @@ export const lineService: LineServiceInterface = {
     }
   },
 
-  async verifyCode(userId: string, code: string): Promise<boolean> {
+  async verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }> {
     try {
       // 從 DynamoDB 獲取驗證資訊
       const params = {
@@ -190,7 +190,7 @@ export const lineService: LineServiceInterface = {
       
       if (!result.Item) {
         logger.error('找不到驗證記錄');
-        return false;
+        return { success: false, message: '找不到驗證記錄' };
       }
 
       const storedCode = result.Item.verificationCode?.S;
@@ -200,19 +200,19 @@ export const lineService: LineServiceInterface = {
       // 驗證碼檢查
       if (!storedCode || !expiry || !lineId) {
         logger.error('驗證資訊不完整');
-        return false;
+        return { success: false, message: '驗證資訊不完整' };
       }
 
       // 檢查是否過期
       if (Date.now() > expiry) {
         logger.error('驗證碼已過期');
-        return false;
+        return { success: false, message: '驗證碼已過期' };
       }
 
       // 檢查驗證碼
       if (code !== storedCode) {
         logger.error('驗證碼不正確');
-        return false;
+        return { success: false, message: '驗證碼不正確' };
       }
 
       // 更新驗證狀態
@@ -228,10 +228,10 @@ export const lineService: LineServiceInterface = {
         text: '🎉 恭喜您完成驗證！\n您現在可以收到最新文章的即時通知了。'
       });
 
-      return true;
+      return { success: true, message: '驗證成功' };
     } catch (error) {
       logger.error('驗證過程發生錯誤:', error);
-      return false;
+      return { success: false, message: '驗證過程發生錯誤' };
     }
   },
 

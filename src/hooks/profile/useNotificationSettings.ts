@@ -61,5 +61,23 @@ export const useNotificationSettings = (userId: string) => {
     }
   });
 
-  return { settings, isLoading, updateSettings };
-}; 
+  // 新增 handleSettingChange 方法
+  const handleSettingChange = (key: string, value: any) => {
+    // 實作設定變更邏輯
+    console.log(`Setting ${key} changed to ${value}`);
+  };
+
+  return { settings, isLoading, updateSettings, handleSettingChange };
+};
+
+// 定義 UseProfileNotificationsReturn 型別的內容
+export type UseProfileNotificationsReturn = {
+  settings: any; // 根據實際資料結構替換 'any'
+  isLoading: boolean;
+  updateSettings: (newSettings: { userId: string; [key: string]: any }) => void;
+  handleSettingChange: (key: string, value: any) => void;
+};
+
+export const useProfileNotifications = () => {
+  // 實作 useProfileNotifications 的邏輯
+};

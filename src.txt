@@ -61,15 +61,22 @@ src/
 │   ├── useNotificationSettings.ts  // 通知設定 Hook
 │   ├── useAuth.ts                  // 用戶認證 Hook
 │   ├── profile/                    // 個人資料相關 Hooks
-│   │   ├── index.ts                // 統一導出個人資料相關 Hooks
-│   │   ├── useProfileLogic.ts      // 主要的個人資料邏輯 Hook
-│   │   ├── useProfileForm.ts       // 個人資料表單相關 Hook
-│   │   ├── useProfileAvatar.ts     // 個人資料頭像相關 Hook
-│   │   ├── useProfilePassword.ts   // 個人資料密碼相關 Hook
-│   │   ├── useProfileActivity.ts   // 個人資料活動記錄相關 Hook
-│   │   ├── useProfileNotification.ts // 個人資料通知設定相關 Hook
-│   │   ├── useProfileLine.ts       // 個人資料 LINE 相關 Hook
-│   │   └── useProfileArticles.ts   // 個人資料最近文章相關 Hook
+│   │   ├── utils/                    # 工具類目錄
+│   │   │   ├── constants.ts          # 常量定義
+│   │   │   ├── errors.ts             # 錯誤處理類
+│   │   │   └── useProfileError.ts    # 錯誤處理 hook
+│   │   ├── components/               # 組件目錄
+│   │   │   └── ProfileErrorBoundary.tsx  # 錯誤邊界組件
+│   │   ├── types.ts                  # 類型定義
+│   │   ├── useAuth.ts                # 認證相關邏輯
+│   │   ├── useForm.ts                # 表單相關邏輯
+│   │   ├── useLine.ts                # LINE 相關邏輯
+│   │   ├── useNotifications.ts       # 通知相關邏輯
+│   │   ├── useSettings.ts            # 設定相關邏輯
+│   │   ├── useActivityLog.ts         # 活動記錄相關邏輯
+│   │   ├── useUserData.ts            # 用戶資料相關邏輯
+│   │   ├── useProfileLogic.ts        # 主要邏輯整合
+│   │   └── index.ts                  # 模組導出
 │   ├── news
 │   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
 │   │   ├── useFetchNews.ts         // 新聞獲取 Hook

@@ -122,6 +122,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
             <PasswordSection 
               {...profileLogic} 
               passwordMessage={profileLogic.passwordMessage || undefined}
+              newPassword={profileLogic.newPassword || ''}
+              setNewPassword={profileLogic.setNewPassword}
             />
           )}
 

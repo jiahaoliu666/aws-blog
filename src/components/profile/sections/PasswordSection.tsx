@@ -26,6 +26,8 @@ interface PasswordSectionProps {
   resetPasswordFields: () => void;
   isLoading: boolean;
   passwordMessage?: string;
+  newPassword: string;
+  setNewPassword: (password: string) => void;
 }
 
 const PasswordSection: React.FC<PasswordSectionProps> = ({
@@ -40,7 +42,9 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
   calculatePasswordStrength,
   handleChangePassword,
   isLoading,
-  passwordMessage
+  passwordMessage,
+  newPassword,
+  setNewPassword
 }) => {
   const passwordStrength = formData.password ? calculatePasswordStrength(formData.password) : 0;
   const getStrengthColor = (strength: number) => {

@@ -165,6 +165,8 @@ interface ProfileLogicReturn {
   isSubmitting: boolean;
   settings: Record<string, any>;
   handleSettingChange: (key: string, value: any) => void;
+  newPassword: string;
+  setNewPassword: (password: string) => void;
 }
 
 // 新增 Article 介面定義
@@ -477,7 +479,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     let changesSuccessful = true;
 
     if (!localUsername.trim()) {
-      setUploadMessage('��名不為空。');
+      setUploadMessage('名不為空。');
       return;
     }
 
@@ -1014,7 +1016,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
       }, 3000);
 
     } catch (error) {
-      console.error('保存通知設定時發生錯誤:', error);
+      console.error('保存通知設定時��生錯誤:', error);
       toast.error('更新通知設定失敗');
       setSettingsMessage('更新通知設定失敗');
       setSettingsStatus('error');
@@ -1292,5 +1294,7 @@ export const useProfileLogic = ({ user = null }: UseProfileLogicProps = {}): Pro
     isSubmitting: false,
     settings: {},
     handleSettingChange: (key: string, value: any) => {},
+    newPassword: '',
+    setNewPassword: (password: string) => {},
   };
 };
