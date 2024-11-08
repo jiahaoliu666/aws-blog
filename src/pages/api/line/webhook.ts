@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { lineService } from '../../../services/lineService';
 import { logger } from '../../../utils/logger';
 import { DynamoDBClient, UpdateItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import crypto from 'crypto';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
@@ -28,83 +29,91 @@ function createVerificationTemplate(verificationCode: string) {
   };
 }
 
+// 添加歡迎訊息模板函數
+function createWelcomeTemplate() {
+  return {
+    type: 'text' as const,
+    text: '感謝您加入！我們將為您提供最新的部落格更新通知。\n\n您可以輸入「驗證」或「/id」來獲取您的 LINE ID。'
+  };
+}
+
+function verifyLineSignature(req: NextApiRequest): boolean {
+  const signature = req.headers['x-line-signature'] as string;
+  const channelSecret = process.env.LINE_CHANNEL_SECRET as string;
+  
+  const body = JSON.stringify(req.body);
+  const hash = crypto
+    .createHmac('SHA256', channelSecret)
+    .update(body)
+    .digest('base64');
+    
+  return signature === hash;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).end();
+  // 驗證 LINE 請求簽名
+  if (!verifyLineSignature(req)) {
+    return res.status(401).json({ error: '未授權的請求' });
   }
 
   try {
     const events = req.body.events;
     
     for (const event of events) {
-      // 處理加入好友事件
-      if (event.type === 'follow') {
-        const lineUserId = event.source.userId;
-        await lineService.updateFollowerStatus(lineUserId, true);
-        await lineService.sendWelcomeMessage(lineUserId);
-      }
-      
-      // 處理取消追蹤事件
-      if (event.type === 'unfollow') {
-        const lineUserId = event.source.userId;
-        await lineService.updateFollowerStatus(lineUserId, false);
-      }
+      const lineUserId = event.source.userId;
 
       // 處理文字訊息
       if (event.type === 'message' && event.message.type === 'text') {
         const messageText = event.message.text;
-        const lineUserId = event.source.userId;
 
-        // 處理驗證命令
-        if (messageText.startsWith('驗證')) {
+        // 處理驗證指令
+        if (messageText === '驗證' || messageText === '/id') {
           try {
-            // 從訊息中提取用戶ID
-            const verificationMatch = messageText.match(/驗證\s+(\S+)/);
-            const userIdFromMessage = verificationMatch?.[1];
+            // 1. 回覆用戶的 LINE ID
+            await lineService.replyMessage(event.replyToken, {
+              type: 'text',
+              text: `您的 LINE ID 是：${lineUserId}`
+            });
 
-            if (!userIdFromMessage) {
-                await lineService.replyMessage(event.replyToken, {
-                    type: 'text',
-                    text: '❌ 驗證格式錯誤！請使用「驗證 {您的用戶ID}」格式'
-                });
-                return;
-            }
-
-            // 儲存到 DynamoDB
+            // 2. 檢查並更新好友狀態
+            const followStatus = await lineService.checkFollowStatus(lineUserId);
+            
+            // 3. 更新資料庫
             const params = {
-                TableName: "AWS_Blog_UserNotificationSettings",
-                Item: {
-                    userId: { S: userIdFromMessage },
-                    lineId: { S: lineUserId },
-                    lineNotification: { BOOL: true },
-                    isVerified: { BOOL: true },
-                    updatedAt: { S: new Date().toISOString() }
-                }
+              TableName: "AWS_Blog_UserNotificationSettings",
+              Item: {
+                lineId: { S: lineUserId },
+                isFollowing: { BOOL: followStatus.isFollowing },
+                lineNotification: { BOOL: true },
+                updatedAt: { S: new Date().toISOString() }
+              }
             };
 
             await dynamoClient.send(new PutItemCommand(params));
 
-            // 回覆用戶
-            await lineService.replyMessage(event.replyToken, {
-                type: 'text',
-                text: '✅ 已確認您的驗證請求！\n請回到網頁繼續完成驗證流程。'
+            logger.info('已更新用戶 LINE 設定:', {
+              lineId: lineUserId,
+              isFollowing: followStatus.isFollowing
             });
 
           } catch (error) {
-            logger.error('儲存 LINE 設定失敗:', error);
+            logger.error('處理驗證指令失敗:', error);
+            // 發送錯誤訊息給用戶
             await lineService.replyMessage(event.replyToken, {
               type: 'text',
-              text: '❌ 驗證過程發生錯誤，請稍後重試。'
+              text: '處理驗證請求時發生錯誤，請稍後重試。'
             });
           }
+          continue;
         }
       }
     }
 
-    res.status(200).end();
+    return res.status(200).json({ message: 'OK' });
+    
   } catch (error) {
-    logger.error('處理 webhook 失敗:', error);
-    res.status(500).json({ message: '處理失敗' });
+    logger.error('Webhook 處理失敗:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
 

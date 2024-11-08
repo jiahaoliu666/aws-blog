@@ -92,7 +92,7 @@ interface LineServiceInterface {
   requestVerification(lineId: string, userId: string): Promise<{ success: boolean; verificationCode: string }>;
   verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }>;
   getFollowers(): Promise<string[]>;
-  checkFollowStatus(lineId: string): Promise<LineFollowStatus>;
+  checkFollowStatus(lineUserId: string): Promise<LineFollowStatus>;
   updateUserLineSettings(params: { userId: string; lineId: string; isVerified: boolean }): Promise<void>;
   getUserLineSettings(userId: string): Promise<{ lineId: string; isVerified: boolean } | null>;
   broadcastNewsNotification(articleData: ArticleData): Promise<boolean>;
@@ -102,38 +102,37 @@ interface LineServiceInterface {
     lineNotification: boolean;
     lineId?: string;
   }): Promise<void>;
-  replyMessage(replyToken: string, message: {
-    type: string;
-    text: string;
-  }): Promise<void>;
+  replyMessage(replyToken: string, message: LineMessage): Promise<void>;
 }
 
 export const lineService: LineServiceInterface = {
-  async checkFollowStatus(lineId: string): Promise<LineFollowStatus> {
+  async checkFollowStatus(lineUserId: string): Promise<LineFollowStatus> {
     try {
-      validateLineMessagingConfig();
-      
-      const response = await fetch(`${lineConfig.apiUrl}/profile/${lineId}`, {
-        headers: {
-          Authorization: `Bearer ${lineConfig.channelAccessToken}`
+      const response = await axios.get(
+        `${lineConfig.apiUrl}/v2/bot/profile/${lineUserId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+          }
         }
-      });
+      );
 
-      const isFollowing = response.ok;
       return {
-        isFollowing,
-        followed: isFollowing,
-        message: isFollowing ? '已追蹤官方帳號' : '尚未追蹤官方帳號',
-        displayName: isFollowing ? (await response.json()).displayName : ''
+        isFollowing: true,
+        followed: true,
+        message: '已追蹤官方帳號',
+        displayName: response.data.displayName || ''
       };
     } catch (error) {
-      logger.error('檢查 LINE 追蹤狀態時發生錯誤:', error);
-      return {
-        isFollowing: false,
-        followed: false,
-        message: '檢查追蹤狀態時發生錯誤',
-        displayName: ''
-      };
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return {
+          isFollowing: false,
+          followed: false,
+          message: '尚未追蹤官方帳號',
+          displayName: ''
+        };
+      }
+      throw error;
     }
   },
 
@@ -232,7 +231,7 @@ export const lineService: LineServiceInterface = {
         throw new Error('發送廣播訊息失敗');
       }
 
-      logger.info('成功發送新文章通知');
+      logger.info('成功發送新文章通');
       return true;
     } catch (error) {
       logger.error('發送廣播訊息失敗:', error);
@@ -535,15 +534,12 @@ export const lineService: LineServiceInterface = {
     }
   },
 
-  async replyMessage(replyToken: string, message: {
-    type: string;
-    text: string;
-  }): Promise<void> {
+  async replyMessage(replyToken: string, message: LineMessage): Promise<void> {
     try {
       validateLineMessagingConfig();
       
       const response = await axios.post(
-        `${lineConfig.apiUrl}/message/reply`,
+        `${lineConfig.apiUrl}/v2/bot/message/reply`,
         {
           replyToken,
           messages: [message]
