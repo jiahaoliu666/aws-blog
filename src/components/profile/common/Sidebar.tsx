@@ -28,11 +28,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   formData,
   tempAvatar
 }) => {
-  const [currentAvatar, setCurrentAvatar] = useState(tempAvatar || formData.avatar);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar) {
+      setCurrentAvatar(savedAvatar);
+    } else {
+      setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
+    }
+  }, [tempAvatar, formData.avatar]);
 
   useEffect(() => {
     const handleAvatarUpdate = (event: CustomEvent) => {
-      setCurrentAvatar(event.detail);
+      const newAvatarUrl = event.detail;
+      setCurrentAvatar(newAvatarUrl);
+      localStorage.setItem('userAvatar', newAvatarUrl);
     };
 
     window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
@@ -60,6 +71,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           src={currentAvatar || '/images/default-avatar.png'}
           alt="Profile"
           className="w-12 h-12 rounded-full object-cover border-2 border-blue-500"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = '/images/default-avatar.png';
+          }}
         />
         <div>
           <h2 className="font-semibold">{formData.username}</h2>

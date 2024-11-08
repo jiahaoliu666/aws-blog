@@ -48,14 +48,21 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   tempAvatar,
   setFormData
 }) => {
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar) {
+      setCurrentAvatar(savedAvatar);
+    } else {
+      setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
+    }
+  }, [tempAvatar, formData.avatar]);
+
   useEffect(() => {
     const handleAvatarUpdate = (event: CustomEvent) => {
-      if (setFormData) {
-        setFormData((prev: any) => ({
-          ...prev,
-          avatar: event.detail
-        }));
-      }
+      const newAvatarUrl = event.detail;
+      setCurrentAvatar(newAvatarUrl);
     };
 
     window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
@@ -63,13 +70,6 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     return () => {
       window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
     };
-  }, [setFormData]);
-
-  useEffect(() => {
-    const savedAvatar = localStorage.getItem('userAvatar');
-    if (savedAvatar && setFormData) {
-      setFormData(prev => ({ ...prev, avatar: savedAvatar }));
-    }
   }, []);
 
   return (
@@ -81,9 +81,13 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
         <div className="flex justify-center">
           <div className="relative">
             <img
-              src={tempAvatar || formData.avatar || '/images/default-avatar.png'}
+              src={currentAvatar || '/images/default-avatar.png'}
               alt="Profile"
               className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/images/default-avatar.png';
+              }}
             />
             <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition duration-200">
               <FontAwesomeIcon icon={faCamera} />
