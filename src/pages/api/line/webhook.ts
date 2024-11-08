@@ -2,6 +2,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { lineService } from '../../../services/lineService';
 import { logger } from '../../../utils/logger';
+import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+
+const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 // 在 lineService 中定義返回類型
 interface VerificationResult {
@@ -49,58 +52,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // 處理文字訊息
       if (event.type === 'message' && event.message.type === 'text') {
-        const lineUserId = event.source.userId;
         const messageText = event.message.text;
+        const userId = event.source.userId;
 
-        // 處理驗證指令
-        if (messageText === '驗證' || messageText === '/id') {
+        // 處理驗證命令
+        if (messageText.startsWith('驗證')) {
           try {
-            // 發送 LINE ID 訊息
-            await lineService.sendMessage(lineUserId, 
-              createUserIdTemplate(lineUserId)
-            );
-            continue;
-          } catch (error) {
-            logger.error('處理驗證指令失敗:', error);
-            await lineService.sendMessage(lineUserId, {
+            // 更新資料庫中的驗證進度
+            const updateParams = {
+              TableName: 'AWS_Blog_UserNotificationSettings',
+              Key: {
+                userId: { S: userId }
+              },
+              UpdateExpression: 'SET verificationStep = :step, verificationStatus = :status, updatedAt = :updatedAt',
+              ExpressionAttributeValues: {
+                ':step': { S: 'follow_completed' },
+                ':status': { S: 'success' },
+                ':updatedAt': { S: new Date().toISOString() }
+              }
+            };
+
+            await dynamoClient.send(new UpdateItemCommand(updateParams));
+
+            // 回覆用戶
+            await lineService.replyMessage(event.replyToken, {
               type: 'text',
-              text: '處理驗證請求時發生錯誤，請稍後重試。'
+              text: '✅ 已確認您的驗證請求！\n請回到網頁繼續完成驗證流程。'
             });
-          }
-        }
-
-        // 原有的驗證 {userId} 處理邏輯
-        if (messageText.startsWith('驗證 ')) {
-          try {
-            const userId = messageText.split(' ')[1];
-            if (!userId) {
-              await lineService.sendMessage(lineUserId, {
-                type: 'text',
-                text: '請提供正確的用戶ID，格式：驗證 {用戶ID}'
-              });
-              return;
-            }
-
-            // 生成驗證碼
-            const verificationCode = await lineService.generateVerificationCode(userId, lineUserId);
-            
-            // 發送驗證碼訊息
-            await lineService.sendMessage(lineUserId, 
-              createVerificationTemplate(verificationCode)
-            );
-
           } catch (error) {
-            logger.error('處理驗證指令失敗:', error);
-            await lineService.sendMessage(lineUserId, {
+            logger.error('處理驗證命令時發生錯誤:', error);
+            await lineService.replyMessage(event.replyToken, {
               type: 'text',
-              text: '處理驗證請求時發生錯誤，請稍後重試。'
+              text: '❌ 處理驗證請求時發生錯誤，請稍後再試。'
             });
           }
         }
       }
     }
 
-    res.status(200).json({ message: 'OK' });
+    res.status(200).end();
   } catch (error) {
     logger.error('處理 webhook 失敗:', error);
     res.status(500).json({ message: '處理失敗' });

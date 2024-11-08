@@ -102,6 +102,10 @@ interface LineServiceInterface {
     lineNotification: boolean;
     lineId?: string;
   }): Promise<void>;
+  replyMessage(replyToken: string, message: {
+    type: string;
+    text: string;
+  }): Promise<void>;
 }
 
 export const lineService: LineServiceInterface = {
@@ -527,6 +531,36 @@ export const lineService: LineServiceInterface = {
       });
     } catch (error) {
       logger.error('更新通知設定失敗:', error);
+      throw error;
+    }
+  },
+
+  async replyMessage(replyToken: string, message: {
+    type: string;
+    text: string;
+  }): Promise<void> {
+    try {
+      validateLineMessagingConfig();
+      
+      const response = await axios.post(
+        `${lineConfig.apiUrl}/message/reply`,
+        {
+          replyToken,
+          messages: [message]
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+          }
+        }
+      );
+
+      if (!response.data) {
+        throw new Error('發送回覆訊息失敗');
+      }
+    } catch (error) {
+      logger.error('發送回覆訊息失敗:', error);
       throw error;
     }
   }

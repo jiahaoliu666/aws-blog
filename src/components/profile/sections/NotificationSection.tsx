@@ -96,15 +96,31 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
           </div>
 
           {/* LINE 驗證組件 */}
-          <LineVerification
-            verificationState={verificationState}
-            lineId={lineId}
-            setLineId={setLineId}
-            startVerification={startVerification}
-            user={user}
-            checkLineFollowStatus={checkLineFollowStatus}
-            confirmVerificationCode={confirmVerificationCode}
-          />
+          <div className="space-y-4">
+            <div className="flex flex-col space-y-2">
+              <label htmlFor="lineId" className="font-medium text-gray-700">
+                LINE ID
+              </label>
+              <input
+                id="lineId"
+                type="text"
+                value={lineId}
+                onChange={(e) => setLineId(e.target.value)}
+                placeholder="請輸入您的 LINE ID"
+                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <LineVerification
+              verificationState={verificationState}
+              lineId={lineId}
+              setLineId={setLineId}
+              startVerification={startVerification}
+              user={user}
+              checkLineFollowStatus={checkLineFollowStatus}
+              confirmVerificationCode={confirmVerificationCode}
+            />
+          </div>
         </div>
 
         {/* 其他通知設定 */}

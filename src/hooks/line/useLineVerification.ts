@@ -25,6 +25,10 @@ interface UseLineVerificationProps {
   updateUserLineSettings: (settings: any) => Promise<void>;
 }
 
+const createVerificationTemplate = (code: string) => {
+  return `您的驗證碼是：${code}\n請在網頁上輸入此驗證碼完成驗證。`;
+};
+
 export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVerificationProps) => {
   const [lineId, setLineId] = useState('');
   const [verificationState, setVerificationState] = useState<VerificationState>({
@@ -97,27 +101,29 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
         throw new Error('請輸入有效的 LINE ID');
       }
 
+      const followStatus = await lineService.checkFollowStatus(lineId);
+      if (!followStatus.isFollowing) {
+        throw new Error('請先加入 LINE 官方帳號為好友');
+      }
+
+      const verificationCode = await lineService.generateVerificationCode(user.sub, lineId);
+      
+      await lineService.sendMessage(lineId, createVerificationTemplate(verificationCode));
+
       const newState: VerificationState = {
         step: 'verifying',
         status: 'idle',
-        message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
+        message: '請查看 LINE 訊息並輸入驗證碼',
         isVerified: false
       };
 
       setVerificationState(newState);
 
-      await updateUserLineSettings({
-        lineId,
-        isVerified: false,
-        displayName: user?.username || '',
-        verificationState: newState
-      });
-
     } catch (error) {
       setVerificationState(prev => ({
         ...prev,
         status: 'error',
-        message: '驗證請求失敗，請稍後重試'
+        message: error instanceof Error ? error.message : '驗證請求失敗，請稍後重試'
       }));
     }
   };
