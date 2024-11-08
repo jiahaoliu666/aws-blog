@@ -30,7 +30,7 @@ interface Article {
 interface ArticleData {
   title: string;
   link: string;
-  timestamp: number;
+  timestamp: string;
   summary: string;
 }
 
@@ -241,14 +241,14 @@ async function saveToDynamoDB(
     const articleData: ArticleData = {
       title: finalTranslatedTitle,
       link: article.link,
-      timestamp: Date.now(),
+      timestamp: Date.now().toString(),
       summary: finalSummary,
     };
 
     const lineUsers = await getLineNotificationUsers();
     if (lineUsers.length > 0) {
       try {
-        await lineService.sendArticleNotification(articleData);
+        await lineService.sendNewsNotification(articleData);
         logger.info(`成功發送 LINE 通知給 ${lineUsers.length} 位用戶`);
       } catch (error) {
         logger.error("發送 LINE 通知失敗:", error);
@@ -422,13 +422,13 @@ async function sendNotifications(
         content: generateNewsNotificationEmail({
           title: articleData.translated_title.S,
           link: articleData.link.S,
-          timestamp: parseInt(articleData.published_at.N) * 1000,
+          timestamp: articleData.published_at.N,
           summary: ""
         }),
         articleData: {
           title: articleData.translated_title.S,
           link: articleData.link.S,
-          timestamp: String(parseInt(articleData.published_at.N) * 1000),
+          timestamp: articleData.published_at.N,
         }
       };
 
