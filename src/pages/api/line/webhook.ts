@@ -9,6 +9,14 @@ interface VerificationResult {
   verificationCode: string;
 }
 
+// 添加 LINE ID 訊息模板函數
+function createUserIdTemplate(lineUserId: string) {
+  return {
+    type: 'text' as const,
+    text: `您的 LINE ID 是：${lineUserId}`
+  };
+}
+
 // 添加驗證碼訊息模板函數
 function createVerificationTemplate(verificationCode: string) {
   return {
@@ -45,6 +53,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const messageText = event.message.text;
 
         // 處理驗證指令
+        if (messageText === '驗證' || messageText === '/id') {
+          try {
+            // 發送 LINE ID 訊息
+            await lineService.sendMessage(lineUserId, 
+              createUserIdTemplate(lineUserId)
+            );
+            continue;
+          } catch (error) {
+            logger.error('處理驗證指令失敗:', error);
+            await lineService.sendMessage(lineUserId, {
+              type: 'text',
+              text: '處理驗證請求時發生錯誤，請稍後重試。'
+            });
+          }
+        }
+
+        // 原有的驗證 {userId} 處理邏輯
         if (messageText.startsWith('驗證 ')) {
           try {
             const userId = messageText.split(' ')[1];

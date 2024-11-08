@@ -7,6 +7,7 @@ import NodeCache from 'node-cache';
 import { LineFollowStatus, ArticleData, LineMessage, LineWebhookEvent, LineUserSettings, VerificationState, LineApiResponse } from "../types/lineTypes";
 import { createClient } from 'redis';
 import crypto from 'crypto';
+import axios from 'axios';
 
 // 驗證 LINE 設定
 const validateLineMessagingConfig = () => {
@@ -446,19 +447,21 @@ export const lineService: LineServiceInterface = {
         ? { type: 'text', text: message }
         : message;
 
-      const response = await fetch(`${lineConfig.apiUrl}/message/push`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${lineConfig.channelAccessToken}`
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        `${lineConfig.apiUrl}/message/push`,
+        {
           to: lineId,
           messages: [messageObject]
-        })
-      });
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+          }
+        }
+      );
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error('發送訊息失敗');
       }
 
