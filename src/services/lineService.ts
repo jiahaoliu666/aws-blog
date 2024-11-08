@@ -105,7 +105,7 @@ interface LineServiceInterface {
   replyMessage(replyToken: string, message: LineMessage): Promise<void>;
 }
 
-class LineService implements LineServiceInterface {
+export class LineService implements LineServiceInterface {
   private headers: { [key: string]: string };
 
   constructor() {
@@ -116,11 +116,14 @@ class LineService implements LineServiceInterface {
     };
   }
 
-  async replyMessage(replyToken: string, message: LineMessage): Promise<void> {
+  async replyMessage(replyToken: string, message: any) {
     try {
       const response = await fetch(`${lineConfig.apiUrl}/message/reply`, {
         method: 'POST',
-        headers: this.headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${lineConfig.channelAccessToken}`
+        },
         body: JSON.stringify({
           replyToken,
           messages: [message]
@@ -129,12 +132,13 @@ class LineService implements LineServiceInterface {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`LINE API 錯誤: ${JSON.stringify(errorData)}`);
+        logger.error('LINE API 回覆訊息失敗:', errorData);
+        throw new Error(`LINE API 錯誤: ${errorData.message}`);
       }
 
-      logger.info('LINE 訊息發送成功', { replyToken });
+      return response.json();
     } catch (error) {
-      logger.error('發送 LINE 訊息失敗:', error);
+      logger.error('發送 LINE 回覆時發生錯誤:', error);
       throw error;
     }
   }
