@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ExtendedNews } from '@/types/newsType';
 import { useAuthContext } from '@/context/AuthContext';
-import { useProfileLogic } from '../../hooks/profile/useProfileLogic';
+import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
 
 interface NewsCardProps {
     article: ExtendedNews;
@@ -28,7 +28,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 }) => {
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
     const { user } = useAuthContext();
-    const { logRecentArticle } = useProfileLogic();
+    const { logRecentArticle } = useProfileArticles({ user });
 
     useEffect(() => {
         setIsSummaryVisible(showSummaries);
@@ -52,7 +52,13 @@ const NewsCard: React.FC<NewsCardProps> = ({
     const handleTitleClick = async () => {
         if (user) {
             console.log(`User ${user.username} clicked on article: ${article.article_id}`);
-            await logRecentArticle(article.article_id, article.link, sourcePage);
+            await logRecentArticle(
+                article.article_id,
+                article.link,
+                sourcePage,
+                displayTitle,
+                displayDescription
+            );
         } else {
             console.log('User not logged in, cannot log activity.');
             // 檢查是否有其他地方會觸發跳轉

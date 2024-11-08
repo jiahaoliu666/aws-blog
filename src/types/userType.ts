@@ -1,6 +1,13 @@
 // src/types/userType.ts
 import { ExtendedNews } from './newsType'; // 確保引入 ExtendedNews 類型
 
+// 建議新增一個用戶角色的列舉型別
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+  EDITOR = 'editor'
+}
+
 // 用戶基本資料介面
 export interface User {
   id: string;
@@ -15,6 +22,9 @@ export interface User {
   lineSettings?: LineSettings;
   notifications?: NotificationSettings;
   avatar?: string;
+  role?: UserRole; // 新增：用戶角色
+  lastLoginDate?: string; // 新增：最後登入時間
+  isActive?: boolean; // 新增：帳戶是否啟用
 }
 
 // LINE 設定介面
@@ -28,6 +38,8 @@ export interface LineSettings {
 export interface NotificationSettings {
   email: boolean;
   line: boolean;
+  pushNotification?: boolean; // 新增：推播通知
+  frequency?: 'realtime' | 'daily' | 'weekly'; // 新增：通知頻率
 }
 
 // 表單資料介面
@@ -89,4 +101,12 @@ export interface UserSettingsState {
 export interface NotificationStatus {
   message: string | null;
   status: 'success' | 'error' | null;
+}
+
+// 新增一個用戶偏好設定介面
+export interface UserPreferences {
+  language: string;
+  theme: 'light' | 'dark';
+  emailFrequency: 'daily' | 'weekly' | 'monthly' | 'never';
+  timezone?: string;
 }
