@@ -9,6 +9,14 @@ interface VerificationResult {
   verificationCode: string;
 }
 
+// 添加驗證碼訊息模板函數
+function createVerificationTemplate(verificationCode: string) {
+  return {
+    type: 'text' as const,
+    text: `您的驗證碼是：${verificationCode}\n請在網站上輸入此驗證碼完成驗證。`
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).end();
@@ -33,31 +41,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // 處理文字訊息
       if (event.type === 'message' && event.message.type === 'text') {
-        const text = event.message.text;
         const lineUserId = event.source.userId;
+        const messageText = event.message.text;
 
         // 處理驗證指令
-        if (text.startsWith('驗證 ')) {
+        if (messageText.startsWith('驗證 ')) {
           try {
-            const userId = text.split(' ')[1];
+            const userId = messageText.split(' ')[1];
+            if (!userId) {
+              await lineService.sendMessage(lineUserId, {
+                type: 'text',
+                text: '請提供正確的用戶ID，格式：驗證 {用戶ID}'
+              });
+              return;
+            }
+
+            // 生成驗證碼
             const verificationCode = await lineService.generateVerificationCode(userId, lineUserId);
             
-            if (verificationCode) {
-              await lineService.sendMessage(lineUserId, {
-                type: 'text',
-                text: `您的驗證碼是：${verificationCode}\n\n請在網站上輸入此驗證碼完成綁定。\n驗證碼將在 5 分鐘後失效。`
-              });
-              
-              await lineService.sendMessage(lineUserId, {
-                type: 'text',
-                text: '💡 提示：為確保資訊安全，請勿將驗證碼分享給他人。'
-              });
-            } else {
-              await lineService.sendMessage(lineUserId, {
-                type: 'text',
-                text: '很抱歉，驗證碼生成失敗。請稍後重試或聯繫客服協助。'
-              });
-            }
+            // 發送驗證碼訊息
+            await lineService.sendMessage(lineUserId, 
+              createVerificationTemplate(verificationCode)
+            );
+
           } catch (error) {
             logger.error('處理驗證指令失敗:', error);
             await lineService.sendMessage(lineUserId, {

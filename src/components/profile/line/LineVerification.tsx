@@ -18,6 +18,7 @@ interface LineVerificationProps {
   startVerification: () => void;
   user: User | null;
   checkLineFollowStatus?: (userId: string) => void;
+  confirmVerificationCode: (code: string) => void;
 }
 
 const LineVerification: React.FC<LineVerificationProps> = ({
@@ -26,8 +27,11 @@ const LineVerification: React.FC<LineVerificationProps> = ({
   setLineId,
   startVerification,
   user,
-  checkLineFollowStatus
+  checkLineFollowStatus,
+  confirmVerificationCode
 }) => {
+  const [verificationCode, setVerificationCode] = React.useState('');
+
   return (
     <div className="space-y-6">
       <StepIndicator step={verificationState as VerificationStep} />
@@ -72,41 +76,24 @@ const LineVerification: React.FC<LineVerificationProps> = ({
 
       {verificationState === 'verifying' && (
         <div className="space-y-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 mt-1" />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-blue-800 font-medium">如何取得 LINE ID?</h3>
-                <p className="text-sm text-blue-700 mt-1">
-                  1. 開啟 LINE 應用程式<br/>
-                  2. 點擊「主頁」→「設定」<br/>
-                  3. 選擇「個人檔案」<br/>
-                  4. 您的 LINE ID 格式為 U 開頭的 33 位字元
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-medium mb-4">輸入您的 LINE ID</h3>
+            <h3 className="text-lg font-medium mb-4">輸入驗證碼</h3>
             <div className="space-y-4">
               <input
                 type="text"
-                value={lineId}
-                onChange={(e) => setLineId(e.target.value)}
-                placeholder="例如: U1234..."
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                placeholder="請輸入 6 位數驗證碼"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               <button
-                onClick={startVerification}
-                disabled={!lineId}
+                onClick={() => confirmVerificationCode(verificationCode)}
+                disabled={!verificationCode}
                 className={`w-full py-3 rounded-full text-white transition duration-200 ${
-                  lineId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'
+                  verificationCode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'
                 }`}
               >
-                開始驗證
+                確認驗證
               </button>
             </div>
           </div>

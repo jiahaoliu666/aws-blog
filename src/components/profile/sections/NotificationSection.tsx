@@ -6,8 +6,6 @@ import {
   faEnvelope,
   faDesktop,
   faMobile,
-  // 移除這行，因為我們要使用 brands 版本的 LINE 圖標
-  // faLine 
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import LineVerification from '../line/LineVerification';
@@ -25,6 +23,7 @@ interface NotificationSectionProps {
   checkLineFollowStatus: () => void;
   notificationSettings: NotificationSettings;
   handleNotificationChange: (setting: keyof NotificationSettings) => void;
+  confirmVerificationCode: () => void;
 }
 
 const NotificationSection: React.FC<NotificationSectionProps> = ({
@@ -41,7 +40,8 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
     mobile: false,
     line: false
   },
-  handleNotificationChange
+  handleNotificationChange,
+  confirmVerificationCode
 }) => {
   return (
     <div className="space-y-8">
@@ -84,6 +84,7 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
             startVerification={startVerification}
             user={user}
             checkLineFollowStatus={checkLineFollowStatus}
+            confirmVerificationCode={confirmVerificationCode}
           />
         </div>
 

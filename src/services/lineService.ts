@@ -176,56 +176,51 @@ export const lineService: LineServiceInterface = {
     }
   },
 
-  async verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }> {
+  async verifyCode(lineId: string, code: string): Promise<{ success: boolean; message?: string }> {
     try {
       // 從 DynamoDB 獲取驗證資訊
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Key: {
-          userId: { S: userId }
+          lineId: { S: lineId }
         }
       };
 
       const result = await dynamoClient.send(new GetItemCommand(params));
       
       if (!result.Item) {
-        logger.error('找不到驗證記錄');
         return { success: false, message: '找不到驗證記錄' };
       }
 
       const storedCode = result.Item.verificationCode?.S;
       const expiry = Number(result.Item.verificationExpiry?.N);
-      const lineId = result.Item.lineId?.S;
 
       // 驗證碼檢查
-      if (!storedCode || !expiry || !lineId) {
-        logger.error('驗證資訊不完整');
+      if (!storedCode || !expiry) {
         return { success: false, message: '驗證資訊不完整' };
       }
 
       // 檢查是否過期
       if (Date.now() > expiry) {
-        logger.error('驗證碼已過期');
         return { success: false, message: '驗證碼已過期' };
       }
 
       // 檢查驗證碼
       if (code !== storedCode) {
-        logger.error('驗證碼不正確');
         return { success: false, message: '驗證碼不正確' };
+      }
+
+      // 檢查 userId 是否存在
+      const userId = result.Item.userId?.S;
+      if (!userId) {
+        return { success: false, message: '找不到用戶資訊' };
       }
 
       // 更新驗證狀態
       await this.updateUserLineSettings({
-        userId,
         lineId,
-        isVerified: true
-      });
-
-      // 發送歡迎訊息
-      await this.sendMessage(lineId, {
-        type: 'text',
-        text: '🎉 恭喜您完成驗證！\n您現在可以收到最新文章的即時通知了。'
+        isVerified: true,
+        userId
       });
 
       return { success: true, message: '驗證成功' };
@@ -511,7 +506,7 @@ export const lineService: LineServiceInterface = {
   async sendWelcomeMessage(lineId: string): Promise<boolean> {
     try {
       const welcomeMessage: LineMessage = {
-        type: 'text' as const,  // 明確指定為字面量類型
+        type: 'text' as const,  // 明確指定為面量類型
         text: '感謝您追蹤我們！請在網站上完成驗證程序以接收通知。'
       };
 
@@ -524,7 +519,23 @@ export const lineService: LineServiceInterface = {
 
   async generateVerificationCode(userId: string, lineId: string): Promise<string> {
     try {
-      const { verificationCode } = await this.requestVerification(lineId, userId);
+      // 生成6位數隨機驗證碼
+      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // 儲存到 DynamoDB
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Item: {
+          userId: { S: userId },
+          lineId: { S: lineId },
+          verificationCode: { S: verificationCode },
+          verificationExpiry: { N: (Date.now() + 300000).toString() }, // 5分鐘過期
+          isVerified: { BOOL: false },
+          createdAt: { S: new Date().toISOString() }
+        }
+      };
+
+      await dynamoClient.send(new PutItemCommand(params));
       return verificationCode;
     } catch (error) {
       logger.error('生成驗證碼失敗:', error);
