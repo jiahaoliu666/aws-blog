@@ -33,7 +33,7 @@ function createVerificationTemplate(verificationCode: string) {
 function createWelcomeTemplate() {
   return {
     type: 'text' as const,
-    text: '感謝您加入！我們將為您提供最新的部落格更新通知。\n\n您可以輸入「驗證」或「/id」來獲取您的 LINE ID。'
+    text: '感謝您加入！我們將為您提供最新的部落格更新通知。\n\n您可以輸入��驗證」或「/id」來獲取您的 LINE ID。'
   };
 }
 
