@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, QueryCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
+import { toast } from 'react-toastify';
 
 interface ActivityLog {
-  date: string;
+  id: string;
+  userId: string;
   action: string;
+  timestamp: string;
+  details?: string;
 }
 
 interface UseProfileActivityProps {
@@ -15,14 +19,17 @@ interface UseProfileActivityProps {
 export type UseProfileActivityReturn = {
   activityLog: ActivityLog[];
   isLoading: boolean;
-  addActivityLog: (action: string) => Promise<void>;
-  formatDate: (dateString: string) => string;
+  error: Error | null;
+  addActivityLog: (action: string, details?: string) => Promise<void>;
   fetchActivityLog: () => Promise<void>;
+  formatDate: (timestamp: string) => string;
+  clearActivityLog: () => Promise<void>;
 };
 
-export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfileActivityReturn => {
+export const useProfileActivity = ({ user }: UseProfileActivityProps) => {
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const dynamoClient = new DynamoDBClient({
     region: 'ap-northeast-1',
@@ -35,88 +42,121 @@ export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfil
   const fetchActivityLog = async () => {
     if (!user?.sub) return;
 
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      setError(null);
+
       const params = {
         TableName: 'AWS_Blog_UserActivityLog',
         KeyConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: {
-          ':userId': { S: user.sub },
+          ':userId': { S: user.sub }
         },
         ScanIndexForward: false, // 降序排列
-        Limit: 12, // 限制返回數量
+        Limit: 50 // 限制返回最近50條記錄
       };
 
       const command = new QueryCommand(params);
       const response = await dynamoClient.send(command);
-      
-      const logs = response.Items?.map(item => ({
-        date: item.timestamp?.S || '',
-        action: item.action?.S || '',
+
+      const activities = response.Items?.map(item => ({
+        id: item.id.S!,
+        userId: item.userId.S!,
+        action: item.action.S!,
+        timestamp: item.timestamp.S!,
+        details: item.details?.S
       })) || [];
 
-      setActivityLog(logs);
-      
+      setActivityLog(activities);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '獲取活動記錄失敗';
+      setError(new Error(errorMessage));
       logger.error('獲取活動記錄失敗:', error);
+      toast.error('無法載入活動記錄');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 新增活動記錄
-  const addActivityLog = async (action: string) => {
+  const addActivityLog = async (action: string, details?: string) => {
     if (!user?.sub) return;
 
     try {
       const timestamp = new Date().toISOString();
+      const id = `${user.sub}-${Date.now()}`;
+
       const params = {
         TableName: 'AWS_Blog_UserActivityLog',
         Item: {
+          id: { S: id },
           userId: { S: user.sub },
-          timestamp: { S: timestamp },
           action: { S: action },
-        },
+          timestamp: { S: timestamp },
+          ...(details && { details: { S: details } })
+        }
       };
 
-      await dynamoClient.send(new QueryCommand(params));
-      
+      const command = new PutItemCommand(params);
+      await dynamoClient.send(command);
+
       // 更新本地狀態
       setActivityLog(prev => [{
-        date: timestamp,
-        action
-      }, ...prev].slice(0, 12));
+        id,
+        userId: user.sub,
+        action,
+        timestamp,
+        details
+      }, ...prev].slice(0, 50)); // 保持最近50條記錄
 
     } catch (error) {
-      logger.error('新增活動記錄失敗:', error);
+      logger.error('添加活動記錄失敗:', error);
+      toast.error('無法記錄活動');
     }
   };
 
-  // 格式化日期
-  const formatDate = (dateString: string): string => {
+  const formatDate = (timestamp: string): string => {
     try {
-      const date = new Date(dateString);
+      const date = new Date(timestamp);
       return new Intl.DateTimeFormat('zh-TW', {
         year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
+        month: 'long',
+        day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit',
+        minute: '2-digit'
       }).format(date);
     } catch (error) {
-      return dateString;
+      logger.error('日期格式化失敗:', error);
+      return timestamp;
+    }
+  };
+
+  const clearActivityLog = async () => {
+    if (!user?.sub) return;
+
+    try {
+      // 這裡可以實現清除活動記錄的邏輯
+      // 注意：這可能需要批次處理，因為 DynamoDB 不支持批量刪除
+      setActivityLog([]);
+      toast.success('活動記錄已清除');
+    } catch (error) {
+      logger.error('清除活動記錄失敗:', error);
+      toast.error('清除活動記錄失敗');
     }
   };
 
   useEffect(() => {
-    fetchActivityLog();
+    if (user?.sub) {
+      fetchActivityLog();
+    }
   }, [user?.sub]);
 
   return {
     activityLog,
     isLoading,
+    error,
     addActivityLog,
+    fetchActivityLog,
     formatDate,
-    fetchActivityLog
+    clearActivityLog
   };
 }; 

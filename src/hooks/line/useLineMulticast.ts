@@ -8,13 +8,15 @@ interface MulticastResult {
   message: string;
 }
 
-export type UseLineMulticastReturn = {
-  send: (message: string) => Promise<void>;
-  status: 'idle' | 'sending' | 'success' | 'error';
-  error?: string;
-};
+export interface UseLineMulticastReturn {
+  multicastMessage: string;
+  setMulticastMessage: (message: string) => void;
+  isMulticasting: boolean;
+  multicastResult: MulticastResult;
+  handleMulticast: () => Promise<void>;
+}
 
-export const useLineMulticast = (): UseLineMulticastReturn => {
+export const useLineMulticast = () => {
   const [multicastMessage, setMulticastMessage] = useState('');
   const [isMulticasting, setIsMulticasting] = useState(false);
   const [multicastResult, setMulticastResult] = useState<MulticastResult>({
@@ -22,7 +24,6 @@ export const useLineMulticast = (): UseLineMulticastReturn => {
     message: ''
   });
 
-  // 發送群發訊息
   const handleMulticast = async () => {
     if (!multicastMessage.trim()) {
       toast.error('請輸入要發送的訊息');
@@ -39,7 +40,7 @@ export const useLineMulticast = (): UseLineMulticastReturn => {
           status: 'success',
           message: '訊息發送成功'
         });
-        setMulticastMessage(''); // 清空訊息
+        setMulticastMessage('');
         toast.success('群發訊息已成功發送');
       } else {
         throw new Error(response.message || '發送失敗');
@@ -56,23 +57,11 @@ export const useLineMulticast = (): UseLineMulticastReturn => {
     }
   };
 
-  // 重置群發狀態
-  const resetMulticast = () => {
-    setMulticastMessage('');
-    setMulticastResult({
-      status: null,
-      message: ''
-    });
-  };
-
-  // 驗證訊息內容
-  const validateMessage = (message: string): boolean => {
-    return message.trim().length > 0 && message.length <= 2000;
-  };
-
   return {
-    send: handleMulticast,
-    status: isMulticasting ? 'sending' : multicastResult.status || 'idle',
-    error: multicastResult.status === 'error' ? multicastResult.message : undefined
+    multicastMessage,
+    setMulticastMessage,
+    isMulticasting,
+    multicastResult,
+    handleMulticast
   };
 }; 

@@ -1,29 +1,31 @@
 import { useState } from 'react';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
-import logActivity from '../../pages/api/profile/activity-log';
+import { logger } from '@/utils/logger';
 import { toast } from 'react-toastify';
 
 interface UseProfileAvatarProps {
   user: User | null;
+  updateUser: (data: Partial<User>) => void;
   setFormData: (data: any) => void;
 }
 
-// 定義 UseProfileAvatarReturn 型別
 export type UseProfileAvatarReturn = {
   tempAvatar: string | null;
   uploadMessage: string | null;
+  isUploading: boolean;
   handleAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   resetUploadState: () => void;
   loadAvatarFromStorage: () => void;
   validateAvatarUrl: (url: string) => boolean;
-  setTempAvatar: React.Dispatch<React.SetStateAction<string | null>>;
+  setTempAvatar: (avatar: string | null) => void;
 };
 
-export const useProfileAvatar = ({ user, setFormData }: UseProfileAvatarProps): UseProfileAvatarReturn => {
+export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAvatarProps): UseProfileAvatarReturn => {
   const [tempAvatar, setTempAvatar] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const s3Client = new S3Client({
     region: 'ap-northeast-1',
@@ -41,88 +43,98 @@ export const useProfileAvatar = ({ user, setFormData }: UseProfileAvatarProps): 
     },
   });
 
+  const validateFile = (file: File): boolean => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!validTypes.includes(file.type)) {
+      toast.error('請上傳 JPG、PNG 或 GIF 格式的圖片');
+      return false;
+    }
+
+    if (file.size > maxSize) {
+      toast.error('圖片大小不能超過 5MB');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (!file || !user?.sub) return;
 
-      // 驗證檔案類型
-      const validImageTypes = ['image/jpeg', 'image/png'];
-      if (!validImageTypes.includes(file.type)) {
-        setUploadMessage('上傳失敗：檔案類型不支援，請確認檔案類型是否為 jpeg 或 png。');
-        toast.error('不支援的檔案類型');
-        return;
-      }
+    try {
+      if (!validateFile(file)) return;
 
-      const userSub = user?.sub || 'default-sub';
+      setIsUploading(true);
+      setUploadMessage('正在上傳頭像...');
 
-      // 準備 S3 上傳參數
-      const params = {
+      // 生成臨時預覽
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTempAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // 上傳到 S3
+      const fileKey = `avatars/${user.sub}/${Date.now()}-${file.name}`;
+      const uploadParams = {
         Bucket: 'aws-blog-avatar',
-        Key: `avatars/${userSub}-${file.name}`,
+        Key: fileKey,
         Body: file,
         ContentType: file.type,
+        ACL: ObjectCannedACL.public_read
       };
 
-      try {
-        // 上傳到 S3
-        const command = new PutObjectCommand(params);
-        await s3Client.send(command);
-        const fileUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
-        
-        // 更新 DynamoDB
-        const updateParams = {
-          TableName: 'AWS_Blog_UserProfiles',
-          Key: {
-            userId: { S: userSub },
-          },
-          UpdateExpression: 'SET avatarUrl = :avatarUrl',
-          ExpressionAttributeValues: {
-            ':avatarUrl': { S: fileUrl },
-          },
-        };
+      const uploadCommand = new PutObjectCommand(uploadParams);
+      await s3Client.send(uploadCommand);
 
-        const updateCommand = new UpdateItemCommand(updateParams);
-        await dynamoClient.send(updateCommand);
+      // 更新用戶資料
+      const avatarUrl = `https://your-s3-bucket-name.s3.amazonaws.com/${fileKey}`;
+      const updateParams = {
+        TableName: 'AWS_Blog_Users',
+        Key: {
+          userId: { S: user.sub }
+        },
+        UpdateExpression: 'SET avatar = :avatar, updatedAt = :updatedAt',
+        ExpressionAttributeValues: {
+          ':avatar': { S: avatarUrl },
+          ':updatedAt': { S: new Date().toISOString() }
+        }
+      };
 
-        // 更新本地狀態
-        setTempAvatar(fileUrl);
-        setFormData((prevData: any) => ({ ...prevData, avatar: fileUrl }));
-        localStorage.setItem('avatarUrl', fileUrl);
-        setUploadMessage('頭像更換成功，頁面刷新中...');
-        toast.success('頭像更新成功');
+      const updateCommand = new UpdateItemCommand(updateParams);
+      await dynamoClient.send(updateCommand);
 
-        // 記錄活動
-        await logActivity(userSub, '更換頭像');
+      // 更新本地狀態
+      updateUser({ avatar: avatarUrl });
+      setUploadMessage('頭像上傳成功');
+      toast.success('頭像已更新');
 
-        // 延遲重新載入頁面
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
-
-      } catch (error) {
-        console.error('Error uploading file or updating profile:', error);
-        setUploadMessage('上傳失敗：請稍後再試。');
-        toast.error('頭像上傳失敗');
-      }
+    } catch (error) {
+      logger.error('上傳頭像失敗:', error);
+      setUploadMessage('上傳頭像失敗');
+      toast.error('上傳頭像失敗，請稍後重試');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const resetUploadState = () => {
-    setUploadMessage(null);
     setTempAvatar(null);
+    setUploadMessage(null);
   };
 
-  // 從 localStorage 讀取頭像
   const loadAvatarFromStorage = () => {
-    if (typeof window !== 'undefined') {
-      const storedAvatar = localStorage.getItem('avatarUrl');
-      if (storedAvatar) {
-        setFormData((prevData: any) => ({ ...prevData, avatar: storedAvatar }));
-      }
+    if (typeof window === 'undefined') return;
+    
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar) {
+      setTempAvatar(savedAvatar);
     }
   };
 
-  // 驗證頭像 URL
   const validateAvatarUrl = (url: string): boolean => {
     try {
       new URL(url);
@@ -135,6 +147,7 @@ export const useProfileAvatar = ({ user, setFormData }: UseProfileAvatarProps): 
   return {
     tempAvatar,
     uploadMessage,
+    isUploading,
     handleAvatarChange,
     resetUploadState,
     loadAvatarFromStorage,

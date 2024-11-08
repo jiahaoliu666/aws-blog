@@ -8,7 +8,11 @@ import ProfileUI from '../../components/profile/ProfileUI';
 const ProfilePage: React.FC = () => {
   const profileCore = useProfileCore();
   const profileForm = useProfileForm({ user: profileCore.user, updateUser: profileCore.updateUser });
-  const profileAvatar = useProfileAvatar({ user: profileCore.user, setFormData: profileForm.setFormData });
+  const profileAvatar = useProfileAvatar({ 
+    user: profileCore.user, 
+    setFormData: profileForm.setFormData,
+    updateUser: profileCore.updateUser
+  });
   const profilePassword = useProfilePassword({ user: profileCore.user, handleLogout: profileCore.handleLogout });
 
   return (

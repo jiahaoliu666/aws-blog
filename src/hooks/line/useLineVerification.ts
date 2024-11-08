@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { User } from '@/types/userType';
-import { VerificationState } from '@/types/lineTypes';
 import { lineService } from '@/services/lineService';
 import { toast } from 'react-toastify';
 import { logger } from '@/utils/logger';
+import { User } from '@/types/userType';
+import { VerificationState } from '@/types/lineTypes';
 
 interface UseLineVerificationProps {
   user: User | null;
@@ -11,19 +11,57 @@ interface UseLineVerificationProps {
 }
 
 export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVerificationProps) => {
+  const [lineId, setLineId] = useState('');
   const [verificationState, setVerificationState] = useState<VerificationState>({
     step: 'idle',
     status: 'idle',
     message: '',
     isVerified: false
   });
-  
-  const [verificationCode, setVerificationCode] = useState('');
   const [retryCount, setRetryCount] = useState(0);
-  const [lineId, setLineId] = useState('');
+  const [isLineFollowed, setIsLineFollowed] = useState(false);
   const MAX_RETRY = 3;
 
-  // 開始驗證流程
+  const checkLineFollowStatus = async () => {
+    try {
+      if (!lineId) {
+        toast.error('請先輸入 LINE ID');
+        return;
+      }
+
+      if (user?.sub) {
+        const response = await lineService.checkFollowStatus(lineId);
+        setIsLineFollowed(response.isFollowing);
+        
+        const newState = response.isFollowing ? {
+          step: 'verifying' as const,
+          status: 'idle' as const,
+          message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
+          isVerified: false
+        } : {
+          step: 'idle' as const,
+          status: 'idle' as const,
+          message: '請先加入 LINE 官方帳號為好友',
+          isVerified: false
+        };
+
+        setVerificationState(newState);
+        
+        if (lineId) {
+          await updateUserLineSettings({
+            lineId,
+            isVerified: false,
+            displayName: user?.username || '',
+            verificationState: newState
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('檢查 LINE 好友狀態失敗:', error);
+      toast.error('檢查 LINE 好友狀態失敗，請稍後重試');
+    }
+  };
+
   const startVerification = async () => {
     try {
       setVerificationState(prev => ({
@@ -58,17 +96,14 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
       });
 
     } catch (error) {
-      logger.error('開始驗證失敗:', error);
       setVerificationState(prev => ({
         ...prev,
         status: 'error',
         message: '驗證請求失敗，請稍後重試'
       }));
-      toast.error('驗證請求失敗');
     }
   };
 
-  // 確認驗證碼
   const confirmVerificationCode = async (code: string) => {
     try {
       setVerificationState(prev => ({
@@ -108,7 +143,6 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
         };
 
         setVerificationState(successState);
-        toast.success('LINE 帳號驗證成功');
 
         await updateUserLineSettings({
           lineId,
@@ -122,17 +156,14 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
       }
 
     } catch (error) {
-      logger.error('驗證碼確認失敗:', error);
       setVerificationState(prev => ({
         ...prev,
         status: 'error',
-        message: '驗證失敗'
+        message: '驗證過程發生錯誤'
       }));
-      toast.error('驗證失敗');
     }
   };
 
-  // 重試驗證
   const handleVerificationRetry = async () => {
     if (retryCount >= MAX_RETRY) {
       setVerificationState({
@@ -140,7 +171,6 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
         status: 'error',
         message: '已超過最大重試次數，請稍後再試'
       });
-      toast.error('已超過重試次數限制');
       return;
     }
     
@@ -148,28 +178,15 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
     await startVerification();
   };
 
-  // 重置驗證狀態
-  const resetVerification = () => {
-    setVerificationState({
-      step: 'idle',
-      status: 'idle',
-      message: '',
-      isVerified: false
-    });
-    setVerificationCode('');
-    setRetryCount(0);
-  };
-
   return {
-    verificationState,
-    verificationCode,
     lineId,
-    setVerificationCode,
     setLineId,
+    verificationState,
+    isLineFollowed,
+    checkLineFollowStatus,
     startVerification,
     confirmVerificationCode,
-    handleVerificationRetry,
-    resetVerification
+    handleVerificationRetry
   };
 };
 

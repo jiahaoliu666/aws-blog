@@ -1,42 +1,22 @@
 import { useState } from 'react';
 import { CognitoIdentityProviderClient, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { User } from '@/types/userType';
-import logActivity from '@/pages/api/profile/activity-log';
 import { toast } from 'react-toastify';
-
+import { logger } from '@/utils/logger';
 
 interface UseProfilePasswordProps {
   user: User | null;
   handleLogout: () => Promise<void>;
 }
 
-export type UseProfilePasswordReturn = {
-  oldPassword: string;
-  showOldPassword: boolean;
-  showNewPassword: boolean;
-  passwordMessage: string | null;
-  isPasswordModalOpen: boolean;
-  isLoading: boolean;
-  setOldPassword: React.Dispatch<React.SetStateAction<string>>;
-  setShowOldPassword: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowNewPassword: React.Dispatch<React.SetStateAction<boolean>>;
-  handleChangePassword: (newPassword: string, confirmPassword: string) => Promise<void>;
-  handleOpenPasswordModal: () => void;
-  handleClosePasswordModal: () => void;
-  resetPasswordFields: () => void;
-  calculatePasswordStrength: (password: string) => number;
-  newPassword: string;
-  setNewPassword: (newPassword: string) => void;
-};
-
-export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps): UseProfilePasswordReturn => {
+export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps) => {
   const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [newPassword, setNewPassword] = useState<string>('');
 
   const cognitoClient = new CognitoIdentityProviderClient({
     region: 'ap-northeast-1',
@@ -56,6 +36,22 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     return strength;
   };
 
+  const validatePassword = (password: string): boolean => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return (
+      password.length >= minLength &&
+      hasUpperCase &&
+      hasLowerCase &&
+      hasNumbers &&
+      hasSpecialChar
+    );
+  };
+
   const handleChangePassword = async (newPassword: string, confirmPassword: string) => {
     setIsLoading(true);
     try {
@@ -66,6 +62,10 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
 
       if (newPassword !== confirmPassword) {
         throw new Error('新密碼和確認密碼不一致');
+      }
+
+      if (!validatePassword(newPassword)) {
+        throw new Error('新密碼不符合安全要求');
       }
 
       // 密碼強度檢查
@@ -83,10 +83,8 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
 
       await cognitoClient.send(changePasswordCommand);
       
-      // 成功處理
       setPasswordMessage('密碼變更成功，請重新登入');
       toast.success('密碼變更成功');
-      await logActivity(user?.sub || 'default-sub', '變更密碼');
       
       // 延遲登出
       setTimeout(handleLogout, 3000);
@@ -95,6 +93,7 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
       const errorMessage = error instanceof Error ? error.message : '密碼變更失敗';
       setPasswordMessage(errorMessage);
       toast.error(errorMessage);
+      logger.error('密碼變更失敗:', error);
     } finally {
       setIsLoading(false);
     }
@@ -106,12 +105,12 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
 
   const handleClosePasswordModal = () => {
     setIsPasswordModalOpen(false);
-    setOldPassword('');
-    setPasswordMessage(null);
+    resetPasswordFields();
   };
 
   const resetPasswordFields = () => {
     setOldPassword('');
+    setNewPassword('');
     setShowOldPassword(false);
     setShowNewPassword(false);
     setPasswordMessage(null);
@@ -119,12 +118,14 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
 
   return {
     oldPassword,
+    newPassword,
     showOldPassword,
     showNewPassword,
     passwordMessage,
     isPasswordModalOpen,
     isLoading,
     setOldPassword,
+    setNewPassword,
     setShowOldPassword,
     setShowNewPassword,
     handleChangePassword,
@@ -132,7 +133,8 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     handleClosePasswordModal,
     resetPasswordFields,
     calculatePasswordStrength,
-    newPassword,
-    setNewPassword,
+    validatePassword
   };
-}; 
+};
+
+export type UseProfilePasswordReturn = ReturnType<typeof useProfilePassword>; 
