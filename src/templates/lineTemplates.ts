@@ -186,9 +186,9 @@ export const createUserIdTemplate = (userId: string) => ({
   }
 });
 
-export const createVerificationTemplate = (lineId: string, code: string) => ({
+export const createVerificationTemplate = (code: string) => ({
   type: 'flex',
-  altText: '驗證資訊',
+  altText: '驗證碼',
   contents: {
     type: 'bubble',
     body: {
@@ -197,66 +197,35 @@ export const createVerificationTemplate = (lineId: string, code: string) => ({
       contents: [
         {
           type: 'text',
-          text: '🔐 驗證資訊',
+          text: '您的驗證碼',
           weight: 'bold',
           size: 'xl',
-          color: '#2c5282'
-        },
-        {
-          type: 'box',
-          layout: 'vertical',
-          margin: 'lg',
-          contents: [
-            {
-              type: 'text',
-              text: '您的 LINE ID:',
-              size: 'sm',
-              color: '#4a5568'
-            },
-            {
-              type: 'text',
-              text: lineId,
-              weight: 'bold',
-              size: 'md',
-              margin: 'sm'
-            }
-          ]
-        },
-        {
-          type: 'box',
-          layout: 'vertical',
-          margin: 'lg',
-          contents: [
-            {
-              type: 'text',
-              text: '驗證碼:',
-              size: 'sm',
-              color: '#4a5568'
-            },
-            {
-              type: 'text',
-              text: code,
-              weight: 'bold',
-              size: '2xl',
-              margin: 'sm',
-              color: '#2c5282'
-            }
-          ]
+          align: 'center'
         },
         {
           type: 'text',
-          text: '請將以上資訊填入網站驗證表單',
-          margin: 'xl',
-          size: 'sm',
-          color: '#718096',
-          wrap: true
-        },
-        {
-          type: 'text',
-          text: '⚠️ 驗證碼將在 5 分鐘後失效',
+          text: code,
+          weight: 'bold',
+          size: '3xl',
+          align: 'center',
           margin: 'md',
+          color: '#1DB446'
+        },
+        {
+          type: 'text',
+          text: '請在網站輸入此驗證碼',
+          size: 'sm',
+          align: 'center',
+          margin: 'md',
+          color: '#888888'
+        },
+        {
+          type: 'text',
+          text: '驗證碼將在 5 分鐘後失效',
           size: 'xs',
-          color: '#e53e3e'
+          align: 'center',
+          margin: 'md',
+          color: '#FF0000'
         }
       ]
     }

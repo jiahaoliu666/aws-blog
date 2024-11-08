@@ -316,13 +316,11 @@ async function requestVerification(userId: string, lineId: string) {
 }
 
 // 建議加強驗證碼生成的複雜度
-const generateVerificationCode = () => {
-  const length = 6;
+const generateVerificationCode = (length: number = 6): string => {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const randomBytes = crypto.randomBytes(length);
   let result = '';
   for (let i = 0; i < length; i++) {
-    result += chars[randomBytes[i] % chars.length];
+    result += chars[Math.floor(Math.random() * chars.length)];
   }
   return result;
 };
@@ -338,4 +336,25 @@ const saveVerificationState = async (userId: string, state: VerificationState) =
     }
   };
   await dynamoClient.send(new UpdateItemCommand(params));
+};
+
+const saveVerificationInfo = async (lineId: string, verificationCode: string) => {
+  try {
+    const params = {
+      TableName: 'AWS_Blog_UserNotificationSettings',
+      Item: {
+        lineId: { S: lineId },
+        verificationCode: { S: verificationCode },
+        verificationExpiry: { N: (Date.now() + 5 * 60 * 1000).toString() }, // 5分鐘後過期
+        createdAt: { S: new Date().toISOString() }
+      }
+    };
+
+    await dynamoClient.send(new PutItemCommand(params));
+    logger.info('驗證資訊已儲存:', { lineId, verificationCode });
+    return true;
+  } catch (error) {
+    logger.error('儲存驗證資訊失敗:', error);
+    throw error;
+  }
 };

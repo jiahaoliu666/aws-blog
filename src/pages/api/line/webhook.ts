@@ -27,6 +27,53 @@ const dynamoClient = new DynamoDBClient({
   }
 });
 
+// 添加錯誤處理中間件
+const errorHandler = (error: any, res: NextApiResponse) => {
+  logger.error('LINE Webhook 錯誤:', {
+    message: error.message,
+    stack: error.stack,
+    timestamp: new Date().toISOString()
+  });
+
+  // 回傳適當的錯誤響應
+  res.status(500).json({
+    success: false,
+    message: '處理請求時發生錯誤'
+  });
+};
+
+// 添加驗證碼生成函數
+function generateVerificationCode(length: number): string {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  return Array.from(
+    { length }, 
+    () => chars[Math.floor(Math.random() * chars.length)]
+  ).join('');
+}
+
+// 添加 saveVerificationInfo 函數
+async function saveVerificationInfo(lineUserId: string, verificationCode: string) {
+  const command = new PutItemCommand({
+    TableName: 'line_verifications',
+    Item: {
+      lineUserId: { S: lineUserId },
+      verificationCode: { S: verificationCode },
+      createdAt: { S: new Date().toISOString() },
+      expiresAt: { N: (Math.floor(Date.now() / 1000) + 600).toString() } // 10分鐘後過期
+    }
+  });
+
+  return dynamoClient.send(command);
+}
+
+// 添加驗證碼訊息模板函數
+function createVerificationTemplate(code: string) {
+  return {
+    type: 'text',
+    text: `您的驗證碼是：${code}\n請在10分鐘內完成驗證。`
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     // 驗證 LINE 簽章
@@ -53,47 +100,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           event.message.text === '驗證') {
         
         try {
-          // 生成驗證碼
-          const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-          const lineId = event.source.userId;
-          const expiryTime = Date.now() + 300000; // 5分鐘後過期
-
-          // 儲存驗證資訊
-          const params = {
-            TableName: 'AWS_Blog_UserNotificationSettings',
-            Item: {
-              lineId: { S: lineId },
-              verificationCode: { S: verificationCode },
-              verificationExpiry: { N: expiryTime.toString() },
-              isVerified: { BOOL: false },
-              createdAt: { S: new Date().toISOString() }
-            }
-          };
-
-          logger.info('準備儲存驗證資訊:', params);
-          await dynamoClient.send(new PutItemCommand(params));
-
-          // 回傳驗證資訊給用戶
-          const message = {
-            type: 'text',
-            text: `您的驗證資訊：\n\nLINE ID：${lineId}\n驗證碼：${verificationCode}\n\n請在網站的驗證表單中輸入以上資訊。\n\n⚠️ 驗證碼將在 5 分鐘後失效`
-          };
-
-          logger.info('準備發送驗證訊息:', { lineId, verificationCode });
-          await lineService.replyMessage(event.replyToken!, message);
+          // 獲取用戶 LINE ID
+          const lineUserId = event.source.userId;
           
-          logger.info('驗證訊息發送成功');
-        } catch (error) {
-          logger.error('處理驗證請求時發生錯誤:', {
-            error,
-            event,
-            stack: (error as Error).stack
+          // 生成驗證碼
+          const verificationCode = generateVerificationCode(6); // 確保這個函數存在
+          
+          // 記錄驗證資訊
+          logger.info('驗證請求:', {
+            lineUserId,
+            verificationCode,
+            timestamp: new Date().toISOString()
           });
 
+          // 儲存驗證資訊到 DynamoDB
+          await saveVerificationInfo(lineUserId, verificationCode);
+
+          // 發送驗證碼給用戶
+          const verificationTemplate = createVerificationTemplate(verificationCode);
+          await lineService.replyMessage(event.replyToken!, verificationTemplate);
+
+        } catch (error) {
+          logger.error('處理驗證請求失敗:', error);
           // 發送錯誤訊息給用戶
           await lineService.replyMessage(event.replyToken!, {
             type: 'text',
-            text: '驗證處理失敗，請稍後重試。如果問題持續發生，請聯繫客服。'
+            text: '驗證處理失敗，請稍後重試'
           });
         }
       }
@@ -101,11 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json({ message: 'OK' });
   } catch (error) {
-    logger.error('處理 LINE Webhook 時發生錯誤:', {
-      error,
-      stack: (error as Error).stack
-    });
-    res.status(500).json({ message: '內部伺服器錯誤' });
+    errorHandler(error, res);
   }
 }
 

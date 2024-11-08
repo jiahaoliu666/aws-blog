@@ -1,5 +1,7 @@
 // config/line.ts
 import { LineConfig } from '../types/lineTypes';
+// 添加 logger 導入
+import { logger } from '../utils/logger';
 
 export const lineConfig: LineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
@@ -106,3 +108,32 @@ export const validateLineMessagingConfig = () => {
     throw new Error('LINE Channel Access Token 格式不正確');
   }
 };
+
+// 修改環境變數檢查函數，返回驗證結果而不是直接拋出錯誤
+const validateEnvironment = () => {
+  const required = [
+    'LINE_CHANNEL_ACCESS_TOKEN',
+    'LINE_CHANNEL_SECRET',
+    'NEXT_PUBLIC_LINE_BASIC_ID'
+  ];
+
+  const missing = required.filter(key => !process.env[key]);
+  
+  if (missing.length > 0) {
+    logger.warn('缺少必要的環境變數:', missing);
+    return {
+      isValid: false,
+      missing
+    };
+  }
+
+  return {
+    isValid: true,
+    missing: []
+  };
+};
+
+// 導出驗證結果供其他模組使用
+export const environmentValidation = validateEnvironment();
+
+// 移除直接調用 validateEnvironment()
