@@ -81,48 +81,6 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
-
-            {/* 瀏覽器通知 */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <FontAwesomeIcon icon={faDesktop} className="text-gray-600 mr-3" />
-                <div>
-                  <h3 className="font-medium">瀏覽器通知</h3>
-                  <p className="text-sm text-gray-500">接收即時桌面通知</p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={notificationSettings.browser}
-                  onChange={() => handleNotificationChange('browser')}
-                  disabled={isLoading}
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            {/* 手機推送通知 */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <FontAwesomeIcon icon={faMobile} className="text-gray-600 mr-3" />
-                <div>
-                  <h3 className="font-medium">手機推送通知</h3>
-                  <p className="text-sm text-gray-500">透過行動應用程式接收通知</p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={notificationSettings.mobile}
-                  onChange={() => handleNotificationChange('mobile')}
-                  disabled={isLoading}
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
           </div>
         </div>
 
@@ -137,8 +95,6 @@ const NotificationSection: React.FC<NotificationSectionProps> = ({
           <ul className="list-disc list-inside text-blue-700 space-y-2">
             <li>電子郵件通知：系統將發送重要更新和活動提醒至您的信箱</li>
             <li>LINE 通知：需要先完成 LINE 帳號綁定才能啟用</li>
-            <li>瀏覽器通知：需要允許網站發送桌面通知</li>
-            <li>手機推送通知：需要安裝我們的行動應用程式</li>
           </ul>
         </div>
       </div>
