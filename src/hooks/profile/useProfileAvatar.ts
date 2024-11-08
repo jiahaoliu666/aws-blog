@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { S3Client, PutObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
@@ -84,33 +84,41 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
         Key: fileKey,
         Body: file,
         ContentType: file.type,
-        ACL: ObjectCannedACL.public_read
       };
 
       const uploadCommand = new PutObjectCommand(uploadParams);
       await s3Client.send(uploadCommand);
 
       // 更新用戶資料
-      const avatarUrl = `https://your-s3-bucket-name.s3.amazonaws.com/${fileKey}`;
+      const avatarUrl = `https://aws-blog-avatar.s3.amazonaws.com/${fileKey}`;
       const updateParams = {
-        TableName: 'AWS_Blog_Users',
+        TableName: 'AWS_Blog_UserProfiles',
         Key: {
           userId: { S: user.sub }
         },
-        UpdateExpression: 'SET avatar = :avatar, updatedAt = :updatedAt',
+        UpdateExpression: 'SET avatarUrl = :avatarUrl, updatedAt = :updatedAt',
         ExpressionAttributeValues: {
-          ':avatar': { S: avatarUrl },
+          ':avatarUrl': { S: avatarUrl },
           ':updatedAt': { S: new Date().toISOString() }
         }
       };
 
       const updateCommand = new UpdateItemCommand(updateParams);
       await dynamoClient.send(updateCommand);
+      logger.info('DynamoDB 更新成功');
 
       // 更新本地狀態
       if (updateUser) {
         updateUser({ avatar: avatarUrl });
       }
+      if (setFormData) {
+        setFormData((prevData: FormData) => ({ ...prevData, avatar: avatarUrl }));
+        logger.info('formData 更新成功', { avatar: avatarUrl });
+      }
+      
+      // 更新臨時頭像為新的 URL
+      setTempAvatar(avatarUrl);
+      
       setUploadMessage('頭像上傳成功');
       toast.success('頭像已更新');
 

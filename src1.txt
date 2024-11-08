@@ -1,0 +1,34 @@
+├── components
+│   ├── profile/                    // 個人資料相關組件
+│   │   ├── sections/               // 各個功能區塊組件
+│   │   │   ├── HistorySection.tsx  // 觀看紀錄區塊
+│   │   │   ├── NotificationSection.tsx   // 通知設定區塊
+│   │   │   ├── SettingsSection.tsx    // 系統偏好設定區塊
+│   │   │   ├── PasswordSection.tsx    // 密碼修改區塊
+│   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
+│   │   │   ├── ProfileSection.tsx     // 基本資料編輯區塊
+│   │   │   └── FeedbackSection.tsx    // 意見反饋區塊
+│   │   ├── ProfileErrorBoundary.tsx   // 錯誤邊界組件
+│   │   ├── common/                 // 共用組件
+│   │   │   ├── StepIndicator.tsx   // LINE 驗證步驟指示器組件
+│   │   │   └── Sidebar.tsx         // 側邊欄導航組件，包含用戶基本信息和菜單
+│   │   ├── line/
+│   │   │   └── LineVerification.tsx   // LINE 帳號驗證流程組件
+│   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
+--------------------------------
+├── hooks
+│   ├── useAuth.ts                  // 用戶認證 Hook
+│   ├── profile/                    // 個人資料相關 Hooks
+│   │   ├── useProfileAvatar.ts     // 個人資料頭像 Hook
+│   │   ├── useProfileFeedback.ts   // 個人資料反饋 Hook
+│   │   ├── useProfileForm.ts       // 個人資料表單 Hook
+│   │   ├── useProfileActivity.ts   // 個人資料活動 Hook
+│   │   ├── useNotificationSettings.ts  // 通知設定 Hook
+│   │   ├── useProfileLogic.ts      // 個人資料邏輯 Hook
+│   │   ├── useProfileCore.ts       // 個人資料核心 Hook
+│   │   ├── useProfileSettings.ts   // 個人資料設定 Hook
+│   │   ├── useProfileArticles.ts   // 個人資料文章 Hook
+│   │   ├── useProfileTheme.ts      // 個人資料主題 Hook
+│   │   ├── index.ts                // 模組導出
+│   │   └── useProfilePassword.ts   // 個人資料密碼 Hook
+--------------------------------

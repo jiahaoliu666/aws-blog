@@ -5,8 +5,7 @@ npm install -g ngrok
 ngrok http 3000
 
 # 列出 src 目錄下的所有文件 
-find src > src.txt
-
+find src > src1.txt
 
 
 

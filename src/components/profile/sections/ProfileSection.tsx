@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCamera, 
@@ -26,6 +26,7 @@ interface ProfileSectionProps {
   handleSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   errorMessage?: string;
+  tempAvatar?: string | null;
 }
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({
@@ -42,7 +43,8 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   uploadMessage,
   handleSubmit,
   isSubmitting,
-  errorMessage
+  errorMessage,
+  tempAvatar
 }) => {
   return (
     <div className="space-y-8">
@@ -53,7 +55,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
         <div className="flex justify-center">
           <div className="relative">
             <img
-              src={formData.avatar || '/images/default-avatar.png'}
+              src={tempAvatar || formData.avatar || '/images/default-avatar.png'}
               alt="Profile"
               className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
             />

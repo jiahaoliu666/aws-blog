@@ -17,6 +17,7 @@ interface SidebarProps {
   isProfileMenuOpen: boolean;
   setIsProfileMenuOpen: (isOpen: boolean) => void;
   formData: FormData;
+  tempAvatar?: string | null;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -24,7 +25,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   setActiveTab,
   isProfileMenuOpen,
   setIsProfileMenuOpen,
-  formData
+  formData,
+  tempAvatar
 }) => {
   const menuItems = [
     { tab: 'profile', label: '個人資訊', icon: faUser },
@@ -41,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* 用戶資訊 */}
       <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-700 rounded-lg">
         <img
-          src={formData.avatar || '/images/default-avatar.png'}
+          src={tempAvatar || formData.avatar || '/images/default-avatar.png'}
           alt="Profile"
           className="w-12 h-12 rounded-full object-cover border-2 border-blue-500"
         />
