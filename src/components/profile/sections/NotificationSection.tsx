@@ -65,28 +65,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             LINE 通知設定
           </h2>
 
-          {/* 用戶 ID 顯示區塊 */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-start gap-3">
-              <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 mt-1" />
-              <div>
-                <h3 className="font-medium text-gray-700 mb-2">您的用戶 ID</h3>
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-3 py-1 rounded border text-blue-600 font-mono select-all">
-                    {userId || '未登入'}
-                  </code>
-                  <button
-                    onClick={onCopyUserId}
-                    className="text-sm px-2 py-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                  >
-                    <FontAwesomeIcon icon={faCopy} className="mr-1" />
-                    複製
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* 驗證表單 */}
           <LineVerification
             verificationState={verificationState}

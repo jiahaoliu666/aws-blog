@@ -23,42 +23,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const events = req.body.events as LineWebhookEvent[];
     
     for (const event of events) {
-      // 處理加入好友事件
-      if (event.type === 'follow') {
-        await lineService.sendWelcomeMessage(event.source.userId);
-      }
-      
       // 處理文字訊息事件
       if (event.type === 'message' && 
-          event.message?.type === 'text' && 
-          event.message.text === '驗證') {
+          event.message?.type === 'text') {
         
+        const messageText = event.message.text;
         const lineId = event.source.userId;
-        const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-        
-        // 儲存驗證資訊到 DynamoDB
-        const params = {
-          TableName: 'AWS_Blog_UserNotificationSettings',
-          Item: {
-            lineId: { S: lineId },
-            verificationCode: { S: verificationCode },
-            verificationExpiry: { N: (Date.now() + 300000).toString() }, // 5分鐘過期
-            isVerified: { BOOL: false },
-            isFollowing: { BOOL: true },
-            createdAt: { S: new Date().toISOString() },
-            updatedAt: { S: new Date().toISOString() }
+
+        // 處理「驗證」指令
+        if (messageText === '驗證') {
+          try {
+            // 生成驗證碼
+            const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            // 儲存驗證資訊到 DynamoDB
+            const params = {
+              TableName: 'AWS_Blog_UserNotificationSettings',
+              Item: {
+                lineId: { S: lineId },
+                verificationCode: { S: verificationCode },
+                verificationExpiry: { N: (Date.now() + 300000).toString() }, // 5分鐘過期
+                isVerified: { BOOL: false },
+                isFollowing: { BOOL: true },
+                createdAt: { S: new Date().toISOString() },
+                updatedAt: { S: new Date().toISOString() }
+              }
+            };
+
+            await dynamoClient.send(new PutItemCommand(params));
+
+            // 回傳驗證資訊
+            await lineService.replyMessage(event.replyToken!, {
+              type: 'text',
+              text: `您的驗證資訊：\n\nLINE ID：${lineId}\n驗證碼：${verificationCode}\n\n請將以上資訊複製到網站的驗證表單中。\n\n⚠️ 驗證碼將在 5 分鐘後失效`
+            });
+
+            logger.info('已發送驗證資訊', { lineId, verificationCode });
+          } catch (error) {
+            logger.error('處理驗證請求時發生錯誤:', error);
+            await lineService.replyMessage(event.replyToken!, {
+              type: 'text',
+              text: '驗證處理失敗，請稍後重試。'
+            });
           }
-        };
-
-        await dynamoClient.send(new PutItemCommand(params));
-
-        // 回傳驗證資訊
-        await lineService.replyMessage(event.replyToken!, {
-          type: 'text',
-          text: `您的 LINE ID: ${lineId}\n驗證碼: ${verificationCode}\n\n請將以上資訊複製到網站的驗證表單中。`
-        });
-
-        logger.info('已發送驗證資訊', { lineId, verificationCode });
+        }
       }
     }
 
