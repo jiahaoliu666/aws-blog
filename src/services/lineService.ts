@@ -309,7 +309,7 @@ export class LineService implements LineServiceInterface {
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Item: {
-          userId: { S: `temp_${lineUserId}` }, // 添加臨時 userId
+          userId: { S: lineUserId }, // 直接使用 LINE 用戶 ID
           lineId: { S: lineUserId },
           verificationCode: { S: verificationCode },
           verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) }, // 10分鐘後過期
@@ -323,6 +323,7 @@ export class LineService implements LineServiceInterface {
       await dynamoClient.send(new PutItemCommand(params));
       
       logger.info('驗證資訊已儲存', { 
+        userId: lineUserId,
         lineId: lineUserId,
         verificationCode,
         timestamp: new Date().toISOString()
