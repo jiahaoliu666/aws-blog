@@ -56,7 +56,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const renderProgressStatus = () => {
     const steps = [
       { label: '加入好友', completed: verificationState.step !== VerificationStep.IDLE },
-      { label: '取得驗證碼', completed: verificationState.step >= VerificationStep.VERIFYING },
+      { label: '進行驗證', completed: verificationState.step >= VerificationStep.VERIFYING },
       { label: '完成驗證', completed: verificationState.step === VerificationStep.COMPLETE }
     ];
 
@@ -130,96 +130,72 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               LINE 通知設定
             </h2>
 
+            {/* 進度指示器 */}
             {!verificationState.isVerified && renderProgressStatus()}
 
             {!verificationState.isVerified ? (
               <div className="space-y-8">
-                {/* 步驟 1: 加入好友 */}
+                {/* 步驟 1: 加入好友說明 */}
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                  <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm">1</span>
-                    加入官方帳號好友
+                  <h3 className="text-lg font-semibold mb-4">
+                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white inline-flex items-center justify-center mr-2">1</span>
+                    加入官方帳號
                   </h3>
-                  <div className="flex justify-center items-center gap-12">
-                    <div className="flex flex-col items-center bg-white rounded-lg border border-gray-200 p-6">
-                      <img 
-                        src="/Line-QR-Code.png" 
-                        alt="LINE QR Code" 
-                        className="w-48 h-48 object-contain mb-3"
-                      />
-                      <p className="text-sm text-gray-500">使用 LINE 掃描 QR Code</p>
+                  <p className="text-sm text-gray-500">在LINE中輸入「驗證」取得驗證資訊</p>
+                  <div className="flex justify-center items-center gap-8">
+                    <div className="text-center space-y-4">
+                      <div className="bg-white p-4 rounded-lg border">
+                        <img src="/Line-QR-Code.png" alt="LINE QR Code" className="w-40 h-40 mx-auto" />
+                      </div>
+                      <p className="text-sm text-gray-600">掃描 QR Code </p>
                     </div>
-                    <div className="flex items-center">
-                      <a
-                        href="https://line.me/R/ti/p/@601feiwz"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-3 bg-[#00B900] text-white px-8 py-4 rounded-lg hover:bg-[#009900] transition-all hover:scale-105 text-lg font-medium whitespace-nowrap"
-                      >
-                        <FontAwesomeIcon icon={faLine} className="text-xl" />
-                        加入 LINE 好友
+                    <div className="text-center space-y-4">
+                      <a href="https://line.me/R/ti/p/@YOUR_LINE_ID" 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         className="inline-block bg-[#00B900] text-white px-6 py-3 rounded-lg hover:bg-[#009900]">
+                        <FontAwesomeIcon icon={faLine} className="mr-2" />
+                        加入好友
                       </a>
+                      <p className="text-sm text-gray-600">或點擊按鈕加入好友</p>
                     </div>
                   </div>
                 </div>
 
-                {/* 步驟 2: LINE ID 和驗證碼輸入 */}
+                {/* 步驟 2: 驗證資訊輸入 */}
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm">2</span>
-                    驗證資訊
+                  <h3 className="text-lg font-semibold mb-4">
+                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white inline-flex items-center justify-center mr-2">2</span>
+                    輸入驗證資訊
                   </h3>
-                  <div className="bg-white p-4 rounded-lg border border-gray-200">
-                    <div className="space-y-4">
-                      {/* LINE ID 輸入 */}
-                      <div>
-                        <label htmlFor="lineId" className="block text-sm font-medium text-gray-700 mb-2">
-                          LINE ID
-                        </label>
-                        <input
-                          id="lineId"
-                          type="text"
-                          value={lineId}
-                          onChange={(e) => setLineId(e.target.value)}
-                          placeholder="請輸入您的 LINE ID"
-                          className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                        />
-                      </div>
-
-                      {/* 驗證碼輸入 */}
-                      <div>
-                        <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
-                          驗證碼
-                        </label>
-                        <input
-                          id="verificationCode"
-                          type="text"
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value)}
-                          placeholder="請輸入驗證碼"
-                          className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">LINE ID</label>
+                      <input
+                        type="text"
+                        value={lineId}
+                        onChange={(e) => setLineId(e.target.value)}
+                        placeholder="請輸入LINE回傳的ID"
+                        className="w-full px-4 py-2 border rounded-lg"
+                      />
                     </div>
-                    
-                    {/* 驗證按鈕 */}
-                    <div className="mt-4">
-                      <button
-                        onClick={handleVerification}
-                        disabled={isLoading}
-                        className="w-full bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-all hover:scale-105 disabled:bg-gray-400 disabled:hover:scale-100"
-                      >
-                        {isLoading ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                            驗證中
-                          </span>
-                        ) : '驗證'}
-                      </button>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">驗證碼</label>
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        placeholder="請輸入LINE回傳的驗證碼"
+                        className="w-full px-4 py-2 border rounded-lg"
+                      />
                     </div>
+                    <button
+                      onClick={handleVerification}
+                      disabled={isLoading}
+                      className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {isLoading ? '驗證中...' : '驗證'}
+                    </button>
                   </div>
                 </div>
               </div>
