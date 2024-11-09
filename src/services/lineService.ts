@@ -103,7 +103,7 @@ interface LineServiceInterface {
     lineId?: string;
   }): Promise<void>;
   replyMessage(replyToken: string, messages: any[]): Promise<any>;
-  handleVerificationCommand(userId: string): Promise<{lineId: string, verificationCode: string}>;
+  handleVerificationCommand(lineUserId: string): Promise<{lineId: string, verificationCode: string}>;
 }
 
 export class LineService implements LineServiceInterface {
@@ -118,11 +118,9 @@ export class LineService implements LineServiceInterface {
     this.channelAccessToken = token;
   }
 
-  async replyMessage(replyToken: string, messages: any) {
+  async replyMessage(replyToken: string, messages: any[]): Promise<void> {
     try {
-      logger.info('準備發送 LINE 回覆:', { replyToken, messages });
-      
-      const response = await fetch('https://api.line.me/v2/bot/message/reply', {
+      const response = await fetch(`${this.apiUrl}/message/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,21 +128,16 @@ export class LineService implements LineServiceInterface {
         },
         body: JSON.stringify({
           replyToken,
-          messages: Array.isArray(messages) ? messages : [messages]
+          messages
         })
       });
 
-      const responseData = await response.json();
-      
       if (!response.ok) {
-        logger.error('LINE API 回覆失敗:', responseData);
-        throw new Error(`LINE API 錯誤: ${responseData.message}`);
+        const errorData = await response.json();
+        throw new Error(`LINE API 錯誤: ${JSON.stringify(errorData)}`);
       }
-
-      logger.info('LINE 回覆發送成功:', responseData);
-      return responseData;
     } catch (error) {
-      logger.error('發送 LINE 回覆時發生錯誤:', error);
+      logger.error('發送 LINE 回覆失敗:', error);
       throw error;
     }
   }
@@ -302,29 +295,41 @@ export class LineService implements LineServiceInterface {
     throw new Error('Method not implemented.');
   }
 
-  async handleVerificationCommand(userId: string): Promise<{lineId: string, verificationCode: string}> {
+  async handleVerificationCommand(lineUserId: string): Promise<{lineId: string, verificationCode: string}> {
     try {
-      // 先從資料庫獲取或生成 lineId
-      const lineId = `U${crypto.randomBytes(16).toString('hex')}`;
-      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // 驗證 lineUserId 是否存在
+      if (!lineUserId) {
+        throw new Error('無效的 LINE 用戶 ID');
+      }
+
+      // 生成驗證碼
+      const verificationCode = generateVerificationCode(6);
       
       // 儲存驗證資訊到 DynamoDB
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Item: {
-          userId: { S: userId },
-          lineId: { S: lineId },
+          userId: { S: `temp_${lineUserId}` }, // 添加臨時 userId
+          lineId: { S: lineUserId },
           verificationCode: { S: verificationCode },
-          verificationExpiry: { N: String(Date.now() + 5 * 60 * 1000) },
+          verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) }, // 10分鐘後過期
           verificationStep: { S: VerificationStep.VERIFYING },
-          verificationStatus: { S: VerificationStatus.PENDING }
+          verificationStatus: { S: VerificationStatus.PENDING },
+          createdAt: { S: new Date().toISOString() },
+          isVerified: { BOOL: false }
         }
       };
 
       await dynamoClient.send(new PutItemCommand(params));
+      
+      logger.info('驗證資訊已儲存', { 
+        lineId: lineUserId,
+        verificationCode,
+        timestamp: new Date().toISOString()
+      });
 
       return {
-        lineId,
+        lineId: lineUserId,
         verificationCode
       };
     } catch (error) {
