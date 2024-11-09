@@ -73,9 +73,8 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   }, []);
 
   return (
-    <div className="w-full px-6 space-y-8">
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">個人資訊</h1>
-
+    <>
+      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">個人資訊</h1>
       <div className="bg-white p-8 lg:p-12 rounded-2xl shadow-md">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* 左側頭像區塊 */}
@@ -188,7 +187,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
