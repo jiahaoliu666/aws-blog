@@ -12,7 +12,7 @@ import { Switch } from '@mui/material';
 import { toast } from 'react-toastify';
 import LineVerification from '../line/LineVerification';
 import { NotificationSectionProps } from '@/types/profileTypes';
-import { VerificationStep } from '@/types/lineTypes';
+import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
 
 // 純 UI 組件
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
@@ -53,6 +53,28 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     return null;
   };
 
+  const renderProgressStatus = () => {
+    const steps = [
+      { label: '加入好友', completed: verificationState.step !== VerificationStep.IDLE },
+      { label: '取得驗證碼', completed: verificationState.step >= VerificationStep.VERIFYING },
+      { label: '完成驗證', completed: verificationState.step === VerificationStep.COMPLETE }
+    ];
+
+    return (
+      <div className="flex justify-between mb-4">
+        {steps.map((step, index) => (
+          <div key={index} className="flex flex-col items-center">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center
+              ${step.completed ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>
+              {step.completed ? '✓' : index + 1}
+            </div>
+            <span className="text-sm mt-1">{step.label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">訂閱通知</h1>
@@ -67,10 +89,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
           {/* 驗證表單 */}
           <LineVerification
-            verificationState={{
-              ...verificationState,
-              progress: verificationState.step === VerificationStep.COMPLETE ? 100 : 50
-            }}
+            verificationState={verificationState}
             lineId={lineId || ''}
             setLineId={setLineId}
             verificationCode={verificationCode || ''}

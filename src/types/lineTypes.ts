@@ -83,7 +83,7 @@ export interface ProfileLogicReturn {
 
 export enum VerificationStep {
   IDLE = 'IDLE',
-  SENDING = 'SENDING',
+  ADDING_FRIEND = 'ADDING_FRIEND',
   VERIFYING = 'VERIFYING',
   COMPLETE = 'COMPLETE'
 }
@@ -214,12 +214,17 @@ export const VERIFICATION_STEPS: VerificationStepInfo[] = [
 ];
 
 export interface LineVerificationProps {
-  verificationState: VerificationState;
+  verificationState: {
+    step: VerificationStep;
+    status: string;
+    message?: string;
+    isVerified?: boolean;
+  };
   lineId: string;
-  setLineId: Dispatch<SetStateAction<string>>;
+  setLineId: (lineId: string) => void;
   verificationCode: string;
-  setVerificationCode: Dispatch<SetStateAction<string>>;
-  verifyLineIdAndCode: () => Promise<void>;
-  userId: string;
+  setVerificationCode: (value: string) => void;
+  verifyLineIdAndCode: () => void;
   onCopyUserId: () => void;
+  userId: string;
 }

@@ -4,7 +4,7 @@ import { createWelcomeTemplate, createNewsNotificationTemplate } from '../templa
 import { DynamoDBClient, UpdateItemCommand, ScanCommand, PutItemCommand, QueryCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '../utils/logger';
 import NodeCache from 'node-cache';
-import { LineFollowStatus, ArticleData, LineMessage, LineWebhookEvent, LineUserSettings, VerificationState, LineApiResponse } from "../types/lineTypes";
+import { LineFollowStatus, ArticleData, LineMessage, LineWebhookEvent, LineUserSettings, VerificationState, LineApiResponse, VerificationStep, VerificationStatus } from "../types/lineTypes";
 import { createClient } from 'redis';
 import crypto from 'crypto';
 import axios from 'axios';
@@ -103,6 +103,7 @@ interface LineServiceInterface {
     lineId?: string;
   }): Promise<void>;
   replyMessage(replyToken: string, messages: any[]): Promise<any>;
+  handleVerificationCommand(userId: string): Promise<{lineId: string, verificationCode: string}>;
 }
 
 export class LineService implements LineServiceInterface {
@@ -299,6 +300,37 @@ export class LineService implements LineServiceInterface {
   }): Promise<void> {
     // ... 實作更新通知設定邏輯 ...
     throw new Error('Method not implemented.');
+  }
+
+  async handleVerificationCommand(userId: string): Promise<{lineId: string, verificationCode: string}> {
+    try {
+      // 先從資料庫獲取或生成 lineId
+      const lineId = `U${crypto.randomBytes(16).toString('hex')}`;
+      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // 儲存驗證資訊到 DynamoDB
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Item: {
+          userId: { S: userId },
+          lineId: { S: lineId },
+          verificationCode: { S: verificationCode },
+          verificationExpiry: { N: String(Date.now() + 5 * 60 * 1000) },
+          verificationStep: { S: VerificationStep.VERIFYING },
+          verificationStatus: { S: VerificationStatus.PENDING }
+        }
+      };
+
+      await dynamoClient.send(new PutItemCommand(params));
+
+      return {
+        lineId,
+        verificationCode
+      };
+    } catch (error) {
+      logger.error('處理驗證指令失敗:', error);
+      throw error;
+    }
   }
 }
 

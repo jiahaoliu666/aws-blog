@@ -1,16 +1,16 @@
 src/
 ├── types
-│   ├── profileTypes.ts             // 個人資料相關類型定義
-│   ├── emailTypes.ts               // 定義與電子郵件通知相關的類型
-│   ├── amazon-dax-client.d.ts      // 宣告 Amazon DAX 客戶端模組
-│   ├── newsType.ts                 // 定義新聞相關的類型
-│   ├── lineTypes.ts                // 定義與 LINE 通訊相關的類型
-│   ├── announcementType.ts         // 定義公告相關的類型
-│   └── userType.ts                 // 定義用戶相關的類型
+│   ├── profileTypes.ts             // 個人資料類型定義
+│   ├── emailTypes.ts               // 電子郵件通知類型
+│   ├── amazon-dax-client.d.ts      // Amazon DAX 客戶端模組
+│   ├── newsType.ts                 // 新聞文章相關類型
+│   ├── announcementType.ts         // 公告文章相關的類型
+│   ├── lineTypes.ts                // LINE 相關類型
+│   └── userType.ts                 // 定義用戶類型
 ├── context
-│   ├── AuthContext.tsx             // 提供用戶認證相關的上下文
-│   ├── AppContext.tsx              // 提供應用程式邏輯相關的上下文
-│   └── LanguageContext.tsx         // 提供語言設定相關的上下文
+│   ├── AuthContext.tsx             // 用戶認證相關的上下文
+│   ├── AppContext.tsx              // 應用程式邏輯相關的上下文
+│   └── LanguageContext.tsx         // 語言設定相關的上下文
 ├── config
 │   ├── email.ts                    // 集中管理郵件相關配置
 │   ├── aws.ts                      // 設定 AWS 相關的客戶端配置
@@ -37,8 +37,8 @@ src/
 │   │   ├── ErrorMessage.tsx        // 錯誤訊息組件
 │   │   ├── Footer.tsx              // 頁腳組件
 │   │   └── Notification.tsx        // 通知組件
-│   ├── profile/                    // 個人資料相關組件
-│   │   ├── sections/               // 各個功能區塊組件
+│   ├── profile/                    
+│   │   ├── sections/               
 │   │   │   ├── ProfileSection.tsx     // 個人資訊區塊
 │   │   │   ├── PasswordSection.tsx    // 修改密碼區塊
 │   │   │   ├── NotificationSection.tsx   // 訂閱通知區塊
@@ -48,10 +48,7 @@ src/
 │   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
 │   │   ├── ProfileErrorBoundary.tsx   // 錯誤邊界組件
 │   │   ├── common/                 // 共用組件
-│   │   │   ├── StepIndicator.tsx   // LINE 驗證步驟指示器組件
-│   │   │   └── Sidebar.tsx         // 側邊欄導航組件，包含用戶基本信息和菜單
-│   │   ├── line/
-│   │   │   └── LineVerification.tsx   // LINE 帳號驗證流程組件
+│   │   │   └── Sidebar.tsx         // 側邊欄導航組件
 │   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
 │   └── news
 │       ├── NewsSearch.tsx          // 新聞搜尋組件
@@ -59,18 +56,18 @@ src/
 │       └── NewsFilters.tsx         // 新聞過濾器組件
 ├── hooks
 │   ├── useAuth.ts                  // 用戶認證 Hook
-│   ├── profile/                    // 個人資料相關 Hooks
-│   │   ├── useProfileAvatar.ts     // 處理用戶頭像上傳、預覽和管理
-│   │   ├── useProfileFeedback.ts   // 處理用戶反饋提交和附件上傳
-│   │   ├── useProfileForm.ts       // 管理個人資料表單狀態和編輯功能
-│   │   ├── useProfileActivity.ts   // 追蹤和記錄用戶活動歷史
-│   │   ├── useNotificationSettings.ts  // 管理用戶通知偏好設定
-│   │   ├── useProfileCore.ts       // 核心用戶資料和認證狀態管理
-│   │   ├── useProfileSettings.ts   // 管理用戶一般設定和偏好
-│   │   ├── useProfileArticles.ts   // 管理用戶的文章閱讀歷史記錄
-│   │   ├── useProfileTheme.ts      // 管理用戶界面主題設定（深色模式、字體等）
-│   │   ├── useProfilePassword.ts   // 處理密碼變更和驗證
-│   │   └── index.ts                // 匯出所有 profile hooks 和共用類型定義
+│   ├── profile/                   
+│   │   ├── useProfileAvatar.ts     // 用戶頭像
+│   │   ├── useProfileFeedback.ts   // 用戶反饋
+│   │   ├── useProfileForm.ts       // 個人資訊
+│   │   ├── useProfileActivity.ts   // 活動日誌
+│   │   ├── useNotificationSettings.ts  // 訂閱通知偏好設定
+│   │   ├── useProfileCore.ts       // 用戶資料和認證狀態
+│   │   ├── useProfileSettings.ts   // 用戶一般設定和偏好
+│   │   ├── useProfileArticles.ts   // 觀看紀錄
+│   │   ├── useProfileTheme.ts      // 主題設定（深色模式、字體等）
+│   │   ├── useProfilePassword.ts   // 密碼變更和驗證
+│   │   └── index.ts                // profile hooks 和共用類型定義
 │   ├── news
 │   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
 │   │   ├── useFetchNews.ts         // 新聞獲取 Hook

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DynamoDBClient, PutItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { LineUserSettings } from '@/types/lineTypes';
@@ -11,6 +11,8 @@ interface UseLineSettingsProps {
 }
 
 export const useLineSettings = ({ user }: UseLineSettingsProps) => {
+  const initialized = useRef(false);
+
   const [lineUserId, setLineUserId] = useState('');
   const [lineIdError, setLineIdError] = useState('');
   const [lineIdStatus, setLineIdStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
@@ -24,6 +26,13 @@ export const useLineSettings = ({ user }: UseLineSettingsProps) => {
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
     },
   });
+
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      fetchLineSettings();
+    }
+  }, []);
 
   // 檢查 LINE 好友狀態
   const checkLineFollowStatus = async () => {
@@ -147,10 +156,6 @@ export const useLineSettings = ({ user }: UseLineSettingsProps) => {
       setLineIdStatus('idle');
     }
   };
-
-  useEffect(() => {
-    fetchLineSettings();
-  }, [user?.sub]);
 
   return {
     lineUserId,
