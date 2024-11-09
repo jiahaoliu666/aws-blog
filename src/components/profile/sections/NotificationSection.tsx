@@ -10,7 +10,6 @@ import {
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
 import { toast } from 'react-toastify';
-import LineVerification from '../line/LineVerification';
 import { NotificationSectionProps } from '@/types/profileTypes';
 import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
 
@@ -86,18 +85,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             <FontAwesomeIcon icon={faLine} className="text-[#00B900]" />
             LINE 通知設定
           </h2>
-
-          {/* 驗證表單 */}
-          <LineVerification
-            verificationState={verificationState}
-            lineId={lineId || ''}
-            setLineId={setLineId}
-            verificationCode={verificationCode || ''}
-            setVerificationCode={setVerificationCode}
-            verifyLineIdAndCode={handleVerification}
-            onCopyUserId={onCopyUserId}
-            userId={userId}
-          />
         </div>
 
         {renderVerificationStatus()}
