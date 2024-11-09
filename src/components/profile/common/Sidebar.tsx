@@ -64,24 +64,43 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <div className="w-full lg:w-1/4 bg-gradient-to-b from-gray-800 to-gray-900 text-white rounded-2xl shadow-2xl p-6">
-      {/* 用戶資訊區塊 - 改善視覺層次和間距 */}
-      <div className="flex items-center space-x-5 mb-8 p-5 bg-gray-800/50 rounded-xl border border-gray-700/50 backdrop-blur-sm">
-        <div className="relative">
-          <img
-            src={currentAvatar || '/images/default-avatar.png'}
-            alt="Profile"
-            className="w-14 h-14 rounded-full object-cover ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-800 transition-transform hover:scale-105"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = '/images/default-avatar.png';
-            }}
-          />
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-800"></div>
-        </div>
-        <div className="flex-1">
-          <h2 className="font-semibold text-lg">{formData.username}</h2>
-          <p className="text-sm text-gray-400 mt-0.5">{formData.email}</p>
+    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-6">
+      {/* 用戶資訊區塊 - 簡潔設計 */}
+      <div className="relative mb-8">
+        <div className="flex flex-col items-center p-4">
+          <div className="relative group mb-4">
+            <div className="relative">
+              <img
+                src={currentAvatar || '/images/default-avatar.png'}
+                alt="Profile"
+                className="w-20 h-20 rounded-full object-cover ring-2 ring-blue-500/80 ring-offset-2 ring-offset-gray-800 transition-all duration-300 group-hover:scale-105 shadow-xl"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/images/default-avatar.png';
+                }}
+              />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-gray-800 shadow-lg">
+                <span className="absolute inset-0 rounded-full animate-ping bg-green-500 opacity-75"></span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <h2 className="font-semibold text-xl tracking-wide mb-2">
+              {formData.username}
+            </h2>
+            <div className="flex items-center justify-center space-x-2 text-sm text-gray-400 hover:text-gray-300 transition-colors duration-300">
+              <svg 
+                className="w-4 h-4" 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+              </svg>
+              <span className="truncate max-w-[200px]">{formData.email}</span>
+            </div>
+          </div>
         </div>
       </div>
 
