@@ -98,7 +98,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   return (
     <>
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">訂閱通知設定</h1>
+      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">訂閱通知</h1>
 
       <div className="space-y-8">
         {/* 電子郵件通知設定 */}

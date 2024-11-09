@@ -61,9 +61,9 @@ src/
 │   │   ├── useProfileFeedback.ts   // 用戶反饋
 │   │   ├── useProfileForm.ts       // 個人資訊
 │   │   ├── useProfileActivity.ts   // 活動日誌
-│   │   ├── useNotificationSettings.ts  // 訂閱通知偏好設定
-│   │   ├── useProfileCore.ts       // 用戶資料和認證狀態
-│   │   ├── useProfileSettings.ts   // 用戶一般設定和偏好
+│   │   ├── useNotificationSettings.ts  // 訂閱通知
+│   │   ├── useProfileCore.ts       // 用戶認證狀態
+│   │   ├── useProfileSettings.ts   // 管理用戶設定的狀態
 │   │   ├── useProfileArticles.ts   // 觀看紀錄
 │   │   ├── useProfileTheme.ts      // 主題設定（深色模式、字體等）
 │   │   ├── useProfilePassword.ts   // 密碼變更和驗證
