@@ -12,6 +12,7 @@ import { Switch } from '@mui/material';
 import { toast } from 'react-toastify';
 import { NotificationSectionProps } from '@/types/profileTypes';
 import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
+import QRCodeImage from '@/assets/images/line-qrcode.png'; // 請確保添加實際的 QR Code 圖片
 
 // 純 UI 組件
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
@@ -60,68 +61,205 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     ];
 
     return (
-      <div className="flex justify-between mb-4">
-        {steps.map((step, index) => (
-          <div key={index} className="flex flex-col items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center
-              ${step.completed ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>
-              {step.completed ? '✓' : index + 1}
+      <div className="relative mb-8">
+        {/* 進度條背景 */}
+        <div className="absolute top-4 left-0 w-full h-1 bg-gray-200"></div>
+        {/* 完成的進度 */}
+        <div 
+          className="absolute top-4 left-0 h-1 bg-green-500 transition-all duration-500"
+          style={{ width: `${(Number(verificationState.step) / (Object.keys(VerificationStep).length - 1)) * 100}%` }}
+        ></div>
+        
+        <div className="flex justify-between relative">
+          {steps.map((step, index) => (
+            <div key={index} className="flex flex-col items-center">
+              <div className={`
+                w-10 h-10 rounded-full flex items-center justify-center
+                transition-all duration-300 mb-2
+                ${step.completed 
+                  ? 'bg-green-500 text-white shadow-lg scale-110' 
+                  : 'bg-white border-2 border-gray-300 text-gray-500'
+                }
+              `}>
+                {step.completed ? '✓' : index + 1}
+              </div>
+              <span className={`
+                text-sm font-medium transition-colors duration-300
+                ${step.completed ? 'text-green-600' : 'text-gray-500'}
+              `}>
+                {step.label}
+              </span>
             </div>
-            <span className="text-sm mt-1">{step.label}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4">訂閱通知</h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-8">訂閱通知設定</h1>
 
-      <div className="space-y-6">
-        {/* LINE 通知設定 */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faLine} className="text-[#00B900]" />
-            LINE 通知設定
-          </h2>
-        </div>
-
-        {renderVerificationStatus()}
-
-        {/* 其他通知設定 */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">其他通知設定</h2>
-          <div className="space-y-4">
-            {/* 電子郵件通知 */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <FontAwesomeIcon icon={faEnvelope} className="text-gray-600 mr-3" />
-                <div>
-                  <h3 className="font-medium">電子郵件通知</h3>
-                  <p className="text-sm text-gray-500">接收重要更新和活動提醒</p>
+        <div className="space-y-6">
+          {/* 電子郵件通知設定 */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">電子郵件通知</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <FontAwesomeIcon icon={faEnvelope} className="text-gray-600" />
+                  <div>
+                    <p className="font-medium">電子郵件通知</p>
+                    <p className="text-sm text-gray-500">接收重要更新和活動提醒</p>
+                  </div>
                 </div>
+                <Switch
+                  checked={notificationSettings.email}
+                  onChange={() => handleNotificationChange('email')}
+                  disabled={isLoading}
+                />
               </div>
-              <Switch
-                checked={notificationSettings.email}
-                onChange={() => handleNotificationChange('email')}
-                disabled={isLoading}
-              />
             </div>
           </div>
-        </div>
 
-        {/* 通知說明 */}
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-lg font-medium text-blue-800 mb-2">
-            <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
-            通知說明
-          </h3>
-          <ul className="list-disc list-inside text-blue-700 space-y-2">
-            <li>LINE 通知：即時接收最新文章和重要更新</li>
-            <li>電子郵件通知：系統將發送重要更新和活動提醒至您的信箱</li>
-            <li>您可以隨時在此頁面調整通知設定</li>
-          </ul>
+          {/* LINE 通知設定卡片 */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="p-8">
+              <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+                <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-3xl" />
+                LINE 通知設定
+              </h2>
+
+              {!verificationState.isVerified && renderProgressStatus()}
+
+              {!verificationState.isVerified ? (
+                <div className="space-y-8">
+                  {/* 步驟 1: 加入好友 */}
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm">1</span>
+                      加入官方帳號好友
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <p className="text-gray-700 mb-3">方法一：複製您的用戶ID</p>
+                          <div className="flex items-center gap-3">
+                            <code className="flex-1 bg-gray-100 px-4 py-3 rounded-lg font-mono text-blue-600">
+                              {userId}
+                            </code>
+                            <button
+                              onClick={onCopyUserId}
+                              className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-3 rounded-lg transition-all hover:scale-105"
+                              title="複製ID"
+                            >
+                              <FontAwesomeIcon icon={faCopy} />
+                            </button>
+                          </div>
+                        </div>
+                        <a
+                          href="https://line.me/R/ti/p/@YOUR_LINE_ID"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-[#00B900] text-white px-6 py-3 rounded-lg hover:bg-[#009900] transition-all hover:scale-105 w-full justify-center"
+                        >
+                          <FontAwesomeIcon icon={faLine} />
+                          加入 LINE 好友
+                        </a>
+                      </div>
+                      <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-gray-200">
+                        <p className="text-gray-700 mb-3">方法二：掃描 QR Code</p>
+                        <img 
+                          src="/Line-QR-Code.png" 
+                          alt="LINE QR Code" 
+                          className="w-40 h-40 object-contain"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">使用 LINE 掃描上方 QR Code</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 步驟 2: 輸入 LINE ID */}
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm">2</span>
+                      輸入您的 LINE ID
+                    </h3>
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <input
+                        type="text"
+                        value={lineId}
+                        onChange={(e) => setLineId(e.target.value)}
+                        placeholder="請輸入您的 LINE ID"
+                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 步驟 3: 輸入驗證碼 */}
+                  {verificationState.step >= VerificationStep.VERIFYING && (
+                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm">3</span>
+                        輸入驗證碼
+                      </h3>
+                      <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex gap-4">
+                          <input
+                            type="text"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                            placeholder="請輸入驗證碼"
+                            className="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          />
+                          <button
+                            onClick={handleVerification}
+                            disabled={isLoading}
+                            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-all hover:scale-105 disabled:bg-gray-400 disabled:hover:scale-100 whitespace-nowrap"
+                          >
+                            {isLoading ? (
+                              <span className="flex items-center gap-2">
+                                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                驗證中
+                              </span>
+                            ) : '驗證'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-green-50 p-6 rounded-xl text-center">
+                  <FontAwesomeIcon icon={faCheckCircle} className="text-4xl text-green-500 mb-3" />
+                  <h3 className="text-xl font-semibold text-green-600">驗證成功！</h3>
+                  <p className="text-green-600">您已成功開啟 LINE 通知功能</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 通知說明卡片 */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500" />
+              通知說明
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-gray-600">
+                <FontAwesomeIcon icon={faLine} className="text-[#00B900]" />
+                <p>即時接收最新文章和重要更新</p>
+              </div>
+              <div className="flex items-center gap-3 text-gray-600">
+                <FontAwesomeIcon icon={faEnvelope} />
+                <p>系統將發送重要更新和活動提醒</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
