@@ -155,10 +155,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         <ul className="space-y-3 text-sm text-gray-300">
           <li className="flex items-start space-x-2">
             <span className="text-blue-400 mt-1">•</span>
-            <span>定期更新個人資料以確保資訊準確</span>
-          </li>
-          <li className="flex items-start space-x-2">
-            <span className="text-blue-400 mt-1">•</span>
             <span>建議定期更改密碼以提高帳戶安全性</span>
           </li>
           <li className="flex items-start space-x-2">

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types/userType';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import { logger } from '@/utils/logger';
-import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
 import logActivity from '@/pages/api/profile/activity-log';
 
 interface FormData {
@@ -51,8 +52,17 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
   const [localUsername, setLocalUsername] = useState(user?.username || '');
   const [isEditing, setIsEditing] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const dynamoClient = new DynamoDBClient({
+    region: 'ap-northeast-1',
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+
+  const cognitoClient = new CognitoIdentityProviderClient({
     region: 'ap-northeast-1',
     credentials: {
       accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
@@ -68,36 +78,67 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
     }));
   };
 
-  const handleSaveProfileChanges = async (username: string) => {
+  const handleSaveProfileChanges = async (localUsername: string) => {
+    console.log('=== handleSaveProfileChanges 被調用 ===');
+    console.log('參數檢查:', {
+      localUsername,
+      'user?.sub': user?.sub,
+      'user?.username': user?.username,
+      'process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID': process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID
+    });
+
+    if (!user?.sub) {
+      console.error('錯誤: 找不到用戶 sub');
+      throw new Error('用戶驗證資訊不完整');
+    }
+
+    if (!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID) {
+      console.error('錯誤: 找不到 USER_POOL_ID');
+      throw new Error('系統配置錯誤');
+    }
+
+    setIsLoading(true);
+
     try {
-      if (!user?.sub) {
-        throw new Error('找不到用戶ID');
-      }
+      const updateUserCommand = new AdminUpdateUserAttributesCommand({
+        UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID,
+        Username: user.sub,
+        UserAttributes: [
+          {
+            Name: 'preferred_username',
+            Value: localUsername,
+          },
+          {
+            Name: 'name',
+            Value: localUsername,
+          }
+        ],
+      });
 
-      const params = {
-        TableName: 'AWS_Blog_Users',
-        Key: {
-          userId: { S: user.sub }
-        },
-        UpdateExpression: 'SET username = :username, updatedAt = :updatedAt',
-        ExpressionAttributeValues: {
-          ':username': { S: username },
-          ':updatedAt': { S: new Date().toISOString() }
-        }
-      };
+      console.log('發送更新請求到 Cognito...');
+      const response = await cognitoClient.send(updateUserCommand);
+      console.log('Cognito 回應:', response);
 
-      const command = new UpdateItemCommand(params);
-      await dynamoClient.send(command);
-
-      updateUser({ username });
+      // 更新本地狀態
+      setFormData(prev => ({ ...prev, username: localUsername }));
+      updateUser({ username: localUsername });
       setIsEditable(prev => ({ ...prev, username: false }));
+
+      // 記錄活動
+      await logActivity(user.sub, `變更用戶名稱為 ${localUsername}`);
+
       toast.success('個人資料已更新');
 
-      await logActivity(user.sub, '更新個人資料');
+      // 延遲重新載入頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
 
-    } catch (error) {
-      logger.error('更新個人資料失敗:', error);
-      toast.error('更新個人資料失敗');
+    } catch (error: any) {
+      console.error('更新失敗:', error);
+      throw new Error(error.message || '更新失敗，請稍後再試');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -173,7 +214,8 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
     handleEditClick,
     toggleEditableField,
     resetForm,
-    resetUsername
+    resetUsername,
+    isLoading,
   };
 };
 

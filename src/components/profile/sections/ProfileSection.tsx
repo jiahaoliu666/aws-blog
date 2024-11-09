@@ -8,6 +8,7 @@ import {
   faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import { FormData } from '@/types/profileTypes';
+import { toast } from 'react-hot-toast';
 
 interface ProfileSectionProps {
   formData: FormData;
@@ -180,9 +181,21 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   取消
                 </button>
                 <button
-                  onClick={() => handleSaveProfileChanges(localUsername)}
+                  onClick={async () => {
+                    if (!localUsername.trim()) {
+                      toast.error('用戶名稱不能為空');
+                      return;
+                    }
+                    
+                    try {
+                      await handleSaveProfileChanges(localUsername);
+                    } catch (error: any) {
+                      console.error('儲存失敗:', error);
+                      toast.error(error.message || '儲存失敗，請稍後再試');
+                    }
+                  }}
                   className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 flex items-center"
-                  disabled={isLoading}
+                  disabled={isLoading || !localUsername.trim()}
                 >
                   {isLoading ? (
                     <>
