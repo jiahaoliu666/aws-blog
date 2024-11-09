@@ -7,6 +7,17 @@ import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-
 import { logger } from '@/utils/logger';
 import { lineService } from '@/services/lineService';
 
+enum VerificationStep {
+  VERIFYING = 'VERIFYING',
+  COMPLETED = 'COMPLETED'
+}
+
+enum VerificationStatus {
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  EXPIRED = 'EXPIRED'
+}
+
 const client = new Client({
   channelAccessToken: lineConfig.channelAccessToken,
   channelSecret: lineConfig.channelSecret,
@@ -20,22 +31,20 @@ function generateVerificationCode(): string {
 }
 
 // 儲存驗證資訊到 DynamoDB
-async function saveVerificationInfo(userId: string, verificationCode: string) {
+async function saveVerificationInfo(lineId: string, verificationCode: string) {
   const params = {
-    TableName: 'line-verification',
+    TableName: 'AWS_Blog_UserNotificationSettings',
     Item: {
-      userId: { S: userId },
+      lineId: { S: lineId },
       verificationCode: { S: verificationCode },
-      createdAt: { N: Date.now().toString() }
+      verificationExpiry: { N: (Date.now() + 10 * 60 * 1000).toString() }, // 10分鐘後過期
+      verificationStep: { S: VerificationStep.VERIFYING },
+      verificationStatus: { S: VerificationStatus.PENDING },
+      createdAt: { S: new Date().toISOString() }
     }
   };
 
-  try {
-    await dynamoClient.send(new PutItemCommand(params));
-  } catch (error) {
-    logger.error('儲存驗證資訊失敗:', error);
-    throw error;
-  }
+  await dynamoClient.send(new PutItemCommand(params));
 }
 
 // 創建用戶 ID 訊息模板
@@ -67,32 +76,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // 添加日誌追蹤
       logger.info('收到 LINE 事件:', { event });
 
+      if (event.type === 'follow') {
+        // 處理加入好友事件
+        await client.pushMessage(event.source.userId, {
+          type: 'text',
+          text: '歡迎加入！請在聊天室中輸入「驗證」取得您的 LINE ID 和驗證碼。'
+        });
+      }
+
       if (event.type === 'message' && 
           event.message?.type === 'text' && 
           event.message.text.trim() === '驗證') {
-          
-        const userId = event.source.userId;
-        const replyToken = event.replyToken;
         
-        if (!replyToken) {
-          logger.error('缺少 replyToken');
-          continue;
-        }
-
-        // 生成驗證碼
+        const userId = event.source.userId;
         const verificationCode = generateVerificationCode();
         
-        // 儲存驗證資訊
+        // 儲存驗證資訊到 DynamoDB
         await saveVerificationInfo(userId, verificationCode);
         
-        // 建立回覆訊息
-        const messages = [
-          createUserIdTemplate(userId),
-          createVerificationTemplate(verificationCode)
-        ];
-        
-        // 發送回覆
-        await lineService.replyMessage(replyToken, messages);
+        // 回傳 LINE ID 和驗證碼
+        await client.replyMessage(event.replyToken, [
+          {
+            type: 'text',
+            text: `您的 LINE ID 是：${userId}`
+          },
+          {
+            type: 'text',
+            text: `您的驗證碼是：${verificationCode}\n請在 5 分鐘內完成驗證。`
+          }
+        ]);
       }
     }
 

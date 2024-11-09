@@ -15,7 +15,14 @@ interface UseLineVerificationProps {
 }
 
 export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVerificationProps) => {
+  const [verificationState, setVerificationState] = useState<VerificationState>({
+    step: VerificationStep.IDLE,
+    status: VerificationStatus.IDLE,
+    progress: 0,
+    currentStep: 1
+  });
   const [lineId, setLineId] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
   const dynamoClient = new DynamoDBClient({
@@ -27,50 +34,71 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
   });
 
   const handleVerification = async () => {
-    if (!lineId.trim()) {
-      toast.error('請輸入 LINE ID');
-      return;
-    }
-
-    if (!lineId.match(/^U[0-9a-f]{32}$/i)) {
-      toast.error('請輸入有效的 LINE ID');
+    if (!lineId.trim() || !verificationCode.trim()) {
+      toast.error('請輸入 LINE ID 和驗證碼');
       return;
     }
 
     try {
       setIsVerifying(true);
+      setVerificationState(prev => ({
+        ...prev,
+        status: VerificationStatus.VALIDATING
+      }));
 
-      // 儲存 LINE ID 到 DynamoDB
-      const params = {
-        TableName: "AWS_Blog_UserNotificationSettings",
-        Item: {
-          userId: { S: user?.sub || '' },
-          lineId: { S: lineId },
-          isVerified: { BOOL: true },
-          updatedAt: { S: new Date().toISOString() }
-        }
-      };
-
-      await dynamoClient.send(new PutItemCommand(params));
-
-      await updateUserLineSettings({
-        lineId,
-        isVerified: true
+      const response = await fetch('/api/line/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.sub,
+          lineId,
+          verificationCode
+        })
       });
 
-      toast.success('LINE ID 已成功儲存');
-      setLineId('');
+      const data = await response.json();
+
+      if (data.success) {
+        setVerificationState(prev => ({
+          ...prev,
+          step: VerificationStep.COMPLETE,
+          status: VerificationStatus.SUCCESS,
+          isVerified: true,
+          message: '驗證成功！'
+        }));
+        
+        await updateUserLineSettings({
+          lineId,
+          isVerified: true
+        });
+        
+        toast.success('LINE 驗證成功！');
+      } else {
+        setVerificationState(prev => ({
+          ...prev,
+          status: VerificationStatus.ERROR,
+          message: data.message || '驗證失敗'
+        }));
+        toast.error(data.message || '驗證失敗');
+      }
     } catch (error) {
-      logger.error('儲存 LINE ID 失敗:', error);
-      toast.error('儲存失敗，請稍後重試');
+      setVerificationState(prev => ({
+        ...prev,
+        status: VerificationStatus.ERROR,
+        message: '驗證過程發生錯誤'
+      }));
+      toast.error('驗證過程發生錯誤');
     } finally {
       setIsVerifying(false);
     }
   };
 
   return {
+    verificationState,
     lineId,
     setLineId,
+    verificationCode,
+    setVerificationCode,
     isVerifying,
     handleVerification
   };
