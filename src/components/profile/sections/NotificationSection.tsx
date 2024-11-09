@@ -55,7 +55,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const renderProgressStatus = () => {
     const steps = [
-      { label: '加入好友', completed: verificationState.step !== VerificationStep.IDLE },
+      { label: '加入官方帳號', completed: verificationState.step !== VerificationStep.IDLE },
       { label: '進行驗證', completed: verificationState.step >= VerificationStep.VERIFYING },
       { label: '完成驗證', completed: verificationState.step === VerificationStep.COMPLETE }
     ];
@@ -100,17 +100,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     <>
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">訂閱通知設定</h1>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* 電子郵件通知設定 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-medium text-gray-800 mb-4">電子郵件通知</h3>
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6">電子郵件通知</h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <FontAwesomeIcon icon={faEnvelope} className="text-gray-600" />
+            <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <div className="flex items-center gap-4">
+                <FontAwesomeIcon icon={faEnvelope} className="text-gray-600 text-xl" />
                 <div>
-                  <p className="font-medium">電子郵件通知</p>
-                  <p className="text-sm text-gray-500">接收重要更新和活動提醒</p>
+                  <p className="font-medium text-gray-800">電子郵件通知</p>
+                  <p className="text-sm text-gray-500 mt-1">接收重要更新和活動提醒</p>
                 </div>
               </div>
               <Switch
@@ -125,7 +125,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         {/* LINE 通知設定卡片 */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="p-8">
-            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+            <h2 className="text-2xl font-semibold mb-8 flex items-center gap-4">
               <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-3xl" />
               LINE 通知設定
             </h2>
@@ -134,36 +134,61 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             {!verificationState.isVerified && renderProgressStatus()}
 
             {!verificationState.isVerified ? (
-              <div className="space-y-8">
-                {/* 步驟 1: 加入好友說明 */}
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                  <h3 className="text-lg font-semibold mb-4">
-                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white inline-flex items-center justify-center mr-2">1</span>
-                    加入官方帳號
-                  </h3>
-                  <p className="text-sm text-gray-500">在LINE中輸入「驗證」取得驗證資訊</p>
-                  <div className="flex justify-center items-center gap-8">
-                    <div className="text-center space-y-4">
-                      <div className="bg-white p-4 rounded-lg border">
-                        <img src="/Line-QR-Code.png" alt="LINE QR Code" className="w-40 h-40 mx-auto" />
-                      </div>
-                      <p className="text-sm text-gray-600">掃描 QR Code </p>
+              <div className="space-y-10">
+                {/* 步驟 1: 加入官方帳號說明 */}
+                <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 hover:border-gray-300 transition-colors">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white inline-flex items-center justify-center text-lg font-medium">1</span>
+                    <h3 className="text-xl font-semibold text-gray-800">加入官方帳號</h3>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg p-6 mb-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 text-xl" />
+                      <p className="text-gray-700 font-medium">請完成以下步驟：</p>
                     </div>
-                    <div className="text-center space-y-4">
-                      <a href="https://line.me/R/ti/p/@YOUR_LINE_ID" 
-                         target="_blank" 
-                         rel="noopener noreferrer"
-                         className="inline-block bg-[#00B900] text-white px-6 py-3 rounded-lg hover:bg-[#009900]">
-                        <FontAwesomeIcon icon={faLine} className="mr-2" />
-                        加入好友
-                      </a>
-                      <p className="text-sm text-gray-600">或點擊按鈕加入好友</p>
+                    <ol className="list-decimal list-inside space-y-3 text-gray-600 ml-4">
+                      <li>掃描下方 QR Code 或點擊「加入官方帳號」按鈕</li>
+                      <li>加入官方帳號後，在聊天室中輸入「<span className="font-medium text-blue-600">驗證</span>」</li>
+                      <li>系統將回傳您的 LINE ID 和驗證碼</li>
+                    </ol>
+                  </div>
+
+                  <div className="flex justify-center items-center gap-12">
+                    <div className="text-center">
+                      <div className="rounded-lg mb-3">
+                        <img 
+                          src="/Line-QR-Code.png" 
+                          alt="LINE QR Code" 
+                          className="w-44 h-44 mx-auto"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500">掃描 QR Code</p>
+                    </div>
+
+                    <div className="flex items-center text-gray-500 text-lg font-medium">
+                      或
+                    </div>
+
+                    <div className="text-center flex flex-col items-center">
+                      <div className="mb-3">
+                        <a 
+                          href="https://line.me/R/ti/p/@601feiwz" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-[#00B900] text-white px-8 py-4 rounded-lg hover:bg-[#009900] transition-colors shadow-md hover:shadow-lg"
+                        >
+                          <FontAwesomeIcon icon={faLine} className="text-xl" />
+                          <span className="font-medium">加入官方帳號</span>
+                        </a>
+                      </div>
+                      <p className="text-sm text-gray-500">點擊按鈕加入官方帳號</p>
                     </div>
                   </div>
                 </div>
 
                 {/* 步驟 2: 驗證資訊輸入 */}
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 hover:border-gray-300 transition-colors">
                   <h3 className="text-lg font-semibold mb-4">
                     <span className="w-8 h-8 rounded-full bg-blue-500 text-white inline-flex items-center justify-center mr-2">2</span>
                     輸入驗證資訊
@@ -200,7 +225,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="bg-green-50 p-6 rounded-xl text-center">
+              <div className="bg-green-50 p-8 rounded-xl text-center">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-4xl text-green-500 mb-3" />
                 <h3 className="text-xl font-semibold text-green-600">驗證成功！</h3>
                 <p className="text-green-600">您已成功開啟 LINE 通知功能</p>
@@ -210,18 +235,18 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         </div>
 
         {/* 通知說明卡片 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
             <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500" />
             通知說明
           </h3>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 text-gray-600">
-              <FontAwesomeIcon icon={faLine} className="text-[#00B900]" />
+          <div className="space-y-5">
+            <div className="flex items-center gap-4 text-gray-600 hover:text-gray-800 transition-colors">
+              <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-xl" />
               <p>即時接收最新文章和重要更新</p>
             </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <FontAwesomeIcon icon={faEnvelope} />
+            <div className="flex items-center gap-4 text-gray-600 hover:text-gray-800 transition-colors">
+              <FontAwesomeIcon icon={faEnvelope} className="text-xl" />
               <p>系統將發送重要更新和活動提醒</p>
             </div>
           </div>
