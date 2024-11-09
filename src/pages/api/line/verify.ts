@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const params = {
       TableName: 'AWS_Blog_UserNotificationSettings',
       Key: {
-        lineId: { S: lineId }
+        userId: { S: lineId }
       }
     };
 
@@ -53,14 +53,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // 更新驗證狀態
+    // 更新驗證狀態並關聯 Cognito userId
     await dynamoClient.send(new UpdateItemCommand({
       TableName: 'AWS_Blog_UserNotificationSettings',
-      Key: { lineId: { S: lineId } },
-      UpdateExpression: 'SET isVerified = :verified, userId = :userId, verificationStep = :step, verificationStatus = :status, updatedAt = :updatedAt',
+      Key: { userId: { S: lineId } },
+      UpdateExpression: 'SET cognitoUserId = :cognitoId, isVerified = :verified, verificationStep = :step, verificationStatus = :status, updatedAt = :updatedAt',
       ExpressionAttributeValues: {
+        ':cognitoId': { S: userId },
         ':verified': { BOOL: true },
-        ':userId': { S: userId },
         ':step': { S: VerificationStep.COMPLETE },
         ':status': { S: VerificationStatus.SUCCESS },
         ':updatedAt': { S: new Date().toISOString() }

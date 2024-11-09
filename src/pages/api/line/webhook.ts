@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Client } from '@line/bot-sdk';
 import { lineConfig } from '@/config/line';
 import { verifyLineSignature } from '@/utils/lineUtils';
-import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, GetItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '@/utils/logger';
 import { LineService } from '@/services/lineService';
 
@@ -58,87 +58,88 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         if (messageText === '驗證') {
           try {
-            const { lineId, verificationCode } = await lineServiceInstance.handleVerificationCommand(event.source.userId!);
-            
-            // 發送兩條分開的訊息，並使用 flex message 美化顯示
-            await lineServiceInstance.replyMessage(event.replyToken, [
-              {
-                type: 'flex',
-                altText: '驗證資訊',
-                contents: {
-                  type: 'bubble',
-                  body: {
-                    type: 'box',
-                    layout: 'vertical',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: '您的驗證資訊',
-                        weight: 'bold',
-                        size: 'xl',
-                        color: '#1DB446'
-                      },
-                      {
-                        type: 'box',
-                        layout: 'vertical',
-                        margin: 'lg',
-                        spacing: 'sm',
-                        contents: [
-                          {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                              {
-                                type: 'text',
-                                text: 'LINE ID:',
-                                size: 'sm',
-                                color: '#555555',
-                                flex: 0
-                              },
-                              {
-                                type: 'text',
-                                text: lineId,
-                                size: 'sm',
-                                color: '#111111',
-                                align: 'end'
-                              }
-                            ]
-                          },
-                          {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                              {
-                                type: 'text',
-                                text: '驗證碼:',
-                                size: 'sm',
-                                color: '#555555',
-                                flex: 0
-                              },
-                              {
-                                type: 'text',
-                                text: verificationCode,
-                                size: 'sm',
-                                color: '#111111',
-                                align: 'end'
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        type: 'text',
-                        text: '請在 10 分鐘內完成驗證',
-                        size: 'xs',
-                        color: '#aaaaaa',
-                        wrap: true,
-                        margin: 'xxl'
-                      }
-                    ]
-                  }
+            // 生成驗證碼並儲存
+            const { lineId, verificationCode } = await lineServiceInstance.handleVerificationCommand(
+              event.source.userId!
+            );
+
+            // 發送驗證資訊給用戶
+            await lineServiceInstance.replyMessage(event.replyToken, [{
+              type: 'flex',
+              altText: '驗證資訊',
+              contents: {
+                type: 'bubble',
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: '您的驗證資訊',
+                      weight: 'bold',
+                      size: 'xl',
+                      color: '#1DB446'
+                    },
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      margin: 'lg',
+                      spacing: 'sm',
+                      contents: [
+                        {
+                          type: 'box',
+                          layout: 'horizontal',
+                          contents: [
+                            {
+                              type: 'text',
+                              text: 'LINE ID:',
+                              size: 'sm',
+                              color: '#555555',
+                              flex: 0
+                            },
+                            {
+                              type: 'text',
+                              text: lineId,
+                              size: 'sm',
+                              color: '#111111',
+                              align: 'end'
+                            }
+                          ]
+                        },
+                        {
+                          type: 'box',
+                          layout: 'horizontal',
+                          contents: [
+                            {
+                              type: 'text',
+                              text: '驗證碼:',
+                              size: 'sm',
+                              color: '#555555',
+                              flex: 0
+                            },
+                            {
+                              type: 'text',
+                              text: verificationCode,
+                              size: 'sm',
+                              color: '#111111',
+                              align: 'end'
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      type: 'text',
+                      text: '請在 10 分鐘內完成驗證',
+                      size: 'xs',
+                      color: '#aaaaaa',
+                      wrap: true,
+                      margin: 'xxl'
+                    }
+                  ]
                 }
               }
-            ]);
+            }]);
 
             logger.info('已發送驗證資訊', { lineId, verificationCode });
           } catch (error) {

@@ -151,6 +151,7 @@ export interface LineUserSettings {
   isVerified: boolean;
   isFollowing: boolean;
   displayName: string;
+  verificationCode?: string;
   notificationPreferences: {
     news: boolean;
     announcements: boolean;
@@ -171,11 +172,17 @@ export interface LineVerificationRecord {
 
 // DynamoDB 資料表結構
 interface AWS_Blog_UserNotificationSettings {
-  lineId: string;          // 主鍵
-  userId?: string;         // 用戶 ID (驗證成功後填入)
+  userId: string;          // 主鍵 (使用 AuthContext 的 userId)
+  lineId: string;          // LINE 用戶 ID
   verificationCode: string; // 驗證碼
   verificationExpiry: number; // 驗證碼過期時間戳
+  verificationStep: string;   // 驗證步驟
+  verificationStatus: string; // 驗證狀態
   isVerified: boolean;     // 是否已驗證
+  notificationPreferences: {
+    news: boolean;
+    announcements: boolean;
+  };
   createdAt: string;       // 創建時間
   updatedAt: string;       // 更新時間
 }

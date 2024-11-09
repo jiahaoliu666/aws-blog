@@ -297,7 +297,6 @@ export class LineService implements LineServiceInterface {
 
   async handleVerificationCommand(lineUserId: string): Promise<{lineId: string, verificationCode: string}> {
     try {
-      // 驗證 lineUserId 是否存在
       if (!lineUserId) {
         throw new Error('無效的 LINE 用戶 ID');
       }
@@ -309,14 +308,20 @@ export class LineService implements LineServiceInterface {
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Item: {
-          userId: { S: lineUserId }, // 直接使用 LINE 用戶 ID
-          lineId: { S: lineUserId },
+          userId: { S: lineUserId }, // 暫時使用 LINE ID 作為主鍵
+          lineId: { S: lineUserId }, // 作為一般欄位儲存 LINE ID
           verificationCode: { S: verificationCode },
-          verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) }, // 10分鐘後過期
+          verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) },
           verificationStep: { S: VerificationStep.VERIFYING },
           verificationStatus: { S: VerificationStatus.PENDING },
           createdAt: { S: new Date().toISOString() },
-          isVerified: { BOOL: false }
+          isVerified: { BOOL: false },
+          notificationPreferences: {
+            M: {
+              news: { BOOL: false },
+              announcements: { BOOL: false }
+            }
+          }
         }
       };
 

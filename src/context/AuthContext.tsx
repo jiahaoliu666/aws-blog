@@ -73,7 +73,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             window.localStorage.setItem("user", JSON.stringify(updatedUser));
           }
         } catch (err) {
-          // console.error('Cognito 驗證失敗:', err);
           const currentUser = JSON.parse(storedUser);
           setUser({ ...currentUser, needsReauth: true });
         }

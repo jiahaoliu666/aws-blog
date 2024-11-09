@@ -155,6 +155,23 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
             {!verificationState.isVerified ? (
               <div className="space-y-10">
+                {/* 新增：顯示用戶ID */}
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">您的用戶ID</label>
+                      <span className="text-gray-600">{userId}</span>
+                    </div>
+                    <button
+                      onClick={onCopyUserId}
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                    >
+                      <FontAwesomeIcon icon={faCopy} />
+                      <span>複製</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* 步驟 1: 加入官方帳號說明 */}
                 <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 hover:border-gray-300 transition-colors">
                   <div className="flex items-center gap-3 mb-6">
