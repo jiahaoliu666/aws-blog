@@ -71,6 +71,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         label: '完成驗證', 
         description: '輸入 LINE ID 與驗證碼',
         completed: verificationState.step === VerificationStep.COMPLETE 
+      },
+      {
+        label: '綁定成功',
+        description: '開始接收 LINE 通知',
+        completed: verificationState.isVerified
       }
     ];
 
@@ -82,13 +87,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         <div 
           className="absolute top-6 left-0 h-1 bg-green-500 transition-all duration-500"
           style={{ 
-            width: `${(Number(verificationState.step) / (Object.keys(VerificationStep).length - 1)) * 100}%` 
+            width: `${(Number(verificationState.step) / (Object.keys(VerificationStep).length)) * 100}%` 
           }}
         ></div>
         
         <div className="flex justify-between relative">
           {steps.map((step, index) => (
-            <div key={index} className="flex flex-col items-center w-1/3">
+            <div key={index} className="flex flex-col items-center" style={{ width: '25%' }}>
               <div className={`
                 w-12 h-12 rounded-full flex items-center justify-center
                 transition-all duration-300 mb-3 relative z-10
@@ -254,7 +259,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                       <div>
                         <p className="text-sm text-blue-700">加入好友後：</p>
                         <ol className="mt-2 text-sm text-blue-600 list-decimal list-inside space-y-1">
-                          <li>在 LINE 聊天室輸入「您的用戶ID」</li>
+                          <li>在 LINE 聊天室輸入「您��用戶ID」</li>
                           <li>系統會回傳您的 LINE ID 和驗證碼</li>
                           <li>將資訊填入下方表單完成驗證</li>
                         </ol>
