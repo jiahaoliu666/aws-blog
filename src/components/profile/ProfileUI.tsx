@@ -22,14 +22,8 @@ import SettingsSection from './sections/SettingsSection';
 import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
-
-interface FormData {
-  password: string;
-  confirmPassword: string;
-  username: string;
-  email: string;
-  avatar: string;
-}
+import { VerificationStep } from '@/types/lineTypes';
+import { FormData } from '@/types/profileTypes';
 
 interface ProfileUIProps {
   user: {
@@ -48,11 +42,12 @@ interface ProfileUIProps {
 }
 
 interface NotificationSettings {
-  email: boolean;
-  push: boolean;
+  all?: boolean;
   line: boolean;
   browser: boolean;
   mobile: boolean;
+  push?: boolean;
+  email: boolean;
 }
 
 interface LocalSettings {
@@ -69,6 +64,24 @@ interface ActivityLog {
   timestamp: string;
 }
 
+const defaultNotificationPreferences: NotificationSettings = {
+  line: false,
+  browser: false,
+  mobile: false,
+  all: false,
+  push: false,
+  email: false
+};
+
+const defaultSettings: LocalSettings = {
+  theme: 'light',
+  language: 'zh-TW',
+  autoplay: false,
+  notifications: true,
+  notificationPreferences: defaultNotificationPreferences,
+  privacy: 'private'
+};
+
 const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMessage, setIsEditable }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -78,7 +91,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
   const core = useProfileCore({ user });
   const form = useProfileForm({ user, updateUser: core.updateUser }) as unknown as { 
     formData: FormData, 
-    handleChange: (e: any) => void 
+    handleChange: (e: any) => void,
+    setFormData: React.Dispatch<React.SetStateAction<FormData>>
   };
   const avatar = useProfileAvatar({ user });
   const password = useProfilePassword({ user, handleLogout: logoutUser });
@@ -90,6 +104,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
     updateUserLineSettings: () => Promise.resolve()
   });
   const lineSettings = useLineSettings({ user });
+
+  const [localSettings, setLocalSettings] = useState<LocalSettings>(defaultSettings);
+
+  useEffect(() => {
+    if (core.settings) {
+      setLocalSettings(core.settings as LocalSettings);
+    }
+  }, [core.settings]);
 
   useEffect(() => {
     setIsClient(true);
@@ -119,22 +141,19 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
     );
   }
 
-  const defaultSettings: LocalSettings = {
-    theme: 'light',
-    language: 'zh-TW',
-    autoplay: false,
-    notifications: true,
-    notificationPreferences: {
-      email: true,
-      push: true,
-      line: true,
-      browser: true,
-      mobile: true
-    },
-    privacy: 'private'
-  };
+  const handleNotificationSettingChange = (setting: keyof NotificationSettings) => {
+    const updatedPreferences = {
+      ...localSettings.notificationPreferences,
+      [setting]: !localSettings.notificationPreferences[setting]
+    };
 
-  const settings: LocalSettings = core.settings as LocalSettings || defaultSettings;
+    setLocalSettings(prev => ({
+      ...prev,
+      notificationPreferences: updatedPreferences
+    }));
+
+    core.handleSettingChange('notificationPreferences', updatedPreferences);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -154,6 +173,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
             <ProfileSection 
               {...form} 
               {...avatar}
+              setFormData={form.setFormData}
               handleSubmit={core.handleSubmit}
               isEditable={{ username: true }}
               localUsername={form.formData.username}
@@ -187,35 +207,56 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
             <NotificationSection 
               {...(notifications as unknown as object)} 
               isLoading={false}
+              verifyLineIdAndCode={async () => {
+                return Promise.resolve();
+              }}
               user={user && {
                 ...user,
                 userId: user.userId || user.id,
                 sub: user.sub || ''
               }}
-              verificationState={String(lineVerification.verificationState)}
-              checkLineFollowStatus={() => Promise.resolve(false)}
-              notificationSettings={{
-                email: settings.notificationPreferences?.email ?? false,
-                line: settings.notificationPreferences?.line ?? false,
-                browser: settings.notificationPreferences?.browser ?? false,
-                mobile: settings.notificationPreferences?.mobile ?? false
+              verificationState={{
+                step: 'INITIAL' as VerificationStep,
+                status: '',
+                message: '',
+                isVerified: false
               }}
-              handleNotificationChange={(setting: keyof NotificationSettings) => 
-                core.handleSettingChange('notificationPreferences', { 
-                  ...settings.notificationPreferences!,
-                  [setting]: !settings.notificationPreferences?.[setting]
-                })
-              }
+              notificationSettings={{
+                all: localSettings?.notificationPreferences?.all ?? defaultNotificationPreferences.all,
+                line: localSettings?.notificationPreferences?.line ?? defaultNotificationPreferences.line,
+                browser: localSettings?.notificationPreferences?.browser ?? defaultNotificationPreferences.browser,
+                mobile: localSettings?.notificationPreferences?.mobile ?? defaultNotificationPreferences.mobile,
+                email: localSettings?.notificationPreferences?.email ?? defaultNotificationPreferences.email
+              }}
+              handleNotificationChange={(setting: keyof NotificationSettings) => {
+                const currentPreferences = localSettings?.notificationPreferences ?? defaultNotificationPreferences;
+                const updatedPreferences = {
+                  ...currentPreferences,
+                  [setting]: !currentPreferences[setting]
+                };
+
+                setLocalSettings(prev => ({
+                  ...prev,
+                  notificationPreferences: updatedPreferences
+                }));
+
+                core.handleSettingChange('notificationPreferences', updatedPreferences);
+              }}
               lineId={lineSettings.lineUserId || ''}
               setLineId={(id: string) => {/* 處理 lineId 更新的邏輯 */}}
-              startVerification={lineVerification.startVerification}
+              verificationCode=""
+              setVerificationCode={() => {}}
+              handleVerification={async () => {}}
+              onCopyUserId={() => {}}
+              userId={user?.userId || ''}
+              formData={form.formData}
             />
           )}
 
           {core.activeTab === 'settings' && (
             <SettingsSection 
               {...core}
-              settings={settings}
+              settings={localSettings}
               handleSettingChange={core.handleSettingChange}
             />
           )}

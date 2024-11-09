@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faInfoCircle,
@@ -12,7 +12,6 @@ import { Switch } from '@mui/material';
 import { toast } from 'react-toastify';
 import { NotificationSectionProps } from '@/types/profileTypes';
 import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
-import QRCodeImage from '@/assets/images/line-qrcode.png'; // 請確保添加實際的 QR Code 圖片
 
 // 純 UI 組件
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
@@ -26,7 +25,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   userId,
   notificationSettings,
   handleNotificationChange,
-  isLoading
+  isLoading,
+  formData = { email: '', username: '' },
 }) => {
   const renderVerificationStatus = () => {
     if (verificationState.status === 'error') {
@@ -103,14 +103,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       <div className="space-y-8">
         {/* 電子郵件通知設定 */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6">電子郵件通知</h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+            <div className="flex items-center justify-between p-5">
               <div className="flex items-center gap-4">
                 <FontAwesomeIcon icon={faEnvelope} className="text-gray-600 text-xl" />
                 <div>
                   <p className="font-medium text-gray-800">電子郵件通知</p>
-                  <p className="text-sm text-gray-500 mt-1">接收重要更新和活動提醒</p>
+                  <p className="text-sm text-gray-500 mt-1">使用電子郵件接收最新發布的文章</p>
                 </div>
               </div>
               <Switch
@@ -119,16 +118,37 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 disabled={isLoading}
               />
             </div>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                電子郵件地址
+              </label>
+              <input
+                type="email"
+                value={formData?.email || ''}
+                disabled
+                className="w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-600"
+              />
+            </div>
           </div>
         </div>
 
         {/* LINE 通知設定卡片 */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="p-8">
-            <h2 className="text-2xl font-semibold mb-8 flex items-center gap-4">
-              <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-3xl" />
-              LINE 通知設定
-            </h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-semibold flex items-center gap-4">
+                <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-3xl" />
+                LINE 通知設定
+              </h2>
+              {verificationState.isVerified && (
+                <Switch
+                  checked={notificationSettings.line}
+                  onChange={() => handleNotificationChange('line')}
+                  disabled={isLoading}
+                />
+              )}
+            </div>
 
             {/* 進度指示器 */}
             {!verificationState.isVerified && renderProgressStatus()}
@@ -231,24 +251,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 <p className="text-green-600">您已成功開啟 LINE 通知功能</p>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* 通知說明卡片 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
-            <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500" />
-            通知說明
-          </h3>
-          <div className="space-y-5">
-            <div className="flex items-center gap-4 text-gray-600 hover:text-gray-800 transition-colors">
-              <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-xl" />
-              <p>即時接收最新文章和重要更新</p>
-            </div>
-            <div className="flex items-center gap-4 text-gray-600 hover:text-gray-800 transition-colors">
-              <FontAwesomeIcon icon={faEnvelope} className="text-xl" />
-              <p>系統將發送重要更新和活動提醒</p>
-            </div>
           </div>
         </div>
       </div>

@@ -73,9 +73,13 @@ export interface NotificationSectionProps {
   handleNotificationChange: (type: keyof NotificationSettings) => void;
   notificationSettings: {
     email: boolean;
-    all: boolean;
+    all?: boolean;
+    line: boolean;
+    browser: boolean;
+    mobile: boolean;
   };
   handleVerification: () => Promise<void>;
   onCopyUserId: () => void;
   userId: string;
+  formData?: FormData;
 } 
