@@ -82,6 +82,11 @@ const updateUserLineStatus = async (lineId: string, isFollowing: boolean) => {
   await dynamoClient.send(new UpdateItemCommand(params));
 };
 
+interface VerificationCommandParams {
+  lineUserId: string;
+  userId: string;
+}
+
 interface LineServiceInterface {
   sendMessage(lineId: string, message: string | LineMessage): Promise<boolean>;
   sendWelcomeMessage(lineId: string): Promise<boolean>;
@@ -103,7 +108,7 @@ interface LineServiceInterface {
     lineId?: string;
   }): Promise<void>;
   replyMessage(replyToken: string, messages: any[]): Promise<any>;
-  handleVerificationCommand(lineUserId: string): Promise<{lineId: string, verificationCode: string}>;
+  handleVerificationCommand(params: VerificationCommandParams): Promise<{lineId: string, verificationCode: string}>;
 }
 
 export class LineService implements LineServiceInterface {
@@ -295,21 +300,19 @@ export class LineService implements LineServiceInterface {
     throw new Error('Method not implemented.');
   }
 
-  async handleVerificationCommand(lineUserId: string): Promise<{lineId: string, verificationCode: string}> {
+  async handleVerificationCommand(params: VerificationCommandParams): Promise<{lineId: string, verificationCode: string}> {
     try {
-      if (!lineUserId) {
+      if (!params.lineUserId) {
         throw new Error('無效的 LINE 用戶 ID');
       }
 
-      // 生成驗證碼
       const verificationCode = generateVerificationCode(6);
       
-      // 儲存驗證資訊到 DynamoDB
-      const params = {
+      const dynamoParams = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Item: {
-          userId: { S: lineUserId }, // 暫時使用 LINE ID 作為主鍵
-          lineId: { S: lineUserId }, // 作為一般欄位儲存 LINE ID
+          userId: { S: params.userId },
+          lineId: { S: params.lineUserId },
           verificationCode: { S: verificationCode },
           verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) },
           verificationStep: { S: VerificationStep.VERIFYING },
@@ -325,17 +328,17 @@ export class LineService implements LineServiceInterface {
         }
       };
 
-      await dynamoClient.send(new PutItemCommand(params));
+      await dynamoClient.send(new PutItemCommand(dynamoParams));
       
       logger.info('驗證資訊已儲存', { 
-        userId: lineUserId,
-        lineId: lineUserId,
+        userId: params.userId,
+        lineId: params.lineUserId,
         verificationCode,
         timestamp: new Date().toISOString()
       });
 
       return {
-        lineId: lineUserId,
+        lineId: params.lineUserId,
         verificationCode
       };
     } catch (error) {

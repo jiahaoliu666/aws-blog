@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           await lineServiceInstance.replyMessage(event.replyToken, [{
             type: 'text',
-            text: '歡迎加入！請在聊天室中輸入「驗證」取得您的 LINE ID 和驗證碼。'
+            text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您可以在網站的個人設定頁面找到您的用戶ID。'
           }]);
           continue;
         } catch (error) {
@@ -56,12 +56,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (event.type === 'message' && event.message?.type === 'text') {
         const messageText = event.message.text.trim();
         
-        if (messageText === '驗證') {
-          try {
+        try {
+          // 檢查輸入的是否為有效的 Cognito User ID
+          const params = {
+            TableName: 'AWS_Blog_UserNotificationSettings',
+            Key: {
+              userId: { S: messageText }
+            }
+          };
+
+          const command = new GetItemCommand(params);
+          const response = await dynamoClient.send(command);
+
+          // 如果找到對應的用戶ID
+          if (response.Item) {
             // 生成驗證碼並儲存
-            const { lineId, verificationCode } = await lineServiceInstance.handleVerificationCommand(
-              event.source.userId!
-            );
+            const { lineId, verificationCode } = await lineServiceInstance.handleVerificationCommand({
+              lineUserId: event.source.userId!,
+              userId: messageText
+            });
 
             // 發送驗證資訊給用戶
             await lineServiceInstance.replyMessage(event.replyToken, [{
@@ -75,10 +88,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   contents: [
                     {
                       type: 'text',
-                      text: '您的驗證資訊',
+                      text: '驗證資訊',
                       weight: 'bold',
                       size: 'xl',
-                      color: '#1DB446'
+                      margin: 'md'
                     },
                     {
                       type: 'box',
@@ -142,13 +155,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }]);
 
             logger.info('已發送驗證資訊', { lineId, verificationCode });
-          } catch (error) {
-            logger.error('處理驗證指令失敗:', error);
+          } else {
+            // 如果找不到對應的用戶ID
             await lineServiceInstance.replyMessage(event.replyToken, [{
               type: 'text',
-              text: error instanceof Error ? error.message : '抱歉，驗證程序發生錯誤，請稍後再試。'
+              text: '無效的用戶ID，請確認您輸入的是正確的用戶ID。\n您可以在網站的個人設定頁面找到您的用戶ID。'
             }]);
           }
+        } catch (error) {
+          logger.error('處理驗證指令失敗:', error);
+          await lineServiceInstance.replyMessage(event.replyToken, [{
+            type: 'text',
+            text: error instanceof Error ? error.message : '抱歉，驗證程序發生錯誤，請稍後再試。'
+          }]);
         }
       }
     }
