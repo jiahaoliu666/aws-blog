@@ -12,6 +12,9 @@ import { Switch } from '@mui/material';
 import { toast } from 'react-toastify';
 import { NotificationSectionProps } from '@/types/profileTypes';
 import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
+import { useLineVerification } from '@/hooks/line/useLineVerification';
+import { useAuthContext } from '@/context/AuthContext';
+import { logger } from '@/utils/logger';
 
 // 純 UI 組件
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
@@ -29,20 +32,42 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   isVerifying,
   formData = { email: '', username: '' },
 }) => {
+  const { user } = useAuthContext();
+  const { handleVerification, verificationState: lineVerificationState } = useLineVerification({
+    user,
+    updateUserLineSettings: async (settings) => {
+      try {
+        // 實作更新設定的邏輯
+        logger.info('更新 LINE 設定', settings);
+      } catch (error) {
+        logger.error('更新 LINE 設定失敗:', error);
+      }
+    }
+  });
+
+  const onVerifyClick = async () => {
+    logger.info('驗證按鈕被點擊');
+    try {
+      await handleVerification();
+    } catch (error) {
+      logger.error('驗證處理失敗:', error);
+    }
+  };
+
   // 渲染驗證狀態提示
   const renderVerificationStatus = () => {
-    if (verificationState.status === VerificationStatus.ERROR) {
+    if (lineVerificationState.status === VerificationStatus.ERROR) {
       return (
         <div className="bg-red-50 p-4 rounded-lg mb-6">
           <div className="flex items-center gap-2 text-red-600">
             <FontAwesomeIcon icon={faExclamationCircle} />
-            <span>{verificationState.message || '驗證失敗'}</span>
+            <span>{lineVerificationState.message || '驗證失敗'}</span>
           </div>
         </div>
       );
     }
 
-    if (verificationState.isVerified) {
+    if (lineVerificationState.isVerified) {
       return (
         <div className="bg-green-50 p-6 rounded-lg text-center mb-6">
           <FontAwesomeIcon icon={faCheckCircle} className="text-4xl text-green-500 mb-3" />
@@ -61,17 +86,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       { 
         label: '準備開始', 
         description: '複製您的用戶ID',
-        completed: verificationState.step !== VerificationStep.IDLE 
+        completed: lineVerificationState.step !== VerificationStep.IDLE 
       },
       { 
         label: '加入並驗證',
         description: '加入官方帳號並完成驗證',
-        completed: verificationState.step >= VerificationStep.VERIFYING 
+        completed: lineVerificationState.step >= VerificationStep.VERIFYING 
       },
       {
         label: '綁定成功',
         description: '開始接收 LINE 通知',
-        completed: verificationState.isVerified
+        completed: lineVerificationState.isVerified
       }
     ];
 
@@ -83,7 +108,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         <div 
           className="absolute top-6 left-0 h-1 bg-green-500 transition-all duration-500"
           style={{ 
-            width: `${(Number(verificationState.step) / (Object.keys(VerificationStep).length)) * 100}%` 
+            width: `${(Number(lineVerificationState.step) / (Object.keys(VerificationStep).length)) * 100}%` 
           }}
         ></div>
         
@@ -165,7 +190,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-3xl" />
                 LINE 通知設定
               </h2>
-              {verificationState.isVerified && (
+              {lineVerificationState.isVerified && (
                 <Switch
                   checked={notificationSettings.line}
                   onChange={() => handleNotificationChange('line')}
@@ -178,10 +203,10 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             {renderVerificationStatus()}
 
             {/* 進度指示器 */}
-            {!verificationState.isVerified && renderProgressStatus()}
+            {!lineVerificationState.isVerified && renderProgressStatus()}
 
             {/* 驗證步驟內容 */}
-            {!verificationState.isVerified ? (
+            {!lineVerificationState.isVerified ? (
               <div className="space-y-8">
                 {/* 步驟 1: 用戶ID */}
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
@@ -225,14 +250,14 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     <div className="flex items-center justify-center md:h-48">
                       <div className="hidden md:block w-px h-full bg-gray-300"></div>
                       <div className="md:hidden h-px w-full bg-gray-300"></div>
-                      <div className="absolute text-gray-500">或</div>
+                      <div className="absolute text-gray-500 bg-gray-50 px-4">或</div>
                     </div>
 
                     {/* 按鈕區塊 */}
                     <div className="flex-1 text-center">
                       <div className="space-y-4">
                         <a
-                          href="https://line.me/R/ti/p/@YOUR_LINE_ID"
+                          href="https://line.me/R/ti/p/@601feiwz"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center gap-2 bg-[#00B900] text-white px-6 py-3 rounded-lg hover:bg-[#009900] transition-colors"
@@ -281,7 +306,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                         onChange={(e) => setLineId(e.target.value)}
                         placeholder="請輸入LINE回傳的ID"
                         className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={verificationState.isVerified}
+                        disabled={lineVerificationState.isVerified}
                       />
                     </div>
                     <div>
@@ -294,21 +319,21 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                         onChange={(e) => setVerificationCode(e.target.value)}
                         placeholder="請輸入LINE回傳的驗證碼"
                         className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={verificationState.isVerified}
+                        disabled={lineVerificationState.isVerified}
                       />
                     </div>
                     <button
-                      onClick={verifyLineIdAndCode}
-                      disabled={!lineId || !verificationCode || verificationState.isVerified || isVerifying}
+                      onClick={onVerifyClick}
+                      disabled={isVerifying}
                       className={`
                         w-full py-3 rounded-lg transition-colors
-                        ${(!lineId || !verificationCode || verificationState.isVerified || isVerifying)
+                        ${(!lineId || !verificationCode || lineVerificationState.isVerified || isVerifying)
                           ? 'bg-gray-300 cursor-not-allowed'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }
                       `}
                     >
-                      {isVerifying ? '驗證中...' : verificationState.isVerified ? '已驗證' : '驗證'}
+                      {isVerifying ? '驗證中...' : lineVerificationState.isVerified ? '已驗證' : '驗證'}
                     </button>
                   </div>
                 </div>

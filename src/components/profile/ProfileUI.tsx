@@ -111,7 +111,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
 
   useEffect(() => {
     if (core.settings) {
-      setLocalSettings(core.settings as LocalSettings);
+      if (JSON.stringify(localSettings) !== JSON.stringify(core.settings)) {
+        setLocalSettings(core.settings as LocalSettings);
+      }
     }
   }, [core.settings]);
 
@@ -122,7 +124,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
   useEffect(() => {
     if (!isClient) return;
 
-    if (!authUser && !window.localStorage.getItem("user")) {
+    const userInStorage = window.localStorage.getItem("user");
+    if (!authUser && !userInStorage) {
       const timer = setTimeout(() => {
         router.push('/auth/login');
       }, 3000);

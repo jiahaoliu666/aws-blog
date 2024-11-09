@@ -1,49 +1,50 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { User } from '@/types/userType';
-import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
+import { LineUserSettings } from '@/types/lineTypes';
+import { logger } from '@/utils/logger';
 
 interface UseLineVerificationProps {
   user: User | null;
-  updateUserLineSettings: (settings: {
-    lineId: string;
-    isVerified: boolean;
-  }) => Promise<void>;
+  updateUserLineSettings: (settings: Partial<LineUserSettings>) => Promise<void>;
 }
 
 export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVerificationProps) => {
-  const [verificationState, setVerificationState] = useState<VerificationState>({
-    step: VerificationStep.IDLE,
-    status: VerificationStatus.IDLE,
-    isVerified: false,
-    message: '',
-    progress: 0,
-    currentStep: 1
-  });
   const [lineId, setLineId] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-
-  const dynamoClient = new DynamoDBClient({
-    region: 'ap-northeast-1',
-    credentials: {
-      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-    },
+  const [verificationState, setVerificationState] = useState({
+    step: VerificationStep.IDLE,
+    status: VerificationStatus.PENDING,
+    message: '',
+    isVerified: false
   });
+
+  // 驗證 LINE ID 格式
+  const validateLineId = (id: string): boolean => {
+    const lineIdPattern = /^U[0-9a-f]{32}$/i;
+    return lineIdPattern.test(id.trim());
+  };
 
   const handleVerification = async () => {
     if (!user?.sub) {
-      toast.error('請先登入');
+      toast.error('請先登入後再進行驗證');
       return;
     }
 
     const trimmedLineId = lineId.trim();
-    const trimmedVerificationCode = verificationCode.trim();
+    const trimmedCode = verificationCode.trim();
 
-    if (!trimmedLineId || !trimmedVerificationCode) {
-      toast.error('請輸入 LINE ID 和驗證碼');
+    // 基本驗證
+    if (!trimmedLineId || !trimmedCode) {
+      toast.error('請填寫 LINE ID 和驗證碼');
+      return;
+    }
+
+    // 驗證 LINE ID 格式
+    if (!validateLineId(trimmedLineId)) {
+      toast.error('LINE ID 格式不正確');
       return;
     }
 
@@ -52,7 +53,7 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
       setVerificationState(prev => ({
         ...prev,
         status: VerificationStatus.VALIDATING,
-        message: '驗證中...'
+        message: '驗證進行中...'
       }));
 
       const response = await fetch('/api/line/verify', {
@@ -61,62 +62,76 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
         body: JSON.stringify({
           userId: user.sub,
           lineId: trimmedLineId,
-          verificationCode: trimmedVerificationCode
+          verificationCode: trimmedCode
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setVerificationState(prev => ({
-          ...prev,
+        // 驗證成功
+        setVerificationState({
           step: VerificationStep.COMPLETE,
           status: VerificationStatus.SUCCESS,
-          isVerified: true,
-          message: '驗證成功！'
-        }));
-        
+          message: '驗證成功！',
+          isVerified: true
+        });
+
+        // 更新用戶的 LINE 設定
         await updateUserLineSettings({
           lineId: trimmedLineId,
           isVerified: true
         });
-        
-        toast.success('LINE 驗證成功！');
+
+        toast.success('LINE 驗證成功！您現在可以接收通知了');
       } else {
+        // 驗證失敗
         setVerificationState(prev => ({
           ...prev,
           status: VerificationStatus.ERROR,
           message: data.message || '驗證失敗'
         }));
-        toast.error(data.message || '驗證失敗');
+
+        // 根據不同錯誤類型顯示對應訊息
+        switch (data.errorCode) {
+          case 'INVALID_CODE':
+            toast.error('驗證碼不正確，請重新確認');
+            break;
+          case 'CODE_EXPIRED':
+            toast.error('驗證碼已過期，請重新取得驗證碼');
+            break;
+          case 'NOT_FOUND':
+            toast.error('找不到驗證資訊，請確認 LINE ID 是否正確');
+            break;
+          case 'NOT_FOLLOWING':
+            toast.error('請先加入 LINE 官方帳號為好友');
+            break;
+          default:
+            toast.error(data.message || '驗證失敗，請稍後再試');
+        }
       }
     } catch (error) {
+      logger.error('LINE 驗證過程發生錯誤:', error);
+      
       setVerificationState(prev => ({
         ...prev,
         status: VerificationStatus.ERROR,
-        message: '驗證過程發生錯誤'
+        message: '系統發生錯誤，請稍後再試'
       }));
-      toast.error('驗證過程發生錯誤');
+
+      toast.error('系統發生錯誤，請稍後再試');
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const handleLineIdChange = (value: string) => {
-    setLineId(value);
-  };
-
-  const handleVerificationCodeChange = (value: string) => {
-    setVerificationCode(value);
-  };
-
   return {
-    verificationState,
     lineId,
-    setLineId: handleLineIdChange,
+    setLineId,
     verificationCode,
-    setVerificationCode: handleVerificationCodeChange,
+    setVerificationCode,
     isVerifying,
+    verificationState,
     handleVerification
   };
 };
