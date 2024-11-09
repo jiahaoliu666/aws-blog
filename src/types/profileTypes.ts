@@ -33,6 +33,7 @@ export interface Settings {
 
 export interface NotificationSettings {
   email: boolean;
+  all: boolean;
   line: boolean;
   browser: boolean;
   mobile: boolean;
@@ -72,6 +73,7 @@ export interface NotificationSectionProps {
   handleNotificationChange: (type: keyof NotificationSettings) => void;
   notificationSettings: {
     email: boolean;
+    all: boolean;
   };
   handleVerification: () => Promise<void>;
   onCopyUserId: () => void;
