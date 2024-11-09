@@ -61,7 +61,7 @@ src/
 │   │   ├── useProfileFeedback.ts   // 用戶反饋
 │   │   ├── useProfileForm.ts       // 個人資訊
 │   │   ├── useProfileActivity.ts   // 活動日誌
-│   │   ├── useNotificationSettings.ts  // 訂閱通知
+│   │   ├── useNotificationSettings.ts  // 通知設定
 │   │   ├── useProfileCore.ts       // 用戶認證狀態
 │   │   ├── useProfileSettings.ts   // 管理用戶設定的狀態
 │   │   ├── useProfileArticles.ts   // 觀看紀錄
@@ -117,7 +117,6 @@ src/
 │   │   │   ├── verify.ts           // LINE 驗證 API
 │   │   │   └── webhook.ts          // LINE Webhook
 │   │   └── notifications
-│   │       ├── settings.ts         // 通知設定 API
 │   │       └── sendEmail.ts        // 發送郵件 API
 │   └── _app.tsx                    // App 組件
 └── services
