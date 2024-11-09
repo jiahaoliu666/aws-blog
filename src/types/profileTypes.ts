@@ -64,10 +64,10 @@ export interface NotificationSectionProps {
     isVerified?: boolean;
   };
   user?: any;
-  lineId?: string;
-  setLineId: (lineId: string) => void;
+  lineId: string;
+  setLineId: (value: string) => void;
   verificationCode: string;
-  setVerificationCode: (code: string) => void;
+  setVerificationCode: (value: string) => void;
   verifyLineIdAndCode: () => void;
   isLoading: boolean;
   handleNotificationChange: (type: keyof NotificationSettings) => void;
@@ -82,4 +82,5 @@ export interface NotificationSectionProps {
   onCopyUserId: () => void;
   userId: string;
   formData?: FormData;
+  isVerifying: boolean;
 } 

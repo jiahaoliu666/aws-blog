@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { lineService } from '@/services/lineService';
 import { toast } from 'react-toastify';
-import { logger } from '@/utils/logger';
 import { User } from '@/types/userType';
 import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 interface UseLineVerificationProps {
   user: User | null;
@@ -18,6 +16,8 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
   const [verificationState, setVerificationState] = useState<VerificationState>({
     step: VerificationStep.IDLE,
     status: VerificationStatus.IDLE,
+    isVerified: false,
+    message: '',
     progress: 0,
     currentStep: 1
   });
@@ -34,7 +34,15 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
   });
 
   const handleVerification = async () => {
-    if (!lineId.trim() || !verificationCode.trim()) {
+    if (!user?.sub) {
+      toast.error('請先登入');
+      return;
+    }
+
+    const trimmedLineId = lineId.trim();
+    const trimmedVerificationCode = verificationCode.trim();
+
+    if (!trimmedLineId || !trimmedVerificationCode) {
       toast.error('請輸入 LINE ID 和驗證碼');
       return;
     }
@@ -43,16 +51,17 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
       setIsVerifying(true);
       setVerificationState(prev => ({
         ...prev,
-        status: VerificationStatus.VALIDATING
+        status: VerificationStatus.VALIDATING,
+        message: '驗證中...'
       }));
 
       const response = await fetch('/api/line/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.sub,
-          lineId,
-          verificationCode
+          userId: user.sub,
+          lineId: trimmedLineId,
+          verificationCode: trimmedVerificationCode
         })
       });
 
@@ -68,7 +77,7 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
         }));
         
         await updateUserLineSettings({
-          lineId,
+          lineId: trimmedLineId,
           isVerified: true
         });
         
@@ -93,12 +102,20 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
     }
   };
 
+  const handleLineIdChange = (value: string) => {
+    setLineId(value);
+  };
+
+  const handleVerificationCodeChange = (value: string) => {
+    setVerificationCode(value);
+  };
+
   return {
     verificationState,
     lineId,
-    setLineId,
+    setLineId: handleLineIdChange,
     verificationCode,
-    setVerificationCode,
+    setVerificationCode: handleVerificationCodeChange,
     isVerifying,
     handleVerification
   };

@@ -20,12 +20,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   setLineId,
   verificationCode,
   setVerificationCode,
-  handleVerification,
+  verifyLineIdAndCode,
   onCopyUserId,
   userId,
   notificationSettings,
   handleNotificationChange,
   isLoading,
+  isVerifying,
   formData = { email: '', username: '' },
 }) => {
   // 渲染驗證狀態提示
@@ -63,14 +64,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         completed: verificationState.step !== VerificationStep.IDLE 
       },
       { 
-        label: '加入官方帳號', 
-        description: '掃描 QR Code 或點擊按鈕',
+        label: '加入並驗證',
+        description: '加入官方帳號並完成驗證',
         completed: verificationState.step >= VerificationStep.VERIFYING 
-      },
-      { 
-        label: '完成驗證', 
-        description: '輸入 LINE ID 與驗證碼',
-        completed: verificationState.step === VerificationStep.COMPLETE 
       },
       {
         label: '綁定成功',
@@ -229,7 +225,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     <div className="flex items-center justify-center md:h-48">
                       <div className="hidden md:block w-px h-full bg-gray-300"></div>
                       <div className="md:hidden h-px w-full bg-gray-300"></div>
-                      <div className="absolute bg-white px-4 text-gray-500">或</div>
+                      <div className="absolute text-gray-500">或</div>
                     </div>
 
                     {/* 按鈕區塊 */}
@@ -259,7 +255,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                       <div>
                         <p className="text-sm text-blue-700">加入好友後：</p>
                         <ol className="mt-2 text-sm text-blue-600 list-decimal list-inside space-y-1">
-                          <li>在 LINE 聊天室輸入「您��用戶ID」</li>
+                          <li>在 LINE 聊天室輸入「您的用戶ID」</li>
                           <li>系統會回傳您的 LINE ID 和驗證碼</li>
                           <li>將資訊填入下方表單完成驗證</li>
                         </ol>
@@ -285,6 +281,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                         onChange={(e) => setLineId(e.target.value)}
                         placeholder="請輸入LINE回傳的ID"
                         className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={verificationState.isVerified}
                       />
                     </div>
                     <div>
@@ -297,20 +294,21 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                         onChange={(e) => setVerificationCode(e.target.value)}
                         placeholder="請輸入LINE回傳的驗證碼"
                         className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={verificationState.isVerified}
                       />
                     </div>
                     <button
-                      onClick={handleVerification}
-                      disabled={isLoading || !lineId || !verificationCode}
+                      onClick={verifyLineIdAndCode}
+                      disabled={!lineId || !verificationCode || verificationState.isVerified || isVerifying}
                       className={`
                         w-full py-3 rounded-lg transition-colors
-                        ${isLoading || !lineId || !verificationCode
+                        ${(!lineId || !verificationCode || verificationState.isVerified || isVerifying)
                           ? 'bg-gray-300 cursor-not-allowed'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }
                       `}
                     >
-                      {isLoading ? '驗證中...' : '驗證'}
+                      {isVerifying ? '驗證中...' : verificationState.isVerified ? '已驗證' : '驗證'}
                     </button>
                   </div>
                 </div>
