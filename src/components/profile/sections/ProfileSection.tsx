@@ -91,9 +91,23 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   }}
                 />
               </div>
-              <label className="absolute bottom-4 right-4 bg-blue-600 text-white p-3.5 rounded-full cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5">
-                <FontAwesomeIcon icon={faCamera} className="text-lg" />
-                <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
+              <label className="absolute bottom-4 right-4 bg-blue-600 text-white p-3.5 rounded-full cursor-pointer 
+                hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5
+                shadow-lg hover:shadow-xl active:scale-95 
+                flex items-center justify-center
+                group-hover:bg-blue-700">
+                {isLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} spin className="text-lg" />
+                ) : (
+                  <FontAwesomeIcon icon={faCamera} className="text-lg" />
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleAvatarChange}
+                  disabled={isLoading} 
+                />
               </label>
             </div>
 
