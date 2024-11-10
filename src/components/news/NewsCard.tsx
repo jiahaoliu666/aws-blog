@@ -54,14 +54,12 @@ const NewsCard: React.FC<NewsCardProps> = ({
             console.log(`User ${user.username} clicked on article: ${article.article_id}`);
             await logRecentArticle(
                 article.article_id,
-                article.link,
-                sourcePage,
                 displayTitle,
-                displayDescription
+                article.link,
+                '最新新聞',
             );
         } else {
             console.log('User not logged in, cannot log activity.');
-            // 檢查是否有其他地方會觸發跳轉
         }
     };
 
