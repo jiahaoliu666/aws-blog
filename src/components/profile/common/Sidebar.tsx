@@ -64,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-6">
+    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-6 min-h-[calc(100vh-8rem)]">
       {/* 用戶資訊區塊 - 簡潔設計 */}
       <div className="relative mb-8">
         <div className="flex flex-col items-center p-4">
@@ -145,24 +145,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </li>
         ))}
       </ul>
-
-      {/* 提示資訊 - 改善視覺呈現 */}
-      <div className="mt-8 p-5 bg-gray-800/50 rounded-xl border border-gray-700/50 backdrop-blur-sm">
-        <h3 className="font-medium text-white mb-3 flex items-center space-x-2">
-          <FontAwesomeIcon icon={faBell} className="text-blue-400" />
-          <span>提示</span>
-        </h3>
-        <ul className="space-y-3 text-sm text-gray-300">
-          <li className="flex items-start space-x-2">
-            <span className="text-blue-400 mt-1">•</span>
-            <span>建議定期更改密碼以提高帳戶安全性</span>
-          </li>
-          <li className="flex items-start space-x-2">
-            <span className="text-blue-400 mt-1">•</span>
-            <span>有任何問題歡迎透過意見反饋與我們聯繫</span>
-          </li>
-        </ul>
-      </div>
     </div>
   );
 };

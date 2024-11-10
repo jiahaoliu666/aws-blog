@@ -4,9 +4,20 @@ import { faList, faGrip, faHistory, faInbox, faGlobe, faClock, faNewspaper, faCh
 import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
 import { useAuthContext } from '@/context/AuthContext';
 
-const HistorySection: React.FC = () => {
+interface Article {
+  link: string;
+  sourcePage: string;
+  timeAgo: string;
+  translatedTitle: string;
+}
+
+interface HistorySectionProps {
+  recentArticles: Article[];
+}
+
+const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
   const { user } = useAuthContext();
-  const { recentArticles, isLoading } = useProfileArticles({ user });
+  const { isLoading } = useProfileArticles({ user });
   const [isGridView, setIsGridView] = useState(true);
 
   return (
