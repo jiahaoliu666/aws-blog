@@ -27,6 +27,7 @@ src/
 │   ├── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
 │   ├── extractDateFromInfo.ts      // 從字串中提取日期的工具函數
 │   └── cacheUtils.ts               // 管理快取的工具
+│   └── dateUtils.ts                // 日期時間差格式化工具
 ├── libs
 │   └── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
 ├── styles

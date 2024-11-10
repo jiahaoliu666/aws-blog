@@ -3,6 +3,7 @@ import { DynamoDBClient, QueryCommand, PutItemCommand, DeleteItemCommand, Update
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
 import { toast } from 'react-toastify';
+import { formatTimeAgo } from '@/utils/dateUtils';
 
 interface Article {
   id: string;
@@ -11,6 +12,7 @@ interface Article {
   translatedTitle: string;
   link: string;
   timestamp: string;
+  timeAgo: string;
   sourcePage: string;
   category?: string;
   readStatus?: 'unread' | 'reading' | 'completed';
@@ -80,6 +82,7 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
           translatedTitle: newsResponse.Items?.[0]?.translated_title?.S || '標題不可用',
           link: newsResponse.Items?.[0]?.link?.S || '#',
           timestamp: timestamp!,
+          timeAgo: formatTimeAgo(new Date(timestamp!)),
           sourcePage
         };
       }));
