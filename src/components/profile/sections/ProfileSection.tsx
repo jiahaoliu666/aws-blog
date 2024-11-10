@@ -5,10 +5,12 @@ import {
   faEdit, 
   faCheck, 
   faTimes,
-  faSpinner
+  faSpinner,
+  faExclamationTriangle,
+  faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { FormData } from '@/types/profileTypes';
-import { toast } from 'react-hot-toast';
+import { useToastContext } from '@/context/ToastContext';
 
 interface ProfileSectionProps {
   formData: FormData;
@@ -42,11 +44,11 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   handleSaveProfileChanges,
   handleCancelChanges,
   isLoading,
-  uploadMessage,
   tempAvatar,
   handleEditClick
 }) => {
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+  const { showToast } = useToastContext();
 
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
@@ -71,6 +73,16 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     };
   }, []);
 
+  const handleSave = async () => {
+    try {
+      showToast('正在儲存...', 'loading');
+      await handleSaveProfileChanges(localUsername);
+      showToast('儲存成功！', 'success');
+    } catch (error) {
+      showToast('儲存失敗', 'error');
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -93,7 +105,8 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
               </div>
               
               <label className="absolute bottom-2 right-2 p-2.5 bg-white rounded-full shadow-lg cursor-pointer
-                hover:bg-blue-50 active:bg-blue-100 transition duration-150">
+                hover:bg-blue-50 active:bg-blue-100 transition duration-150
+                disabled:opacity-50 disabled:cursor-not-allowed">
                 <FontAwesomeIcon 
                   icon={isLoading ? faSpinner : faCamera} 
                   className={`text-blue-600 text-lg ${isLoading ? 'animate-spin' : ''}`}
@@ -142,7 +155,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                       disabled={isLoading}
                     />
                     <button
-                      onClick={() => handleSaveProfileChanges(localUsername)}
+                      onClick={handleSave}
                       disabled={isLoading || !localUsername.trim()}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg 
                         hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
@@ -201,17 +214,6 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
           </div>
         </div>
       </div>
-
-      {/* 上傳訊息提示 */}
-      {uploadMessage && (
-        <div className={`mt-4 p-4 rounded-lg ${
-          uploadMessage.includes('成功') 
-            ? 'bg-green-50 text-green-700 border-l-4 border-green-500'
-            : 'bg-red-50 text-red-700 border-l-4 border-red-500'
-        }`}>
-          <p className="text-sm">{uploadMessage}</p>
-        </div>
-      )}
     </div>
   );
 };

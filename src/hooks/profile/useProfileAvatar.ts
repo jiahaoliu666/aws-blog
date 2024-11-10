@@ -3,7 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
-import { toast } from 'react-toastify';
+import { useToastContext } from '@/context/ToastContext';
 
 interface UseProfileAvatarProps {
   user: User | null;
@@ -26,6 +26,7 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
   const [tempAvatar, setTempAvatar] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const { showToast } = useToastContext();
 
   const s3Client = new S3Client({
     region: 'ap-northeast-1',
@@ -48,12 +49,12 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!validTypes.includes(file.type)) {
-      toast.error('請上傳 JPG、PNG 或 GIF 格式的圖片');
+      showToast('請上傳 JPG、PNG 或 GIF 格式的圖片', 'error');
       return false;
     }
 
     if (file.size > maxSize) {
-      toast.error('圖片大小不能超過 5MB');
+      showToast('圖片大小不能超過 5MB', 'error');
       return false;
     }
 
@@ -85,10 +86,21 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
     if (!file || !user?.sub) return;
 
     try {
-      if (!validateFile(file)) return;
+      showToast('正在處理您的頭像...', 'loading');
+
+      if (!validateFile(file)) {
+        showToast('檔案格式不支援，請選擇 JPG、PNG 或 GIF 圖片', 'error');
+        return;
+      }
 
       setIsUploading(true);
-      setUploadMessage('正在上傳頭像...');
+      setUploadMessage('正在處理您的頭像...');
+
+      // 檢查檔案大小
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('檔案大小不能超過 5MB', 'error');
+        return;
+      }
 
       // 生成臨時預覽
       const reader = new FileReader();
@@ -98,6 +110,7 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       reader.readAsDataURL(file);
 
       // 上傳到 S3
+      setUploadMessage('正在上傳頭像...');
       const fileKey = `avatars/${user.sub}/${Date.now()}-${file.name}`;
       const uploadParams = {
         Bucket: 'aws-blog-avatar',
@@ -115,11 +128,11 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       // 更新 DynamoDB
       await updateDynamoDB(user.sub, avatarUrl);
 
-      // 更新本地存儲
+      // 更新本地存儲和狀態
       localStorage.setItem('userAvatar', avatarUrl);
-      
-      // 更新所有相關狀態
       setTempAvatar(avatarUrl);
+      setUploadMessage('頭像更新成功！');
+      
       if (updateUser) {
         updateUser({ avatar: avatarUrl });
       }
@@ -130,13 +143,23 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       // 觸發全局事件
       window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: avatarUrl }));
 
-      setUploadMessage('頭像上傳成功');
-      toast.success('頭像已更新');
+      showToast('頭像已成功更新', 'success');
+
+      // 3秒後清除消息
+      setTimeout(() => {
+        setUploadMessage(null);
+      }, 3000);
 
     } catch (error) {
-      logger.error('上傳頭像失敗:', error);
-      setUploadMessage('上傳頭像失敗');
-      toast.error('上傳頭像失敗，請稍後重試');
+      showToast(
+        error instanceof Error ? error.message : '上傳失敗，請稍後重試', 
+        'error'
+      );
+
+      // 3秒後清除錯誤消息
+      setTimeout(() => {
+        setUploadMessage(null);
+      }, 3000);
     } finally {
       setIsUploading(false);
     }

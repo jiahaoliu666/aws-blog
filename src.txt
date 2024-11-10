@@ -10,7 +10,8 @@ src/
 ├── context
 │   ├── AuthContext.tsx             // 用戶認證相關的上下文
 │   ├── AppContext.tsx              // 應用程式邏輯相關的上下文
-│   └── LanguageContext.tsx         // 語言設定相關的上下文
+│   ├── LanguageContext.tsx         // 語言設定相關的上下文
+│   └── ToastContext.tsx            // Toast 通知上下文
 ├── config
 │   ├── email.ts                    // 集中管理郵件相關配置
 │   ├── aws.ts                      // 設定 AWS 相關的客戶端配置
@@ -29,14 +30,18 @@ src/
 ├── libs
 │   └── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
 ├── styles
-│   └── globals.css                 // 定義全域的 CSS 樣式
+│   ├── globals.css                 // 定義全域的 CSS 樣式
+│   └── toast.css                   // Toast 通知的 CSS 樣式
 ├── components
 │   ├── common
 │   │   ├── Navbar.tsx              // 導航欄組件
 │   │   ├── Pagination.tsx          // 分頁組件
 │   │   ├── ErrorMessage.tsx        // 錯誤訊息組件
 │   │   ├── Footer.tsx              // 頁腳組件
-│   │   └── Notification.tsx        // 通知組件
+│   │   ├── Notification.tsx        // 通知組件
+│   │   └── Toast
+│   │       ├── Toast.tsx           // Toast 組件
+│   │       └── index.ts            // 導出 Toast 組件和類型
 │   ├── profile/                    
 │   │   ├── sections/               
 │   │   │   ├── ProfileSection.tsx     // 個人資訊區塊
@@ -77,8 +82,10 @@ src/
 │   │   ├── useLineVerification.ts  // LINE 驗證 Hook
 │   │   └── useLineMulticast.ts     // LINE 多播 Hook
 │   ├── useAppLogic.ts              // 應用程式邏輯 Hook
-│   └── notifications
-│       └── useEmailNotifications.ts // 電子郵件通知 Hook
+│   ├── notifications
+│   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
+│   └── toast
+│       └── useToast.ts             // Toast 通知 Hook
 ├── lambda
 │   ├── fetchNews.ts                // 獲取新聞 Lambda
 │   ├── fetchAnnouncement.ts        // 獲取公告 Lambda
@@ -111,7 +118,6 @@ src/
 │   │   │   ├── addFavorite.ts      // 添加收藏 API
 │   │   │   ├── removeFavorite.ts   // 移除收藏 API
 │   │   │   ├── updateNews.js       // 更新新聞 API
-│   │   │   ├── index.ts            // 新聞 API
 │   │   │   └── getFavorites.ts     // 獲取收藏 API
 │   │   ├── line
 │   │   │   ├── verify.ts           // LINE 驗證 API

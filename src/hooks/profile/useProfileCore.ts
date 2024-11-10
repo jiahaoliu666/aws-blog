@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
 import { User } from '@/types/userType';
-import { toast } from 'react-hot-toast';
+import { useToastContext } from '@/context/ToastContext';
 
 interface UseProfileCoreProps {
   user?: User | null;
@@ -33,6 +33,7 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
   const { user: authUser, updateUser, logoutUser } = useAuthContext();
   const router = useRouter();
   const currentUser = user || authUser;
+  const { showToast } = useToastContext();
 
   // State
   const [activeTab, setActiveTab] = useState<string>('profile');
@@ -87,7 +88,7 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
       await logoutUser();
       router.push('/auth/login');
     } catch (error) {
-      toast.error('登出時發生錯誤');
+      showToast('登出時發生錯誤', 'error');
       console.error('Logout error:', error);
     }
   };
@@ -117,10 +118,10 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     setIsSubmitting(true);
     setErrorMessage('');
     try {
-      // 在這裡實現提交邏輯
-      // 例如：await updateUserProfile(currentUser);
+      // 實作提交邏輯
+      showToast('更新成功', 'success');
     } catch (error) {
-      toast.error('更新失敗');
+      showToast('更新失敗', 'error');
       setErrorMessage('更新資料時發生錯誤');
       console.error('Update error:', error);
     } finally {

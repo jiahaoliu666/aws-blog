@@ -1,0 +1,85 @@
+/* 原本在 globals.css 中的動畫樣式獨立出來 */
+@keyframes toast-slide-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes toast-slide-out {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+}
+
+@keyframes toast-progress {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.toast-exit {
+  animation: toast-slide-out 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.toast-progress {
+  animation: toast-progress 3s linear;
+}
+
+@keyframes toast-slide-in-right {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-in-left {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in-right 0.3s ease forwards;
+}
+
+.toast-enter-left {
+  animation: toast-slide-in-left 0.3s ease forwards;
+}
+
+.toast-progress {
+  animation: toast-progress linear;
+  transform-origin: left;
+}
+
+/* 添加暗色主題支援 */
+@media (prefers-color-scheme: dark) {
+  .toast {
+    @apply bg-gray-800 text-white;
+  }
+} 

@@ -24,7 +24,7 @@ import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
 import { VerificationStep } from '@/types/lineTypes';
 import { FormData } from '@/types/profileTypes';
-import { Toaster } from 'react-hot-toast';
+import { ToastProvider } from '@/context/ToastContext';
 
 interface ProfileUIProps {
   user: {
@@ -83,7 +83,7 @@ const defaultSettings: LocalSettings = {
   privacy: 'private'
 };
 
-const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMessage, setIsEditable }) => {
+const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploadMessage, passwordMessage, setIsEditable }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
@@ -102,7 +102,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
     handleSaveProfileChanges: () => void,
     isLoading: boolean
   };
-  const avatar = useProfileAvatar({ user });
+  const avatar = useProfileAvatar({ user, updateUser: core.updateUser, setFormData: form.setFormData });
   const password = useProfilePassword({ user, handleLogout: logoutUser });
   const activity = useProfileActivity({ user });
   const articles = useProfileArticles({ user });
@@ -195,164 +195,142 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            style: {
-              background: '#4aed88',
-              color: '#fff'
-            }
-          },
-          error: {
-            duration: 3000,
-            style: {
-              background: '#ff4b4b',
-              color: '#fff'
-            }
-          },
-        }}
-      />
-      <Navbar />
-      
-      <div className="flex-grow container mx-auto px-2 sm:px-6 lg:px-8 py-4 lg:py-8 flex flex-col lg:flex-row gap-3 lg:gap-6">
-        <Sidebar 
-          activeTab={core.activeTab}
-          setActiveTab={core.setActiveTab}
-          isProfileMenuOpen={isProfileMenuOpen}
-          setIsProfileMenuOpen={setIsProfileMenuOpen}
-          formData={form.formData}
-        />
+    <ToastProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
         
-        <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
-          {core.activeTab === 'profile' && (
-            <ProfileSection 
-              formData={form.formData}
-              isEditable={form.isEditable}
-              localUsername={form.localUsername}
-              setLocalUsername={form.setLocalUsername}
-              handleEditClick={form.handleEditClick}
-              handleCancelChanges={form.handleCancelChanges}
-              handleSaveProfileChanges={form.handleSaveProfileChanges}
-              isLoading={form.isLoading}
-              uploadMessage={uploadMessage}
-              handleAvatarChange={avatar.handleAvatarChange}
-              tempAvatar={avatar.tempAvatar}
-              handleSubmit={(e: FormEvent) => {
-                e.preventDefault();
-                core.handleSubmit(e);
-              }}
-              isSubmitting={core.isSubmitting}
-              errorMessage={core.errorMessage}
-              toggleEditableField={() => setIsEditable()}
-              resetUsername={form.handleCancelChanges}
-              setFormData={form.setFormData}
-              setIsEditable={setIsEditable}
-            />
-          )}
+        <div className="flex-grow container mx-auto px-2 sm:px-6 lg:px-8 py-4 lg:py-8 flex flex-col lg:flex-row gap-3 lg:gap-6">
+          <Sidebar 
+            activeTab={core.activeTab}
+            setActiveTab={core.setActiveTab}
+            isProfileMenuOpen={isProfileMenuOpen}
+            setIsProfileMenuOpen={setIsProfileMenuOpen}
+            formData={form.formData}
+            tempAvatar={avatar.tempAvatar}
+          />
+          
+          <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
+            {core.activeTab === 'profile' && (
+              <ProfileSection 
+                formData={form.formData}
+                isEditable={form.isEditable}
+                localUsername={form.localUsername}
+                setLocalUsername={form.setLocalUsername}
+                handleEditClick={form.handleEditClick}
+                handleCancelChanges={form.handleCancelChanges}
+                handleSaveProfileChanges={form.handleSaveProfileChanges}
+                isLoading={form.isLoading || avatar.isUploading}
+                uploadMessage={avatar.uploadMessage}
+                handleAvatarChange={avatar.handleAvatarChange}
+                tempAvatar={avatar.tempAvatar}
+                handleSubmit={(e: FormEvent) => {
+                  e.preventDefault();
+                  core.handleSubmit(e);
+                }}
+                isSubmitting={core.isSubmitting}
+                errorMessage={core.errorMessage}
+                toggleEditableField={() => setIsEditable()}
+                resetUsername={form.handleCancelChanges}
+                setFormData={form.setFormData}
+                setIsEditable={setIsEditable}
+              />
+            )}
 
-          {core.activeTab === 'changePassword' && (
-            <PasswordSection 
-              {...password} 
-              passwordMessage={password.passwordMessage || undefined}
-              newPassword={password.newPassword || ''}
-              setNewPassword={password.setNewPassword}
-              formData={{
-                password: form.formData.password,
-                confirmPassword: form.formData.confirmPassword
-              }}
-              handleChange={form.handleChange}
-            />
-          )}
+            {core.activeTab === 'changePassword' && (
+              <PasswordSection 
+                {...password} 
+                passwordMessage={password.passwordMessage || undefined}
+                newPassword={password.newPassword || ''}
+                setNewPassword={password.setNewPassword}
+                formData={{
+                  password: form.formData.password,
+                  confirmPassword: form.formData.confirmPassword
+                }}
+                handleChange={form.handleChange}
+              />
+            )}
 
-          {core.activeTab === 'notificationSettings' && (
-            <NotificationSection 
-              {...(notifications as unknown as object)} 
-              isLoading={false}
-              isVerifying={false}
-              lineId={lineSettings.lineUserId}
-              setLineId={lineSettings.setLineUserId}
-              verificationCode={verificationCode}
-              setVerificationCode={setVerificationCode}
-              verificationStep={VerificationStep.IDLE}
-              verificationProgress={0}
-              handleStartVerification={() => lineVerification.handleVerification()}
-              handleConfirmVerification={() => lineVerification.confirmVerification(verificationCode)}
-              verificationState={{
-                step: VerificationStep.IDLE,
-                status: '',
-                isVerified: false
-              }}
-              verifyLineIdAndCode={handleVerifyLineIdAndCode}
-              handleVerification={handleVerifyLineIdAndCode}
-              onCopyUserId={() => {/* 實作複製用戶ID的邏輯 */}}
-              userId={user?.userId || ''}
-              handleNotificationChange={(type) => {/* 實作通知設定變更的邏輯 */}}
-              notificationSettings={{
-                email: false,
-                line: false,
-                browser: false,
-                mobile: false
-              }}
-            />
-          )}
+            {core.activeTab === 'notificationSettings' && (
+              <NotificationSection 
+                {...(notifications as unknown as object)} 
+                isLoading={false}
+                isVerifying={false}
+                lineId={lineSettings.lineUserId}
+                setLineId={lineSettings.setLineUserId}
+                verificationCode={verificationCode}
+                setVerificationCode={setVerificationCode}
+                verificationStep={VerificationStep.IDLE}
+                verificationProgress={0}
+                handleStartVerification={() => lineVerification.handleVerification()}
+                handleConfirmVerification={() => lineVerification.confirmVerification(verificationCode)}
+                verificationState={{
+                  step: VerificationStep.IDLE,
+                  status: '',
+                  isVerified: false
+                }}
+                verifyLineIdAndCode={handleVerifyLineIdAndCode}
+                handleVerification={handleVerifyLineIdAndCode}
+                onCopyUserId={() => {/* 實作複製用戶ID的邏輯 */}}
+                userId={user?.userId || ''}
+                handleNotificationChange={(type) => {/* 實作通知設定變更的邏輯 */}}
+                notificationSettings={{
+                  email: false,
+                  line: false,
+                  browser: false,
+                  mobile: false
+                }}
+              />
+            )}
 
-          {core.activeTab === 'settings' && (
-            <SettingsSection 
-              {...core}
-              settings={localSettings}
-              handleSettingChange={core.handleSettingChange}
-            />
-          )}
+            {core.activeTab === 'settings' && (
+              <SettingsSection 
+                {...core}
+                settings={localSettings}
+                handleSettingChange={core.handleSettingChange}
+              />
+            )}
 
-          {core.activeTab === 'feedback' && (
-            <FeedbackSection 
-              {...core}
-              feedback={{
-                rating: 0,
-                category: '',
-                message: core.feedback || ''
-              }}
-              feedbackMessage={core.feedback || undefined}
-              setFeedback={(newFeedback) => {
-                if (typeof newFeedback === 'object' && 'message' in newFeedback) {
-                  core.setFeedback(newFeedback.message);
-                } else if (typeof newFeedback === 'string') {
-                  core.setFeedback(newFeedback);
-                }
-              }}
-              handleSubmitFeedback={() => core.handleSubmitFeedback(core.feedback || '')}
-              isSubmitting={core.isSubmitting}
-            />
-          )}
+            {core.activeTab === 'feedback' && (
+              <FeedbackSection 
+                {...core}
+                feedback={{
+                  rating: 0,
+                  category: '',
+                  message: core.feedback || ''
+                }}
+                feedbackMessage={core.feedback || undefined}
+                setFeedback={(newFeedback) => {
+                  if (typeof newFeedback === 'object' && 'message' in newFeedback) {
+                    core.setFeedback(newFeedback.message);
+                  } else if (typeof newFeedback === 'string') {
+                    core.setFeedback(newFeedback);
+                  }
+                }}
+                handleSubmitFeedback={() => core.handleSubmitFeedback(core.feedback || '')}
+                isSubmitting={core.isSubmitting}
+              />
+            )}
 
-          {core.activeTab === 'activityLog' && (
-            <ActivityLogSection activityLog={activity.activityLog.map((log: ActivityLog) => ({
-              id: crypto.randomUUID(),
-              type: 'default',
-              description: log.action,
-              timestamp: log.timestamp
-            }))} />
-          )}
+            {core.activeTab === 'activityLog' && (
+              <ActivityLogSection activityLog={activity.activityLog.map((log: ActivityLog) => ({
+                id: crypto.randomUUID(),
+                type: 'default',
+                description: log.action,
+                timestamp: log.timestamp
+              }))} />
+            )}
 
-          {core.activeTab === 'history' && (
-            <HistorySection 
-              recentArticles={articles.recentArticles}
-            />
-          )}
+            {core.activeTab === 'history' && (
+              <HistorySection 
+                recentArticles={articles.recentArticles}
+              />
+            )}
+          </div>
         </div>
+        
+        <Footer />
       </div>
-      
-      <Footer />
-    </div>
+    </ToastProvider>
   );
 };
 

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types/userType';
-import { toast } from 'react-hot-toast';
 import { logger } from '@/utils/logger';
 import { DynamoDBClient, UpdateItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
 import logActivity from '@/pages/api/profile/activity-log';
+import { useToastContext } from '@/context/ToastContext';
 
 interface FormData {
   username: string;
@@ -45,6 +45,8 @@ export type UseProfileFormReturn = {
 };
 
 export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UseProfileFormReturn => {
+  const { showToast } = useToastContext();
+
   const [formData, setFormData] = useState<FormData>({
     username: user?.username || '',
     email: user?.email || '',
@@ -93,39 +95,19 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
   };
 
   const handleSaveProfileChanges = async (localUsername: string) => {
-    console.log('=== handleSaveProfileChanges 被調用 ===');
-    
     if (!localUsername.trim()) {
-      toast.error('用戶名稱不能為空', {
-        duration: 3000,
-        position: 'top-center',
-      });
-      return;
-    }
-
-    if (!user?.sub) {
-      toast.error('找不到用戶資訊', {
-        duration: 3000,
-        position: 'top-center',
-      });
-      return;
-    }
-
-    if (!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID) {
-      toast.error('系統配置錯誤', {
-        duration: 3000,
-        position: 'top-center',
-      });
+      showToast('用戶名稱不能為空', 'error');
       return;
     }
 
     setIsLoading(true);
-
-    const toastId = toast.loading('正在更新個人資料...', {
-      position: 'top-center',
-    });
+    showToast('正在更新個人資料...', 'loading');
 
     try {
+      if (!user) {
+        throw new Error('找不到用戶資料');
+      }
+
       const updateUserCommand = new AdminUpdateUserAttributesCommand({
         UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID,
         Username: user.sub,
@@ -145,20 +127,14 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
 
       await logActivity(user.sub, `變更用戶名稱為 ${localUsername}`);
 
-      toast.success('個人資料已更新成功！', {
-        id: toastId,
-        duration: 3000,
-      });
+      showToast('個人資料已更新成功！', 'success');
 
       setTimeout(() => {
         window.location.reload();
       }, 3000);
 
     } catch (error: any) {
-      toast.error(error.message || '更新失敗，請稍後再試', {
-        id: toastId,
-        duration: 3000,
-      });
+      showToast(error.message || '更新失敗，請稍後再試', 'error');
       logger.error('更新個人資料失敗:', error);
     } finally {
       setIsLoading(false);
