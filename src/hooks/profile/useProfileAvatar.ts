@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
@@ -80,6 +80,15 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
     }
   };
 
+  const validateAvatarUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.sub) return;
@@ -104,6 +113,7 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
         Key: fileKey,
         Body: file,
         ContentType: file.type,
+        ACL: 'public-read' as const
       };
 
       const uploadCommand = new PutObjectCommand(uploadParams);
@@ -115,11 +125,11 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       // 更新 DynamoDB
       await updateDynamoDB(user.sub, avatarUrl);
 
-      // 更新本地存儲
+      // 更新本地存儲和狀態
       localStorage.setItem('userAvatar', avatarUrl);
-      
-      // 更新所有相關狀態
       setTempAvatar(avatarUrl);
+      
+      // 更新父組件狀態
       if (updateUser) {
         updateUser({ avatar: avatarUrl });
       }
@@ -137,31 +147,32 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       logger.error('上傳頭像失敗:', error);
       setUploadMessage('上傳頭像失敗');
       toast.error('上傳頭像失敗，請稍後重試');
+      // 重置臨時預覽
+      setTempAvatar(null);
     } finally {
       setIsUploading(false);
     }
   };
 
+  const loadAvatarFromStorage = () => {
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar && validateAvatarUrl(savedAvatar)) {
+      setTempAvatar(savedAvatar);
+      window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: savedAvatar }));
+    } else {
+      // 如果沒有有效的存儲頭像,使用用戶當前頭像
+      setTempAvatar(user?.avatar || null);
+    }
+  };
+
+  // 初始化時載入頭像
+  useEffect(() => {
+    loadAvatarFromStorage();
+  }, [user?.avatar]);
+
   const resetUploadState = () => {
     setTempAvatar(null);
     setUploadMessage(null);
-  };
-
-  const loadAvatarFromStorage = () => {
-    const savedAvatar = localStorage.getItem('userAvatar');
-    if (savedAvatar) {
-      setTempAvatar(savedAvatar);
-      window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: savedAvatar }));
-    }
-  };
-
-  const validateAvatarUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
   };
 
   return {

@@ -39,62 +39,21 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   localUsername,
   setLocalUsername,
   handleAvatarChange,
-  toggleEditableField,
   handleSaveProfileChanges,
   handleCancelChanges,
-  resetUsername,
   isLoading,
   uploadMessage,
-  handleSubmit,
-  isSubmitting,
-  errorMessage,
   tempAvatar,
-  setFormData,
-  setIsEditable,
   handleEditClick
 }) => {
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedAvatar = localStorage.getItem('userAvatar');
-    if (savedAvatar) {
-      setCurrentAvatar(savedAvatar);
-    } else {
-      setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
-    }
+    setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
   }, [tempAvatar, formData.avatar]);
 
-  useEffect(() => {
-    const handleAvatarUpdate = (event: CustomEvent) => {
-      const newAvatarUrl = event.detail;
-      setCurrentAvatar(newAvatarUrl);
-    };
-
-    window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
-
-    return () => {
-      window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
-    };
-  }, []);
-
-  const handleSave = async () => {
-    if (!localUsername.trim()) {
-      toast.error('用戶名稱不能為空', {
-        duration: 3000,
-        position: 'top-center',
-      });
-      return;
-    }
-
-    try {
-      await handleSaveProfileChanges(localUsername);
-    } catch (error) {
-      console.error('儲存變更時發生錯誤:', error);
-    }
-  };
-
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">個人資訊</h1>
         <p className="mt-2 text-gray-600">管理您的個人資料與帳號設定</p>
@@ -108,20 +67,25 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
               <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-gray-50">
                 <img
                   src={currentAvatar || '/images/default-avatar.png'}
-                  alt="Profile"
+                  alt="個人頭像"
                   className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               
               <label className="absolute bottom-2 right-2 p-2.5 bg-white rounded-full shadow-lg cursor-pointer
-                hover:bg-blue-50 active:bg-blue-100 transition duration-150
-                transform hover:scale-105 active:scale-95">
+                hover:bg-blue-50 active:bg-blue-100 transition duration-150">
                 <FontAwesomeIcon 
                   icon={isLoading ? faSpinner : faCamera} 
                   className={`text-blue-600 text-lg ${isLoading ? 'animate-spin' : ''}`}
                 />
-                <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleAvatarChange}
+                  disabled={isLoading}
+                />
               </label>
             </div>
 
@@ -156,21 +120,29 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                       className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
                         transition duration-150"
+                      disabled={isLoading}
                     />
                     <button
-                      onClick={handleSave}
+                      onClick={() => handleSaveProfileChanges(localUsername)}
                       disabled={isLoading || !localUsername.trim()}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg 
                         hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
                         transition duration-150"
                     >
+                      {isLoading ? (
+                        <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
+                      ) : (
+                        <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                      )}
                       {isLoading ? '儲存中...' : '儲存'}
                     </button>
                     <button
                       onClick={handleCancelChanges}
+                      disabled={isLoading}
                       className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg
                         hover:bg-gray-200 transition duration-150"
                     >
+                      <FontAwesomeIcon icon={faTimes} className="mr-2" />
                       取消
                     </button>
                   </div>
