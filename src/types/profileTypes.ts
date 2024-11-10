@@ -7,6 +7,12 @@ export interface FormData {
   registrationDate?: string;
   password?: string;
   confirmPassword?: string;
+  notifications: {
+    email: boolean;
+    line: boolean;
+    browser: boolean;
+    mobile: boolean;
+  };
 }
 
 export type ActivityLog = {
@@ -68,6 +74,7 @@ export interface NotificationSectionProps {
   setLineId: (value: string) => void;
   verificationCode: string;
   setVerificationCode: (value: string) => void;
+  verificationError?: string;
   verifyLineIdAndCode: () => void;
   isLoading: boolean;
   handleNotificationChange: (type: keyof NotificationSettings) => void;
@@ -83,4 +90,10 @@ export interface NotificationSectionProps {
   userId: string;
   formData?: FormData;
   isVerifying: boolean;
+  verificationStep: VerificationStep;
+  verificationProgress: number;
+  handleStartVerification: () => void;
+  handleConfirmVerification: () => void;
+  settingsMessage?: string;
+  settingsStatus?: 'success' | 'error';
 } 

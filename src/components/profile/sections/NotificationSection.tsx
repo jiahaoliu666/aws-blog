@@ -15,6 +15,7 @@ import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
 import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { useAuthContext } from '@/context/AuthContext';
 import { logger } from '@/utils/logger';
+import { Transition } from '@headlessui/react';
 
 // 純 UI 組件
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
@@ -30,7 +31,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   handleNotificationChange,
   isLoading,
   isVerifying,
-  formData = { email: '', username: '' },
+  formData = { 
+    email: '', 
+    username: '', 
+    notifications: { email: false, line: false } 
+  },
+  settingsMessage,
+  settingsStatus,
 }) => {
   const { user } = useAuthContext();
   const { handleVerification, verificationState: lineVerificationState } = useLineVerification({
@@ -52,6 +59,10 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     } catch (error) {
       logger.error('驗證處理失敗:', error);
     }
+  };
+
+  const toggleNotification = (type: 'email' | 'line') => {
+    handleNotificationChange(type);
   };
 
   // 渲染驗證狀態提示
@@ -145,60 +156,80 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     );
   };
 
-  return (
-    <>
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">訂閱通知</h1>
+  const [showLineSettings, setShowLineSettings] = useState(false);
 
-      <div className="space-y-8">
-        {/* 電子郵件通知設定 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-5">
-              <div className="flex items-center gap-4">
-                <FontAwesomeIcon icon={faEnvelope} className="text-gray-600 text-xl" />
-                <div>
-                  <p className="font-medium text-gray-800">電子郵件通知</p>
-                  <p className="text-sm text-gray-500 mt-1">使用電子郵件接收最新發布的文章</p>
-                </div>
+  // 處理 LINE 通知開關
+  const handleLineToggle = async () => {
+    if (!formData.notifications.line) {
+      // 開啟通知時展開設定
+      setShowLineSettings(true);
+    } else {
+      // 關閉通知時收合設定
+      setShowLineSettings(false);
+    }
+    await toggleNotification('line');
+  };
+
+  return (
+    <div className="w-full">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">通知設定</h1>
+        <p className="mt-2 text-gray-600">管理您想要接收的通知方式</p>
+      </div>
+
+      {/* 電子郵件通知設定 */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+        <div className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
+                <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
               </div>
-              <Switch
-                checked={notificationSettings.email}
-                onChange={() => handleNotificationChange('email')}
-                disabled={isLoading}
-              />
             </div>
-            
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                電子郵件地址
-              </label>
-              <input
-                type="email"
-                value={formData?.email || ''}
-                disabled
-                className="w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-600"
-              />
+            <Switch
+              checked={formData.notifications.email}
+              onChange={() => toggleNotification('email')}
+              color="primary"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* LINE 通知設定 */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FontAwesomeIcon icon={faLine} className="text-xl text-[#00B900]" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
+                <p className="text-sm text-gray-600">透過 LINE 接收即時通知</p>
+              </div>
             </div>
+            <Switch
+              checked={formData.notifications.line}
+              onChange={handleLineToggle}
+              color="primary"
+              className={`${
+                formData.notifications.line ? 'bg-[#00B900]' : 'bg-gray-200'
+              }`}
+            />
           </div>
         </div>
 
-        {/* LINE 通知設定卡片 */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-semibold flex items-center gap-4">
-                <FontAwesomeIcon icon={faLine} className="text-[#00B900] text-3xl" />
-                LINE 通知設定
-              </h2>
-              {lineVerificationState.isVerified && (
-                <Switch
-                  checked={notificationSettings.line}
-                  onChange={() => handleNotificationChange('line')}
-                  disabled={isLoading}
-                />
-              )}
-            </div>
-
+        {/* LINE 設定內容區域 */}
+        <Transition
+          show={showLineSettings || formData.notifications.line}
+          enter="transition-all duration-300 ease-out"
+          enterFrom="max-h-0 opacity-0"
+          enterTo="max-h-[2000px] opacity-100"
+          leave="transition-all duration-200 ease-in"
+          leaveFrom="max-h-[2000px] opacity-100"
+          leaveTo="max-h-0 opacity-0"
+        >
+          <div className="overflow-hidden p-6 space-y-6">
             {/* 驗證狀態提示 */}
             {renderVerificationStatus()}
 
@@ -207,9 +238,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
             {/* 驗證步驟內容 */}
             {!lineVerificationState.isVerified ? (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {/* 步驟 1: 用戶ID */}
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">1</span>
                     <h3 className="text-lg font-semibold">複製您的用戶ID</h3>
@@ -227,7 +258,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 </div>
 
                 {/* 步驟 2: 加入官方帳號 */}
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-6">
                     <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">2</span>
                     <h3 className="text-lg font-semibold">加入官方帳號</h3>
@@ -290,7 +321,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 </div>
 
                 {/* 步驟 3: 驗證資訊輸入 */}
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-6">
                     <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">3</span>
                     <h3 className="text-lg font-semibold">輸入驗證資訊</h3>
@@ -317,7 +348,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                         type="text"
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
-                        placeholder="請輸入LINE回傳的驗證碼"
+                        placeholder="請輸入LINE傳的驗證碼"
                         className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         disabled={lineVerificationState.isVerified}
                       />
@@ -346,9 +377,20 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </Transition>
       </div>
-    </>
+
+      {/* 顯示訊息 */}
+      {settingsMessage && (
+        <div className={`mt-4 p-4 rounded-lg ${
+          settingsStatus === 'success' 
+            ? 'bg-green-50 text-green-700 border-l-4 border-green-500'
+            : 'bg-red-50 text-red-700 border-l-4 border-red-500'
+        }`}>
+          <p className="text-sm">{settingsMessage}</p>
+        </div>
+      )}
+    </div>
   );
 };
 

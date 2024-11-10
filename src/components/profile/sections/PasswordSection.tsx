@@ -5,7 +5,8 @@ import {
   faEye, 
   faEyeSlash, 
   faCheckCircle, 
-  faTimesCircle 
+  faTimesCircle,
+  faShieldAlt
 } from '@fortawesome/free-solid-svg-icons';
 
 interface PasswordSectionProps {
@@ -22,8 +23,6 @@ interface PasswordSectionProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   calculatePasswordStrength: (password: string) => number;
   handleChangePassword: () => void;
-  handleClosePasswordModal: () => void;
-  resetPasswordFields: () => void;
   isLoading: boolean;
   passwordMessage?: string;
   newPassword: string;
@@ -47,135 +46,204 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
   setNewPassword
 }) => {
   const passwordStrength = formData.password ? calculatePasswordStrength(formData.password) : 0;
+  
   const getStrengthColor = (strength: number) => {
     if (strength < 30) return 'bg-red-500';
     if (strength < 60) return 'bg-yellow-500';
     return 'bg-green-500';
   };
 
+  const getStrengthText = (strength: number) => {
+    if (strength < 30) return '弱';
+    if (strength < 60) return '中';
+    return '強';
+  };
+
   return (
-    <>
-      <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">修改密碼</h1>
+    <div className="w-full">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">修改密碼</h1>
+        <p className="mt-2 text-gray-600">請定期更新您的密碼以確保帳號安全</p>
+      </div>
 
-      <div className="space-y-6">
-        {/* 當前密碼 */}
-        <div className="relative">
-          <label className="block text-gray-700 font-medium mb-2">當前密碼</label>
-          <div className="relative">
-            <input
-              type={showOldPassword ? 'text' : 'password'}
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="請輸入當前密碼"
-            />
-            <button
-              type="button"
-              onClick={() => setShowOldPassword(!showOldPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              <FontAwesomeIcon icon={showOldPassword ? faEyeSlash : faEye} />
-            </button>
-          </div>
-        </div>
-
-        {/* 新密碼 */}
-        <div className="relative">
-          <label className="block text-gray-700 font-medium mb-2">新密碼</label>
-          <div className="relative">
-            <input
-              type={showNewPassword ? 'text' : 'password'}
-              name="password"
-              value={formData.password || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="請輸入新密碼"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              <FontAwesomeIcon icon={showNewPassword ? faEyeSlash : faEye} />
-            </button>
-          </div>
-          {formData.password && (
-            <div className="mt-2">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-300 ${getStrengthColor(passwordStrength)}`}
-                  style={{ width: `${passwordStrength}%` }}
-                />
-              </div>
-              <div className="flex justify-between mt-1 text-sm">
-                <span className={passwordStrength < 30 ? 'text-red-500' : 'text-gray-500'}>弱</span>
-                <span className={passwordStrength >= 30 && passwordStrength < 60 ? 'text-yellow-500' : 'text-gray-500'}>中</span>
-                <span className={passwordStrength >= 60 ? 'text-green-500' : 'text-gray-500'}>強</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 確認新密碼 */}
-        <div className="relative">
-          <label className="block text-gray-700 font-medium mb-2">確認新密碼</label>
-          <div className="relative">
-            <input
-              type={showNewPassword ? 'text' : 'password'}
-              name="confirmPassword"
-              value={formData.confirmPassword || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="請再次輸入新密碼"
-            />
-          </div>
-          {formData.password && formData.confirmPassword && (
-            <div className="flex items-center mt-2 text-sm">
-              <FontAwesomeIcon 
-                icon={formData.password === formData.confirmPassword ? faCheckCircle : faTimesCircle}
-                className={formData.password === formData.confirmPassword ? 'text-green-500' : 'text-red-500'}
+      {/* 密碼修改表單 */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+        <div className="p-6 space-y-6">
+          {/* 當前密碼 */}
+          <div className="space-y-2">
+            <label className="block text-gray-700 font-medium">當前密碼</label>
+            <div className="relative">
+              <input
+                type={showOldPassword ? 'text' : 'password'}
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
+                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                  transition duration-150"
+                placeholder="請輸入當前密碼"
               />
-              <span className={`ml-2 ${
-                formData.password === formData.confirmPassword ? 'text-green-500' : 'text-red-500'
-              }`}>
-                {formData.password === formData.confirmPassword ? '密碼匹配' : '密碼不匹配'}
-              </span>
+              <button
+                type="button"
+                onClick={() => setShowOldPassword(!showOldPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 
+                  text-gray-400 hover:text-gray-600 transition duration-150"
+              >
+                <FontAwesomeIcon icon={showOldPassword ? faEyeSlash : faEye} />
+              </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* 密碼要求說明 */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-medium mb-2">密碼要求</h3>
-          <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-            <li>至少 8 個字符</li>
-            <li>包含大小寫字母</li>
-            <li>包含數字</li>
-            <li>包含特殊字符</li>
-          </ul>
+          {/* 新密碼 */}
+          <div className="space-y-2">
+            <label className="block text-gray-700 font-medium">新密碼</label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password || ''}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
+                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                  transition duration-150"
+                placeholder="請輸入新密碼"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 
+                  text-gray-400 hover:text-gray-600 transition duration-150"
+              >
+                <FontAwesomeIcon icon={showNewPassword ? faEyeSlash : faEye} />
+              </button>
+            </div>
+            
+            {/* 密碼強度指示器 */}
+            {formData.password && (
+              <div className="mt-3 space-y-2">
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${getStrengthColor(passwordStrength)}`}
+                    style={{ width: `${passwordStrength}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className={`${passwordStrength < 30 ? 'text-red-500 font-medium' : 'text-gray-400'}`}>弱</span>
+                  <span className={`${passwordStrength >= 30 && passwordStrength < 60 ? 'text-yellow-500 font-medium' : 'text-gray-400'}`}>中</span>
+                  <span className={`${passwordStrength >= 60 ? 'text-green-500 font-medium' : 'text-gray-400'}`}>強</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 確認新密碼 */}
+          <div className="space-y-2">
+            <label className="block text-gray-700 font-medium">確認新密碼</label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword || ''}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
+                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                  transition duration-150"
+                placeholder="請再次輸入新密碼"
+              />
+            </div>
+            {formData.password && formData.confirmPassword && (
+              <div className="flex items-center mt-2 text-sm">
+                <FontAwesomeIcon 
+                  icon={formData.password === formData.confirmPassword ? faCheckCircle : faTimesCircle}
+                  className={formData.password === formData.confirmPassword ? 'text-green-500' : 'text-red-500'}
+                />
+                <span className={`ml-2 ${
+                  formData.password === formData.confirmPassword ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {formData.password === formData.confirmPassword ? '密碼匹配' : '密碼不匹配'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 提交按鈕 */}
-        <div className="flex justify-end">
-          <button 
-            onClick={handleChangePassword} 
-            className="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition duration-200" 
-            disabled={isLoading}
-          >
-            {isLoading ? '保存中...' : '更改密碼'}
-          </button>
-        </div>
-
-        {/* 提示訊息 */}
-        {passwordMessage && (
-          <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${
-            passwordMessage.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
-            {passwordMessage}
+        <div className="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-100">
+          <div className="flex justify-end">
+            <button 
+              onClick={handleChangePassword}
+              disabled={isLoading}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg
+                hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                transition duration-150 flex items-center gap-2"
+            >
+              <FontAwesomeIcon icon={faLock} />
+              {isLoading ? '更新中...' : '更新密碼'}
+            </button>
           </div>
-        )}
+        </div>
       </div>
-    </>
+
+      {/* 密碼要求說明區塊 */}
+      <div className="bg-blue-50 p-6 rounded-xl mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <FontAwesomeIcon icon={faShieldAlt} className="text-blue-600 text-lg" />
+          <h3 className="font-medium text-blue-800">密碼要求與安全提示</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 基本要求 */}
+          <div>
+            <h4 className="text-sm font-medium text-blue-800 mb-3">基本要求</h4>
+            <ul className="space-y-3 text-sm text-blue-700">
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
+                <span>至少 8 個字符</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
+                <span>包含大小寫字母</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
+                <span>包含數字</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
+                <span>包含特殊字符</span>
+              </li>
+            </ul>
+          </div>
+          {/* 安全提示 */}
+          <div>
+            <h4 className="text-sm font-medium text-blue-800 mb-3">安全提示</h4>
+            <ul className="space-y-3 text-sm text-blue-700">
+              <li className="flex items-start gap-2">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 mt-1 flex-shrink-0" />
+                <span>避免使用容易猜到的密碼，如生日、電話號碼等</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 mt-1 flex-shrink-0" />
+                <span>建議定期更換密碼以提高帳號安全性</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 mt-1 flex-shrink-0" />
+                <span>請勿在不同網站使用相同的密碼</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* 提示訊息 */}
+      {passwordMessage && (
+        <div className={`mt-4 p-4 rounded-lg ${
+          passwordMessage.includes('成功') 
+            ? 'bg-green-50 text-green-700 border-l-4 border-green-500'
+            : 'bg-red-50 text-red-700 border-l-4 border-red-500'
+        }`}>
+          <p className="text-sm">{passwordMessage}</p>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -125,6 +125,44 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
     }
   };
 
+  const confirmVerification = async (code: string) => {
+    try {
+      setVerificationState(prev => ({
+        ...prev,
+        status: VerificationStatus.VALIDATING,
+      }));
+
+      const response = await fetch('/api/line/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: user?.sub,
+          lineId: user?.lineId,
+          code 
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setVerificationState({
+          step: VerificationStep.COMPLETE,
+          status: VerificationStatus.SUCCESS,
+          isVerified: true,
+          message: '驗證成功！'
+        });
+      } else {
+        throw new Error('驗證失敗');
+      }
+    } catch (error) {
+      setVerificationState(prev => ({
+        ...prev,
+        status: VerificationStatus.ERROR,
+      }));
+      throw error;
+    }
+  };
+
   return {
     lineId,
     setLineId,
@@ -132,7 +170,8 @@ export const useLineVerification = ({ user, updateUserLineSettings }: UseLineVer
     setVerificationCode,
     isVerifying,
     verificationState,
-    handleVerification
+    handleVerification,
+    confirmVerification
   };
 };
 

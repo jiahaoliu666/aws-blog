@@ -282,6 +282,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
               setLineId={lineSettings.setLineUserId}
               verificationCode={verificationCode}
               setVerificationCode={setVerificationCode}
+              verificationStep={VerificationStep.IDLE}
+              verificationProgress={0}
+              handleStartVerification={() => lineVerification.handleVerification()}
+              handleConfirmVerification={() => lineVerification.confirmVerification(verificationCode)}
               verificationState={{
                 step: VerificationStep.IDLE,
                 status: '',
