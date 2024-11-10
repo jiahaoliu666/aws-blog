@@ -84,7 +84,7 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
             <div className="relative">
               {activityLog.map((activity) => (
                 <div key={activity.id} className="relative pl-24 pb-6 last:pb-0 group">
-                  <time className="absolute left-0 top-1/2 -translate-y-1/2 text-xs text-gray-400 
+                  <time className="absolute left-0 top-0 text-xs text-gray-400 
                     flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-full min-w-[4.5rem] justify-center
                     group-hover:bg-gray-100 transition-colors duration-300"
                     title={activity.timestamp}>
@@ -92,7 +92,7 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
                     <span className="whitespace-nowrap">{formatTimeAgo(activity.parsedDate)}</span>
                   </time>
 
-                  <div className={`absolute left-[5.25rem] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full 
+                  <div className={`absolute left-[5.25rem] top-0 w-3 h-3 rounded-full 
                     bg-white border-2 shadow-sm z-10
                     ${activity.type === 'security_alert' 
                       ? 'border-yellow-400 ring-2 ring-yellow-50' 
