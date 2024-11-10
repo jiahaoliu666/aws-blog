@@ -63,73 +63,79 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
         <p className="mt-2 text-gray-600">追蹤您的帳戶活動記錄</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <FontAwesomeIcon icon={faHistory} className="text-xl text-blue-500" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">近期活動</h3>
-              <p className="text-sm text-gray-600">顯示最近 30 天的活動記錄</p>
-            </div>
-          </div>
-        </div>
-
+      <div className="bg-white rounded-2xl border border-gray-300/80 shadow-sm backdrop-blur-sm">
         <div className="p-6">
           {activityLog.length === 0 ? (
-            <div className="text-center py-12">
-              <FontAwesomeIcon icon={faClock} className="text-4xl text-gray-400 mb-3" />
-              <h3 className="text-lg font-medium text-gray-600">暫無活動記錄</h3>
-              <p className="text-gray-500 mt-1">您的活動記錄將會顯示在這裡</p>
+            <div className="text-center py-36 bg-gradient-to-b from-white via-gray-50/50 to-gray-100/30">
+              <FontAwesomeIcon 
+                icon={faClock} 
+                className="text-8xl text-gray-300 mb-8 transform motion-safe:hover:scale-110 transition-all duration-500" 
+              />
+              <h3 className="text-2xl font-semibold text-gray-800">暫無活動記錄</h3>
+              <p className="text-gray-500 mt-4 max-w-md mx-auto leading-relaxed">
+                您的活動記錄將會顯示在這裡
+              </p>
             </div>
           ) : (
             <div className="relative">
-              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200/80"></div>
               
               {activityLog.map((activity, index) => (
                 <div key={activity.id} className="relative pl-20 pb-8 last:pb-0">
-                  <div className={`absolute left-6 w-4 h-4 rounded-full bg-white border-4 ${
-                    activity.type === 'security_alert' 
+                  <div className={`absolute left-6 w-4 h-4 rounded-full bg-white border-4 
+                    ${activity.type === 'security_alert' 
                       ? 'border-yellow-500' 
                       : activity.type === 'account_delete'
                       ? 'border-red-500'
                       : 'border-blue-500'
-                  }`}></div>
+                    } transition-colors duration-300`}>
+                  </div>
                   
-                  <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="bg-white p-6 rounded-xl border border-gray-200/80 
+                    hover:shadow-md hover:border-blue-200/80 hover:translate-y-[-2px]
+                    transition-all duration-300">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <FontAwesomeIcon 
-                          icon={getActivityIcon(activity.type)}
-                          className={`text-xl ${getActivityColor(activity.type)}`}
-                        />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center
+                          ${getActivityColor(activity.type).replace('text-', 'bg-').replace('500', '50')}`}>
+                          <FontAwesomeIcon 
+                            icon={getActivityIcon(activity.type)}
+                            className={`text-lg ${getActivityColor(activity.type)}`}
+                          />
+                        </div>
                         <h3 className="text-lg font-medium text-gray-800">{activity.description}</h3>
                       </div>
-                      <time className="text-sm text-gray-500">{activity.timestamp}</time>
+                      <time className="text-sm text-gray-400 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faClock} className="h-3 w-3" />
+                        {activity.timestamp}
+                      </time>
                     </div>
                     
                     {activity.details && (
-                      <p className="text-gray-600 mb-4">{activity.details}</p>
+                      <p className="text-gray-600 ml-11">{activity.details}</p>
                     )}
                     
                     {activity.status && (
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                        activity.status === 'success'
-                          ? 'bg-green-50 text-green-700 border border-green-200'
-                          : activity.status === 'warning'
-                          ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                          : 'bg-red-50 text-red-700 border border-red-200'
-                      }`}>
-                        <FontAwesomeIcon 
-                          icon={
-                            activity.status === 'success' 
-                              ? faCheckCircle 
-                              : activity.status === 'warning'
-                              ? faExclamationTriangle
-                              : faTimesCircle
-                          } 
-                          className="text-sm"
-                        />
-                        <span>{activity.status}</span>
+                      <div className="ml-11 mt-4">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm
+                          ${activity.status === 'success'
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : activity.status === 'warning'
+                            ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                          } transition-colors duration-300`}>
+                          <FontAwesomeIcon 
+                            icon={
+                              activity.status === 'success' 
+                                ? faCheckCircle 
+                                : activity.status === 'warning'
+                                ? faExclamationTriangle
+                                : faTimesCircle
+                            } 
+                            className="text-sm"
+                          />
+                          <span>{activity.status}</span>
+                        </div>
                       </div>
                     )}
                   </div>
