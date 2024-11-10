@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faList, faGrip, faHistory, faInbox, faGlobe, faClock } from '@fortawesome/free-solid-svg-icons';
+import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
+import { useAuthContext } from '@/context/AuthContext';
 
-interface HistoryItem {
-  translatedTitle: string;
-  link: string;
-  timestamp: string;
-  sourcePage: string;
-}
-
-interface HistorySectionProps {
-  recentArticles: HistoryItem[];
-}
-
-const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
+const HistorySection: React.FC = () => {
+  const { user } = useAuthContext();
+  const { recentArticles, isLoading } = useProfileArticles({ user });
   const [isGridView, setIsGridView] = useState(true);
+
+  if (isLoading) {
+    return <div>載入中...</div>;
+  }
 
   return (
     <div className="w-full">

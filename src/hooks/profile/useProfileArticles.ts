@@ -41,31 +41,50 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
       setError(null);
 
       const params = {
-        TableName: 'AWS_Blog_UserArticleHistory',
+        TableName: 'AWS_Blog_UserRecentArticles',
         KeyConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: {
           ':userId': { S: user.sub }
         },
         ScanIndexForward: false,
-        Limit: 20
+        Limit: 12
       };
 
       const command = new QueryCommand(params);
       const response = await dynamoClient.send(command);
+      
+      // 首先獲取文章ID和基本信息
+      const articleData = response.Items?.map(item => ({
+        articleId: item.articleId?.S,
+        timestamp: item.timestamp?.S,
+        sourcePage: item.sourcePage?.S || '未知來源'
+      })).filter(data => data.articleId && data.timestamp) || [];
 
-      const articles = response.Items?.map(item => ({
-        id: item.id.S!,
-        userId: item.userId.S!,
-        title: item.title.S!,
-        translatedTitle: item.translatedTitle.S!,
-        link: item.link.S!,
-        timestamp: item.timestamp.S!,
-        sourcePage: item.sourcePage.S!,
-        category: item.category?.S,
-        readStatus: item.readStatus?.S as 'unread' | 'reading' | 'completed'
-      })) || [];
+      // 然後獲取每篇文章的詳細信息
+      const articles = await Promise.all(articleData.map(async ({ articleId, timestamp, sourcePage }) => {
+        const newsParams = {
+          TableName: 'AWS_Blog_News',
+          KeyConditionExpression: 'article_id = :articleId',
+          ExpressionAttributeValues: {
+            ':articleId': { S: articleId! }
+          }
+        };
 
-      setRecentArticles(articles);
+        const newsCommand = new QueryCommand(newsParams);
+        const newsResponse = await dynamoClient.send(newsCommand);
+        
+        return {
+          id: articleId!,
+          userId: user.sub,
+          title: newsResponse.Items?.[0]?.title?.S || '標題不可用',
+          translatedTitle: newsResponse.Items?.[0]?.translated_title?.S || '標題不可用',
+          link: newsResponse.Items?.[0]?.link?.S || '#',
+          timestamp: timestamp!,
+          sourcePage
+        };
+      }));
+
+      setRecentArticles(articles.slice(0, 12));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '獲取文章歷史記錄失敗';
       setError(new Error(errorMessage));
@@ -87,38 +106,53 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
 
     try {
       const timestamp = new Date().toISOString();
-      const id = `${user.sub}-${articleId}`;
 
-      const params = {
-        TableName: 'AWS_Blog_UserArticleHistory',
+      // 儲存新紀錄
+      const putParams = {
+        TableName: 'AWS_Blog_UserRecentArticles',
         Item: {
-          id: { S: id },
           userId: { S: user.sub },
-          title: { S: title },
-          translatedTitle: { S: title }, // 可以在這裡添加翻譯邏輯
-          link: { S: link },
+          articleId: { S: articleId },
           timestamp: { S: timestamp },
-          sourcePage: { S: sourcePage },
-          readStatus: { S: 'unread' },
-          ...(category && { category: { S: category } })
+          link: { S: link },
+          sourcePage: { S: sourcePage }
         }
       };
 
-      const command = new PutItemCommand(params);
-      await dynamoClient.send(command);
+      const putCommand = new PutItemCommand(putParams);
+      await dynamoClient.send(putCommand);
+
+      // 檢查並刪除舊紀錄
+      const queryParams = {
+        TableName: 'AWS_Blog_UserRecentArticles',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': { S: user.sub }
+        },
+        ScanIndexForward: true // 升序排序以獲取最舊的記錄
+      };
+
+      const queryCommand = new QueryCommand(queryParams);
+      const response = await dynamoClient.send(queryCommand);
+
+      if (response.Items && response.Items.length > 12) {
+        // 刪除最舊的記錄
+        const oldestArticle = response.Items[0];
+        if (oldestArticle.timestamp?.S) {
+          const deleteParams = {
+            TableName: 'AWS_Blog_UserRecentArticles',
+            Key: {
+              userId: { S: user.sub },
+              timestamp: { S: oldestArticle.timestamp.S }
+            }
+          };
+          const deleteCommand = new DeleteItemCommand(deleteParams);
+          await dynamoClient.send(deleteCommand);
+        }
+      }
 
       // 更新本地狀態
-      setRecentArticles(prev => [{
-        id,
-        userId: user.sub,
-        title,
-        translatedTitle: title,
-        link,
-        timestamp,
-        sourcePage,
-        category,
-        readStatus: 'unread' as const
-      }, ...prev].slice(0, 20));
+      await fetchRecentArticles(); // 重新獲取最新記錄
 
     } catch (error) {
       logger.error('記錄最近文章失敗:', error);
@@ -131,7 +165,7 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
 
     try {
       const params = {
-        TableName: 'AWS_Blog_UserArticleHistory',
+        TableName: 'AWS_Blog_UserRecentArticles',
         Key: {
           id: { S: articleId },
           userId: { S: user.sub }
@@ -165,7 +199,7 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
 
     try {
       const params = {
-        TableName: 'AWS_Blog_UserArticleHistory',
+        TableName: 'AWS_Blog_UserRecentArticles',
         Key: {
           id: { S: articleId },
           userId: { S: user.sub }
