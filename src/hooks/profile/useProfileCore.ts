@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
 import { User } from '@/types/userType';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 
 interface UseProfileCoreProps {
   user?: User | null;

@@ -24,6 +24,7 @@ import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
 import { VerificationStep } from '@/types/lineTypes';
 import { FormData } from '@/types/profileTypes';
+import { Toaster } from 'react-hot-toast';
 
 interface ProfileUIProps {
   user: {
@@ -195,6 +196,31 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            style: {
+              background: '#4aed88',
+              color: '#fff'
+            }
+          },
+          error: {
+            duration: 3000,
+            style: {
+              background: '#ff4b4b',
+              color: '#fff'
+            }
+          },
+        }}
+      />
       <Navbar />
       
       <div className="flex-grow container mx-auto px-2 sm:px-6 lg:px-8 py-4 lg:py-8 flex flex-col lg:flex-row gap-3 lg:gap-6">

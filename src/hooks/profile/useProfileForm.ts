@@ -94,24 +94,36 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
 
   const handleSaveProfileChanges = async (localUsername: string) => {
     console.log('=== handleSaveProfileChanges 被調用 ===');
-    console.log('參數檢查:', {
-      localUsername,
-      'user?.sub': user?.sub,
-      'user?.username': user?.username,
-      'process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID': process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID
-    });
+    
+    if (!localUsername.trim()) {
+      toast.error('用戶名稱不能為空', {
+        duration: 3000,
+        position: 'top-center',
+      });
+      return;
+    }
 
     if (!user?.sub) {
-      console.error('錯誤: 找不到用戶 sub');
-      throw new Error('用戶驗證資訊不完整');
+      toast.error('找不到用戶資訊', {
+        duration: 3000,
+        position: 'top-center',
+      });
+      return;
     }
 
     if (!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID) {
-      console.error('錯誤: 找不到 USER_POOL_ID');
-      throw new Error('系統配置錯誤');
+      toast.error('系統配置錯誤', {
+        duration: 3000,
+        position: 'top-center',
+      });
+      return;
     }
 
     setIsLoading(true);
+
+    const toastId = toast.loading('正在更新個人資料...', {
+      position: 'top-center',
+    });
 
     try {
       const updateUserCommand = new AdminUpdateUserAttributesCommand({
@@ -125,28 +137,29 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
         ],
       });
 
-      console.log('發送更新請求到 Cognito...');
-      const response = await cognitoClient.send(updateUserCommand);
-      console.log('Cognito 回應:', response);
+      await cognitoClient.send(updateUserCommand);
 
-      // 更新本地狀態
       setFormData(prev => ({ ...prev, username: localUsername }));
       updateUser({ username: localUsername });
       setIsEditable(prev => ({ ...prev, username: false }));
 
-      // 記錄活動
       await logActivity(user.sub, `變更用戶名稱為 ${localUsername}`);
 
-      toast.success('個人資料已更新');
+      toast.success('個人資料已更新成功！', {
+        id: toastId,
+        duration: 3000,
+      });
 
-      // 延遲重新載入頁面
       setTimeout(() => {
         window.location.reload();
       }, 3000);
 
     } catch (error: any) {
-      console.error('更新失敗:', error);
-      throw new Error(error.message || '更新失敗，請稍後再試');
+      toast.error(error.message || '更新失敗，請稍後再試', {
+        id: toastId,
+        duration: 3000,
+      });
+      logger.error('更新個人資料失敗:', error);
     } finally {
       setIsLoading(false);
     }

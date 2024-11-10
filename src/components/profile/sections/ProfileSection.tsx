@@ -77,6 +77,22 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     };
   }, []);
 
+  const handleSave = async () => {
+    if (!localUsername.trim()) {
+      toast.error('用戶名稱不能為空', {
+        duration: 3000,
+        position: 'top-center',
+      });
+      return;
+    }
+
+    try {
+      await handleSaveProfileChanges(localUsername);
+    } catch (error) {
+      console.error('儲存變更時發生錯誤:', error);
+    }
+  };
+
   return (
     <>
       <h1 className="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">個人資訊</h1>
@@ -180,13 +196,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   取消
                 </button>
                 <button
-                  onClick={() => {
-                    if (!localUsername.trim()) {
-                      toast.error('用戶名稱不能為空');
-                      return;
-                    }
-                    handleSaveProfileChanges(localUsername);
-                  }}
+                  onClick={handleSave}
                   className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 flex items-center"
                   disabled={isLoading || !localUsername.trim()}
                 >
