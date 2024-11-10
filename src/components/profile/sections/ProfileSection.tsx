@@ -104,12 +104,17 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               
-              <label className="absolute bottom-2 right-2 p-2.5 bg-white rounded-full shadow-lg cursor-pointer
-                hover:bg-blue-50 active:bg-blue-100 transition duration-150
-                disabled:opacity-50 disabled:cursor-not-allowed">
+              <label className="absolute bottom-2 right-2 flex items-center justify-center w-10 h-10 
+                bg-white/90 backdrop-blur-sm rounded-full shadow-lg cursor-pointer
+                hover:bg-blue-50 hover:scale-105 active:scale-100
+                ring-2 ring-white/50 hover:ring-blue-200
+                transform transition-all duration-200 ease-out
+                disabled:opacity-50 disabled:cursor-not-allowed
+                group">
                 <FontAwesomeIcon 
                   icon={isLoading ? faSpinner : faCamera} 
-                  className={`text-blue-600 text-lg ${isLoading ? 'animate-spin' : ''}`}
+                  className={`text-blue-600 text-lg group-hover:text-blue-700
+                    ${isLoading ? 'animate-spin' : 'group-hover:rotate-12 transition-transform duration-200'}`}
                 />
                 <input 
                   type="file" 
@@ -127,7 +132,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 {/* 用戶名稱 */}
                 <div className="flex flex-col md:flex-row md:items-center">
                   <div className="flex items-center gap-2">
-                    <label className="text-base font-semibold text-gray-700">用戶名稱</label>
+                    <label className="text-lg font-semibold text-gray-800">用戶名稱：</label>
                     {isEditable.username ? (
                       <div className="flex gap-3">
                         <input
@@ -136,7 +141,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                           onChange={(e) => setLocalUsername(e.target.value)}
                           className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
                             focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                            transition duration-150 text-base"
+                            transition duration-150 text-lg"
                           disabled={isLoading}
                         />
                         <button
@@ -165,7 +170,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <span className="text-base text-gray-900">{formData.username}</span>
+                        <span className="text-lg text-gray-900">{formData.username}</span>
                         <button
                           onClick={() => handleEditClick('username')}
                           className="p-2 text-gray-400 hover:text-blue-600 rounded-full
@@ -181,9 +186,9 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 {/* 電子郵件 */}
                 <div className="flex flex-col md:flex-row md:items-center">
                   <div className="flex items-center gap-2">
-                    <label className="text-base font-semibold text-gray-700">電子郵件</label>
-                    <span className="text-base text-gray-900">{formData.email}</span>
-                    <span className="px-2.5 py-1 bg-green-50 text-green-600 text-sm font-medium rounded-full">
+                    <label className="text-lg font-semibold text-gray-800">電子郵件：</label>
+                    <span className="text-lg text-gray-900">{formData.email}</span>
+                    <span className="px-2.5 py-1 bg-green-50 text-green-600 text-base font-medium rounded-full">
                       已驗證
                     </span>
                   </div>
@@ -192,8 +197,8 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 {/* 註冊日期 */}
                 <div className="flex flex-col md:flex-row md:items-center">
                   <div className="flex items-center gap-2">
-                    <label className="text-base font-semibold text-gray-700">註冊日期</label>
-                    <span className="text-base text-gray-900">{formData.registrationDate}</span>
+                    <label className="text-lg font-semibold text-gray-800">註冊日期：</label>
+                    <span className="text-lg text-gray-900">{formData.registrationDate}</span>
                   </div>
                 </div>
               </div>
