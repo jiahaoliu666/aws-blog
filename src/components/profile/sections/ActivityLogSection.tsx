@@ -89,7 +89,33 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
                       flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full
                       shadow border-2 border-gray-300 hover:border-gray-400 transition-colors">
                       <FontAwesomeIcon icon={faClock} className="h-3.5 w-3.5" />
-                      <span>{formatTimeAgo(activity.parsedDate)}</span>
+                      <span>
+                        {(() => {
+                          try {
+                            console.log('活動時間資料:', {
+                              parsedDate: activity.parsedDate,
+                              timestamp: activity.timestamp
+                            }); // 除錯日誌
+
+                            if (activity.parsedDate && activity.parsedDate instanceof Date) {
+                              console.log('使用 parsedDate:', activity.parsedDate); // 除錯日誌
+                              return formatTimeAgo(activity.parsedDate);
+                            }
+
+                            console.log('嘗試解析 timestamp:', activity.timestamp); // 除錯日誌
+                            const date = new Date(activity.timestamp);
+                            if (!isNaN(date.getTime())) {
+                              return formatTimeAgo(date);
+                            }
+
+                            console.log('無法解析時間'); // 除錯日誌
+                            return '無效日期';
+                          } catch (error) {
+                            console.error('時間格式化錯誤:', error);
+                            return '無效日期';
+                          }
+                        })()}
+                      </span>
                     </time>
                   </div>
 

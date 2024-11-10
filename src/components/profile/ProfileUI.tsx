@@ -61,10 +61,13 @@ interface LocalSettings {
 }
 
 interface ActivityLog {
-  action: string;
-  timestamp: string;
+  id: string;
   type: string;
   description: string;
+  timestamp: string;
+  parsedDate: Date;
+  details?: string;
+  status?: string;
 }
 
 const defaultNotificationPreferences: NotificationSettings = {
@@ -296,7 +299,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
               <FeedbackSection 
                 {...core}
                 feedback={{
-                  rating: 0,
                   category: '',
                   message: core.feedback || ''
                 }}
@@ -310,12 +312,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
                 }}
                 handleSubmitFeedback={() => core.handleSubmitFeedback(core.feedback || '')}
                 isSubmitting={core.isSubmitting}
+                userEmail={form.formData.email}
               />
             )}
 
             {core.activeTab === 'activityLog' && (
               <ActivityLogSection 
-                activityLog={activity.activityLog}
+                activityLog={activity.activityLog.map(log => ({
+                  ...log,
+                  parsedDate: new Date(log.timestamp)
+                }))}
               />
             )}
 

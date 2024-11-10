@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faSmile, 
-  faMeh, 
-  faFrown,
   faPaperPlane,
   faSpinner,
   faTag,
-  faComment
+  faComment,
+  faEnvelope
 } from '@fortawesome/free-solid-svg-icons';
 
 interface Feedback {
-  rating: number;
   category: string;
   message: string;
+  title: string;
+  email: string;
 }
 
 interface FeedbackSectionProps {
   feedback: {
-    rating: number;
     category: string;
     message: string;
   };
@@ -26,6 +24,7 @@ interface FeedbackSectionProps {
   setFeedback: (newFeedback: any) => void;
   handleSubmitFeedback: () => void;
   isSubmitting: boolean;
+  userEmail: string;
 }
 
 const FeedbackSection: React.FC<FeedbackSectionProps> = ({ 
@@ -33,12 +32,14 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
   feedbackMessage: initialFeedbackMessage,
   setFeedback: setParentFeedback,
   handleSubmitFeedback: onSubmit,
-  isSubmitting: initialIsSubmitting 
+  isSubmitting: initialIsSubmitting,
+  userEmail
 }) => {
   const [feedback, setFeedback] = useState<Feedback>({
-    rating: 0,
     category: '',
-    message: ''
+    message: '',
+    title: '',
+    email: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -62,34 +63,42 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
       </div>
 
       <div className="space-y-6">
-        {/* 評分 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        {/* 電子郵件 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-400">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <FontAwesomeIcon icon={faSmile} className="text-xl text-blue-500" />
+              <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">整體評分</h3>
-                <p className="text-sm text-gray-600">請為我們的服務評分</p>
+                <h3 className="text-lg font-semibold text-gray-800">聯絡信箱</h3>
+                <p className="text-sm text-gray-600">您的電子郵件地址</p>
               </div>
             </div>
-            <div className="flex justify-center space-x-8">
-              {[1, 2, 3].map((rating) => (
-                <button
-                  key={rating}
-                  onClick={() => setFeedback(prev => ({ ...prev, rating }))}
-                  className={`p-4 rounded-xl transition-all ${
-                    feedback.rating === rating
-                      ? 'bg-blue-50 text-blue-600 scale-110 border-2 border-blue-500'
-                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border-2 border-transparent'
-                  }`}
-                >
-                  <FontAwesomeIcon 
-                    icon={rating === 1 ? faFrown : rating === 2 ? faMeh : faSmile}
-                    className="text-3xl"
-                  />
-                </button>
-              ))}
+            <input
+              type="email"
+              value={userEmail}
+              readOnly
+              className="w-full p-4 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-600 cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* 標題 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <FontAwesomeIcon icon={faTag} className="text-xl text-blue-500" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">反饋標題</h3>
+                <p className="text-sm text-gray-600">請輸入標題描述</p>
+              </div>
             </div>
+            <input
+              type="text"
+              value={feedback.title}
+              onChange={(e) => setFeedback(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="請輸入標題..."
+              className="w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
         </div>
 

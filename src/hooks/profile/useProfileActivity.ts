@@ -9,6 +9,7 @@ interface ActivityLog {
   userId: string;
   action: string;
   timestamp: string;
+  parsedDate: Date;
   details?: string;
   type: string;
   description: string;
@@ -30,23 +31,37 @@ export type UseProfileActivityReturn = {
 
 const parseChineseDateTime = (timestamp: string): Date => {
   try {
-    // 處理格式如 "2024-11-10 下午09:48:15"
-    const [date, timeWithPeriod] = timestamp.split(' ');
-    const isPM = timeWithPeriod.includes('下午');
-    const cleanTime = timeWithPeriod.replace(/(下午|上午)/, '');
-    const [hours, minutes, seconds] = cleanTime.split(':');
-    
-    let hour = parseInt(hours);
-    if (isPM && hour !== 12) {
-      hour += 12;
-    } else if (!isPM && hour === 12) {
-      hour = 0;
+    console.log('開始解析時間:', timestamp); // 除錯日誌
+
+    // 處理格式如 "2024-11-10 下午05:29:32"
+    const [datePart, timePart] = timestamp.split(' ');
+    console.log('分割後:', { datePart, timePart }); // 除錯日誌
+
+    // 直接處理時間部分，不使用正則表達式
+    const timePrefix = timePart.substring(0, 2); // "下午"
+    const timeString = timePart.substring(2);    // "05:29:32"
+    console.log('時間部分:', { timePrefix, timeString }); // 除錯日誌
+
+    const [hours, minutes, seconds] = timeString.split(':').map(Number);
+    const [year, month, day] = datePart.split('-').map(Number);
+
+    let adjustedHours = hours;
+    if (timePrefix === '下午' && hours < 12) {
+      adjustedHours += 12;
+    } else if (timePrefix === '上午' && hours === 12) {
+      adjustedHours = 0;
     }
 
-    const [year, month, day] = date.split('-').map(num => parseInt(num));
-    return new Date(year, month - 1, day, hour, parseInt(minutes), parseInt(seconds));
+    console.log('調整後的時間:', {
+      year, month, day, hours: adjustedHours, minutes, seconds
+    }); // 除錯日誌
+
+    const date = new Date(year, month - 1, day, adjustedHours, minutes, seconds);
+    console.log('最終日期物件:', date); // 除錯日誌
+
+    return date;
   } catch (error) {
-    console.error('解析時間錯誤:', error);
+    console.error('解析時間發生錯誤:', error, timestamp);
     return new Date();
   }
 };
@@ -92,17 +107,34 @@ export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfil
         return;
       }
 
-      const activities = response.Items.map(item => ({
-        id: item.id?.S || `${Date.now()}-${Math.random()}`,
-        userId: item.userId.S!,
-        action: item.action.S || '',
-        timestamp: item.timestamp.S || '',
-        parsedDate: parseChineseDateTime(item.timestamp.S || ''),
-        details: item.details?.S,
-        type: item.type?.S || 'user_action',
-        description: item.description?.S || item.action.S || '未知活動'
-      }));
+      const activities = response.Items.map(item => {
+        const timestamp = item.timestamp.S || new Date().toISOString();
+        console.log('原始時間戳:', timestamp); // 除錯日誌
+        
+        const parsedDate = parseChineseDateTime(timestamp);
+        console.log('解析後的日期:', parsedDate); // 除錯日誌
+        
+        const activity = {
+          id: item.id?.S || `${Date.now()}-${Math.random()}`,
+          userId: item.userId.S!,
+          action: item.action.S || '',
+          timestamp,
+          parsedDate,
+          details: item.details?.S,
+          type: item.type?.S || 'user_action',
+          description: item.description?.S || item.action.S || '未知活動'
+        };
+        
+        console.log('建立的活動物件:', activity); // 除錯日誌
+        return activity;
+      });
 
+      // 確保時間排序正確
+      activities.sort((a, b) => {
+        const dateA = a.parsedDate.getTime();
+        const dateB = b.parsedDate.getTime();
+        return dateB - dateA;  // 降序排列
+      });
       setActivityLog(activities);
 
     } catch (error) {
@@ -137,7 +169,8 @@ export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfil
     if (!user?.sub) return;
 
     try {
-      const timestamp = new Date().toISOString();
+      const now = new Date();
+      const timestamp = now.toISOString();
       const id = `${user.sub}-${Date.now()}`;
       const type = 'user_action';
 
@@ -146,7 +179,8 @@ export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfil
         id,
         userId: user.sub,
         action,
-        timestamp: new Date().toLocaleString('zh-TW'),
+        timestamp,
+        parsedDate: now,
         details,
         type,
         description: details || action
