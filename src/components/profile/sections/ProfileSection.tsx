@@ -120,96 +120,83 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 />
               </label>
             </div>
-
-            <div className="flex-1 text-center md:text-left">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">{formData.username}</h2>
-              <p className="text-gray-500">{formData.email}</p>
-              <div className="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">
-                <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-full">
-                  一般會員
-                </span>
-                <span className="px-3 py-1 bg-green-50 text-green-600 text-sm rounded-full">
-                  已驗證
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 個人資料表單 */}
-        <div className="p-8">
-          <div className="space-y-6">
-            {/* 用戶名稱 */}
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <label className="w-32 text-sm font-medium text-gray-600">用戶名稱</label>
-              <div className="flex-1">
-                {isEditable.username ? (
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      value={localUsername}
-                      onChange={(e) => setLocalUsername(e.target.value)}
-                      className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
-                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                        transition duration-150"
-                      disabled={isLoading}
-                    />
-                    <button
-                      onClick={handleSave}
-                      disabled={isLoading || !localUsername.trim()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg 
-                        hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                        transition duration-150"
-                    >
-                      {isLoading ? (
-                        <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                      ) : (
-                        <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                      )}
-                      {isLoading ? '儲存中...' : '儲存'}
-                    </button>
-                    <button
-                      onClick={handleCancelChanges}
-                      disabled={isLoading}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg
-                        hover:bg-gray-200 transition duration-150"
-                    >
-                      <FontAwesomeIcon icon={faTimes} className="mr-2" />
-                      取消
-                    </button>
+            
+            {/* 個人資料表單 */}
+            <div className="flex-1">
+              <div className="space-y-6">
+                {/* 用戶名稱 */}
+                <div className="flex flex-col md:flex-row md:items-center">
+                  <div className="flex items-center gap-2">
+                    <label className="text-base font-semibold text-gray-700">用戶名稱</label>
+                    {isEditable.username ? (
+                      <div className="flex gap-3">
+                        <input
+                          type="text"
+                          value={localUsername}
+                          onChange={(e) => setLocalUsername(e.target.value)}
+                          className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
+                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                            transition duration-150 text-base"
+                          disabled={isLoading}
+                        />
+                        <button
+                          onClick={handleSave}
+                          disabled={isLoading || !localUsername.trim()}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg 
+                            hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                            transition duration-150"
+                        >
+                          {isLoading ? (
+                            <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
+                          ) : (
+                            <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                          )}
+                          {isLoading ? '儲存中...' : '儲存'}
+                        </button>
+                        <button
+                          onClick={handleCancelChanges}
+                          disabled={isLoading}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg
+                            hover:bg-gray-200 transition duration-150"
+                        >
+                          <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                          取消
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <span className="text-base text-gray-900">{formData.username}</span>
+                        <button
+                          onClick={() => handleEditClick('username')}
+                          className="p-2 text-gray-400 hover:text-blue-600 rounded-full
+                            hover:bg-blue-50 transition duration-150"
+                        >
+                          <FontAwesomeIcon icon={faEdit} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-800">{formData.username}</span>
-                    <button
-                      onClick={() => handleEditClick('username')}
-                      className="p-2 text-gray-400 hover:text-blue-600 rounded-full
-                        hover:bg-blue-50 transition duration-150"
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
 
-            {/* 電子郵件 */}
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <label className="w-32 text-sm font-medium text-gray-600">電子郵件</label>
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-800">{formData.email}</span>
-                  <span className="px-2 py-1 bg-green-50 text-green-600 text-xs rounded-full">
-                    已驗證
-                  </span>
+                {/* 電子郵件 */}
+                <div className="flex flex-col md:flex-row md:items-center">
+                  <div className="flex items-center gap-2">
+                    <label className="text-base font-semibold text-gray-700">電子郵件</label>
+                    <span className="text-base text-gray-900">{formData.email}</span>
+                    <span className="px-2.5 py-1 bg-green-50 text-green-600 text-sm font-medium rounded-full">
+                      已驗證
+                    </span>
+                  </div>
+                </div>
+
+                {/* 註冊日期 */}
+                <div className="flex flex-col md:flex-row md:items-center">
+                  <div className="flex items-center gap-2">
+                    <label className="text-base font-semibold text-gray-700">註冊日期</label>
+                    <span className="text-base text-gray-900">{formData.registrationDate}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* 註冊日期 */}
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <label className="w-32 text-sm font-medium text-gray-600">註冊日期</label>
-              <span className="text-gray-800">{formData.registrationDate}</span>
             </div>
           </div>
         </div>
