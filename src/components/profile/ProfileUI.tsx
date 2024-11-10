@@ -63,6 +63,8 @@ interface LocalSettings {
 interface ActivityLog {
   action: string;
   timestamp: string;
+  type: string;
+  description: string;
 }
 
 const defaultNotificationPreferences: NotificationSettings = {
@@ -312,12 +314,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
             )}
 
             {core.activeTab === 'activityLog' && (
-              <ActivityLogSection activityLog={activity.activityLog.map((log: ActivityLog) => ({
-                id: crypto.randomUUID(),
-                type: 'default',
-                description: log.action,
-                timestamp: log.timestamp
-              }))} />
+              <ActivityLogSection 
+                activityLog={activity.activityLog}
+              />
             )}
 
             {core.activeTab === 'history' && (
