@@ -47,13 +47,17 @@ const HistorySection: React.FC = () => {
             <article 
               key={index}
               className="group relative bg-white rounded-2xl overflow-hidden
-              border border-gray-200/60 shadow-sm backdrop-blur-sm
+              border border-gray-300/80 shadow-sm backdrop-blur-sm
               transition-all duration-300 ease-out
-              hover:shadow-lg hover:border-blue-200/80
+              hover:shadow-lg hover:border-blue-300
               hover:translate-y-[-2px]"
             >
-              <a href={article.link} className="block">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 
+              <a href={article.link} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block"
+              >
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 
                   opacity-0 group-hover:opacity-100 transition-all duration-300" />
 
                 <div className="p-5 sm:p-6">
