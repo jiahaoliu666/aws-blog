@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
@@ -45,11 +45,11 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
   });
 
   const validateFile = (file: File): boolean => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const validTypes = ['image/jpeg', 'image/png'];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!validTypes.includes(file.type)) {
-      showToast('請上傳 JPG、PNG 或 GIF 格式的圖片', 'error');
+      showToast('請上傳 JPG 或 PNG 格式的圖片', 'error');
       return false;
     }
 
@@ -81,6 +81,26 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
     }
   };
 
+  const deleteOldAvatar = async (oldAvatarUrl: string) => {
+    try {
+      // 從 URL 中提取 S3 key
+      const urlParts = oldAvatarUrl.split('aws-blog-avatar.s3.amazonaws.com/');
+      if (urlParts.length !== 2) return;
+      
+      const key = urlParts[1];
+      
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: 'aws-blog-avatar',
+        Key: key
+      });
+
+      await s3Client.send(deleteCommand);
+      logger.info('舊頭像已刪除');
+    } catch (error) {
+      logger.error('刪除舊頭像失敗:', error);
+    }
+  };
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.sub) return;
@@ -89,18 +109,11 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       showToast('正在處理您的頭像...', 'loading');
 
       if (!validateFile(file)) {
-        showToast('檔案格式不支援，請選擇 JPG、PNG 或 GIF 圖片', 'error');
         return;
       }
 
       setIsUploading(true);
       setUploadMessage('正在處理您的頭像...');
-
-      // 檢查檔案大小
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('檔案大小不能超過 5MB', 'error');
-        return;
-      }
 
       // 生成臨時預覽
       const reader = new FileReader();
@@ -125,6 +138,12 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       // 更新用戶資料
       const avatarUrl = `https://aws-blog-avatar.s3.amazonaws.com/${fileKey}`;
       
+      // 如果有舊的頭像，先刪除
+      const oldAvatarUrl = user.avatar;
+      if (oldAvatarUrl && oldAvatarUrl.includes('aws-blog-avatar.s3.amazonaws.com')) {
+        await deleteOldAvatar(oldAvatarUrl);
+      }
+
       // 更新 DynamoDB
       await updateDynamoDB(user.sub, avatarUrl);
 
@@ -140,28 +159,19 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
         setFormData((prevData: any) => ({ ...prevData, avatar: avatarUrl }));
       }
 
-      // 觸發全局事件
       window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: avatarUrl }));
-
       showToast('頭像已成功更新', 'success');
-
-      // 3秒後清除消息
-      setTimeout(() => {
-        setUploadMessage(null);
-      }, 3000);
 
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : '上傳失敗，請稍後重試', 
         'error'
       );
-
-      // 3秒後清除錯誤消息
+    } finally {
+      setIsUploading(false);
       setTimeout(() => {
         setUploadMessage(null);
       }, 3000);
-    } finally {
-      setIsUploading(false);
     }
   };
 

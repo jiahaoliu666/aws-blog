@@ -114,7 +114,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 <input 
                   type="file" 
                   className="hidden" 
-                  accept="image/*" 
+                  accept="image/jpeg, image/png" 
                   onChange={handleAvatarChange}
                   disabled={isLoading}
                 />

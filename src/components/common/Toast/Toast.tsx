@@ -40,7 +40,7 @@ const Toast: React.FC<ToastProps> = ({
   className
 }) => {
   const getToastStyles = () => {
-    const baseStyles = "fixed px-6 py-4 rounded-xl shadow-lg z-50 flex items-start gap-4 max-w-md w-full transition-all duration-300 backdrop-blur-sm border";
+    const baseStyles = "fixed px-6 py-4 rounded-2xl shadow-lg z-50 flex items-start gap-4 max-w-md w-full transition-all duration-300 border";
     const positionStyles = {
       'top': "top-6 left-1/2 -translate-x-1/2",
       'bottom': "bottom-6 left-1/2 -translate-x-1/2",
@@ -50,11 +50,11 @@ const Toast: React.FC<ToastProps> = ({
       'bottom-left': "bottom-6 left-6"
     };
     const typeStyles = {
-      success: "bg-green-100/95 dark:bg-green-800/90 border-green-400 text-green-700 dark:text-green-100",
-      error: "bg-red-100/95 dark:bg-red-800/90 border-red-400 text-red-700 dark:text-red-100",
-      info: "bg-blue-100/95 dark:bg-blue-800/90 border-blue-400 text-blue-700 dark:text-blue-100",
-      loading: "bg-purple-100/95 dark:bg-purple-800/90 border-purple-400 text-purple-700 dark:text-purple-100",
-      warning: "bg-amber-100/95 dark:bg-amber-800/90 border-amber-400 text-amber-700 dark:text-amber-100"
+      success: "bg-emerald-100 border-emerald-200 text-emerald-700 shadow-emerald-500/10",
+      error: "bg-rose-100 border-rose-200 text-rose-700 shadow-rose-500/10",
+      info: "bg-sky-100 border-sky-200 text-sky-700 shadow-sky-500/10",
+      loading: "bg-blue-100 border-blue-200 text-blue-700 shadow-blue-500/10",
+      warning: "bg-amber-100 border-amber-200 text-amber-700 shadow-amber-500/10"
     };
     
     return `${baseStyles} ${positionStyles[position]} ${typeStyles[type]} ${className} ${
@@ -64,19 +64,22 @@ const Toast: React.FC<ToastProps> = ({
 
   const getIcon = () => {
     const iconStyles = {
-      success: "text-green-600 dark:text-green-300 text-lg",
-      error: "text-red-600 dark:text-red-300 text-lg",
-      info: "text-blue-600 dark:text-blue-300 text-lg",
-      loading: "text-purple-600 dark:text-purple-300 text-lg",
-      warning: "text-amber-600 dark:text-amber-300 text-lg"
+      success: "text-emerald-600",
+      error: "text-rose-600",
+      info: "text-sky-600",
+      loading: "text-blue-600",
+      warning: "text-amber-600"
     };
 
     return (
-      <div className={`${iconStyles[type]} flex-shrink-0`}>
+      <div className={`${iconStyles[type]} flex-shrink-0 mt-1`}>
         {icon ? (
           <FontAwesomeIcon icon={icon} className="w-5 h-5" />
         ) : (
-          <FontAwesomeIcon icon={getDefaultIcon()} className="w-5 h-5" />
+          <FontAwesomeIcon 
+            icon={getDefaultIcon()} 
+            className={`w-5 h-5 ${type === 'loading' ? 'animate-spin' : ''}`} 
+          />
         )}
       </div>
     );
@@ -107,20 +110,20 @@ const Toast: React.FC<ToastProps> = ({
     <div className={getToastStyles()}>
       {getIcon()}
       <div className="flex-1 pr-8">
-        <h4 className="font-medium text-base">{message}</h4>
+        <h4 className="font-semibold text-base leading-snug tracking-wide">{message}</h4>
         {description && (
-          <p className="text-sm mt-1.5 opacity-85 leading-relaxed">{description}</p>
+          <p className="text-sm mt-1.5 opacity-90 leading-relaxed font-normal">{description}</p>
         )}
       </div>
       <CloseButton />
       {showProgress && (
-        <div className="absolute bottom-0 left-0 h-0.5 bg-gray-200/50 dark:bg-gray-700/50 w-full overflow-hidden">
+        <div className="absolute bottom-0 left-0 h-1 bg-black/5 dark:bg-white/10 w-full overflow-hidden rounded-b-2xl">
           <div 
             className="h-full toast-progress rounded-r-full" 
             style={{
               width: `${progress}%`,
               backgroundColor: 'currentColor',
-              opacity: 0.5
+              opacity: 0.15
             }} 
           />
         </div>
