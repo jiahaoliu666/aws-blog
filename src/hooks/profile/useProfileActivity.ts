@@ -28,6 +28,29 @@ export type UseProfileActivityReturn = {
   clearActivityLog: () => Promise<void>;
 };
 
+const parseChineseDateTime = (timestamp: string): Date => {
+  try {
+    // 處理格式如 "2024-11-10 下午09:48:15"
+    const [date, timeWithPeriod] = timestamp.split(' ');
+    const isPM = timeWithPeriod.includes('下午');
+    const cleanTime = timeWithPeriod.replace(/(下午|上午)/, '');
+    const [hours, minutes, seconds] = cleanTime.split(':');
+    
+    let hour = parseInt(hours);
+    if (isPM && hour !== 12) {
+      hour += 12;
+    } else if (!isPM && hour === 12) {
+      hour = 0;
+    }
+
+    const [year, month, day] = date.split('-').map(num => parseInt(num));
+    return new Date(year, month - 1, day, hour, parseInt(minutes), parseInt(seconds));
+  } catch (error) {
+    console.error('解析時間錯誤:', error);
+    return new Date();
+  }
+};
+
 export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfileActivityReturn => {
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,16 +80,14 @@ export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfil
         ExpressionAttributeValues: {
           ':userId': { S: user.sub }
         },
-        ScanIndexForward: false, // 降序排列
-        Limit: 50 // 限制返回最近50條記錄
+        ScanIndexForward: false,
+        Limit: 50
       };
 
-      logger.info('Fetching activity log for user:', user.sub);
       const command = new QueryCommand(params);
       const response = await dynamoClient.send(command);
 
       if (!response.Items) {
-        logger.warn('No activity log items found');
         setActivityLog([]);
         return;
       }
@@ -75,19 +96,13 @@ export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfil
         id: item.id?.S || `${Date.now()}-${Math.random()}`,
         userId: item.userId.S!,
         action: item.action.S || '',
-        timestamp: new Date(item.timestamp.S || '').toLocaleString('zh-TW', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
+        timestamp: item.timestamp.S || '',
+        parsedDate: parseChineseDateTime(item.timestamp.S || ''),
         details: item.details?.S,
         type: item.type?.S || 'user_action',
         description: item.description?.S || item.action.S || '未知活動'
       }));
 
-      logger.info(`Found ${activities.length} activity log entries`);
       setActivityLog(activities);
 
     } catch (error) {
