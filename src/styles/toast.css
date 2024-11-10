@@ -39,23 +39,33 @@
 }
 
 .toast-progress {
-  animation: toast-progress 3s linear;
+  animation: toast-progress linear;
+  transform-origin: left;
+  transition: width 0.1s linear;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
 }
 
 @keyframes toast-slide-in-right {
   0% {
-    transform: translateX(100%);
+    transform: translateX(120%) scale(0.9);
     opacity: 0;
   }
+  50% {
+    transform: translateX(-5%) scale(1.02);
+  }
   100% {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes toast-slide-in-left {
   0% {
-    transform: translateX(-100%);
+    transform: translateX(-120%);
     opacity: 0;
   }
   100% {
@@ -64,17 +74,33 @@
   }
 }
 
+@keyframes toast-slide-in-top {
+  0% {
+    transform: translate(-50%, -120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
 .toast-enter {
-  animation: toast-slide-in-right 0.3s ease forwards;
+  animation: toast-slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .toast-enter-left {
-  animation: toast-slide-in-left 0.3s ease forwards;
+  animation: toast-slide-in-left 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-enter-top {
+  animation: toast-slide-in-top 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .toast-progress {
   animation: toast-progress linear;
   transform-origin: left;
+  transition: width 0.1s linear, opacity 0.2s ease;
 }
 
 /* 添加暗色主題支援 */
@@ -82,4 +108,27 @@
   .toast {
     @apply bg-gray-800 text-white;
   }
+}
+
+/* 添加漸變效果 */
+.toast {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.toast:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 
+    0 12px 28px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 新增玻璃擬態效果 */
+.toast {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 } 

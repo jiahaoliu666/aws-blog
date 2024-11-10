@@ -20,6 +20,10 @@ interface ToastProps {
   autoClose?: number | false;
   onClose?: () => void;
   description?: string;
+  progress?: number;
+  showProgress?: boolean;
+  icon?: IconDefinition;
+  className?: string;
 }
 
 const Toast: React.FC<ToastProps> = ({
@@ -29,52 +33,71 @@ const Toast: React.FC<ToastProps> = ({
   position = 'top-right',
   autoClose = 3000,
   onClose,
-  description
+  description,
+  progress = 100,
+  showProgress = true,
+  icon,
+  className
 }) => {
   const getToastStyles = () => {
-    const baseStyles = "fixed px-4 py-3 rounded-lg shadow-lg z-50 flex items-start gap-3 max-w-md w-full";
+    const baseStyles = "fixed px-6 py-4 rounded-xl shadow-lg z-50 flex items-start gap-4 max-w-md w-full transition-all duration-300 backdrop-blur-sm border";
     const positionStyles = {
-      'top': "top-4 left-1/2 -translate-x-1/2",
-      'bottom': "bottom-4 left-1/2 -translate-x-1/2",
-      'top-right': "top-4 right-4",
-      'top-left': "top-4 left-4",
-      'bottom-right': "bottom-4 right-4",
-      'bottom-left': "bottom-4 left-4"
+      'top': "top-6 left-1/2 -translate-x-1/2",
+      'bottom': "bottom-6 left-1/2 -translate-x-1/2",
+      'top-right': "top-6 right-6",
+      'top-left': "top-6 left-6",
+      'bottom-right': "bottom-6 right-6",
+      'bottom-left': "bottom-6 left-6"
     };
     const typeStyles = {
-      success: "bg-green-50 border border-green-200 text-green-800",
-      error: "bg-red-50 border border-red-200 text-red-800",
-      info: "bg-blue-50 border border-blue-200 text-blue-800",
-      loading: "bg-gray-50 border border-gray-200 text-gray-800",
-      warning: "bg-yellow-50 border border-yellow-200 text-yellow-800"
+      success: "bg-green-100/95 dark:bg-green-800/90 border-green-400 text-green-700 dark:text-green-100",
+      error: "bg-red-100/95 dark:bg-red-800/90 border-red-400 text-red-700 dark:text-red-100",
+      info: "bg-blue-100/95 dark:bg-blue-800/90 border-blue-400 text-blue-700 dark:text-blue-100",
+      loading: "bg-purple-100/95 dark:bg-purple-800/90 border-purple-400 text-purple-700 dark:text-purple-100",
+      warning: "bg-amber-100/95 dark:bg-amber-800/90 border-amber-400 text-amber-700 dark:text-amber-100"
     };
     
-    return `${baseStyles} ${positionStyles[position]} ${typeStyles[type]} ${
+    return `${baseStyles} ${positionStyles[position]} ${typeStyles[type]} ${className} ${
       isVisible ? 'toast-enter' : 'toast-exit'
     }`;
   };
 
   const getIcon = () => {
+    const iconStyles = {
+      success: "text-green-600 dark:text-green-300 text-lg",
+      error: "text-red-600 dark:text-red-300 text-lg",
+      info: "text-blue-600 dark:text-blue-300 text-lg",
+      loading: "text-purple-600 dark:text-purple-300 text-lg",
+      warning: "text-amber-600 dark:text-amber-300 text-lg"
+    };
+
+    return (
+      <div className={`${iconStyles[type]} flex-shrink-0`}>
+        {icon ? (
+          <FontAwesomeIcon icon={icon} className="w-5 h-5" />
+        ) : (
+          <FontAwesomeIcon icon={getDefaultIcon()} className="w-5 h-5" />
+        )}
+      </div>
+    );
+  };
+
+  const getDefaultIcon = () => {
     switch (type) {
-      case 'success':
-        return <FontAwesomeIcon icon={faCheck} className="text-green-500 text-lg" />;
-      case 'error':
-        return <FontAwesomeIcon icon={faTimes} className="text-red-500 text-lg" />;
-      case 'info':
-        return <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 text-lg" />;
-      case 'loading':
-        return <FontAwesomeIcon icon={faSpinner} className="text-gray-500 text-lg animate-spin" />;
-      case 'warning':
-        return <FontAwesomeIcon icon={faTriangleExclamation} className="text-yellow-500 text-lg" />;
+      case 'success': return faCheck;
+      case 'error': return faTimes;
+      case 'info': return faInfoCircle;
+      case 'loading': return faSpinner;
+      case 'warning': return faTriangleExclamation;
     }
   };
 
   const CloseButton = () => (
     <button
       onClick={onClose}
-      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
+      className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/10"
     >
-      <FontAwesomeIcon icon={faXmark} />
+      <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
     </button>
   );
 
@@ -82,18 +105,24 @@ const Toast: React.FC<ToastProps> = ({
 
   return (
     <div className={getToastStyles()}>
-      <div className="flex-shrink-0">{getIcon()}</div>
+      {getIcon()}
       <div className="flex-1 pr-8">
-        <h4 className="font-semibold text-sm">{message}</h4>
+        <h4 className="font-medium text-base">{message}</h4>
         {description && (
-          <p className="text-sm mt-1 opacity-80">{description}</p>
+          <p className="text-sm mt-1.5 opacity-85 leading-relaxed">{description}</p>
         )}
       </div>
       <CloseButton />
-      {type === 'loading' && (
-        <div className="absolute bottom-0 left-0 h-1 bg-gray-200 w-full">
-          <div className="h-full bg-blue-500 toast-progress" 
-               style={{animationDuration: `${autoClose}ms`}} />
+      {showProgress && (
+        <div className="absolute bottom-0 left-0 h-0.5 bg-gray-200/50 dark:bg-gray-700/50 w-full overflow-hidden">
+          <div 
+            className="h-full toast-progress rounded-r-full" 
+            style={{
+              width: `${progress}%`,
+              backgroundColor: 'currentColor',
+              opacity: 0.5
+            }} 
+          />
         </div>
       )}
     </div>
