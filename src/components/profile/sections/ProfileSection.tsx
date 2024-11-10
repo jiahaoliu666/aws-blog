@@ -49,8 +49,27 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar) {
+      setCurrentAvatar(savedAvatar);
+    } else {
+      setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
+    }
   }, [tempAvatar, formData.avatar]);
+
+  useEffect(() => {
+    const handleAvatarUpdate = (event: CustomEvent) => {
+      const newAvatarUrl = event.detail;
+      setCurrentAvatar(newAvatarUrl);
+      localStorage.setItem('userAvatar', newAvatarUrl);
+    };
+
+    window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+    };
+  }, []);
 
   return (
     <div className="w-full">

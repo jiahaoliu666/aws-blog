@@ -16,7 +16,25 @@ interface Feedback {
   message: string;
 }
 
-const FeedbackSection: React.FC = () => {
+interface FeedbackSectionProps {
+  feedback: {
+    rating: number;
+    category: string;
+    message: string;
+  };
+  feedbackMessage?: string;
+  setFeedback: (newFeedback: any) => void;
+  handleSubmitFeedback: () => void;
+  isSubmitting: boolean;
+}
+
+const FeedbackSection: React.FC<FeedbackSectionProps> = ({ 
+  feedback: initialFeedback,
+  feedbackMessage: initialFeedbackMessage,
+  setFeedback: setParentFeedback,
+  handleSubmitFeedback: onSubmit,
+  isSubmitting: initialIsSubmitting 
+}) => {
   const [feedback, setFeedback] = useState<Feedback>({
     rating: 0,
     category: '',
