@@ -30,7 +30,9 @@ const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
         
         <button
           onClick={() => setIsGridView(!isGridView)}
-          className="px-4 py-2.5 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-all duration-200 flex items-center gap-2"
+          className="px-4 py-2.5 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 hover:text-blue-600 
+            transition-all duration-200 flex items-center gap-2
+            border border-gray-300"
           title={isGridView ? "切換列表檢視" : "切換網格檢視"}
         >
           <FontAwesomeIcon icon={isGridView ? faList : faGrip} className="text-lg" />
