@@ -26,6 +26,7 @@ export type UseProfileCoreReturn = {
   handleSubmitFeedback: (feedback: string) => void;
   isSubmitting: boolean;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
+  errorMessage: string;
 };
 
 export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UseProfileCoreReturn => {
@@ -41,6 +42,7 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
   const [isClient, setIsClient] = useState(false);
   const feedback = '';
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   // 初始化載入效果
   useEffect(() => {
@@ -113,11 +115,13 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage('');
     try {
       // 在這裡實現提交邏輯
       // 例如：await updateUserProfile(currentUser);
     } catch (error) {
       toast.error('更新失敗');
+      setErrorMessage('更新資料時發生錯誤');
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);
@@ -142,5 +146,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     handleSubmitFeedback,
     isSubmitting,
     handleSubmit,
+    errorMessage,
   };
 }; 

@@ -29,6 +29,8 @@ interface ProfileSectionProps {
   errorMessage?: string;
   tempAvatar?: string | null;
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
+  setIsEditable: React.Dispatch<React.SetStateAction<{ username: boolean }>>;
+  handleEditClick: (field: string) => void;
 }
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({
@@ -47,7 +49,9 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   isSubmitting,
   errorMessage,
   tempAvatar,
-  setFormData
+  setFormData,
+  setIsEditable,
+  handleEditClick
 }) => {
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
 
@@ -142,12 +146,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   )}
                 </div>
                 <button
-                  onClick={() => {
-                    if (isEditable.username) {
-                      resetUsername();
-                    }
-                    toggleEditableField('username');
-                  }}
+                  onClick={() => isEditable.username ? handleCancelChanges() : handleEditClick('username')}
                   className="ml-4 p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition duration-200"
                 >
                   <FontAwesomeIcon icon={isEditable.username ? faTimes : faEdit} />
@@ -181,18 +180,12 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   取消
                 </button>
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     if (!localUsername.trim()) {
                       toast.error('用戶名稱不能為空');
                       return;
                     }
-                    
-                    try {
-                      await handleSaveProfileChanges(localUsername);
-                    } catch (error: any) {
-                      console.error('儲存失敗:', error);
-                      toast.error(error.message || '儲存失敗，請稍後再試');
-                    }
+                    handleSaveProfileChanges(localUsername);
                   }}
                   className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 flex items-center"
                   disabled={isLoading || !localUsername.trim()}

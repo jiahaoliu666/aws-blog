@@ -30,7 +30,21 @@ interface UseProfileFormProps {
   updateUser: (user: Partial<User>) => void;
 }
 
-export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
+export type UseProfileFormReturn = {
+  formData: FormData;
+  isEditable: {
+    username: boolean;
+  };
+  localUsername: string;
+  setLocalUsername: (username: string) => void;
+  handleEditClick: (field: string) => void;
+  handleCancelChanges: () => void;
+  handleSaveProfileChanges: (username: string) => void;
+  isLoading: boolean;
+  // ... 其他必要的屬性
+};
+
+export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UseProfileFormReturn => {
   const [formData, setFormData] = useState<FormData>({
     username: user?.username || '',
     email: user?.email || '',
@@ -105,10 +119,6 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
         Username: user.sub,
         UserAttributes: [
           {
-            Name: 'preferred_username',
-            Value: localUsername,
-          },
-          {
             Name: 'name',
             Value: localUsername,
           }
@@ -148,22 +158,18 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
       [field]: true
     }));
     setIsEditing(true);
+    if (field === 'username') {
+      setLocalUsername(formData.username);
+    }
   };
 
   const handleCancelChanges = () => {
-    setLocalUsername(user?.username || '');
+    setLocalUsername(formData.username);
     setIsEditable(prev => ({
       ...prev,
       username: false
     }));
     setIsEditing(false);
-  };
-
-  const toggleEditableField = (field: string) => {
-    setIsEditable(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
   };
 
   const resetForm = () => {
@@ -184,7 +190,7 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
   };
 
   const resetUsername = () => {
-    setLocalUsername(user?.username || '');
+    setLocalUsername(formData.username);
   };
 
   useEffect(() => {
@@ -202,23 +208,13 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps) => {
 
   return {
     formData,
-    setFormData,
     isEditable,
     localUsername,
     setLocalUsername,
-    uploadMessage,
-    isEditing,
-    handleChange,
-    handleSaveProfileChanges,
-    handleCancelChanges,
     handleEditClick,
-    toggleEditableField,
-    resetForm,
-    resetUsername,
+    handleCancelChanges,
+    handleSaveProfileChanges,
     isLoading,
+    // ... 其他返回值
   };
 };
-
-export type UseProfileFormReturn = {
-  // 定義型別的內容
-}; 

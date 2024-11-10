@@ -92,7 +92,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
   const form = useProfileForm({ user, updateUser: core.updateUser }) as unknown as { 
     formData: FormData, 
     handleChange: (e: any) => void,
-    setFormData: React.Dispatch<React.SetStateAction<FormData>>
+    setFormData: React.Dispatch<React.SetStateAction<FormData>>,
+    isEditable: { username: boolean },
+    localUsername: string,
+    setLocalUsername: (username: string) => void,
+    handleEditClick: () => void,
+    handleCancelChanges: () => void,
+    handleSaveProfileChanges: () => void,
+    isLoading: boolean
   };
   const avatar = useProfileAvatar({ user });
   const password = useProfilePassword({ user, handleLogout: logoutUser });
@@ -202,21 +209,27 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage, passwordMess
         <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
           {core.activeTab === 'profile' && (
             <ProfileSection 
-              {...form} 
-              {...avatar}
-              setFormData={form.setFormData}
-              handleSubmit={core.handleSubmit}
-              isEditable={{ username: true }}
-              localUsername={form.formData.username}
-              setLocalUsername={(username: string) => form.handleChange({ target: { name: 'username', value: username } })}
-              toggleEditableField={() => setIsEditable()}
-              isSubmitting={core.isSubmitting}
-              handleSaveProfileChanges={(username: string) => {
-                form.handleChange({ target: { name: 'username', value: username } });
-                core.handleSubmit(new Event('submit') as unknown as FormEvent<Element>);
+              formData={form.formData}
+              isEditable={form.isEditable}
+              localUsername={form.localUsername}
+              setLocalUsername={form.setLocalUsername}
+              handleEditClick={form.handleEditClick}
+              handleCancelChanges={form.handleCancelChanges}
+              handleSaveProfileChanges={form.handleSaveProfileChanges}
+              isLoading={form.isLoading}
+              uploadMessage={uploadMessage}
+              handleAvatarChange={avatar.handleAvatarChange}
+              tempAvatar={avatar.tempAvatar}
+              handleSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                core.handleSubmit(e);
               }}
-              handleCancelChanges={() => setIsEditable()}
-              resetUsername={() => form.handleChange({ target: { name: 'username', value: user?.username || '' } })}
+              isSubmitting={core.isSubmitting}
+              errorMessage={core.errorMessage}
+              toggleEditableField={() => setIsEditable()}
+              resetUsername={form.handleCancelChanges}
+              setFormData={form.setFormData}
+              setIsEditable={setIsEditable}
             />
           )}
 
