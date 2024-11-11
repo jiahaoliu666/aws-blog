@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
 import { toast } from 'react-toastify';
@@ -15,16 +16,38 @@ interface FeedbackData {
 
 interface UseProfileFeedbackProps {
   user: User | null;
+  initialAttachments?: File[];
 }
 
-export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
+interface UseProfileFeedbackReturn {
+  feedback: FeedbackData;
+  setFeedback: (feedback: FeedbackData) => void;
+  attachments: File[];
+  setAttachments: (files: File[]) => void;
+  isSubmitting: boolean;
+  feedbackMessage: string | null;
+  handleSubmitFeedback: (submitData: {
+    title: string;
+    content: string;
+    category: string;
+    attachments: File[];
+  }) => Promise<void>;
+  handleAttachmentChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  removeAttachment: (index: number) => void;
+  resetFeedbackForm: () => void;
+}
+
+export const useProfileFeedback = ({ 
+  user,
+  initialAttachments = []
+}: UseProfileFeedbackProps): UseProfileFeedbackReturn => {
   const [feedback, setFeedback] = useState<FeedbackData>({
     title: '',
     content: '',
     category: '',
     rating: 0
   });
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<File[]>(initialAttachments);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
@@ -42,6 +65,8 @@ export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
       accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
     },
+    endpoint: `https://s3.ap-northeast-1.amazonaws.com`,
+    forcePathStyle: true,
   });
 
   const validateFeedback = (data: FeedbackData): boolean => {
@@ -71,42 +96,72 @@ export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
         continue;
       }
 
-      const fileKey = `feedback-attachments/${user?.sub}/${Date.now()}-${file.name}`;
-      const uploadParams = {
-        Bucket: 'aws-blog-feedback',
-        Key: fileKey,
-        Body: file,
-        ContentType: file.type,
-        ACL: 'public-read' as const
-      };
+      try {
+        const fileKey = `feedback-attachments/${user?.sub}/${Date.now()}-${file.name}`;
+        
+        // 使用 presigned URL 進行上傳
+        const putObjectCommand = new PutObjectCommand({
+          Bucket: 'aws-blog-feedback',
+          Key: fileKey,
+          ContentType: file.type,
+        });
 
-      const uploadCommand = new PutObjectCommand(uploadParams);
-      await s3Client.send(uploadCommand);
+        // 獲取預簽名 URL
+        const presignedUrl = await getSignedUrl(s3Client, putObjectCommand, {
+          expiresIn: 3600,
+        });
 
-      uploadedUrls.push(
-        `https://aws-blog-feedback.s3.amazonaws.com/${fileKey}`
-      );
+        // 使用 fetch 上傳文件
+        const uploadResponse = await fetch(presignedUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+        }
+
+        // 構建公開訪問 URL
+        const publicUrl = `https://aws-blog-feedback.s3.ap-northeast-1.amazonaws.com/${fileKey}`;
+        uploadedUrls.push(publicUrl);
+        
+        console.log('File uploaded successfully:', publicUrl);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        throw error;
+      }
     }
 
     return uploadedUrls;
   };
 
-  const handleSubmitFeedback = async () => {
+  const handleSubmitFeedback = async (submitData: {
+    title: string;
+    content: string;
+    category: string;
+    attachments: File[];
+  }) => {
     if (!user?.sub) {
       toast.error('請先登入');
       return;
     }
 
-    if (!validateFeedback(feedback)) return;
+    if (!validateFeedback(submitData)) return;
 
     try {
       setIsSubmitting(true);
       setFeedbackMessage('正在提交反饋...');
 
-      // 上傳附件
-      const attachmentUrls = attachments.length > 0 
-        ? await uploadAttachments(attachments)
-        : [];
+      // 檢查是否有附件需要上傳
+      let attachmentUrls: string[] = [];
+      if (submitData.attachments && submitData.attachments.length > 0) {
+        console.log('開始上傳附件:', submitData.attachments);
+        attachmentUrls = await uploadAttachments(submitData.attachments);
+        console.log('附件上傳完成:', attachmentUrls);
+      }
 
       // 發送郵件
       const emailParams = {
@@ -118,10 +173,10 @@ export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
             Html: {
               Data: `
                 <h2>用戶反饋</h2>
-                <p><strong>標題：</strong> ${feedback.title}</p>
-                <p><strong>類別：</strong> ${feedback.category}</p>
+                <p><strong>標題：</strong> ${submitData.title}</p>
+                <p><strong>類別：</strong> ${submitData.category}</p>
                 <p><strong>內容：</strong></p>
-                <p>${feedback.content}</p>
+                <p>${submitData.content}</p>
                 ${attachmentUrls.length > 0 ? `
                   <p><strong>附件：</strong></p>
                   <ul>
@@ -138,7 +193,7 @@ export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
             }
           },
           Subject: {
-            Data: `[用戶反饋] ${feedback.category}: ${feedback.title}`
+            Data: `[用戶反饋] ${submitData.category}: ${submitData.title}`
           }
         },
         Source: 'mail@awsblog365.com',
@@ -163,6 +218,7 @@ export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
       console.error('提交反饋失敗:', error);
       setFeedbackMessage('提交反饋失敗');
       toast.error('提交反饋失敗，請稍後重試');
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -206,6 +262,7 @@ export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
     feedback,
     setFeedback,
     attachments,
+    setAttachments,
     isSubmitting,
     feedbackMessage,
     handleSubmitFeedback,

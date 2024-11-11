@@ -119,8 +119,11 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     // 在這裡實現設置更改的邏輯
   };
 
-  // 使用 useProfileFeedback hook
-  const feedbackHook = useProfileFeedback({ user: currentUser });
+  // 使用 useProfileFeedback hook 時傳入 attachments
+  const feedbackHook = useProfileFeedback({ 
+    user: currentUser,
+    initialAttachments: attachments
+  });
 
   // 修改 handleSubmitFeedback 函數
   const handleSubmitFeedback = async () => {
@@ -132,16 +135,15 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
 
     setIsSubmitting(true);
     try {
-      // 更新 feedbackHook 的 feedback 狀態
-      feedbackHook.setFeedback({
+      // 直接使用 feedbackHook 的方法提交，包含當前的 feedback 和 attachments
+      await feedbackHook.handleSubmitFeedback({
         title: feedback.title,
         content: feedback.content,
-        category: feedback.category
+        category: feedback.category,
+        attachments: attachments
       });
       
-      // 直接呼叫 handleSubmitFeedback，不傳入參數
-      await feedbackHook.handleSubmitFeedback();
-      
+      // 重置表單
       setFeedback({
         category: '',
         content: '',
