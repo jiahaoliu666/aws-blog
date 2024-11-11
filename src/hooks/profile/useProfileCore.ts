@@ -132,6 +132,14 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
 
     setIsSubmitting(true);
     try {
+      // 更新 feedbackHook 的 feedback 狀態
+      feedbackHook.setFeedback({
+        title: feedback.title,
+        content: feedback.content,
+        category: feedback.category
+      });
+      
+      // 直接呼叫 handleSubmitFeedback，不傳入參數
       await feedbackHook.handleSubmitFeedback();
       
       setFeedback({

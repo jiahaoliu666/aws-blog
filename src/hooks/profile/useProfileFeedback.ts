@@ -132,7 +132,7 @@ export const useProfileFeedback = ({ user }: UseProfileFeedbackProps) => {
                 <p><strong>用戶資訊：</strong></p>
                 <p>用戶 ID：${user?.sub}</p>
                 <p>電子郵件：${user?.email}</p>
-                <p>姓名：${user?.username}</p>
+                <p>用戶名稱：${user?.username}</p>
                 <p>提交時間：${new Date().toLocaleString()}</p>
               `
             }
