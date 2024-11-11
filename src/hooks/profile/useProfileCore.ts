@@ -3,9 +3,16 @@ import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
 import { User } from '@/types/userType';
 import { useToastContext } from '@/context/ToastContext';
+import { useProfileFeedback } from './useProfileFeedback';
 
 interface UseProfileCoreProps {
   user?: User | null;
+}
+
+interface FeedbackData {
+  category: string;
+  content: string;
+  title: string;
 }
 
 export type UseProfileCoreReturn = {
@@ -21,12 +28,14 @@ export type UseProfileCoreReturn = {
   updateUser: (user: Partial<User>) => void;
   settings: any;
   handleSettingChange: (key: string, value: any) => void;
-  feedback: string;
-  setFeedback: (feedback: string) => void;
-  handleSubmitFeedback: (feedback: string) => void;
+  feedback: FeedbackData;
+  setFeedback: (feedback: FeedbackData) => void;
+  handleSubmitFeedback: () => Promise<void>;
   isSubmitting: boolean;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   errorMessage: string;
+  attachments: File[];
+  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
 };
 
 export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UseProfileCoreReturn => {
@@ -41,9 +50,14 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const feedback = '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [feedback, setFeedback] = useState<FeedbackData>({
+    category: '',
+    content: '',
+    title: ''
+  });
 
   // 初始化載入效果
   useEffect(() => {
@@ -105,12 +119,35 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     // 在這裡實現設置更改的邏輯
   };
 
-  const setFeedback = (feedback: string) => {
-    // 定義 setFeedback 的邏輯
-  };
+  // 使用 useProfileFeedback hook
+  const feedbackHook = useProfileFeedback({ user: currentUser });
 
-  const handleSubmitFeedback = (feedback: string) => {
-    // 在這裡實現提交反饋的邏輯
+  // 修改 handleSubmitFeedback 函數
+  const handleSubmitFeedback = async () => {
+    console.log('開始提交反饋:', { feedback, attachments });
+    if (!feedback.category || !feedback.content) {
+      showToast('請填寫必要欄位', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await feedbackHook.handleSubmitFeedback();
+      
+      setFeedback({
+        category: '',
+        content: '',
+        title: ''
+      });
+      setAttachments([]);
+      
+      showToast('反饋提交成功', 'success');
+    } catch (error) {
+      console.error('Feedback submission error:', error);
+      showToast('提交反饋時發生錯誤', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,7 +155,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     setIsSubmitting(true);
     setErrorMessage('');
     try {
-      // 實作提交邏輯
       showToast('更新成功', 'success');
     } catch (error) {
       showToast('更新失敗', 'error');
@@ -148,5 +184,7 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     isSubmitting,
     handleSubmit,
     errorMessage,
+    attachments,
+    setAttachments,
   };
 }; 

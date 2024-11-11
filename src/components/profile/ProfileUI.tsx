@@ -297,22 +297,21 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
 
             {core.activeTab === 'feedback' && (
               <FeedbackSection 
-                {...core}
-                feedback={{
-                  category: '',
-                  message: core.feedback || ''
-                }}
-                feedbackMessage={core.feedback || undefined}
-                setFeedback={(newFeedback) => {
-                  if (typeof newFeedback === 'object' && 'message' in newFeedback) {
-                    core.setFeedback(newFeedback.message);
-                  } else if (typeof newFeedback === 'string') {
-                    core.setFeedback(newFeedback);
-                  }
-                }}
-                handleSubmitFeedback={() => core.handleSubmitFeedback(core.feedback || '')}
+                feedback={core.feedback}
+                setFeedback={core.setFeedback}
+                handleSubmitFeedback={core.handleSubmitFeedback}
                 isSubmitting={core.isSubmitting}
                 userEmail={form.formData.email}
+                attachments={core.attachments}
+                handleAttachmentChange={(e) => {
+                  if (e.target.files) {
+                    const files = Array.from(e.target.files);
+                    core.setAttachments(prev => [...prev, ...files]);
+                  }
+                }}
+                removeAttachment={(index) => {
+                  core.setAttachments(prev => prev.filter((_, i) => i !== index));
+                }}
               />
             )}
 
