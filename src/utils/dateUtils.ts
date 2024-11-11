@@ -1,6 +1,6 @@
 export function formatTimeAgo(date: Date): string {
   try {
-    console.log('formatTimeAgo 輸入:', date); // 除錯日誌
+    console.log('formatTimeAgo 輸入:', date);
 
     if (!(date instanceof Date)) {
       console.error('輸入不是 Date 物件:', date);
@@ -13,24 +13,27 @@ export function formatTimeAgo(date: Date): string {
     }
 
     const now = new Date();
-    console.log('現在時間:', now); // 除錯日誌
+    console.log('現在時間:', now);
     
     const diffInMilliseconds = now.getTime() - date.getTime();
-    console.log('時間差(毫秒):', diffInMilliseconds); // 除錯日誌
+    console.log('時間差(毫秒):', diffInMilliseconds);
     
-    if (diffInMilliseconds < -5 * 60 * 1000) {
+    if (diffInMilliseconds < 0) {
+      if (Math.abs(diffInMilliseconds) < 5 * 60 * 1000) {
+        return '剛剛';
+      }
       console.warn('檢測到未來時間:', date);
-      return '剛剛';
+      return '無效時間';
     }
     
-    const seconds = Math.floor(Math.abs(diffInMilliseconds) / 1000);
+    const seconds = Math.floor(diffInMilliseconds / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
     const months = Math.floor(days / 30);
     const years = Math.floor(days / 365);
 
-    console.log('計算結果:', { years, months, days, hours, minutes, seconds }); // 除錯日誌
+    console.log('計算結果:', { years, months, days, hours, minutes, seconds });
 
     if (years > 0) return `${years} 年前`;
     if (months > 0) return `${months} 個月前`;

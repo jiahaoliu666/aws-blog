@@ -31,38 +31,57 @@ export type UseProfileActivityReturn = {
 
 const parseChineseDateTime = (timestamp: string): Date => {
   try {
-    console.log('開始解析時間:', timestamp); // 除錯日誌
+    console.log('開始解析時間:', timestamp);
+    
+    // 如果是 ISO 格式，直接返回
+    if (timestamp.includes('T') || timestamp.includes('Z')) {
+      return new Date(timestamp);
+    }
 
-    // 處理格式如 "2024-11-10 下午05:29:32"
+    // 處理中文格式 "2024-11-10 下午08:03:19"
     const [datePart, timePart] = timestamp.split(' ');
-    console.log('分割後:', { datePart, timePart }); // 除錯日誌
+    if (!datePart || !timePart) {
+      throw new Error('無效的時間格式');
+    }
 
-    // 直接處理時間部分，不使用正則表達式
-    const timePrefix = timePart.substring(0, 2); // "下午"
-    const timeString = timePart.substring(2);    // "05:29:32"
-    console.log('時間部分:', { timePrefix, timeString }); // 除錯日誌
-
-    const [hours, minutes, seconds] = timeString.split(':').map(Number);
     const [year, month, day] = datePart.split('-').map(Number);
+    const meridiem = timePart.substring(0, 2);
+    const timeString = timePart.substring(2);
+    const [hours, minutes, seconds] = timeString.split(':').map(Number);
+
+    // 驗證所有數值
+    if ([year, month, day, hours, minutes, seconds].some(num => isNaN(num))) {
+      throw new Error('時間格式包含無效數字');
+    }
 
     let adjustedHours = hours;
-    if (timePrefix === '下午' && hours < 12) {
+    if (meridiem === '下午' && hours < 12) {
       adjustedHours += 12;
-    } else if (timePrefix === '上午' && hours === 12) {
+    } else if (meridiem === '上午' && hours === 12) {
       adjustedHours = 0;
     }
 
-    console.log('調整後的時間:', {
-      year, month, day, hours: adjustedHours, minutes, seconds
-    }); // 除錯日誌
+    // 使用 Date.UTC 來創建時間
+    const date = new Date(Date.UTC(year, month - 1, day, adjustedHours, minutes, seconds));
+    
+    // 調整為本地時間
+    const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
 
-    const date = new Date(year, month - 1, day, adjustedHours, minutes, seconds);
-    console.log('最終日期物件:', date); // 除錯日誌
+    if (isNaN(localDate.getTime())) {
+      throw new Error('無效的日期物件');
+    }
 
-    return date;
+    console.log('解析結果:', {
+      original: timestamp,
+      parsed: localDate,
+      isValid: !isNaN(localDate.getTime())
+    });
+
+    return localDate;
   } catch (error) {
-    console.error('解析時間發生錯誤:', error, timestamp);
-    return new Date();
+    console.error('解析時間發生錯誤:', error);
+    // 返回一個有效的預設日期，而不是 new Date()
+    return new Date(Date.now());
   }
 };
 

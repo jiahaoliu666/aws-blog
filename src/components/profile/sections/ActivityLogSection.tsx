@@ -58,6 +58,27 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
     }
   };
 
+  const getDisplayTime = (activity: ActivityLog) => {
+    try {
+      // 檢查 parsedDate 是否為有效日期
+      if (activity.parsedDate && activity.parsedDate instanceof Date && !isNaN(activity.parsedDate.getTime())) {
+        return formatTimeAgo(activity.parsedDate);
+      }
+
+      // 如果 parsedDate 無效，嘗試直接解析 timestamp
+      const date = new Date(activity.timestamp);
+      if (!isNaN(date.getTime())) {
+        return formatTimeAgo(date);
+      }
+
+      // 如果都失敗了，返回原始時間戳
+      return activity.timestamp;
+    } catch (error) {
+      console.error('時間顯示錯誤:', error);
+      return activity.timestamp;
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="mb-4 flex justify-between items-center">
@@ -90,31 +111,7 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
                       shadow border-2 border-gray-300 hover:border-gray-400 transition-colors">
                       <FontAwesomeIcon icon={faClock} className="h-3.5 w-3.5" />
                       <span>
-                        {(() => {
-                          try {
-                            console.log('活動時間資料:', {
-                              parsedDate: activity.parsedDate,
-                              timestamp: activity.timestamp
-                            }); // 除錯日誌
-
-                            if (activity.parsedDate && activity.parsedDate instanceof Date) {
-                              console.log('使用 parsedDate:', activity.parsedDate); // 除錯日誌
-                              return formatTimeAgo(activity.parsedDate);
-                            }
-
-                            console.log('嘗試解析 timestamp:', activity.timestamp); // 除錯日誌
-                            const date = new Date(activity.timestamp);
-                            if (!isNaN(date.getTime())) {
-                              return formatTimeAgo(date);
-                            }
-
-                            console.log('無法解析時間'); // 除錯日誌
-                            return '無效日期';
-                          } catch (error) {
-                            console.error('時間格式化錯誤:', error);
-                            return '無效日期';
-                          }
-                        })()}
+                        {getDisplayTime(activity)}
                       </span>
                     </time>
                   </div>
