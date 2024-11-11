@@ -3,6 +3,7 @@ import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
 import { toast } from 'react-toastify';
+import { formatTimeAgo } from '@/utils/dateUtils';
 
 interface ActivityLog {
   id: string;
@@ -80,7 +81,7 @@ const parseChineseDateTime = (timestamp: string): Date => {
     return localDate;
   } catch (error) {
     console.error('解析時間發生錯誤:', error);
-    // 返回一個有效的預設日期，而不是 new Date()
+    // 返回一個效的預設日期，而不是 new Date()
     return new Date(Date.now());
   }
 };
@@ -127,25 +128,46 @@ export const useProfileActivity = ({ user }: UseProfileActivityProps): UseProfil
       }
 
       const activities = response.Items.map(item => {
-        const timestamp = item.timestamp.S || new Date().toISOString();
-        console.log('原始時間戳:', timestamp); // 除錯日誌
-        
-        const parsedDate = parseChineseDateTime(timestamp);
-        console.log('解析後的日期:', parsedDate); // 除錯日誌
-        
-        const activity = {
+        const timestamp = item.timestamp?.S || '';
+        let parsedDate: Date;
+
+        try {
+          // 解析時間格式
+          if (timestamp.includes('T') || timestamp.includes('Z')) {
+            // 處理 ISO 格式
+            parsedDate = new Date(timestamp);
+          } else {
+            // 處理中文格式 "2024-11-10 下午10:52:32"
+            const [datePart, timePart] = timestamp.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const meridiem = timePart.substring(0, 2);
+            const timeString = timePart.substring(2);
+            const [hours, minutes, seconds] = timeString.split(':').map(Number);
+
+            let adjustedHours = hours;
+            if (meridiem === '下午' && hours < 12) {
+              adjustedHours += 12;
+            } else if (meridiem === '上午' && hours === 12) {
+              adjustedHours = 0;
+            }
+
+            parsedDate = new Date(year, month - 1, day, adjustedHours, minutes, seconds);
+          }
+        } catch (error) {
+          console.error('解析時間錯誤:', error);
+          parsedDate = new Date();
+        }
+
+        return {
           id: item.id?.S || `${Date.now()}-${Math.random()}`,
           userId: item.userId.S!,
           action: item.action.S || '',
-          timestamp,
+          timestamp: formatTimeAgo(parsedDate),
           parsedDate,
           details: item.details?.S,
           type: item.type?.S || 'user_action',
           description: item.description?.S || item.action.S || '未知活動'
         };
-        
-        console.log('建立的活動物件:', activity); // 除錯日誌
-        return activity;
       });
 
       // 確保時間排序正確

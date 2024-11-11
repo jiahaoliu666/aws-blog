@@ -60,19 +60,12 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
 
   const getDisplayTime = (activity: ActivityLog) => {
     try {
-      // 檢查 parsedDate 是否為有效日期
-      if (activity.parsedDate && activity.parsedDate instanceof Date && !isNaN(activity.parsedDate.getTime())) {
-        return formatTimeAgo(activity.parsedDate);
+      const date = activity.parsedDate;
+      if (!(date instanceof Date) || isNaN(date.getTime())) {
+        console.error('無效的日期:', date);
+        return activity.timestamp;
       }
-
-      // 如果 parsedDate 無效，嘗試直接解析 timestamp
-      const date = new Date(activity.timestamp);
-      if (!isNaN(date.getTime())) {
-        return formatTimeAgo(date);
-      }
-
-      // 如果都失敗了，返回原始時間戳
-      return activity.timestamp;
+      return formatTimeAgo(date);
     } catch (error) {
       console.error('時間顯示錯誤:', error);
       return activity.timestamp;
