@@ -52,7 +52,7 @@ src/
 │   │   │   ├── HistorySection.tsx  // 觀看紀錄區塊
 │   │   │   └── FeedbackSection.tsx    // 意見反饋區塊
 │   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
-│   │   ├── ProfileErrorBoundary.tsx   // 錯誤邊界組件
+│   │   │   ├── AccountSection.tsx     // 帳號管理區塊
 │   │   ├── common/                 // 共用組件
 │   │   │   └── Sidebar.tsx         // 側邊欄導航組件
 │   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
@@ -74,6 +74,7 @@ src/
 │   │   ├── useProfileTheme.ts      // 主題設定（深色模式、字體等）
 │   │   ├── useProfilePassword.ts   // 密碼變更和驗證
 │   │   ├── useProfilePreferences.ts // 偏好設定
+│   │   ├── useProfileAccount.ts    // 帳號管理
 │   │   └── index.ts                // profile hooks 和共用類型定義
 │   ├── news
 │   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
