@@ -62,7 +62,6 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
     try {
       const date = activity.parsedDate;
       if (!(date instanceof Date) || isNaN(date.getTime())) {
-        console.error('無效的日期:', date);
         return activity.timestamp;
       }
       return formatTimeAgo(date);

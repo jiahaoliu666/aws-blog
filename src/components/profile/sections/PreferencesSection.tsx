@@ -16,20 +16,48 @@ interface SettingsSectionProps {
     theme: 'light' | 'dark';
     language: string;
     autoSummarize: boolean;
-    viewMode: 'grid' | 'list' | 'compact';
+    viewMode: 'grid' | 'list';
   };
   handleSettingChange: (key: string, value: any) => void;
-  onSave: (settings: { theme: 'light' | 'dark'; language: string; autoSummarize: boolean; viewMode: 'grid' | 'list' | 'compact'; }) => void;
+  onSave: (settings: any) => Promise<void>;
   isLoading: boolean;
 }
 
-const SettingsSection: React.FC<SettingsSectionProps> = ({
+const PreferencesSection: React.FC<SettingsSectionProps> = ({
   settings: initialSettings,
   handleSettingChange,
   onSave,
   isLoading
 }) => {
   const [tempSettings, setTempSettings] = React.useState(initialSettings);
+
+  const handleSettingsChange = (key: string, value: any) => {
+    console.log('設定變更:', key, value);
+    const newSettings = {
+      ...tempSettings,
+      [key]: value
+    };
+    setTempSettings(newSettings);
+    handleSettingChange(key, value);
+  };
+
+  const handleSave = async () => {
+    console.log('正在儲存設定:', tempSettings);
+    try {
+      await onSave({
+        theme: tempSettings.theme,
+        language: tempSettings.language,
+        viewMode: tempSettings.viewMode,
+        autoSummarize: tempSettings.autoSummarize
+      });
+    } catch (error) {
+      console.error('儲存設定失敗:', error);
+    }
+  };
+
+  React.useEffect(() => {
+    setTempSettings(initialSettings);
+  }, [initialSettings]);
 
   return (
     <div className="w-full">
@@ -56,7 +84,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               ].map((theme) => (
                 <button
                   key={theme.id}
-                  onClick={() => handleSettingChange('theme', theme.id)}
+                  onClick={() => handleSettingsChange('theme', theme.id)}
                   className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                     tempSettings.theme === theme.id
                       ? 'bg-blue-50 border-2 border-blue-500'
@@ -93,7 +121,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               ].map((view) => (
                 <button
                   key={view.id}
-                  onClick={() => handleSettingChange('viewMode', view.id)}
+                  onClick={() => handleSettingsChange('viewMode', view.id)}
                   className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                     tempSettings.viewMode === view.id
                       ? 'bg-blue-50 border-2 border-blue-500'
@@ -129,7 +157,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 <input
                   type="checkbox"
                   checked={tempSettings.autoSummarize}
-                  onChange={(e) => handleSettingChange('autoSummarize', e.target.checked)}
+                  onChange={(e) => handleSettingsChange('autoSummarize', e.target.checked)}
                   className="sr-only peer"
                   disabled={isLoading}
                 />
@@ -154,7 +182,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             </div>
             <select
               value={tempSettings.language}
-              onChange={(e) => handleSettingChange('language', e.target.value)}
+              onChange={(e) => handleSettingsChange('language', e.target.value)}
               className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isLoading}
             >
@@ -167,7 +195,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
         {/* 儲存按鈕 */}
         <div className="flex justify-end pt-4">
           <button
-            onClick={() => onSave(tempSettings)}
+            onClick={handleSave}
             disabled={isLoading}
             className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
           >
@@ -186,4 +214,4 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   );
 };
 
-export default SettingsSection;
+export default PreferencesSection;

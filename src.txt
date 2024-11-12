@@ -48,7 +48,7 @@ src/
 │   │   │   ├── ProfileSection.tsx     // 個人資訊區塊
 │   │   │   ├── PasswordSection.tsx    // 修改密碼區塊
 │   │   │   ├── NotificationSection.tsx   // 訂閱通知區塊
-│   │   │   ├── SettingsSection.tsx    // 偏好設定區塊
+│   │   │   ├── PreferencesSection.tsx    // 偏好設定區塊
 │   │   │   ├── HistorySection.tsx  // 觀看紀錄區塊
 │   │   │   └── FeedbackSection.tsx    // 意見反饋區塊
 │   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊

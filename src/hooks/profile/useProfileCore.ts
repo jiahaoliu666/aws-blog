@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
 import { User } from '@/types/userType';
@@ -59,6 +59,21 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     title: ''
   });
 
+  // 修改 settings 和 handleSettingChange 的實現
+  const [settings, setSettings] = useState({
+    theme: 'light',
+    language: 'zh-TW',
+    viewMode: 'grid',
+    autoSummarize: false
+  });
+
+  const handleSettingChange = useCallback((key: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }, []);
+
   // 初始化載入效果
   useEffect(() => {
     setIsLoading(true);
@@ -105,18 +120,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
       showToast('登出時發生錯誤', 'error');
       console.error('Logout error:', error);
     }
-  };
-
-  // 定義 getSettingsFromSomewhere 函數
-  const getSettingsFromSomewhere = (): any => {
-    // 在這裡返回一些設定
-    return {};
-  };
-
-  const settings = getSettingsFromSomewhere();
-
-  const handleSettingChange = (key: string, value: any) => {
-    // 在這裡實現設置更改的邏輯
   };
 
   // 使用 useProfileFeedback hook 時傳入 attachments

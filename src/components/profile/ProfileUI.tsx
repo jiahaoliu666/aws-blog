@@ -18,7 +18,7 @@ import Sidebar from './common/Sidebar';
 import ProfileSection from './sections/ProfileSection';
 import PasswordSection from './sections/PasswordSection';
 import NotificationSection from './sections/NotificationSection';
-import SettingsSection from './sections/SettingsSection';
+import PreferencesSection from './sections/PreferencesSection';
 import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
@@ -27,6 +27,7 @@ import { FormData } from '@/types/profileTypes';
 import { ToastProvider } from '@/context/ToastContext';
 import AccountSection from './sections/AccountSection';
 import { useProfileAccount } from '@/hooks/profile';
+import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 
 interface ProfileUIProps {
   user: {
@@ -56,7 +57,8 @@ interface NotificationSettings {
 interface LocalSettings {
   theme: 'light' | 'dark';
   language: string;
-  autoplay: boolean;
+  autoSummarize: boolean;
+  viewMode: 'grid' | 'list' | 'compact';
   notifications: boolean;
   notificationPreferences: NotificationSettings;
   privacy: 'private' | 'public';
@@ -84,20 +86,23 @@ const defaultNotificationPreferences: NotificationSettings = {
 const defaultSettings: LocalSettings = {
   theme: 'light',
   language: 'zh-TW',
-  autoplay: false,
+  autoSummarize: false,
+  viewMode: 'grid',
   notifications: true,
   notificationPreferences: defaultNotificationPreferences,
   privacy: 'private'
 };
 
-const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploadMessage, passwordMessage, setIsEditable }) => {
+const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, passwordMessage, setIsEditable }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const { user: authUser, logoutUser } = useAuthContext();
 
-  const core = useProfileCore({ user });
-  const form = useProfileForm({ user, updateUser: core.updateUser }) as unknown as { 
+  const currentUser = authUser || propUser;
+
+  const core = useProfileCore({ user: currentUser });
+  const form = useProfileForm({ user: currentUser, updateUser: core.updateUser }) as unknown as { 
     formData: FormData, 
     handleChange: (e: any) => void,
     setFormData: React.Dispatch<React.SetStateAction<FormData>>,
@@ -109,22 +114,24 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
     handleSaveProfileChanges: () => void,
     isLoading: boolean
   };
-  const avatar = useProfileAvatar({ user, updateUser: core.updateUser, setFormData: form.setFormData });
-  const password = useProfilePassword({ user, handleLogout: logoutUser });
-  const activity = useProfileActivity({ user });
-  const articles = useProfileArticles({ user });
+  const avatar = useProfileAvatar({ user: currentUser, updateUser: core.updateUser, setFormData: form.setFormData });
+  const password = useProfilePassword({ user: currentUser, handleLogout: logoutUser });
+  const activity = useProfileActivity({ user: currentUser });
+  const articles = useProfileArticles({ user: currentUser });
   const notifications = useProfileNotifications();
   const lineVerification = useLineVerification({ 
-    user,
+    user: currentUser,
     updateUserLineSettings: () => Promise.resolve()
   });
-  const lineSettings = useLineSettings({ user });
+  const lineSettings = useLineSettings({ user: currentUser });
 
   const [localSettings, setLocalSettings] = useState<LocalSettings>(defaultSettings);
 
   const [verificationCode, setVerificationCode] = useState('');
 
-  const account = useProfileAccount({ user });
+  const account = useProfileAccount({ user: currentUser });
+
+  const preferences = useProfilePreferences();
 
   useEffect(() => {
     if (core.settings) {
@@ -142,13 +149,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
     if (!isClient) return;
 
     const userInStorage = window.localStorage.getItem("user");
-    if (!authUser && !userInStorage) {
-      const timer = setTimeout(() => {
-        router.push('/auth/login');
-      }, 3000);
-      return () => clearTimeout(timer);
+    if (!currentUser && !userInStorage) {
+      router.push('/auth/login');
+      return;
     }
-  }, [authUser, router, isClient]);
+  }, [currentUser, router, isClient]);
 
   const handleVerifyLineIdAndCode = async () => {
     // 實作驗證邏輯
@@ -160,7 +165,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user?.userId,
+          userId: currentUser?.userId,
           lineId: lineSettings.lineUserId,
           verificationCode
         }),
@@ -179,7 +184,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
   if (!isClient) return null;
 
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
-  if (!user && !storedUser) {
+  if (!currentUser && !storedUser) {
     return (
       <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
         <Loader className="mb-4" size="large" />
@@ -280,7 +285,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
                 verifyLineIdAndCode={handleVerifyLineIdAndCode}
                 handleVerification={handleVerifyLineIdAndCode}
                 onCopyUserId={() => {/* 實作複製用戶ID的邏輯 */}}
-                userId={user?.userId || ''}
+                userId={currentUser?.userId || ''}
                 handleNotificationChange={(type) => {/* 實作通知設定變更的邏輯 */}}
                 notificationSettings={{
                   email: false,
@@ -291,11 +296,30 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
               />
             )}
 
-            {core.activeTab === 'settings' && (
-              <SettingsSection 
-                {...core}
-                settings={localSettings}
-                onSave={() => core.handleSettingChange('settings', localSettings)}
+            {core.activeTab === 'preferences' && (
+              <PreferencesSection 
+                settings={{
+                  theme: preferences.preferences.theme,
+                  language: preferences.preferences.language,
+                  viewMode: preferences.preferences.viewMode,
+                  autoSummarize: preferences.preferences.autoSummarize
+                }}
+                handleSettingChange={(key, value) => {
+                  preferences.handleSettingChange(key, value);
+                }}
+                onSave={async (newSettings) => {
+                  if (!currentUser?.id && !currentUser?.sub) {
+                    throw new Error('請先登入');
+                  }
+                  
+                  const settingsWithUserId = {
+                    ...newSettings,
+                    userId: currentUser.id || currentUser.sub
+                  };
+                  
+                  await preferences.updatePreferences(settingsWithUserId);
+                }}
+                isLoading={preferences.isLoading}
               />
             )}
 
