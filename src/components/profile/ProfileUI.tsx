@@ -28,6 +28,7 @@ import { ToastProvider } from '@/context/ToastContext';
 import AccountSection from './sections/AccountSection';
 import { useProfileAccount } from '@/hooks/profile';
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
+import '@aws-amplify/ui-react/styles.css';  
 
 interface ProfileUIProps {
   user: {
@@ -186,10 +187,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
   if (!currentUser && !storedUser) {
     return (
-      <div className="flex-grow flex flex-col justify-center items-center mt-10 p-6">
-        <Loader className="mb-4" size="large" />
-        <h2 className="text-2xl font-semibold text-red-600">請先登入!</h2>
-        <p className="text-lg text-gray-700">您將重新導向至登入頁面...</p>
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">
+        <Navbar />
+        <div className="flex items-center justify-center flex-grow px-4 py-8">
+          <div className="text-center py-10">
+            <Loader className="mb-4" size="large" />
+            <h2 className="text-2xl font-semibold text-red-600">請先登入！</h2>
+            <p className="text-lg text-gray-700">重新導向至登入頁面...</p>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
