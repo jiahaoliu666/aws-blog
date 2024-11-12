@@ -3,18 +3,23 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faMoon, 
   faSun, 
-  faGlobe, 
   faPalette,
   faLanguage,
+  faMagicWandSparkles,
+  faTableCells,
+  faList,
+  faTableColumns,
 } from '@fortawesome/free-solid-svg-icons';
 
 interface SettingsSectionProps {
   settings: {
-    theme: 'light' | 'dark' | 'system';
+    theme: 'light' | 'dark';
     language: string;
+    autoSummarize: boolean;
+    viewMode: 'grid' | 'list' | 'compact';
   };
   handleSettingChange: (key: string, value: any) => void;
-  onSave: (settings: { theme: 'light' | 'dark' | 'system'; language: string; }) => void;
+  onSave: (settings: { theme: 'light' | 'dark'; language: string; autoSummarize: boolean; viewMode: 'grid' | 'list' | 'compact'; }) => void;
   isLoading: boolean;
 }
 
@@ -45,26 +50,94 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {['light', 'dark', 'system'].map((theme) => (
+              {[
+                { id: 'light', icon: faSun, label: '淺色模式' },
+                { id: 'dark', icon: faMoon, label: '深色模式' }
+              ].map((theme) => (
                 <button
-                  key={theme}
-                  onClick={() => handleSettingChange('theme', theme)}
+                  key={theme.id}
+                  onClick={() => handleSettingChange('theme', theme.id)}
                   className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                    tempSettings.theme === theme
+                    tempSettings.theme === theme.id
                       ? 'bg-blue-50 border-2 border-blue-500'
                       : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
                   }`}
                   disabled={isLoading}
                 >
                   <FontAwesomeIcon 
-                    icon={theme === 'light' ? faSun : theme === 'dark' ? faMoon : faGlobe}
-                    className={`text-xl ${tempSettings.theme === theme ? 'text-blue-500' : 'text-gray-600'}`}
+                    icon={theme.icon}
+                    className={`text-xl ${tempSettings.theme === theme.id ? 'text-blue-500' : 'text-gray-600'}`}
                   />
-                  <span className={`font-medium ${tempSettings.theme === theme ? 'text-blue-700' : 'text-gray-700'}`}>
-                    {theme === 'light' ? '淺色模式' : theme === 'dark' ? '深色模式' : '系統預設'}
+                  <span className={`font-medium ${tempSettings.theme === theme.id ? 'text-blue-700' : 'text-gray-700'}`}>
+                    {theme.label}
                   </span>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+        {/* 視圖設定 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <FontAwesomeIcon icon={faTableColumns} className="text-xl text-blue-500" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">視圖設定</h3>
+                <p className="text-sm text-gray-600">選擇您偏好的顯示方式</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { id: 'grid', icon: faTableCells, label: '網格視圖' },
+                { id: 'list', icon: faList, label: '列表視圖' }
+              ].map((view) => (
+                <button
+                  key={view.id}
+                  onClick={() => handleSettingChange('viewMode', view.id)}
+                  className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                    tempSettings.viewMode === view.id
+                      ? 'bg-blue-50 border-2 border-blue-500'
+                      : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                  }`}
+                  disabled={isLoading}
+                >
+                  <FontAwesomeIcon 
+                    icon={view.icon}
+                    className={`text-xl ${tempSettings.viewMode === view.id ? 'text-blue-500' : 'text-gray-600'}`}
+                  />
+                  <span className={`font-medium ${tempSettings.viewMode === view.id ? 'text-blue-700' : 'text-gray-700'}`}>
+                    {view.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 一鍵總結設定 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <FontAwesomeIcon icon={faMagicWandSparkles} className="text-xl text-blue-500" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">一鍵總結</h3>
+                <p className="text-sm text-gray-600">自動顯示總結</p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={tempSettings.autoSummarize}
+                  onChange={(e) => handleSettingChange('autoSummarize', e.target.checked)}
+                  className="sr-only peer"
+                  disabled={isLoading}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <span className="ml-3 text-sm font-medium text-gray-700">
+                  {tempSettings.autoSummarize ? '已啟用' : '已停用'}
+                </span>
+              </label>
             </div>
           </div>
         </div>
@@ -75,7 +148,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faLanguage} className="text-xl text-blue-500" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">語言設定</h3>
+                <h3 className="text-lg font-semibold text-gray-800">文章語言設定</h3>
                 <p className="text-sm text-gray-600">選擇您偏好的顯示語言</p>
               </div>
             </div>
@@ -87,7 +160,6 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             >
               <option value="zh-TW">繁體中文</option>
               <option value="en">English</option>
-              <option value="ja">日本語</option>
             </select>
           </div>
         </div>
