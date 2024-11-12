@@ -29,6 +29,7 @@ import AccountSection from './sections/AccountSection';
 import { useProfileAccount } from '@/hooks/profile';
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import '@aws-amplify/ui-react/styles.css';  
+import { useToast } from '@/hooks/toast/useToast';
 
 interface ProfileUIProps {
   user: {
@@ -132,7 +133,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   const account = useProfileAccount({ user: currentUser });
 
-  const preferences = useProfilePreferences();
+  const { preferences, updatePreferences, isLoading } = useProfilePreferences();
 
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showRedirectMessage, setShowRedirectMessage] = useState(false);
@@ -240,6 +241,15 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     core.handleSettingChange('notificationPreferences', updatedPreferences);
   };
 
+  const handleSettingChange = (key: string, value: any) => {
+    // ... 處理設定變更
+  };
+
+  const handleSave = async (settings: any) => {
+    console.log('接收到要儲存的設定:', settings);
+    await updatePreferences(settings);
+  };
+
   return (
     <ToastProvider>
       <div className="min-h-screen bg-gray-50">
@@ -329,29 +339,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
             )}
 
             {core.activeTab === 'preferences' && (
-              <PreferencesSection 
-                settings={{
-                  theme: preferences.preferences.theme,
-                  language: preferences.preferences.language,
-                  viewMode: preferences.preferences.viewMode,
-                  autoSummarize: preferences.preferences.autoSummarize
-                }}
-                handleSettingChange={(key, value) => {
-                  preferences.handleSettingChange(key, value);
-                }}
-                onSave={async (newSettings) => {
-                  if (!currentUser?.id && !currentUser?.sub) {
-                    throw new Error('請先登入');
-                  }
-                  
-                  const settingsWithUserId = {
-                    ...newSettings,
-                    userId: currentUser.id || currentUser.sub
-                  };
-                  
-                  await preferences.updatePreferences(settingsWithUserId);
-                }}
-                isLoading={preferences.isLoading}
+              <PreferencesSection
+                settings={preferences}
+                handleSettingChange={handleSettingChange}
+                onSave={handleSave}
+                isLoading={isLoading}
               />
             )}
 

@@ -10,6 +10,7 @@ import {
   faList,
   faTableColumns,
 } from '@fortawesome/free-solid-svg-icons';
+import { useAuthContext } from '@/context/AuthContext';
 
 interface SettingsSectionProps {
   settings: {
@@ -29,6 +30,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
   onSave,
   isLoading
 }) => {
+  const { user } = useAuthContext();
   const [tempSettings, setTempSettings] = React.useState(initialSettings);
 
   const handleSettingsChange = (key: string, value: any) => {
@@ -42,16 +44,23 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
   };
 
   const handleSave = async () => {
-    console.log('正在儲存設定:', tempSettings);
+    const userId = user?.id || user?.sub;
+    
+    if (!userId) {
+      console.error('找不到用戶ID，user:', user);
+      return;
+    }
+
     try {
-      await onSave({
-        theme: tempSettings.theme,
-        language: tempSettings.language,
-        viewMode: tempSettings.viewMode,
-        autoSummarize: tempSettings.autoSummarize
-      });
+      const settingsToSave = {
+        ...tempSettings,
+        userId: userId
+      };
+      
+      console.log('準備儲存的設定:', settingsToSave);
+      await onSave(settingsToSave);
     } catch (error) {
-      console.error('儲存設定失敗:', error);
+      console.error('儲存設定時發生錯誤:', error);
     }
   };
 

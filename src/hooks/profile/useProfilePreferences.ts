@@ -3,6 +3,7 @@ import { useToast } from '../toast/useToast';
 import { useAuthContext } from '@/context/AuthContext';
 import { PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient } from '@/utils/dynamodb';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 const TABLE_NAME = 'AWS_Blog_UserPreferences';
 
@@ -73,22 +74,30 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
 
   // 更新設定
   const updatePreferences = useCallback(async (newSettings: PreferenceSettings & { userId: string }) => {
-    if (!authUser?.id && !authUser?.sub) {
-      showToast('請先登入', 'error');
-      return Promise.reject(new Error('請先登入'));
+    console.log('開始更新設定，收到的設定值:', newSettings);
+    
+    if (!newSettings.userId) {
+      console.error('未找到用戶ID');
+      showToast('無法儲存設定', 'error', {
+        description: '找不到用戶ID，請重新登入',
+        position: 'top-right',
+        duration: 3000
+      });
+      return Promise.reject(new Error('找不到用戶ID'));
     }
 
     setIsLoading(true);
     try {
-      const userId = newSettings.userId || authUser.id || authUser.sub;
-      console.log('正在更新使用者設定:', userId);
-
       const updateData = {
-        ...newSettings,
+        userId: newSettings.userId,
+        theme: newSettings.theme,
+        language: newSettings.language,
+        viewMode: newSettings.viewMode,
+        autoSummarize: newSettings.autoSummarize,
         updatedAt: new Date().toISOString()
       };
 
-      console.log('更新資料:', updateData);
+      console.log('準備發送到 DynamoDB 的數據:', updateData);
 
       await docClient.send(new PutCommand({
         TableName: TABLE_NAME,
@@ -97,27 +106,38 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
 
       setPreferences(newSettings);
       localStorage.setItem('userPreferences', JSON.stringify(newSettings));
-      showToast('設定已更新', 'success');
-      console.log('設定更新成功');
+      
+      showToast('設定已更新', 'success', {
+        description: '您的偏好設定已成功儲存',
+        position: 'top-right',
+        duration: 3000,
+        icon: faSave
+      });
       
     } catch (err) {
-      console.error('更新偏好設定失敗:', err);
+      console.error('更新偏好設定失敗，詳細錯誤:', err);
       showToast('更新失敗', 'error', {
-        description: '請確認您的網路連線並重試'
+        description: '設定更新失敗，請稍後再試',
+        position: 'top-right',
+        duration: 4000
       });
       throw err;
     } finally {
       setIsLoading(false);
     }
-  }, [authUser, showToast]);
+  }, [showToast]);
 
   // 處理設定變更
   const handleSettingChange = useCallback((key: string, value: any) => {
     console.log('設定變更:', key, value);
-    setPreferences(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setPreferences(prev => {
+      const newPreferences = {
+        ...prev,
+        [key]: value
+      };
+      console.log('更新後的設定狀態:', newPreferences);
+      return newPreferences;
+    });
   }, []);
 
   // 初始載入設定
