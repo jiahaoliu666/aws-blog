@@ -46,63 +46,59 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   filteredFavoritesCount,  
   language,  
   setLanguage,  
-  toggleShowSummaries,  
   showSummaries,  
   setShowSummaries  
 }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const { user } = useAuthContext();
   const { preferences, updatePreferences } = useProfilePreferences();
+  const { user } = useAuthContext();
 
-  React.useEffect(() => {
-    if (preferences) {
-      setShowSummaries(preferences.autoSummarize);
-      setIsDarkMode(preferences.theme === 'dark');
-      setGridView(preferences.viewMode === 'grid');
-      setLanguage(preferences.language);
-    }
-  }, [preferences]);
-
-  // 處理切換並儲存設定
-  const handleToggleWithPreference = async (key: string, value: boolean) => {
+  // 處理偏好設定的變更並同時更新到 AWS
+  const handlePreferenceChange = async (key: string, value: any) => {
     if (!user?.id) return;
 
-    // 根據不同的切換更新對應的狀態和偏好設定
-    switch (key) {
-      case 'autoSummarize':
-        setShowSummaries(value);
-        await updatePreferences({
-          ...preferences,
-          userId: user.id,
-          autoSummarize: value
-        });
-        break;
-      case 'theme':
-        setIsDarkMode(value);
-        await updatePreferences({
-          ...preferences,
-          userId: user.id,
-          theme: value ? 'dark' : 'light'
-        });
-        break;
-      case 'viewMode':
-        setGridView(value);
-        await updatePreferences({
-          ...preferences,
-          userId: user.id,
-          viewMode: value ? 'grid' : 'list'
-        });
-        break;
-      case 'language':
-        setLanguage(value ? 'zh-TW' : 'en');
-        await updatePreferences({
-          ...preferences,
-          userId: user.id,
-          language: value ? 'zh-TW' : 'en'
-        });
-        break;
+    // 更新到 AWS
+    try {
+      await updatePreferences({
+        ...preferences,
+        userId: user.id,
+        [key]: value
+      });
+    } catch (error) {
+      console.error('更新偏好設定失敗:', error);
     }
   };
+
+  // 修改切換按鈕的處理函數
+  const handleDarkModeToggle = (checked: boolean) => {
+    setIsDarkMode(checked);
+    handlePreferenceChange('theme', checked ? 'dark' : 'light');
+  };
+
+  const handleViewModeToggle = (checked: boolean) => {
+    setGridView(checked);
+    handlePreferenceChange('viewMode', checked ? 'list' : 'grid');
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    handlePreferenceChange('language', value);
+  };
+
+  const handleSummariesToggle = (checked: boolean) => {
+    setShowSummaries(checked);
+    handlePreferenceChange('autoSummarize', checked);
+  };
+
+  // 初始化時從 preferences 載入設定
+  React.useEffect(() => {
+    if (preferences) {
+      setIsDarkMode(preferences.theme === 'dark');
+      setGridView(preferences.viewMode === 'list');
+      setLanguage(preferences.language);
+      setShowSummaries(preferences.autoSummarize);
+    }
+  }, [preferences]);
 
   return (
     <div className="mb-4 p-4 max-w-full">
@@ -128,14 +124,13 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
         </button>
       </div>
 
-      {/* 使用響應式類別來控制佈局 */}
       <div className={`flex flex-col lg:flex-row lg:flex-wrap items-center gap-4 max-w-full ${isMenuOpen ? 'block' : 'hidden'} lg:flex`}>
         <SwitchField
           isDisabled={false}
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
           labelPosition="start"
           isChecked={showSummaries}
-          onChange={(e) => handleToggleWithPreference('autoSummarize', e.target.checked)}
+          onChange={(e) => handleSummariesToggle(e.target.checked)}
         />
         <SwitchField
           isDisabled={false}
@@ -149,7 +144,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}
           labelPosition="start"
           isChecked={isDarkMode}
-          onChange={(e) => handleToggleWithPreference('theme', e.target.checked)}
+          onChange={(e) => handleDarkModeToggle(e.target.checked)}
         />
         <SwitchField
           className="hidden lg:block"
@@ -157,7 +152,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}
           labelPosition="start"
           isChecked={gridView}
-          onChange={(e) => handleToggleWithPreference('viewMode', e.target.checked)}
+          onChange={(e) => handleViewModeToggle(e.target.checked)}
         />
         <div className="flex flex-col md:flex-row items-center gap-2 ">
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>日期：</label>
@@ -196,7 +191,7 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           <label className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>語言：</label>
           <select
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+            onChange={(e) => handleLanguageChange(e.target.value)}
             className={`${isDarkMode ? "bg-gray-700 text-gray-200" : "bg-white text-gray-900"} border border-gray-300 rounded-md p-2 md:w-32`}
           >
             <option value="zh-TW">繁體中文</option>
