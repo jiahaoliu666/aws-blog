@@ -141,10 +141,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   const { 
     settings: notificationSettings, 
-    tempSettings,
+    tempSettings: { line, email, ...otherSettings } = defaultNotificationPreferences,
     loading: notificationsLoading, 
     error: notificationsError, 
-    handleToggle,
+    handleToggle: handleNotificationToggle,
     saveSettings: updateNotificationSettings 
   } = useNotificationSettings();
 
@@ -335,8 +335,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               <NotificationSection 
                 isLoading={notificationsLoading}
                 saveAllSettings={handleSaveNotificationSettings}
-                notificationSettings={tempSettings}
-                handleNotificationChange={handleToggle}
+                notificationSettings={{
+                  line,
+                  email,
+                  browser: false,
+                  mobile: false,
+                  all: false,
+                  ...otherSettings
+                }}
+                formData={form.formData}
+                handleNotificationChange={(type: keyof NotificationSettings) => {
+                  if (type === 'line' || type === 'email') {
+                    handleNotificationToggle(type);
+                  }
+                }}
                 isVerifying={false}
                 lineId={lineSettings.lineUserId}
                 setLineId={lineSettings.setLineUserId}

@@ -3,19 +3,13 @@ import { NotificationSettings } from '@/types/profileTypes';
 import { logger } from '@/utils/logger';
 
 export const useNotificationSettings = () => {
-  const [settings, setSettings] = useState<NotificationSettings>({
+  const [settings, setSettings] = useState<Pick<NotificationSettings, 'email' | 'line'>>({
     email: false,
-    line: false,
-    browser: false,
-    mobile: false,
-    all: false
+    line: false
   });
-  const [tempSettings, setTempSettings] = useState<NotificationSettings>({
+  const [tempSettings, setTempSettings] = useState<Pick<NotificationSettings, 'email' | 'line'>>({
     email: false,
-    line: false,
-    browser: false,
-    mobile: false,
-    all: false
+    line: false
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -34,10 +28,7 @@ export const useNotificationSettings = () => {
         const data = await response.json();
         const newSettings = {
           email: data.email ?? false,
-          line: data.line ?? false,
-          browser: false,
-          mobile: false,
-          all: false
+          line: data.line ?? false
         };
         setSettings(newSettings);
         setTempSettings(newSettings);
@@ -52,27 +43,20 @@ export const useNotificationSettings = () => {
     fetchSettings();
   }, []);
 
-  const handleToggle = (type: keyof NotificationSettings) => {
-    if (type === 'email' || type === 'line') {
-      setTempSettings(prev => {
-        const newSettings = {
-          ...prev,
-          [type]: !prev[type]
-        };
-        setHasChanges(JSON.stringify(newSettings) !== JSON.stringify(settings));
-        return newSettings;
-      });
-    }
+  const handleToggle = (type: 'email' | 'line') => {
+    setTempSettings(prev => {
+      const newSettings = {
+        ...prev,
+        [type]: !prev[type]
+      };
+      setHasChanges(JSON.stringify(newSettings) !== JSON.stringify(settings));
+      return newSettings;
+    });
   };
 
   const saveSettings = async (userId: string) => {
     try {
       setLoading(true);
-      
-      const settingsToSave = {
-        email: tempSettings.email,
-        line: tempSettings.line
-      };
       
       const response = await fetch('/api/profile/notification-settings', {
         method: 'PUT',
@@ -81,7 +65,7 @@ export const useNotificationSettings = () => {
         },
         body: JSON.stringify({
           userId,
-          settings: settingsToSave
+          settings: tempSettings
         }),
       });
 
