@@ -292,7 +292,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
               <SettingsSection 
                 {...core}
                 settings={localSettings}
-                handleSettingChange={core.handleSettingChange}
+                onSave={() => core.handleSettingChange('settings', localSettings)}
               />
             )}
 
@@ -331,18 +331,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
               />
             )}
 
-            {core.activeTab === 'accountManagement' && (
-              <AccountManagementSection 
-                accountInfo={accountManagement.accountInfo}
-                linkedAccounts={accountManagement.linkedAccounts}
-                isLoading={accountManagement.isLoading}
-                onLinkAccount={accountManagement.handleLinkAccount}
-                onUnlinkAccount={accountManagement.handleUnlinkAccount}
-                onDeleteAccount={accountManagement.handleDeleteAccount}
-                userEmail={form.formData.email}
-                createdAt={form.formData.registrationDate}
-              />
-            )}
+            
           </div>
         </div>
         

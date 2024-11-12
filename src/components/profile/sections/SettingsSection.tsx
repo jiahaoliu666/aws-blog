@@ -13,23 +13,18 @@ interface SettingsSectionProps {
     theme: 'light' | 'dark' | 'system';
     language: string;
   };
+  handleSettingChange: (key: string, value: any) => void;
   onSave: (settings: { theme: 'light' | 'dark' | 'system'; language: string; }) => void;
   isLoading: boolean;
 }
 
 const SettingsSection: React.FC<SettingsSectionProps> = ({
   settings: initialSettings,
+  handleSettingChange,
   onSave,
   isLoading
 }) => {
   const [tempSettings, setTempSettings] = React.useState(initialSettings);
-
-  const handleSettingChange = (setting: string, value: any) => {
-    setTempSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-  };
 
   return (
     <div className="w-full">
