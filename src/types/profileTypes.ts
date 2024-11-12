@@ -39,10 +39,7 @@ export interface Settings {
 
 export interface NotificationSettings {
   email: boolean;
-  all?: boolean;
   line: boolean;
-  browser: boolean;
-  mobile: boolean;
 }
 
 export interface Feedback {
@@ -59,8 +56,6 @@ export interface EditableFields {
 export interface NotificationSectionProps {
   email?: boolean;
   line?: boolean;
-  browser?: boolean;
-  mobile?: boolean;
   
   onSettingsChange?: (settings: NotificationSettings) => void;
   verificationState: {
@@ -81,9 +76,6 @@ export interface NotificationSectionProps {
   notificationSettings: {
     email: boolean;
     line: boolean;
-    browser: boolean;
-    mobile: boolean;
-    all?: boolean;
   };
   handleVerification: () => Promise<void>;
   onCopyUserId: () => void;

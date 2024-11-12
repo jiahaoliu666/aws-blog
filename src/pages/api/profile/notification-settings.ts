@@ -21,17 +21,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           Key: { userId }
         };
 
-        const { Item } = await dynamodb.get(getParams).promise();
-        return res.status(200).json(Item || {
-          email: false,
-          line: false,
-          userId
-        });
+        try {
+          const { Item } = await dynamodb.get(getParams).promise();
+          return res.status(200).json({
+            email: Item?.mail ?? false,
+            line: Item?.line ?? false
+          });
+        } catch (error) {
+          logger.error('獲取通知設定失敗:', error);
+          throw error;
+        }
 
       case 'PUT':
-        const { userId: putUserId, settings } = req.body;
+        const { userId: putUserId, email, line } = req.body;
         
-        if (!putUserId || !settings) {
+        if (!putUserId) {
           return res.status(400).json({ message: '缺少必要參數' });
         }
 
@@ -39,8 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           TableName: TABLE_NAME,
           Item: {
             userId: putUserId,
-            email: Boolean(settings.email),
-            line: Boolean(settings.line),
+            mail: Boolean(email),
+            line: Boolean(line),
             updatedAt: new Date().toISOString()
           }
         };
@@ -49,7 +53,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           await dynamodb.put(putParams).promise();
           logger.info('通知設定已更新:', putParams.Item);
           
-          return res.status(200).json(putParams.Item);
+          return res.status(200).json({
+            email: putParams.Item.mail,
+            line: putParams.Item.line
+          });
         } catch (error) {
           logger.error('更新通知設定失敗:', error);
           throw error;

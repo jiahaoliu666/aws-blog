@@ -83,6 +83,7 @@ export interface ProfileLogicReturn {
 
 export enum VerificationStep {
   IDLE = 'IDLE',
+  STARTED = 'STARTED',
   VERIFYING = 'VERIFYING',
   COMPLETE = 'COMPLETE'
 }

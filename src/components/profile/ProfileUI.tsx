@@ -21,7 +21,7 @@ import PreferencesSection from './sections/PreferencesSection';
 import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
-import { VerificationStep } from '@/types/lineTypes';
+import { VerificationStep } from '../../types/lineTypes';
 import { FormData } from '@/types/profileTypes';
 import { ToastProvider } from '@/context/ToastContext';
 import AccountSection from './sections/AccountSection';
@@ -52,7 +52,7 @@ interface NotificationSettings {
   line: boolean;
   browser: boolean;
   mobile: boolean;
-  push?: boolean;
+  push: boolean;
   email: boolean;
 }
 
@@ -140,13 +140,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const toast = useToastContext();
 
   const { 
-    settings: notificationSettings, 
-    tempSettings: { line, email, ...otherSettings } = defaultNotificationPreferences,
+    settings,
     loading: notificationsLoading, 
-    error: notificationsError, 
     handleToggle: handleNotificationToggle,
-    saveSettings: updateNotificationSettings 
-  } = useNotificationSettings();
+    saveSettings: updateNotificationSettings,
+    hasChanges: hasNotificationChanges
+  } = useNotificationSettings(currentUser?.userId || '');
 
   useEffect(() => {
     if (core.settings) {
@@ -237,18 +236,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     );
   }
 
-  const handleNotificationSettingChange = (setting: keyof NotificationSettings) => {
-    const updatedPreferences = {
-      ...localSettings.notificationPreferences,
-      [setting]: !localSettings.notificationPreferences[setting]
-    };
+  const handleNotificationChange = async (type: keyof NotificationSettings) => {
+    if (!currentUser?.userId) {
+      toast.error('請先登入');
+      return;
+    }
 
-    setLocalSettings(prev => ({
-      ...prev,
-      notificationPreferences: updatedPreferences
-    }));
-
-    core.handleSettingChange('notificationPreferences', updatedPreferences);
+    if (type === 'line' || type === 'email') {
+      try {
+        handleNotificationToggle(type);
+      } catch (error) {
+        console.error('切換通知設定失敗:', error);
+        toast.error('設定切換失敗，請稍後再試');
+      }
+    }
   };
 
   const handleSettingChange = (key: string, value: any) => {
@@ -266,8 +267,13 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       return;
     }
 
+    if (!hasNotificationChanges) {
+      toast.info('沒有需要儲存的變更');
+      return;
+    }
+
     try {
-      await updateNotificationSettings(currentUser.userId);
+      await updateNotificationSettings();
       toast.success('通知設定已更新');
     } catch (error) {
       console.error('更新通知設定失敗:', error);
@@ -334,22 +340,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
             {core.activeTab === 'notificationSettings' && (
               <NotificationSection 
                 isLoading={notificationsLoading}
+                isVerifying={false}
                 saveAllSettings={handleSaveNotificationSettings}
                 notificationSettings={{
-                  line,
-                  email,
-                  browser: false,
-                  mobile: false,
-                  all: false,
-                  ...otherSettings
+                  line: settings.line,
+                  email: settings.email,
                 }}
                 formData={form.formData}
-                handleNotificationChange={(type: keyof NotificationSettings) => {
-                  if (type === 'line' || type === 'email') {
-                    handleNotificationToggle(type);
-                  }
-                }}
-                isVerifying={false}
+                handleNotificationChange={handleNotificationChange}
                 lineId={lineSettings.lineUserId}
                 setLineId={lineSettings.setLineUserId}
                 verificationCode={verificationCode}

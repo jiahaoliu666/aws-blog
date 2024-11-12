@@ -1,32 +1,66 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faInfoCircle,
-  faCopy,
-  faEnvelope,
-  faExclamationCircle,
-  faCheckCircle,
-  faSave,
+  faEnvelope, 
+  faGlobe,
+  faSave
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
-import { toast } from 'react-toastify';
-import { NotificationSectionProps } from '@/types/profileTypes';
-import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
-import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { useAuthContext } from '@/context/AuthContext';
-import { logger } from '@/utils/logger';
-import { Transition } from '@headlessui/react';
 import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
+import { toast } from 'react-toastify';
+import { VerificationStep } from '@/types/lineTypes';
 
-// 純 UI 組件
-const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
-  notificationSettings,
-  handleNotificationChange,
-  isLoading,
-  saveAllSettings,
-  formData,
-}) => {
+interface NotificationSettings {
+  line: boolean;
+  email: boolean;
+}
+
+interface NotificationSectionProps {
+  isLoading: boolean;
+  isVerifying: boolean;
+  saveAllSettings: () => Promise<void>;
+  notificationSettings: NotificationSettings;
+  formData: any;
+  handleNotificationChange: (type: keyof NotificationSettings) => void;
+  lineId: string;
+  setLineId: (id: string) => void;
+  verificationCode: string;
+  setVerificationCode: (code: string) => void;
+  verificationStep: VerificationStep;
+  verificationProgress: number;
+  handleStartVerification: () => void;
+  handleConfirmVerification: () => void;
+  verificationState: {
+    step: VerificationStep;
+    status: string;
+    isVerified: boolean;
+  };
+  verifyLineIdAndCode: () => void;
+  handleVerification: () => void;
+  onCopyUserId: () => void;
+  userId: string;
+}
+
+const NotificationSectionUI: React.FC<NotificationSectionProps> = (props) => {
+  const { user } = useAuthContext();
+  const {
+    settings,
+    loading,
+    hasChanges,
+    handleToggle,
+    saveSettings
+  } = useNotificationSettings(user?.userId || '');
+
+  const handleSave = async () => {
+    if (!user?.userId) {
+      toast.error('請先登入');
+      return;
+    }
+    await saveSettings();
+  };
+
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -37,6 +71,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div className="p-6">
           <div className="flex flex-col space-y-4">
+            {/* 電子郵件通知 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
@@ -48,80 +83,57 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 </div>
               </div>
               <Switch
-                checked={notificationSettings.email}
-                onChange={() => handleNotificationChange('email')}
-                color="primary"
+                checked={settings.email}
+                onChange={() => handleToggle('email')}
+                disabled={loading}
               />
             </div>
 
             <div className="border-t border-gray-100"></div>
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  通知接收信箱
-                </label>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
-                  <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
-                  已驗證
-                </span>
-              </div>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={formData?.email || ''}
-                  readOnly
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 
-                    rounded-lg text-gray-700 text-sm focus:outline-none cursor-not-allowed
-                    transition duration-150 ease-in-out"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FontAwesomeIcon icon={faInfoCircle} className="text-gray-400" />
+            {/* LINE 通知 */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-50">
+                  <FontAwesomeIcon icon={faLine} className="text-xl text-green-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
+                  <p className="text-sm text-gray-600">透過 LINE 接收即時通知</p>
                 </div>
               </div>
-              <p className="mt-1.5 text-xs text-gray-500">
-                此信箱與您的帳號綁定
-              </p>
+              <Switch
+                checked={settings.line}
+                onChange={() => handleToggle('line')}
+                disabled={loading}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FontAwesomeIcon icon={faLine} className="text-xl text-[#00B900]" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
-                <p className="text-sm text-gray-600">透過 LINE 接收即時通知</p>
-              </div>
-            </div>
-            <Switch
-              checked={notificationSettings.line}
-              onChange={() => handleNotificationChange('line')}
-              color="primary"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8 flex justify-end">
+      {/* 儲存按鈕 */}
+      <div className="flex justify-end mt-6">
         <button
-          onClick={saveAllSettings}
-          disabled={isLoading}
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
-                     disabled:opacity-50 disabled:cursor-not-allowed 
-                     transition-colors duration-200 flex items-center gap-2"
+          onClick={handleSave}
+          disabled={loading || !hasChanges}
+          className={`
+            px-6 py-2.5 rounded-lg flex items-center gap-2
+            ${loading || !hasChanges 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+            } 
+            text-white transition-colors duration-200
+          `}
         >
-          {isLoading ? (
+          {loading ? (
             <>
               <span className="animate-spin">⌛</span>
               儲存中...
             </>
           ) : (
             <>
-              <FontAwesomeIcon icon={faSave} className="mr-2" />
+              <FontAwesomeIcon icon={faSave} />
               儲存設定
             </>
           )}
@@ -131,4 +143,4 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   );
 };
 
-export default NotificationSectionUI; 
+export default NotificationSectionUI;
