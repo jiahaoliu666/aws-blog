@@ -96,4 +96,91 @@ export interface NotificationSectionProps {
   handleConfirmVerification: () => void;
   settingsMessage?: string;
   settingsStatus?: 'success' | 'error';
+}
+
+// 帳號資訊相關型別
+export interface AccountInfo {
+  createdAt: string;
+  lastLogin: string;
+  status: 'active' | 'suspended' | 'deactivated';
+  emailVerified: boolean;
+  twoFactorEnabled: boolean;
+  loginHistory: LoginRecord[];
+  securitySettings: SecuritySettings;
+}
+
+export interface LoginRecord {
+  timestamp: string;
+  ipAddress: string;
+  device: string;
+  location?: string;
+  status: 'success' | 'failed';
+}
+
+export interface SecuritySettings {
+  twoFactorAuth: boolean;
+  loginNotifications: boolean;
+  passwordLastChanged: string;
+  securityQuestions: SecurityQuestion[];
+}
+
+export interface SecurityQuestion {
+  id: string;
+  question: string;
+  isAnswered: boolean;
+}
+
+// 連結帳號相關型別
+export interface LinkedAccount {
+  id: string;
+  provider: 'google' | 'line' | 'facebook';
+  email?: string;
+  username?: string;
+  linkedAt: string;
+  avatar?: string;
+  status: 'active' | 'expired';
+}
+
+// 帳號管理區塊的 Props
+export interface AccountManagementSectionProps {
+  accountInfo: AccountInfo | null;
+  linkedAccounts: LinkedAccount[];
+  isLoading: boolean;
+  onLinkAccount: (provider: string) => Promise<void>;
+  onUnlinkAccount: (accountId: string) => Promise<void>;
+  onDeleteAccount: () => Promise<void>;
+  userEmail: string;
+  createdAt?: string;
+}
+
+// Hook 回傳型別
+export interface UseAccountManagementReturn {
+  accountInfo: AccountInfo | null;
+  linkedAccounts: LinkedAccount[];
+  isLoading: boolean;
+  handleLinkAccount: (provider: string) => Promise<void>;
+  handleUnlinkAccount: (accountId: string) => Promise<void>;
+  handleDeleteAccount: () => Promise<void>;
+  handleUpdateSecurity: (settings: Partial<SecuritySettings>) => Promise<void>;
+  handleAnswerSecurityQuestion: (questionId: string, answer: string) => Promise<void>;
+  error: string | null;
+}
+
+// 帳號管理相關的 API 回應型別
+export interface AccountManagementResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    accountInfo?: AccountInfo;
+    linkedAccounts?: LinkedAccount[];
+  };
+  error?: string;
+}
+
+// 帳號操作的請求型別
+export interface AccountActionRequest {
+  action: 'link' | 'unlink' | 'delete' | 'update';
+  provider?: string;
+  accountId?: string;
+  settings?: Partial<SecuritySettings>;
 } 

@@ -9,7 +9,7 @@ import {
   useProfilePassword,
   useProfileActivity,
   useProfileArticles,
-  useProfileNotifications
+  useProfileNotifications,
 } from '@/hooks/profile';
 import { useLineVerification, useLineSettings } from '@/hooks/line';
 import Navbar from '../common/Navbar';
@@ -121,6 +121,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
   const [localSettings, setLocalSettings] = useState<LocalSettings>(defaultSettings);
 
   const [verificationCode, setVerificationCode] = useState('');
+
 
   useEffect(() => {
     if (core.settings) {
@@ -327,6 +328,19 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
             {core.activeTab === 'history' && (
               <HistorySection 
                 recentArticles={articles.recentArticles}
+              />
+            )}
+
+            {core.activeTab === 'accountManagement' && (
+              <AccountManagementSection 
+                accountInfo={accountManagement.accountInfo}
+                linkedAccounts={accountManagement.linkedAccounts}
+                isLoading={accountManagement.isLoading}
+                onLinkAccount={accountManagement.handleLinkAccount}
+                onUnlinkAccount={accountManagement.handleUnlinkAccount}
+                onDeleteAccount={accountManagement.handleDeleteAccount}
+                userEmail={form.formData.email}
+                createdAt={form.formData.registrationDate}
               />
             )}
           </div>

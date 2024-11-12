@@ -5,6 +5,7 @@ import { UseProfilePasswordReturn } from './useProfilePassword';
 import { UseProfileActivityReturn } from './useProfileActivity';
 import { UseProfileArticlesReturn } from './useProfileArticles';
 import { UseProfileNotificationsReturn } from './useNotificationSettings';
+import { UseProfilePreferencesReturn } from './useProfilePreferences';
 
 // 匯出所有 hooks
 export { useProfileCore } from './useProfileCore';
@@ -14,6 +15,7 @@ export { useProfilePassword } from './useProfilePassword';
 export { useProfileActivity } from './useProfileActivity';
 export { useProfileArticles } from './useProfileArticles';
 export { useProfileNotifications } from './useNotificationSettings';
+export { useProfilePreferences } from './useProfilePreferences';
 
 // 匯出型別定義
 export type {
@@ -23,7 +25,8 @@ export type {
   UseProfilePasswordReturn,
   UseProfileActivityReturn,
   UseProfileArticlesReturn,
-  UseProfileNotificationsReturn
+  UseProfileNotificationsReturn,
+  UseProfilePreferencesReturn,
 };
 
 // 基本介面定義
@@ -70,6 +73,18 @@ export interface ActivityLog {
   action: string;
 }
 
+export interface PreferenceSettings {
+  theme: 'light' | 'dark' | 'system';
+  language: string;
+  fontSize: 'small' | 'medium' | 'large';
+  reduceMotion: boolean;
+  highContrast: boolean;
+  accountStatus: 'active' | 'suspended' | 'deactivated';
+  email: string;
+  username: string;
+  joinDate: string;
+}
+
 // 常數定義
 export const PROFILE_CONSTANTS = {
   MAX_USERNAME_LENGTH: 30,
@@ -79,6 +94,19 @@ export const PROFILE_CONSTANTS = {
   VALID_IMAGE_TYPES: ['image/jpeg', 'image/png'],
   ACTIVITY_LOG_LIMIT: 12,
   RECENT_ARTICLES_LIMIT: 12
+};
+
+export const PREFERENCE_CONSTANTS = {
+  SUPPORTED_LANGUAGES: ['zh-TW', 'en', 'ja'],
+  SUPPORTED_THEMES: ['light', 'dark', 'system'],
+  FONT_SIZES: ['small', 'medium', 'large'],
+  DEFAULT_PREFERENCES: {
+    theme: 'system',
+    language: 'zh-TW',
+    fontSize: 'medium',
+    reduceMotion: false,
+    highContrast: false,
+  } as const
 };
 
 // 工具函數
@@ -126,6 +154,24 @@ export const profileUtils = {
   }
 };
 
+export const preferenceUtils = {
+  isValidTheme: (theme: string): theme is 'light' | 'dark' | 'system' => {
+    return PREFERENCE_CONSTANTS.SUPPORTED_THEMES.includes(theme);
+  },
+
+  isValidLanguage: (language: string): boolean => {
+    return PREFERENCE_CONSTANTS.SUPPORTED_LANGUAGES.includes(language);
+  },
+
+  isValidFontSize: (fontSize: string): fontSize is 'small' | 'medium' | 'large' => {
+    return PREFERENCE_CONSTANTS.FONT_SIZES.includes(fontSize);
+  },
+
+  getSystemTheme: (): 'light' | 'dark' => {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+};
+
 // 錯誤訊息
 export const PROFILE_ERROR_MESSAGES = {
   INVALID_USERNAME: '使用者名稱長度必須在 1-30 字元之間',
@@ -137,23 +183,28 @@ export const PROFILE_ERROR_MESSAGES = {
   FEEDBACK_TOO_LONG: '回饋內容不能超過 1000 字'
 };
 
-// 成功訊息
-export const PROFILE_SUCCESS_MESSAGES = {
-  PROFILE_UPDATED: '個人資料已更新',
-  PASSWORD_CHANGED: '密碼已成功變更',
-  AVATAR_UPDATED: '頭像已更新',
-  FEEDBACK_SENT: '回饋已送出',
-  SETTINGS_SAVED: '設定已儲存'
+export const PREFERENCE_SUCCESS_MESSAGES = {
+  SETTINGS_UPDATED: '偏好設定已更新',
+  SETTINGS_RESET: '設定已重置為預設值'
 };
 
 // 狀態類型
 export type ProfileTab = 'profile' | 'security' | 'notifications' | 'activity';
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 export type SettingsStatus = 'success' | 'error' | null;
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type FontSizeOption = 'small' | 'medium' | 'large';
+export type PreferenceStatus = 'idle' | 'loading' | 'success' | 'error';
 
 // 事件類型
 export interface ProfileEvent {
   type: 'update' | 'password' | 'avatar' | 'feedback' | 'settings';
   timestamp: number;
   data?: any;
+}
+
+export interface PreferenceEvent {
+  type: 'theme' | 'language' | 'fontSize' | 'accessibility' | 'delete';
+  value: any;
+  timestamp: number;
 }

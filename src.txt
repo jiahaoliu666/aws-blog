@@ -73,6 +73,7 @@ src/
 │   │   ├── useProfileArticles.ts   // 觀看紀錄
 │   │   ├── useProfileTheme.ts      // 主題設定（深色模式、字體等）
 │   │   ├── useProfilePassword.ts   // 密碼變更和驗證
+│   │   ├── useProfilePreferences.ts // 偏好設定
 │   │   └── index.ts                // profile hooks 和共用類型定義
 │   ├── news
 │   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
