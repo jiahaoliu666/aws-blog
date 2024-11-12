@@ -29,7 +29,7 @@ import AccountSection from './sections/AccountSection';
 import { useProfileAccount } from '@/hooks/profile';
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import '@aws-amplify/ui-react/styles.css';  
-import { useToast } from '@/hooks/toast/useToast';
+import { useToastContext } from '@/context/ToastContext';
 
 interface ProfileUIProps {
   user: {
@@ -137,6 +137,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showRedirectMessage, setShowRedirectMessage] = useState(false);
+
+  const toast = useToastContext();
 
   useEffect(() => {
     if (core.settings) {

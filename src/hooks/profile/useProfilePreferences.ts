@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useToast } from '../toast/useToast';
+import { useToastContext } from '@/context/ToastContext';
 import { useAuthContext } from '@/context/AuthContext';
 import { PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient } from '@/utils/dynamodb';
@@ -30,7 +30,7 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
     autoSummarize: false
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { showToast } = useToast();
+  const { showToast } = useToastContext();
 
   // 讀取設定
   const fetchPreferences = useCallback(async () => {
@@ -74,10 +74,7 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
 
   // 更新設定
   const updatePreferences = useCallback(async (newSettings: PreferenceSettings & { userId: string }) => {
-    console.log('開始更新設定，收到的設定值:', newSettings);
-    
     if (!newSettings.userId) {
-      console.error('未找到用戶ID');
       showToast('無法儲存設定', 'error', {
         description: '找不到用戶ID，請重新登入',
         position: 'top-right',
@@ -97,8 +94,6 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
         updatedAt: new Date().toISOString()
       };
 
-      console.log('準備發送到 DynamoDB 的數據:', updateData);
-
       await docClient.send(new PutCommand({
         TableName: TABLE_NAME,
         Item: updateData
@@ -107,20 +102,8 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
       setPreferences(newSettings);
       localStorage.setItem('userPreferences', JSON.stringify(newSettings));
       
-      showToast('設定已更新', 'success', {
-        description: '您的偏好設定已成功儲存',
-        position: 'top-right',
-        duration: 3000,
-        icon: faSave
-      });
-      
     } catch (err) {
-      console.error('更新偏好設定失敗，詳細錯誤:', err);
-      showToast('更新失敗', 'error', {
-        description: '設定更新失敗，請稍後再試',
-        position: 'top-right',
-        duration: 4000
-      });
+      console.error('更新偏好設定失敗:', err);
       throw err;
     } finally {
       setIsLoading(false);

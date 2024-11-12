@@ -11,18 +11,18 @@ import '@/styles/toast.css';
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <AppProvider>
-          <LanguageProvider>
+    <AuthProvider>
+      <AppProvider>
+        <LanguageProvider>
+          <ToastProvider>
             <Head>
               <title>AWS Blog 365</title>
             </Head>
             <Component {...pageProps} />
-          </LanguageProvider>
-        </AppProvider>
-      </AuthProvider>
-    </ToastProvider>
+          </ToastProvider>
+        </LanguageProvider>
+      </AppProvider>
+    </AuthProvider>
   );
 };
 

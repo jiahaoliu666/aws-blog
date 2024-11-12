@@ -9,8 +9,10 @@ import {
   faTableCells,
   faList,
   faTableColumns,
+  faSave,
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthContext } from '@/context/AuthContext';
+import { useToastContext } from '@/context/ToastContext';
 
 interface SettingsSectionProps {
   settings: {
@@ -31,6 +33,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
   isLoading
 }) => {
   const { user } = useAuthContext();
+  const { showToast } = useToastContext();
   const [tempSettings, setTempSettings] = React.useState(initialSettings);
 
   const handleSettingsChange = (key: string, value: any) => {
@@ -47,7 +50,11 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
     const userId = user?.id || user?.sub;
     
     if (!userId) {
-      console.error('找不到用戶ID，user:', user);
+      showToast('無法儲存設定', 'error', {
+        description: '請先登入後再試',
+        position: 'top-right',
+        duration: 3000
+      });
       return;
     }
 
@@ -57,10 +64,26 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
         userId: userId
       };
       
-      console.log('準備儲存的設定:', settingsToSave);
+      showToast('正在儲存設定...', 'loading', {
+        description: '請稍候',
+        position: 'top-right',
+        duration: 1000
+      });
+      
       await onSave(settingsToSave);
+      
+      showToast('偏好設定已成功儲存！', 'success', {
+        description: '您的偏好設定已成功儲存',
+        position: 'top-right',
+        duration: 3000
+      });
     } catch (error) {
       console.error('儲存設定時發生錯誤:', error);
+      showToast('儲存失敗', 'error', {
+        description: '無法儲存設定，請稍後再試',
+        position: 'top-right',
+        duration: 4000
+      });
     }
   };
 
@@ -214,7 +237,10 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
                 儲存中...
               </>
             ) : (
-              '儲存設定'
+              <>
+                <FontAwesomeIcon icon={faSave} className="mr-2" />
+                儲存設定
+              </>
             )}
           </button>
         </div>
