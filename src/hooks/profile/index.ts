@@ -6,6 +6,7 @@ import { UseProfileActivityReturn } from './useProfileActivity';
 import { UseProfileArticlesReturn } from './useProfileArticles';
 import { UseProfileNotificationsReturn } from './useNotificationSettings';
 import { UseProfilePreferencesReturn } from './useProfilePreferences';
+import { useProfileAccount as UseProfileAccountReturn } from './useProfileAccount';
 
 // 匯出所有 hooks
 export { useProfileCore } from './useProfileCore';
@@ -16,6 +17,7 @@ export { useProfileActivity } from './useProfileActivity';
 export { useProfileArticles } from './useProfileArticles';
 export { useProfileNotifications } from './useNotificationSettings';
 export { useProfilePreferences } from './useProfilePreferences';
+export { useProfileAccount } from './useProfileAccount';
 
 // 匯出型別定義
 export type {
@@ -27,6 +29,7 @@ export type {
   UseProfileArticlesReturn,
   UseProfileNotificationsReturn,
   UseProfilePreferencesReturn,
+  UseProfileAccountReturn,
 };
 
 // 基本介面定義
@@ -175,7 +178,7 @@ export const preferenceUtils = {
 // 錯誤訊息
 export const PROFILE_ERROR_MESSAGES = {
   INVALID_USERNAME: '使用者名稱長度必須在 1-30 字元之間',
-  INVALID_PASSWORD: '密碼必須包含大小寫字母、數字和特殊符號，且長度至少為 8 位',
+  INVALID_PASSWORD: '密碼必須包含大小寫字母、數字和特殊符號，且長至少為 8 位',
   PASSWORDS_NOT_MATCH: '兩次輸入的密碼不一致',
   INVALID_IMAGE: '請上傳 JPG 或 PNG 格式的圖片，大小不超過 5MB',
   UPLOAD_FAILED: '上傳失敗，請稍後再試',

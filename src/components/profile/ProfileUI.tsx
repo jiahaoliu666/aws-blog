@@ -25,6 +25,8 @@ import HistorySection from './sections/HistorySection';
 import { VerificationStep } from '@/types/lineTypes';
 import { FormData } from '@/types/profileTypes';
 import { ToastProvider } from '@/context/ToastContext';
+import AccountSection from './sections/AccountSection';
+import { useProfileAccount } from '@/hooks/profile';
 
 interface ProfileUIProps {
   user: {
@@ -122,6 +124,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
 
   const [verificationCode, setVerificationCode] = useState('');
 
+  const account = useProfileAccount({ user });
 
   useEffect(() => {
     if (core.settings) {
@@ -328,6 +331,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user, uploadMessage: initialUploa
             {core.activeTab === 'history' && (
               <HistorySection 
                 recentArticles={articles.recentArticles}
+              />
+            )}
+
+            {core.activeTab === 'accountManagement' && (
+              <AccountSection 
+                {...account}
               />
             )}
 
