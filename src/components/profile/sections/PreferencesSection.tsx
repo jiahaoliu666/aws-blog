@@ -228,7 +228,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faLanguage} className="text-xl text-blue-500" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">文章語言設定</h3>
+                <h3 className="text-lg font-semibold text-gray-800">語言設定</h3>
                 <p className="text-sm text-gray-600">選擇您偏好的顯示語言</p>
               </div>
             </div>
