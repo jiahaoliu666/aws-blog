@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthContext } from '@/context/AuthContext';
 import { useToastContext } from '@/context/ToastContext';
+import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 
 interface SettingsSectionProps {
   settings: {
@@ -34,6 +35,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
 }) => {
   const { user } = useAuthContext();
   const { showToast } = useToastContext();
+  const { preferences } = useProfilePreferences();
   const [tempSettings, setTempSettings] = React.useState(initialSettings);
 
   const handleSettingsChange = (key: string, value: any) => {
@@ -52,6 +54,15 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
     if (!userId) {
       showToast('無法儲存設定', 'error', {
         description: '請先登入後再試',
+        position: 'top-right',
+        duration: 3000
+      });
+      return;
+    }
+
+    if (JSON.stringify(tempSettings) === JSON.stringify(preferences)) {
+      showToast('未變更', 'info', {
+        description: '設定未變更',
         position: 'top-right',
         duration: 3000
       });
@@ -87,6 +98,15 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
     }
   };
 
+  const handleCancel = () => {
+    setTempSettings(preferences);
+    showToast('設定已重置為默認值', 'info', {
+      description: '設定已重置為伺服器上的值',
+      position: 'top-right',
+      duration: 3000
+    });
+  };
+
   React.useEffect(() => {
     setTempSettings(initialSettings);
   }, [initialSettings]);
@@ -94,7 +114,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">偏好設定</h1>
+        <h1 className="text-3xl font-bold text-gray-800">文章偏好設定</h1>
         <p className="mt-2 text-gray-600">自訂您的使用體驗</p>
       </div>
 
@@ -148,8 +168,8 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
-                { id: 'grid', icon: faTableCells, label: '網格視圖' },
-                { id: 'list', icon: faList, label: '列表視圖' }
+                { id: 'grid', icon: faList, label: '列表視圖' },
+                { id: 'list', icon: faTableCells, label: '網格視圖' }
               ].map((view) => (
                 <button
                   key={view.id}
@@ -181,7 +201,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
               <FontAwesomeIcon icon={faMagicWandSparkles} className="text-xl text-blue-500" />
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">一鍵總結</h3>
-                <p className="text-sm text-gray-600">自動顯示總結</p>
+                <p className="text-sm text-gray-600">自動顯示全部總結</p>
               </div>
             </div>
             <div className="flex items-center">
@@ -224,8 +244,15 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
           </div>
         </div>
 
-        {/* 儲存按鈕 */}
-        <div className="flex justify-end pt-4">
+        {/* 儲存和取消按鈕 */}
+        <div className="flex justify-end pt-4 gap-2">
+          <button
+            onClick={handleCancel}
+            disabled={isLoading}
+            className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            取消
+          </button>
           <button
             onClick={handleSave}
             disabled={isLoading}

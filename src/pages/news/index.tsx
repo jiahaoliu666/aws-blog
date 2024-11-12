@@ -77,6 +77,11 @@ const NewsPage: React.FC = () => {
         setCurrentSourcePage('最新新聞');
     }, []);
 
+    useEffect(() => {
+        // 只在組件首次加載時設置默認值
+        resetFilters();
+    }, []); // 空依賴數組表示只在首次渲染時執行
+
     const resetFilters = () => {
         setGridView(false);
         setIsDarkMode(false);

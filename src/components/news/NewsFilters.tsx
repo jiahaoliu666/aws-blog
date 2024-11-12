@@ -75,9 +75,10 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
     handlePreferenceChange('theme', checked ? 'dark' : 'light');
   };
 
+  // 修改視圖切換邏輯
   const handleViewModeToggle = (checked: boolean) => {
     setGridView(checked);
-    handlePreferenceChange('viewMode', checked ? 'list' : 'grid');
+    handlePreferenceChange('viewMode', checked ? 'grid' : 'list');
   };
 
   const handleLanguageChange = (value: string) => {
@@ -147,7 +148,6 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
           onChange={(e) => handleDarkModeToggle(e.target.checked)}
         />
         <SwitchField
-          className="hidden lg:block"
           isDisabled={false}
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}
           labelPosition="start"
