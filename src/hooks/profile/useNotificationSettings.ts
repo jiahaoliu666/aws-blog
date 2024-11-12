@@ -19,6 +19,7 @@ export const useNotificationSettings = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -34,9 +35,9 @@ export const useNotificationSettings = () => {
         const newSettings = {
           email: data.email ?? false,
           line: data.line ?? false,
-          browser: data.browser ?? false,
-          mobile: data.mobile ?? false,
-          all: data.all ?? false
+          browser: false,
+          mobile: false,
+          all: false
         };
         setSettings(newSettings);
         setTempSettings(newSettings);
@@ -52,15 +53,27 @@ export const useNotificationSettings = () => {
   }, []);
 
   const handleToggle = (type: keyof NotificationSettings) => {
-    setTempSettings(prev => ({
-      ...prev,
-      [type]: !prev[type]
-    }));
+    if (type === 'email' || type === 'line') {
+      setTempSettings(prev => {
+        const newSettings = {
+          ...prev,
+          [type]: !prev[type]
+        };
+        setHasChanges(JSON.stringify(newSettings) !== JSON.stringify(settings));
+        return newSettings;
+      });
+    }
   };
 
   const saveSettings = async (userId: string) => {
     try {
       setLoading(true);
+      
+      const settingsToSave = {
+        email: tempSettings.email,
+        line: tempSettings.line
+      };
+      
       const response = await fetch('/api/profile/notification-settings', {
         method: 'PUT',
         headers: {
@@ -68,7 +81,7 @@ export const useNotificationSettings = () => {
         },
         body: JSON.stringify({
           userId,
-          settings: tempSettings
+          settings: settingsToSave
         }),
       });
 
@@ -78,6 +91,7 @@ export const useNotificationSettings = () => {
 
       const data = await response.json();
       setSettings(tempSettings);
+      setHasChanges(false);
       return data;
     } catch (err) {
       logger.error('儲存通知設定失敗:', err);
@@ -87,12 +101,19 @@ export const useNotificationSettings = () => {
     }
   };
 
+  const resetSettings = () => {
+    setTempSettings(settings);
+    setHasChanges(false);
+  };
+
   return {
     settings,
     tempSettings,
     loading,
     error,
+    hasChanges,
     handleToggle,
-    saveSettings
+    saveSettings,
+    resetSettings
   };
 };

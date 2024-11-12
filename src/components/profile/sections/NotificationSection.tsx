@@ -235,19 +235,10 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
                 </div>
               </div>
-              {/* 新增的電子郵件輸入框 */}
-              <div className="mt-3 max-w-md">
-                <input
-                  type="email"
-                  value={localFormData.email}
-                  readOnly
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
-                />
-              </div>
             </div>
             <Switch
-              checked={localFormData.notifications.email}
-              onChange={() => toggleNotification('email')}
+              checked={notificationSettings.email}
+              onChange={() => handleNotificationChange('email')}
               color="primary"
             />
           </div>
@@ -256,7 +247,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
       {/* LINE 通知設定 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FontAwesomeIcon icon={faLine} className="text-xl text-[#00B900]" />
@@ -266,180 +257,22 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
             </div>
             <Switch
-              checked={localFormData.notifications.line}
-              onChange={handleLineToggle}
+              checked={notificationSettings.line}
+              onChange={() => handleNotificationChange('line')}
               color="primary"
             />
           </div>
         </div>
-
-        {/* LINE 設定內容區域 */}
-        <Transition
-          show={showLineSettings || localFormData.notifications.line}
-          enter="transition-all duration-300 ease-out"
-          enterFrom="max-h-0 opacity-0"
-          enterTo="max-h-[2000px] opacity-100"
-          leave="transition-all duration-200 ease-in"
-          leaveFrom="max-h-[2000px] opacity-100"
-          leaveTo="max-h-0 opacity-0"
-        >
-          <div className="overflow-hidden p-6 space-y-6">
-            {/* 驗證狀態提示 */}
-            {renderVerificationStatus()}
-
-            {/* 進度指示器 */}
-            {!lineVerificationState.isVerified && renderProgressStatus()}
-
-            {/* 驗證步驟內容 */}
-            {!lineVerificationState.isVerified ? (
-              <div className="space-y-6">
-                {/* 步驟 1: 用戶ID */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">1</span>
-                    <h3 className="text-lg font-semibold">複製您的用戶ID</h3>
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
-                    <span className="text-gray-600 font-mono">{userId}</span>
-                    <button
-                      onClick={onCopyUserId}
-                      className="flex items-center gap-2 text-blue-600 hover:text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                      <FontAwesomeIcon icon={faCopy} />
-                      <span>複製</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 步驟 2: 加入官方帳號 */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">2</span>
-                    <h3 className="text-lg font-semibold">加入官方帳號</h3>
-                  </div>
-                  
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    {/* QR Code 區塊 */}
-                    <div className="flex-1 text-center">
-                      <div className="bg-white p-4 rounded-lg inline-block shadow-md mb-3">
-                        <img 
-                          src="/line-qr-code.png" 
-                          alt="LINE 官方帳號 QR Code" 
-                          className="w-48 h-48 object-contain"
-                        />
-                      </div>
-                      <p className="text-sm text-gray-600">掃描 QR Code 加入好友</p>
-                    </div>
-
-                    {/* 分隔線 */}
-                    <div className="flex items-center justify-center md:h-48">
-                      <div className="hidden md:block w-px h-full bg-gray-300"></div>
-                      <div className="md:hidden h-px w-full bg-gray-300"></div>
-                      <div className="absolute text-gray-500 bg-gray-50 px-4">或</div>
-                    </div>
-
-                    {/* 按鈕區塊 */}
-                    <div className="flex-1 text-center">
-                      <div className="space-y-4">
-                        <a
-                          href="https://line.me/R/ti/p/@601feiwz"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-2 bg-[#00B900] text-white px-6 py-3 rounded-lg hover:bg-[#009900] transition-colors"
-                        >
-                          <FontAwesomeIcon icon={faLine} className="text-xl" />
-                          <span>點擊加入好友</span>
-                        </a>
-                        <p className="text-sm text-gray-600">
-                          <FontAwesomeIcon icon={faInfoCircle} className="mr-2 text-gray-400" />
-                          建議使用手機開啟
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 提示訊息 */}
-                  <div className="mt-6 bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 mt-1" />
-                      <div>
-                        <p className="text-sm text-blue-700">加入好友後：</p>
-                        <ol className="mt-2 text-sm text-blue-600 list-decimal list-inside space-y-1">
-                          <li>在 LINE 聊天室輸入「您的用戶ID」</li>
-                          <li>系統會回傳您的 LINE ID 和驗證碼</li>
-                          <li>將資訊填入下方表單完成驗證</li>
-                        </ol>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 步驟 3: 驗證資訊輸入 */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">3</span>
-                    <h3 className="text-lg font-semibold">輸入驗證資訊</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        LINE ID
-                      </label>
-                      <input
-                        type="text"
-                        value={lineId}
-                        onChange={(e) => setLineId(e.target.value)}
-                        placeholder="請輸入LINE回傳的ID"
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={lineVerificationState.isVerified}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        驗證碼
-                      </label>
-                      <input
-                        type="text"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        placeholder="請輸入LINE傳的驗證碼"
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={lineVerificationState.isVerified}
-                      />
-                    </div>
-                    <button
-                      onClick={onVerifyClick}
-                      disabled={isVerifying}
-                      className={`
-                        w-full py-3 rounded-lg transition-colors
-                        ${(!lineId || !verificationCode || lineVerificationState.isVerified || isVerifying)
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                        }
-                      `}
-                    >
-                      {isVerifying ? '驗證中...' : lineVerificationState.isVerified ? '已驗證' : '驗證'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-green-50 p-8 rounded-xl text-center">
-                <FontAwesomeIcon icon={faCheckCircle} className="text-4xl text-green-500 mb-3" />
-                <h3 className="text-xl font-semibold text-green-600">驗證成功！</h3>
-                <p className="text-green-600">您已成功開啟 LINE 通知功能</p>
-              </div>
-            )}
-          </div>
-        </Transition>
       </div>
 
-      {/* 新增儲存按鈕 */}
+      {/* 儲存按鈕 */}
       <div className="mt-8 flex justify-end">
         <button
-          onClick={handleSaveSettings}
+          onClick={saveAllSettings}
           disabled={isLoading}
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
+          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+                     disabled:opacity-50 disabled:cursor-not-allowed 
+                     transition-colors duration-200 flex items-center gap-2"
         >
           {isLoading ? (
             <>
