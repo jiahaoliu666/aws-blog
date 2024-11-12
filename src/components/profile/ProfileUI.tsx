@@ -134,6 +134,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   const preferences = useProfilePreferences();
 
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showRedirectMessage, setShowRedirectMessage] = useState(false);
+
   useEffect(() => {
     if (core.settings) {
       if (JSON.stringify(localSettings) !== JSON.stringify(core.settings)) {
@@ -148,13 +151,34 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   useEffect(() => {
     if (!isClient) return;
+    
+    const checkAuthAndRedirect = async () => {
+      const storedUser = window.localStorage.getItem("user");
+      
+      if (!currentUser && !storedUser && !isRedirecting) {
+        setIsRedirecting(true);
+        setShowRedirectMessage(true);
+        
+        try {
+          await Promise.all([
+            new Promise(resolve => setTimeout(resolve, 1500)),
+            new Promise(resolve => {
+              setTimeout(() => {
+                router.push('/auth/login').then(resolve);
+              }, 1500);
+            })
+          ]);
+        } catch (error) {
+          console.error('重導向失敗:', error);
+          setShowRedirectMessage(false);
+        } finally {
+          setIsRedirecting(false);
+        }
+      }
+    };
 
-    const userInStorage = window.localStorage.getItem("user");
-    if (!currentUser && !userInStorage) {
-      router.push('/auth/login');
-      return;
-    }
-  }, [currentUser, router, isClient]);
+    checkAuthAndRedirect();
+  }, [currentUser, router, isClient, isRedirecting]);
 
   const handleVerifyLineIdAndCode = async () => {
     // 實作驗證邏輯
@@ -185,7 +209,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   if (!isClient) return null;
 
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
-  if (!currentUser && !storedUser) {
+  
+  if (!currentUser && !storedUser && showRedirectMessage) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-300">
         <Navbar />

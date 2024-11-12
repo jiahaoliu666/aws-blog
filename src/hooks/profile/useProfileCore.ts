@@ -91,10 +91,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     if (!isClient) return;
 
     const storedUser = localStorage.getItem("user");
-    if (!storedUser && !authUser) {
-      router.push('/auth/login');
-      return;
-    }
   }, [authUser, router, isClient]);
 
   // 響應式布局處理
