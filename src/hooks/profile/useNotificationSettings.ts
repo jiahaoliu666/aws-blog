@@ -62,12 +62,36 @@ export const useNotificationSettings = (userId: string) => {
   });
 
   // 新增 handleSettingChange 方法
-  const handleSettingChange = (key: string, value: any) => {
-    // 實作設定變更邏輯
-    console.log(`Setting ${key} changed to ${value}`);
+  const handleSettingChange = async (key: string, value: any) => {
+    if (!userId) return;
+    
+    try {
+      await updateSettings({
+        userId,
+        [key]: value
+      });
+    } catch (error) {
+      console.error('設定更新失敗:', error);
+      throw error;
+    }
   };
 
-  return { settings, isLoading, updateSettings, handleSettingChange };
+  // 新增批量更新設定的方法
+  const saveAllSettings = async (settings: { [key: string]: any }) => {
+    if (!userId) return;
+    
+    try {
+      await updateSettings({
+        userId,
+        ...settings
+      });
+    } catch (error) {
+      console.error('批量更新設定失敗:', error);
+      throw error;
+    }
+  };
+
+  return { settings, isLoading, updateSettings, handleSettingChange, saveAllSettings };
 };
 
 // 定義 UseProfileNotificationsReturn 型別的內容
@@ -76,6 +100,7 @@ export type UseProfileNotificationsReturn = {
   isLoading: boolean;
   updateSettings: (newSettings: { userId: string; [key: string]: any }) => void;
   handleSettingChange: (key: string, value: any) => void;
+  saveAllSettings: (settings: { [key: string]: any }) => void;
 };
 
 export const useProfileNotifications = () => {

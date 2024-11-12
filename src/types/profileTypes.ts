@@ -96,6 +96,7 @@ export interface NotificationSectionProps {
   handleConfirmVerification: () => void;
   settingsMessage?: string;
   settingsStatus?: 'success' | 'error';
+  saveAllSettings: () => Promise<void>;
 }
 
 // 帳號資訊相關型別

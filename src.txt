@@ -67,7 +67,7 @@ src/
 │   │   ├── useProfileFeedback.ts   // 用戶反饋
 │   │   ├── useProfileForm.ts       // 個人資訊
 │   │   ├── useProfileActivity.ts   // 活動日誌
-│   │   ├── useNotificationSettings.ts  // 通知設定
+│   │   ├── useNotificationSettings.ts  //訂閱通知
 │   │   ├── useProfileCore.ts       // 用戶認證狀態
 │   │   ├── useProfileArticles.ts   // 觀看紀錄
 │   │   ├── useProfilePassword.ts   // 密碼變更和驗證

@@ -312,6 +312,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               <NotificationSection 
                 {...(notifications as unknown as object)} 
                 isLoading={false}
+                saveAllSettings={async () => await core.handleSettingChange('notificationPreferences', localSettings.notificationPreferences)}
                 isVerifying={false}
                 lineId={lineSettings.lineUserId}
                 setLineId={lineSettings.setLineUserId}

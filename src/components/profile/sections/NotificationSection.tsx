@@ -6,6 +6,7 @@ import {
   faEnvelope,
   faExclamationCircle,
   faCheckCircle,
+  faSave,
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -34,10 +35,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   formData = { 
     email: '', 
     username: '', 
-    notifications: { email: false, line: false } 
+    notifications: { email: false, line: false, browser: false, mobile: false } 
   },
   settingsMessage,
   settingsStatus,
+  saveAllSettings,
 }) => {
   const { user } = useAuthContext();
   const { handleVerification, verificationState: lineVerificationState } = useLineVerification({
@@ -61,8 +63,26 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
   };
 
-  const toggleNotification = (type: 'email' | 'line') => {
-    handleNotificationChange(type);
+  const [localFormData, setFormData] = useState(formData);
+
+  const toggleNotification = async (type: 'email' | 'line') => {
+    try {
+      const newValue = !localFormData.notifications[type];
+      await handleNotificationChange(type);
+      
+      setFormData(prev => ({
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          [type]: newValue,
+          browser: prev.notifications.browser || false,
+          mobile: prev.notifications.mobile || false
+        }
+      }));
+    } catch (error) {
+      toast.error('設定更新失敗，請稍後再試');
+      logger.error(`${type} 通知設定更新失敗:`, error);
+    }
   };
 
   // 渲染驗證狀態提示
@@ -160,7 +180,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   // 處理 LINE 通知開關
   const handleLineToggle = async () => {
-    if (!formData.notifications.line) {
+    if (!localFormData.notifications.line) {
       // 開啟通知時展開設定
       setShowLineSettings(true);
     } else {
@@ -193,14 +213,14 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               <div className="mt-3 max-w-md">
                 <input
                   type="email"
-                  value={formData.email}
+                  value={localFormData.email}
                   readOnly
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
                 />
               </div>
             </div>
             <Switch
-              checked={formData.notifications.email}
+              checked={localFormData.notifications.email}
               onChange={() => toggleNotification('email')}
               color="primary"
             />
@@ -220,19 +240,16 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
             </div>
             <Switch
-              checked={formData.notifications.line}
+              checked={localFormData.notifications.line}
               onChange={handleLineToggle}
               color="primary"
-              className={`${
-                formData.notifications.line ? 'bg-[#00B900]' : 'bg-gray-200'
-              }`}
             />
           </div>
         </div>
 
         {/* LINE 設定內容區域 */}
         <Transition
-          show={showLineSettings || formData.notifications.line}
+          show={showLineSettings || localFormData.notifications.line}
           enter="transition-all duration-300 ease-out"
           enterFrom="max-h-0 opacity-0"
           enterTo="max-h-[2000px] opacity-100"
@@ -389,6 +406,27 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             )}
           </div>
         </Transition>
+      </div>
+
+      {/* 新增儲存按鈕 */}
+      <div className="mt-8 flex justify-end">
+        <button
+          onClick={saveAllSettings}
+          disabled={isLoading}
+          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
+        >
+          {isLoading ? (
+            <>
+              <span className="animate-spin">⌛</span>
+              儲存中...
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faSave} className="mr-2" />
+              儲存設定
+            </>
+          )}
+        </button>
       </div>
 
       {/* 顯示訊息 */}
