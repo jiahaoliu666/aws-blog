@@ -39,7 +39,7 @@ export interface Settings {
 
 export interface NotificationSettings {
   email: boolean;
-  all: boolean;
+  all?: boolean;
   line: boolean;
   browser: boolean;
   mobile: boolean;
@@ -77,13 +77,13 @@ export interface NotificationSectionProps {
   verificationError?: string;
   verifyLineIdAndCode: () => void;
   isLoading: boolean;
-  handleNotificationChange: (type: keyof NotificationSettings) => void;
+  handleNotificationChange: (type: string) => void;
   notificationSettings: {
     email: boolean;
-    all?: boolean;
     line: boolean;
     browser: boolean;
     mobile: boolean;
+    all?: boolean;
   };
   handleVerification: () => Promise<void>;
   onCopyUserId: () => void;
@@ -184,4 +184,10 @@ export interface AccountActionRequest {
   provider?: string;
   accountId?: string;
   settings?: Partial<SecuritySettings>;
-} 
+}
+
+// 新增 Toast 相關類型
+export type ToastType = {
+  type: 'success' | 'error' | 'warning' | 'info';
+  message?: string;
+};

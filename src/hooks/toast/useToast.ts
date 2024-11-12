@@ -35,6 +35,10 @@ export type ToastReturnType = {
     icon?: IconDefinition;
     className?: string;
   }) => void;
+  success: (message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => void;
+  error: (message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => void;
+  info: (message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => void;
+  warning: (message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => void;
 };
 
 export const useToast = (): ToastReturnType => {
@@ -116,9 +120,29 @@ export const useToast = (): ToastReturnType => {
     }
   }, [processNextToast]);
 
+  const success = useCallback((message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => {
+    showToast(message, 'success', options);
+  }, [showToast]);
+
+  const error = useCallback((message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => {
+    showToast(message, 'error', options);
+  }, [showToast]);
+
+  const info = useCallback((message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => {
+    showToast(message, 'info', options);
+  }, [showToast]);
+
+  const warning = useCallback((message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => {
+    showToast(message, 'warning', options);
+  }, [showToast]);
+
   return {
     toasts,
     remove,
-    showToast
+    showToast,
+    success,
+    error,
+    info,
+    warning
   };
 }; 

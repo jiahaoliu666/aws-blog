@@ -9,7 +9,6 @@ import {
   useProfilePassword,
   useProfileActivity,
   useProfileArticles,
-  useProfileNotifications,
 } from '@/hooks/profile';
 import { useLineVerification, useLineSettings } from '@/hooks/line';
 import Navbar from '../common/Navbar';
@@ -30,6 +29,7 @@ import { useProfileAccount } from '@/hooks/profile';
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import '@aws-amplify/ui-react/styles.css';  
 import { useToastContext } from '@/context/ToastContext';
+import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
 
 interface ProfileUIProps {
   user: {
@@ -120,7 +120,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const password = useProfilePassword({ user: currentUser, handleLogout: logoutUser });
   const activity = useProfileActivity({ user: currentUser });
   const articles = useProfileArticles({ user: currentUser });
-  const notifications = useProfileNotifications();
   const lineVerification = useLineVerification({ 
     user: currentUser,
     updateUserLineSettings: () => Promise.resolve()
@@ -139,6 +138,13 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const [showRedirectMessage, setShowRedirectMessage] = useState(false);
 
   const toast = useToastContext();
+
+  const { 
+    settings: notificationSettings, 
+    loading: notificationsLoading, 
+    error: notificationsError, 
+    updateSettings: updateNotificationSettings 
+  } = useNotificationSettings();
 
   useEffect(() => {
     if (core.settings) {
@@ -252,6 +258,29 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     await updatePreferences(settings);
   };
 
+  const handleSaveNotificationSettings = async () => {
+    if (!currentUser?.userId) {
+      toast.error('請先登入');
+      return;
+    }
+
+    try {
+      const settingsToUpdate = {
+        email: notificationSettings?.email ?? false,
+        line: notificationSettings?.line ?? false,
+        browser: notificationSettings?.browser ?? false,
+        mobile: notificationSettings?.mobile ?? false,
+        all: notificationSettings?.all ?? false
+      };
+
+      await updateNotificationSettings(currentUser.userId, settingsToUpdate);
+      toast.success('通知設定已更新');
+    } catch (error) {
+      console.error('更新通知設定失敗:', error);
+      toast.error('設定更新失敗，請稍後再試');
+    }
+  };
+
   return (
     <ToastProvider>
       <div className="min-h-screen bg-gray-50">
@@ -310,9 +339,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
             {core.activeTab === 'notificationSettings' && (
               <NotificationSection 
-                {...(notifications as unknown as object)} 
-                isLoading={false}
-                saveAllSettings={async () => await core.handleSettingChange('notificationPreferences', localSettings.notificationPreferences)}
+                isLoading={notificationsLoading}
+                saveAllSettings={handleSaveNotificationSettings}
                 isVerifying={false}
                 lineId={lineSettings.lineUserId}
                 setLineId={lineSettings.setLineUserId}
@@ -333,10 +361,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 userId={currentUser?.userId || ''}
                 handleNotificationChange={(type) => {/* 實作通知設定變更的邏輯 */}}
                 notificationSettings={{
-                  email: false,
-                  line: false,
-                  browser: false,
-                  mobile: false
+                  email: notificationSettings?.email ?? false,
+                  line: notificationSettings?.line ?? false,
+                  browser: notificationSettings?.browser ?? false,
+                  mobile: notificationSettings?.mobile ?? false,
+                  all: notificationSettings?.all ?? false
                 }}
                 formData={{
                   email: form.formData.email,
