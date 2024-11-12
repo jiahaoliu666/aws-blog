@@ -77,7 +77,7 @@ export interface NotificationSectionProps {
   verificationError?: string;
   verifyLineIdAndCode: () => void;
   isLoading: boolean;
-  handleNotificationChange: (type: string) => void;
+  handleNotificationChange: (type: keyof NotificationSettings) => void;
   notificationSettings: {
     email: boolean;
     line: boolean;

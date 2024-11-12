@@ -141,8 +141,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   const { 
     settings: notificationSettings, 
+    tempSettings,
     loading: notificationsLoading, 
     error: notificationsError, 
+    handleToggle,
     saveSettings: updateNotificationSettings 
   } = useNotificationSettings();
 
@@ -333,6 +335,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               <NotificationSection 
                 isLoading={notificationsLoading}
                 saveAllSettings={handleSaveNotificationSettings}
+                notificationSettings={tempSettings}
+                handleNotificationChange={handleToggle}
                 isVerifying={false}
                 lineId={lineSettings.lineUserId}
                 setLineId={lineSettings.setLineUserId}
@@ -351,24 +355,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 handleVerification={handleVerifyLineIdAndCode}
                 onCopyUserId={() => {/* 實作複製用戶ID的邏輯 */}}
                 userId={currentUser?.userId || ''}
-                handleNotificationChange={(type) => {/* 實作通知設定變更的邏輯 */}}
-                notificationSettings={{
-                  email: notificationSettings?.email ?? false,
-                  line: notificationSettings?.line ?? false,
-                  browser: notificationSettings?.browser ?? false,
-                  mobile: notificationSettings?.mobile ?? false,
-                  all: notificationSettings?.all ?? false
-                }}
-                formData={{
-                  email: form.formData.email,
-                  username: form.formData.username,
-                  notifications: {
-                    email: localSettings?.notificationPreferences?.email ?? defaultSettings.notificationPreferences.email,
-                    line: localSettings?.notificationPreferences?.line ?? defaultSettings.notificationPreferences.line,
-                    browser: localSettings?.notificationPreferences?.browser ?? defaultSettings.notificationPreferences.browser,
-                    mobile: localSettings?.notificationPreferences?.mobile ?? defaultSettings.notificationPreferences.mobile
-                  }
-                }}
               />
             )}
 

@@ -189,15 +189,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const [showLineSettings, setShowLineSettings] = useState(false);
 
   // 處理 LINE 通知開關
-  const handleLineToggle = async () => {
+  const handleLineToggle = () => {
     if (!localFormData.notifications.line) {
-      // 開啟通知時展開設定
       setShowLineSettings(true);
     } else {
-      // 關閉通知時收合設定
       setShowLineSettings(false);
     }
-    await toggleNotification('line');
+    handleNotificationChange('line');
   };
 
   // 修改儲存按鈕的處理函數
