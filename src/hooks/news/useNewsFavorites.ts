@@ -8,19 +8,19 @@ export const useNewsFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedNews[]>([]);
 
-    // useEffect(() => {
-    //     const fetchFavorites = async () => {
-    //         if (user) {
-    //             try {
-    //                 const response = await axios.get(`/api/news/getFavorites?userId=${user.sub}`);
-    //                 setFavorites(response.data.items || []);
-    //             } catch (error) {
-    //                 // console.error('獲取收藏文章失敗:', error);
-    //             }
-    //         }
-    //     };
-    //     fetchFavorites();
-    // }, [user]);
+    useEffect(() => {
+        const fetchFavorites = async () => {
+            if (user) {
+                try {
+                    const response = await axios.get(`/api/news/getFavorites?userId=${user.sub}`);
+                    setFavorites(response.data.items || []);
+                } catch (error) {
+                    console.error('獲取收藏文章失敗:', error);
+                }
+            }
+        };
+        fetchFavorites();
+    }, [user]);
 
     const toggleFavorite = async (article: ExtendedNews) => {
         if (!user) {
