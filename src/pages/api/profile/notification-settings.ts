@@ -39,16 +39,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           TableName: TABLE_NAME,
           Item: {
             userId: putUserId,
-            email: settings.email,
-            line: settings.line,
+            email: Boolean(settings.email),
+            line: Boolean(settings.line),
             updatedAt: new Date().toISOString()
           }
         };
 
-        await dynamodb.put(putParams).promise();
-        logger.info('通知設定已更新:', putParams.Item);
-        
-        return res.status(200).json(putParams.Item);
+        try {
+          await dynamodb.put(putParams).promise();
+          logger.info('通知設定已更新:', putParams.Item);
+          
+          return res.status(200).json(putParams.Item);
+        } catch (error) {
+          logger.error('更新通知設定失敗:', error);
+          throw error;
+        }
 
       default:
         res.setHeader('Allow', ['GET', 'PUT']);

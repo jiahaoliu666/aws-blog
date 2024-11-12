@@ -143,7 +143,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     settings: notificationSettings, 
     loading: notificationsLoading, 
     error: notificationsError, 
-    updateSettings: updateNotificationSettings 
+    saveSettings: updateNotificationSettings 
   } = useNotificationSettings();
 
   useEffect(() => {
@@ -265,15 +265,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     }
 
     try {
-      const settingsToUpdate = {
-        email: notificationSettings?.email ?? false,
-        line: notificationSettings?.line ?? false,
-        browser: notificationSettings?.browser ?? false,
-        mobile: notificationSettings?.mobile ?? false,
-        all: notificationSettings?.all ?? false
-      };
-
-      await updateNotificationSettings(currentUser.userId, settingsToUpdate);
+      await updateNotificationSettings(currentUser.userId);
       toast.success('通知設定已更新');
     } catch (error) {
       console.error('更新通知設定失敗:', error);

@@ -17,6 +17,7 @@ import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { useAuthContext } from '@/context/AuthContext';
 import { logger } from '@/utils/logger';
 import { Transition } from '@headlessui/react';
+import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
 
 // 純 UI 組件
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
@@ -67,16 +68,25 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const toggleNotification = async (type: 'email' | 'line') => {
     try {
-      const newValue = !localFormData.notifications[type];
+      const newValue = !notificationSettings[type];
+      
+      // 先更新本地狀態
+      const updatedSettings = {
+        ...notificationSettings,
+        [type]: newValue
+      };
+
+      // 呼叫父組件的處理函數
       await handleNotificationChange(type);
+      
+      // 更新到資料庫
+      await saveAllSettings();
       
       setFormData(prev => ({
         ...prev,
         notifications: {
           ...prev.notifications,
-          [type]: newValue,
-          browser: prev.notifications.browser || false,
-          mobile: prev.notifications.mobile || false
+          [type]: newValue
         }
       }));
     } catch (error) {
@@ -189,6 +199,24 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
     await toggleNotification('line');
   };
+
+  // 修改儲存按鈕的處理函數
+  const handleSaveSettings = async () => {
+    try {
+      if (!user?.userId) {
+        toast.error('請先登入');
+        return;
+      }
+
+      await saveAllSettings();
+      toast.success('通知設定已更新');
+    } catch (error) {
+      toast.error('設定更新失敗，請稍後再試');
+      logger.error('儲存通知設定失敗:', error);
+    }
+  };
+
+  const { tempSettings, handleToggle } = useNotificationSettings();
 
   return (
     <div className="w-full">
@@ -411,7 +439,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       {/* 新增儲存按鈕 */}
       <div className="mt-8 flex justify-end">
         <button
-          onClick={saveAllSettings}
+          onClick={handleSaveSettings}
           disabled={isLoading}
           className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
         >

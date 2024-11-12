@@ -10,11 +10,18 @@ export const useNotificationSettings = () => {
     mobile: false,
     all: false
   });
+  const [tempSettings, setTempSettings] = useState<NotificationSettings>({
+    email: false,
+    line: false,
+    browser: false,
+    mobile: false,
+    all: false
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchNotificationSettings = async () => {
+    const fetchSettings = async () => {
       try {
         setLoading(true);
         const response = await fetch('/api/profile/notification-settings');
@@ -24,31 +31,36 @@ export const useNotificationSettings = () => {
         }
         
         const data = await response.json();
-        setSettings({
+        const newSettings = {
           email: data.email ?? false,
           line: data.line ?? false,
           browser: data.browser ?? false,
           mobile: data.mobile ?? false,
           all: data.all ?? false
-        });
-        logger.info('成功獲取通知設定:', data);
+        };
+        setSettings(newSettings);
+        setTempSettings(newSettings);
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('未知錯誤');
-        logger.error('獲取通知設定失敗:', error);
-        setError(error);
+        logger.error('獲取通知設定失敗:', err);
+        setError(err instanceof Error ? err : new Error('未知錯誤'));
       } finally {
         setLoading(false);
       }
     };
 
-    fetchNotificationSettings();
+    fetchSettings();
   }, []);
 
-  const updateSettings = async (userId: string, newSettings: Partial<NotificationSettings>) => {
+  const handleToggle = (type: keyof NotificationSettings) => {
+    setTempSettings(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
+
+  const saveSettings = async (userId: string) => {
     try {
       setLoading(true);
-      logger.info('開始更新通知設定:', { userId, newSettings });
-
       const response = await fetch('/api/profile/notification-settings', {
         method: 'PUT',
         headers: {
@@ -56,7 +68,7 @@ export const useNotificationSettings = () => {
         },
         body: JSON.stringify({
           userId,
-          settings: newSettings
+          settings: tempSettings
         }),
       });
 
@@ -65,14 +77,11 @@ export const useNotificationSettings = () => {
       }
 
       const data = await response.json();
-      setSettings(data);
-      logger.info('成功更新通知設定:', data);
+      setSettings(tempSettings);
       return data;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('更新設定時發生錯誤');
-      logger.error('更新通知設定失敗:', error);
-      setError(error);
-      throw error;
+      logger.error('儲存通知設定失敗:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -80,8 +89,10 @@ export const useNotificationSettings = () => {
 
   return {
     settings,
+    tempSettings,
     loading,
     error,
-    updateSettings,
+    handleToggle,
+    saveSettings
   };
 };
