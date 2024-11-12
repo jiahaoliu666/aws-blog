@@ -34,33 +34,55 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         <p className="mt-2 text-gray-600">管理您想要接收的通知方式</p>
       </div>
 
-      {/* 只顯示 email 和 line 的開關 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
-                <div className="flex-1">
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
+                  <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
+                </div>
+                <div>
                   <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
                   <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
-                  <div className="mt-2">
-                    <input
-                      type="email"
-                      value={formData?.email || ''}
-                      readOnly
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg 
-                        text-gray-700 text-sm focus:outline-none cursor-not-allowed"
-                    />
-                  </div>
                 </div>
               </div>
+              <Switch
+                checked={notificationSettings.email}
+                onChange={() => handleNotificationChange('email')}
+                color="primary"
+              />
             </div>
-            <Switch
-              checked={notificationSettings.email}
-              onChange={() => handleNotificationChange('email')}
-              color="primary"
-            />
+
+            <div className="border-t border-gray-100"></div>
+
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  通知接收信箱
+                </label>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                  <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
+                  已驗證
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  type="email"
+                  value={formData?.email || ''}
+                  readOnly
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 
+                    rounded-lg text-gray-700 text-sm focus:outline-none cursor-not-allowed
+                    transition duration-150 ease-in-out"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FontAwesomeIcon icon={faInfoCircle} className="text-gray-400" />
+                </div>
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500">
+                此信箱與您的帳號綁定
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -84,7 +106,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         </div>
       </div>
 
-      {/* 儲存按鈕 */}
       <div className="mt-8 flex justify-end">
         <button
           onClick={saveAllSettings}
