@@ -18,7 +18,7 @@ interface HistorySectionProps {
 const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
   const { user } = useAuthContext();
   const { isLoading } = useProfileArticles({ user });
-  const [isGridView, setIsGridView] = useState(true);
+  const [isGridView, setIsGridView] = useState(false);
 
   return (
     <div className="w-full">
