@@ -337,6 +337,16 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                   browser: false,
                   mobile: false
                 }}
+                formData={{
+                  email: form.formData.email,
+                  username: form.formData.username,
+                  notifications: {
+                    email: localSettings?.notificationPreferences?.email ?? defaultSettings.notificationPreferences.email,
+                    line: localSettings?.notificationPreferences?.line ?? defaultSettings.notificationPreferences.line,
+                    browser: localSettings?.notificationPreferences?.browser ?? defaultSettings.notificationPreferences.browser,
+                    mobile: localSettings?.notificationPreferences?.mobile ?? defaultSettings.notificationPreferences.mobile
+                  }
+                }}
               />
             )}
 

@@ -69,8 +69,8 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
             <div className="flex items-center gap-3 mb-6">
               <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">聯絡信箱</h3>
-                <p className="text-sm text-gray-600">您的電子郵件地址</p>
+                <h3 className="text-lg font-semibold text-gray-800">郵件信箱</h3>
+                <p className="text-sm text-gray-600">寄出的電子郵件地址</p>
               </div>
             </div>
             <input

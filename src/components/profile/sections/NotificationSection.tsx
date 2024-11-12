@@ -181,11 +181,22 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div className="p-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
+                  <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
+                </div>
+              </div>
+              {/* 新增的電子郵件輸入框 */}
+              <div className="mt-3 max-w-md">
+                <input
+                  type="email"
+                  value={formData.email}
+                  readOnly
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
+                />
               </div>
             </div>
             <Switch
