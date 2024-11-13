@@ -114,6 +114,7 @@ src/
 │   │   │   ├── recent-log.ts       // 最近活動 API
 │   │   │   ├── sendFeedback.ts     // 反饋 API
 │   │   │   └── activity-log.ts     // 活動日誌 API
+│   │   │   └── notification-settings.ts // 通知設定 API
 │   │   ├── news
 │   │   │   ├── summary.ts          // 新聞摘要 API
 │   │   │   ├── addFavorite.ts      // 添加收藏 API

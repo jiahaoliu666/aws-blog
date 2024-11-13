@@ -151,5 +151,3 @@ const validateEnvironment = () => {
 
 // 導出驗證結果供其他模組使用
 export const environmentValidation = validateEnvironment();
-
-// 移除直接調用 validateEnvironment()
