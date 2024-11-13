@@ -108,12 +108,16 @@ export const useNotificationSettings = (userId: string) => {
     setTempSettings(settings);
   };
 
+  // 添加 hasChanges 的計算
+  const hasChanges = JSON.stringify(tempSettings) !== JSON.stringify(settings);
+
   return {
     settings: tempSettings,
     originalSettings: settings,
     loading,
     handleToggle,
     saveSettings,
-    resetSettings
+    resetSettings,
+    hasChanges
   };
 };
