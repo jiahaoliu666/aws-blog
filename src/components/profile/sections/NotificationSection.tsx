@@ -82,21 +82,32 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = (props) => {
       {/* 電子郵件通知卡片 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
-                <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
+                  <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
+                  <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
-              </div>
+              <Switch
+                checked={settings.email}
+                onChange={() => handleToggle('email')}
+                disabled={loading}
+              />
             </div>
-            <Switch
-              checked={settings.email}
-              onChange={() => handleToggle('email')}
-              disabled={loading}
-            />
+            
+            <div className="pl-[3.25rem]">
+              <input 
+                type="email" 
+                value={props.formData.email} 
+                readOnly 
+                className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 w-full max-w-md focus:outline-none"
+              />
+            </div>
           </div>
         </div>
       </div>
