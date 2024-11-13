@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { logger } from '@/utils/logger';
 import { useToastContext } from '@/context/ToastContext';
+import { VerificationStep } from '@/types/lineTypes';
 
 interface NotificationSettings {
   email: boolean;
@@ -19,6 +20,9 @@ export const useNotificationSettings = (userId: string) => {
     line: false
   });
   const [loading, setLoading] = useState(false);
+  const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.ADD_FRIEND);
+  const [verificationProgress, setVerificationProgress] = useState(0);
+  const [isVerified, setIsVerified] = useState(false);
 
   // 初始化載入設定
   useEffect(() => {
@@ -53,7 +57,14 @@ export const useNotificationSettings = (userId: string) => {
   }, [userId]);
 
   // 處理切換設定
-  const handleToggle = (type: keyof NotificationSettings) => {
+  const handleToggle = async (type: keyof NotificationSettings) => {
+    if (type === 'line' && !tempSettings.line) {
+      // 當開啟 LINE 通知時，重置驗證流程
+      setVerificationStep(VerificationStep.ADD_FRIEND);
+      setVerificationProgress(33);
+      setIsVerified(false);
+    }
+
     const newSettings = {
       ...tempSettings,
       [type]: !tempSettings[type]
@@ -137,6 +148,22 @@ export const useNotificationSettings = (userId: string) => {
   // 添加 hasChanges 的計算
   const hasChanges = JSON.stringify(tempSettings) !== JSON.stringify(settings);
 
+  // 新增驗證相關方法
+  const startVerification = () => {
+    setVerificationStep(VerificationStep.INPUT_LINE_ID);
+    setVerificationProgress(66);
+  };
+
+  const handleVerification = () => {
+    setVerificationStep(VerificationStep.VERIFY_CODE);
+    setVerificationProgress(100);
+  };
+
+  const completeVerification = () => {
+    setVerificationStep(VerificationStep.COMPLETED);
+    setIsVerified(true);
+  };
+
   return {
     settings: tempSettings,
     originalSettings: settings,
@@ -144,6 +171,12 @@ export const useNotificationSettings = (userId: string) => {
     handleToggle,
     saveSettings,
     resetSettings,
-    hasChanges
+    hasChanges,
+    verificationStep,
+    verificationProgress,
+    isVerified,
+    startVerification,
+    handleVerification,
+    completeVerification,
   };
 };

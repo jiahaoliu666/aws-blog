@@ -85,7 +85,11 @@ export enum VerificationStep {
   IDLE = 'IDLE',
   STARTED = 'STARTED',
   VERIFYING = 'VERIFYING',
-  COMPLETE = 'COMPLETE'
+  COMPLETE = 'COMPLETE',
+  COMPLETED = 'COMPLETED',
+  ADD_FRIEND = 'ADD_FRIEND',
+  INPUT_LINE_ID = 'INPUT_LINE_ID',
+  VERIFY_CODE = 'VERIFY_CODE'
 }
 
 export enum VerificationStatus {
