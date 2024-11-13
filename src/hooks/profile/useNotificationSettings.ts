@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { logger } from '@/utils/logger';
+import { useToastContext } from '@/context/ToastContext';
 
 interface NotificationSettings {
   email: boolean;
@@ -8,6 +9,7 @@ interface NotificationSettings {
 }
 
 export const useNotificationSettings = (userId: string) => {
+  const { showToast } = useToastContext();
   const [settings, setSettings] = useState<NotificationSettings>({
     email: false,
     line: false
@@ -62,12 +64,22 @@ export const useNotificationSettings = (userId: string) => {
   // 儲存設定
   const saveSettings = async () => {
     if (!userId) {
-      toast.error('請先登入');
+      showToast('無法儲存設定', 'error', {
+        description: '請先登入後再試',
+        position: 'top-right',
+        duration: 3000
+      });
       return;
     }
 
     try {
       setLoading(true);
+      showToast('正在儲存設定...', 'loading', {
+        description: '請稍候',
+        position: 'top-right',
+        duration: 1000
+      });
+
       const response = await fetch('/api/profile/notification-settings', {
         method: 'PUT',
         headers: {
@@ -93,10 +105,19 @@ export const useNotificationSettings = (userId: string) => {
         email: data.email,
         line: data.line
       });
-      toast.success('通知設定已更新');
+      
+      showToast('通知設定已更新', 'success', {
+        description: '您的通知偏好已成功儲存',
+        position: 'top-right',
+        duration: 3000
+      });
     } catch (err) {
       logger.error('儲存通知設定失敗:', err);
-      toast.error('儲存設定失敗，請稍後再試');
+      showToast('儲存失敗', 'error', {
+        description: '無法儲存設定，請稍後再試',
+        position: 'top-right',
+        duration: 4000
+      });
       setTempSettings(settings);
     } finally {
       setLoading(false);
@@ -106,6 +127,11 @@ export const useNotificationSettings = (userId: string) => {
   // 重置設定
   const resetSettings = () => {
     setTempSettings(settings);
+    showToast('設定已重置', 'info', {
+      description: '設定已重置為原始狀態',
+      position: 'top-right',
+      duration: 3000
+    });
   };
 
   // 添加 hasChanges 的計算

@@ -57,8 +57,16 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = (props) => {
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
 
   const handleSave = async () => {
-    if (!user?.userId) {
-      toast.error('請先登入');
+    if (!hasChanges) {
+      toast.info('沒有需要儲存的變更', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored"
+      });
       return;
     }
     await saveSettings();
