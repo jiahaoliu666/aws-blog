@@ -47,11 +47,14 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = (props) => {
   const { user } = useAuthContext();
   const {
     settings,
+    originalSettings,
     loading,
-    hasChanges,
     handleToggle,
-    saveSettings
+    saveSettings,
+    resetSettings
   } = useNotificationSettings(user?.userId || '');
+
+  const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
 
   const handleSave = async () => {
     if (!user?.userId) {
@@ -112,8 +115,23 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = (props) => {
         </div>
       </div>
 
-      {/* 儲存按鈕 */}
-      <div className="flex justify-end mt-6">
+      {/* 儲存按鈕區域 */}
+      <div className="flex justify-end mt-6 gap-3">
+        {/* 只有在有變更時才顯示取消按鈕 */}
+        {JSON.stringify(settings) !== JSON.stringify(originalSettings) && (
+          <button
+            onClick={resetSettings}
+            disabled={loading}
+            className={`
+              px-6 py-2.5 rounded-lg flex items-center gap-2
+              ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-700'}
+              text-white transition-colors duration-200
+            `}
+          >
+            取消
+          </button>
+        )}
+        
         <button
           onClick={handleSave}
           disabled={loading || !hasChanges}

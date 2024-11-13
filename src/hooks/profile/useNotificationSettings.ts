@@ -17,7 +17,6 @@ export const useNotificationSettings = (userId: string) => {
     line: false
   });
   const [loading, setLoading] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
   // 初始化載入設定
   useEffect(() => {
@@ -58,7 +57,6 @@ export const useNotificationSettings = (userId: string) => {
       [type]: !tempSettings[type]
     };
     setTempSettings(newSettings);
-    setHasChanges(true);
   };
 
   // 儲存設定
@@ -87,7 +85,6 @@ export const useNotificationSettings = (userId: string) => {
       }
 
       const data = await response.json();
-      // 使用回傳的資料更新狀態
       setSettings({
         email: data.email,
         line: data.line
@@ -96,12 +93,10 @@ export const useNotificationSettings = (userId: string) => {
         email: data.email,
         line: data.line
       });
-      setHasChanges(false);
       toast.success('通知設定已更新');
     } catch (err) {
       logger.error('儲存通知設定失敗:', err);
       toast.error('儲存設定失敗，請稍後再試');
-      // 重置為原始設定
       setTempSettings(settings);
     } finally {
       setLoading(false);
@@ -111,13 +106,12 @@ export const useNotificationSettings = (userId: string) => {
   // 重置設定
   const resetSettings = () => {
     setTempSettings(settings);
-    setHasChanges(false);
   };
 
   return {
     settings: tempSettings,
+    originalSettings: settings,
     loading,
-    hasChanges,
     handleToggle,
     saveSettings,
     resetSettings
