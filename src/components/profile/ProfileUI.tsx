@@ -147,6 +147,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     hasChanges: hasNotificationChanges
   } = useNotificationSettings(currentUser?.userId || '');
 
+  const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.SCAN_QR);
+
   useEffect(() => {
     if (core.settings) {
       if (JSON.stringify(localSettings) !== JSON.stringify(core.settings)) {
@@ -352,19 +354,25 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 setLineId={lineSettings.setLineUserId}
                 verificationCode={verificationCode}
                 setVerificationCode={setVerificationCode}
-                verificationStep={VerificationStep.IDLE}
+                verificationStep={VerificationStep.SCAN_QR}
                 verificationProgress={0}
                 handleStartVerification={() => lineVerification.handleVerification()}
                 handleConfirmVerification={() => lineVerification.confirmVerification(verificationCode)}
                 verificationState={{
-                  step: VerificationStep.IDLE,
+                  step: VerificationStep.SCAN_QR,
                   status: '',
                   isVerified: false
                 }}
                 verifyLineIdAndCode={handleVerifyLineIdAndCode}
                 handleVerification={handleVerifyLineIdAndCode}
-                onCopyUserId={() => {/* 實作複製用戶ID的邏輯 */}}
+                onCopyUserId={() => {
+                  navigator.clipboard.writeText(currentUser?.userId || '');
+                  toast.success('已複製 LINE ID');
+                }}
                 userId={currentUser?.userId || ''}
+                setVerificationStep={(step) => {
+                  setVerificationStep(step);
+                }}
               />
             )}
 

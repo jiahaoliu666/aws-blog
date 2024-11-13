@@ -89,7 +89,9 @@ export enum VerificationStep {
   COMPLETED = 'COMPLETED',
   ADD_FRIEND = 'ADD_FRIEND',
   INPUT_LINE_ID = 'INPUT_LINE_ID',
-  VERIFY_CODE = 'VERIFY_CODE'
+  VERIFY_CODE = 'VERIFY_CODE',
+  SCAN_QR = 'SCAN_QR',
+  SEND_ID = 'SEND_ID'
 }
 
 export enum VerificationStatus {
