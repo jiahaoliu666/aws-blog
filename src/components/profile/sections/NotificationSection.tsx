@@ -79,46 +79,46 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = (props) => {
         <p className="mt-2 text-gray-600">管理您想要接收的通知方式</p>
       </div>
 
+      {/* 電子郵件通知卡片 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div className="p-6">
-          <div className="flex flex-col space-y-4">
-            {/* 電子郵件通知 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
-                  <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                  <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
-                </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
+                <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
               </div>
-              <Switch
-                checked={settings.email}
-                onChange={() => handleToggle('email')}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="border-t border-gray-100"></div>
-
-            {/* LINE 通知 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-50">
-                  <FontAwesomeIcon icon={faLine} className="text-xl text-green-500" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
-                  <p className="text-sm text-gray-600">透過 LINE 接收即時通知</p>
-                </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
+                <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
               </div>
-              <Switch
-                checked={settings.line}
-                onChange={() => handleToggle('line')}
-                disabled={loading}
-              />
             </div>
+            <Switch
+              checked={settings.email}
+              onChange={() => handleToggle('email')}
+              disabled={loading}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* LINE 通知卡片 */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+        <div className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-50">
+                <FontAwesomeIcon icon={faLine} className="text-xl text-green-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
+                <p className="text-sm text-gray-600">透過 LINE 接收即時通知</p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.line}
+              onChange={() => handleToggle('line')}
+              disabled={loading}
+            />
           </div>
         </div>
       </div>
