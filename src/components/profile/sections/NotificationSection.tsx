@@ -59,27 +59,43 @@ interface StepIndicatorsProps {
 
 const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClick }) => {
   const steps = [
-    { step: VerificationStep.SCAN_QR, label: '掃描 QR Code' },
-    { step: VerificationStep.ADD_FRIEND, label: '加入好友' },
-    { step: VerificationStep.SEND_ID, label: '發送 ID' },
-    { step: VerificationStep.VERIFY_CODE, label: '驗證碼確認' }
+    { step: VerificationStep.SCAN_QR, label: '掃描 QR Code', icon: faQrcode },
+    { step: VerificationStep.ADD_FRIEND, label: '加入好友', icon: faUserPlus },
+    { step: VerificationStep.SEND_ID, label: '發送 ID', icon: faPaperPlane },
+    { step: VerificationStep.VERIFY_CODE, label: '驗證確認', icon: faShield }
   ];
 
   return (
-    <div className="flex justify-between">
-      {steps.map(({ step, label }) => (
+    <div className="flex justify-between relative">
+      {steps.map(({ step, label, icon }, index) => (
         <div 
           key={step}
-          className={`relative flex flex-col items-center cursor-pointer`}
-          onClick={() => onStepClick(step)}
+          className="relative flex flex-col items-center w-1/4"
         >
           <div className={`
-            w-10 h-10 rounded-full flex items-center justify-center z-10
-            ${currentStep === step ? 'bg-green-500 text-white' : 'bg-gray-200'}
+            w-12 h-12 rounded-full flex items-center justify-center z-10
+            transition-all duration-300 ease-in-out
+            ${currentStep === step 
+              ? 'bg-green-500 text-white shadow-lg scale-110' 
+              : currentStep > step
+                ? 'bg-green-200 text-green-700'
+                : 'bg-gray-100 text-gray-400'
+            }
           `}>
-            {step + 1}
+            <FontAwesomeIcon icon={icon} className="text-lg" />
           </div>
-          <span className="text-sm mt-2">{label}</span>
+          <span className={`
+            text-sm mt-3 font-medium transition-colors duration-300
+            ${currentStep === step ? 'text-green-600' : 'text-gray-500'}
+          `}>
+            {label}
+          </span>
+          {index < steps.length - 1 && (
+            <div className={`
+              absolute top-6 left-1/2 w-full h-0.5
+              ${currentStep > step ? 'bg-green-500' : 'bg-gray-200'}
+            `} />
+          )}
         </div>
       ))}
     </div>
@@ -92,23 +108,34 @@ interface StepProps {
 }
 
 const QRCodeStep: React.FC<StepProps> = ({ onNext }) => (
-  <div className="text-center">
-    <div className="bg-white p-8 rounded-xl shadow-sm inline-block mb-6">
-      <img 
-        src="/images/line-qrcode.png" 
-        alt="LINE QR Code" 
-        width={200} 
-        height={200} 
-      />
+  <div className="max-w-md mx-auto text-center">
+    <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
+      <div className="relative">
+        <img 
+          src="/Line-QR-Code.png" 
+          alt="LINE QR Code" 
+          className="w-48 h-48 mx-auto"
+        />
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center animate-pulse">
+          <FontAwesomeIcon icon={faQrcode} className="text-4xl text-green-500" />
+        </div>
+      </div>
+      <div className="mt-6">
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">掃描 QR Code</h3>
+        <p className="text-gray-600 text-sm leading-relaxed">
+          請開啟您的 LINE 應用程式，點擊「加入好友」，
+          <br />然後掃描上方的 QR Code
+        </p>
+      </div>
     </div>
-    <h3 className="text-xl font-semibold mb-3">掃描 QR Code</h3>
-    <p className="text-gray-600 mb-6">請使用 LINE 應用程式掃描上方的 QR Code</p>
     <button
       onClick={onNext}
-      className="bg-green-500 text-white px-6 py-2.5 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 mx-auto"
+      className="bg-green-500 text-white px-8 py-3 rounded-xl hover:bg-green-600 
+                 transition-all duration-300 shadow-md hover:shadow-lg transform 
+                 hover:-translate-y-0.5 flex items-center gap-2 mx-auto"
     >
       <span>下一步</span>
-      <FontAwesomeIcon icon={faArrowRight} />
+      <FontAwesomeIcon icon={faArrowRight} className="text-sm" />
     </button>
   </div>
 );
@@ -428,16 +455,26 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
         {/* 驗證成功狀態 */}
         {notificationSettings.line && verificationState.isVerified && (
-          <div className="p-6 bg-green-50">
-            <div className="flex items-center gap-3">
+          <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50">
+            <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-lg bg-green-500 text-white flex items-center justify-center">
-                  <FontAwesomeIcon icon={faCheckCircle} className="text-xl" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 
+                              text-white flex items-center justify-center shadow-lg">
+                  <FontAwesomeIcon icon={faCheckCircle} className="text-2xl" />
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-gray-800">LINE 通知已啟用</h4>
-                <p className="text-sm text-gray-600">您將可以透過 LINE 接收所有重要通知</p>
+                <h4 className="font-semibold text-gray-800 text-lg mb-1">LINE 通知已成功啟用</h4>
+                <p className="text-gray-600">您現在可以透過 LINE 即時接收所有重要通知</p>
+              </div>
+              <div className="ml-auto">
+                <button 
+                  className="text-green-600 hover:text-green-700 text-sm flex items-center gap-1"
+                  onClick={() => {/* 處理重新驗證邏輯 */}}
+                >
+                  <FontAwesomeIcon icon={faInfoCircle} />
+                  <span>重新驗證</span>
+                </button>
               </div>
             </div>
           </div>
