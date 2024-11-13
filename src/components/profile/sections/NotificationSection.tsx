@@ -110,15 +110,12 @@ interface StepProps {
 const QRCodeStep: React.FC<StepProps> = ({ onNext }) => (
   <div className="max-w-md mx-auto text-center">
     <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
-      <div className="relative">
+      <div className="mb-6">
         <img 
           src="/Line-QR-Code.png" 
           alt="LINE QR Code" 
           className="w-48 h-48 mx-auto"
         />
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center animate-pulse">
-          <FontAwesomeIcon icon={faQrcode} className="text-4xl text-green-500" />
-        </div>
       </div>
       <div className="mt-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-2">掃描 QR Code</h3>
