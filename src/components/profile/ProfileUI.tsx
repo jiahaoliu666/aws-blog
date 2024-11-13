@@ -367,9 +367,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 handleVerification={handleVerifyLineIdAndCode}
                 onCopyUserId={() => {
                   navigator.clipboard.writeText(currentUser?.userId || '');
-                  toast.success('已複製 LINE ID');
+                  toast.success('已複製用戶 ID');
+                }}
+                onCopyLineId={() => {
+                  navigator.clipboard.writeText('@601feiwz');
+                  toast.success('已複製官方 LINE ID');
                 }}
                 userId={currentUser?.userId || ''}
+                lineOfficialId="@601feiwz"
                 setVerificationStep={(step) => {
                   setVerificationStep(step);
                 }}

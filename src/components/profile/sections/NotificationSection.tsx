@@ -11,7 +11,8 @@ import {
   faInfoCircle,
   faUserPlus,
   faPaperPlane,
-  faExclamationTriangle
+  faExclamationTriangle,
+  faCopy
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -48,7 +49,9 @@ interface NotificationSectionProps {
   verifyLineIdAndCode: () => void;
   handleVerification: () => void;
   onCopyUserId: () => void;
+  onCopyLineId: () => void;
   userId: string;
+  lineOfficialId: string;
   setVerificationStep: (step: VerificationStep) => void;
 }
 
@@ -105,9 +108,10 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
 interface StepProps {
   onBack?: () => void;
   onNext?: () => void;
+  onCopyLineId?: () => void;
 }
 
-const QRCodeStep: React.FC<StepProps> = ({ onNext }) => (
+const QRCodeStep: React.FC<StepProps> = ({ onNext, onCopyLineId }) => (
   <div className="max-w-2xl mx-auto text-center">
     <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
       <div className="flex items-center justify-center gap-12">
@@ -137,12 +141,30 @@ const QRCodeStep: React.FC<StepProps> = ({ onNext }) => (
 
         {/* LINE ID 搜尋區塊 */}
         <div className="text-center">
-          <div className="mb-4 ">
+          <div className="mb-4">
             <div className="w-48 h-48 flex items-center justify-center">
               <div className="text-center">
                 <FontAwesomeIcon icon={faLine} className="text-5xl text-green-500 mb-4" />
-                <div className="bg-gray-100 px-4 py-2 rounded-lg font-mono text-lg">
-                  @601feiwz
+                <div className="relative group">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-3 pr-12
+                                font-mono text-lg text-gray-700 select-all">
+                    @601feiwz
+                  </div>
+                  <button
+                    onClick={onCopyLineId}
+                    className="absolute right-2 top-1/2 -translate-y-1/2
+                             p-2 rounded-md hover:bg-gray-100 
+                             text-gray-500 hover:text-gray-700
+                             transition-all duration-200"
+                    title="複製 LINE ID"
+                  >
+                    <FontAwesomeIcon icon={faCopy} className="text-lg" />
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 
+                                   bg-gray-800 text-white text-xs py-1 px-2 rounded 
+                                   opacity-0 group-hover:opacity-100 transition-opacity">
+                      複製
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -220,7 +242,7 @@ const SendIdStep: React.FC<StepProps & { userId: string; onCopyUserId: () => voi
                      transition-all duration-200"
             title="複製 ID"
           >
-            <FontAwesomeIcon icon={faQrcode} className="text-lg" />
+            <FontAwesomeIcon icon={faCopy} className="text-lg" />
             <span className="absolute -top-8 left-1/2 -translate-x-1/2 
                            bg-gray-800 text-white text-xs py-1 px-2 rounded 
                            opacity-0 group-hover:opacity-100 transition-opacity">
@@ -319,7 +341,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   verifyLineIdAndCode,
   handleVerification,
   onCopyUserId,
+  onCopyLineId,
   userId,
+  lineOfficialId,
   setVerificationStep,
 }) => {
   const { user } = useAuthContext();
@@ -475,6 +499,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               {currentStep === VerificationStep.SCAN_QR && (
                 <QRCodeStep 
                   onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)}
+                  onCopyLineId={onCopyLineId}
                 />
               )}
 
