@@ -108,23 +108,54 @@ interface StepProps {
 }
 
 const QRCodeStep: React.FC<StepProps> = ({ onNext }) => (
-  <div className="max-w-md mx-auto text-center">
+  <div className="max-w-2xl mx-auto text-center">
     <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
-      <div className="mb-6">
-        <img 
-          src="/Line-QR-Code.png" 
-          alt="LINE QR Code" 
-          className="w-48 h-48 mx-auto"
-        />
-      </div>
-      <div className="mt-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">掃描 QR Code</h3>
-        <p className="text-gray-600 text-sm leading-relaxed">
-          請開啟您的 LINE 應用程式，點擊「加入好友」，
-          <br />然後掃描上方的 QR Code
-        </p>
+      <div className="flex items-center justify-center gap-12">
+        {/* QR Code 區塊 */}
+        <div className="text-center">
+          <div className="mb-4">
+            <img 
+              src="/Line-QR-Code.png" 
+              alt="LINE QR Code" 
+              className="w-48 h-48"
+            />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">掃描 QR Code</h3>
+          <p className="text-gray-600 text-sm">
+            開啟 LINE 應用程式
+            <br />點擊「加入好友」後掃描
+          </p>
+        </div>
+
+        {/* 分隔線 */}
+        <div className="h-64 w-px bg-gray-200 relative">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                        bg-white text-gray-400 px-2 text-sm">
+            或
+          </div>
+        </div>
+
+        {/* LINE ID 搜尋區塊 */}
+        <div className="text-center">
+          <div className="mb-4 ">
+            <div className="w-48 h-48 flex items-center justify-center">
+              <div className="text-center">
+                <FontAwesomeIcon icon={faLine} className="text-5xl text-green-500 mb-4" />
+                <div className="bg-gray-100 px-4 py-2 rounded-lg font-mono text-lg">
+                  @601feiwz
+                </div>
+              </div>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">搜尋 LINE ID</h3>
+          <p className="text-gray-600 text-sm">
+            開啟 LINE 應用程式
+            <br />搜尋 ID 加入好友
+          </p>
+        </div>
       </div>
     </div>
+
     <button
       onClick={onNext}
       className="bg-green-500 text-white px-8 py-3 rounded-xl hover:bg-green-600 
@@ -172,28 +203,53 @@ const SendIdStep: React.FC<StepProps & { userId: string; onCopyUserId: () => voi
     <div className="bg-white p-8 rounded-xl mb-6">
       <FontAwesomeIcon icon={faPaperPlane} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">發送您的用戶 ID</h3>
-      <p className="text-gray-600 mb-4">請將以下 ID 複製並發送給官方帳號</p>
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <code className="bg-gray-100 px-4 py-2 rounded-lg">{userId}</code>
-        <button
-          onClick={onCopyUserId}
-          className="p-2 text-gray-500 hover:text-gray-700"
-          title="複製 ID"
-        >
-          <FontAwesomeIcon icon={faQrcode} />
-        </button>
+      <p className="text-gray-600 mb-6">請將以下 ID 複製並發送給官方帳號</p>
+      
+      {/* 優化後的 ID 複製區域 */}
+      <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="relative group">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-3 pr-12
+                        font-mono text-lg text-gray-700 select-all">
+            {userId}
+          </div>
+          <button
+            onClick={onCopyUserId}
+            className="absolute right-2 top-1/2 -translate-y-1/2
+                     p-2 rounded-md hover:bg-gray-100 
+                     text-gray-500 hover:text-gray-700
+                     transition-all duration-200"
+            title="複製 ID"
+          >
+            <FontAwesomeIcon icon={faQrcode} className="text-lg" />
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 
+                           bg-gray-800 text-white text-xs py-1 px-2 rounded 
+                           opacity-0 group-hover:opacity-100 transition-opacity">
+              複製
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* 提示訊息 */}
+      <div className="text-sm text-gray-500 flex items-center justify-center gap-2 mb-4">
+        <FontAwesomeIcon icon={faInfoCircle} />
+        <span>點擊右側按鈕即可複製 ID</span>
       </div>
     </div>
+
     <div className="flex justify-center gap-4">
       <button
         onClick={onBack}
-        className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-colors"
+        className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg 
+                   hover:bg-gray-200 transition-colors"
       >
         返回
       </button>
       <button
         onClick={onNext}
-        className="bg-green-500 text-white px-6 py-2.5 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+        className="bg-green-500 text-white px-6 py-2.5 rounded-lg 
+                   hover:bg-green-600 transition-colors 
+                   flex items-center gap-2"
       >
         <span>下一步</span>
         <FontAwesomeIcon icon={faArrowRight} />
