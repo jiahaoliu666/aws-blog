@@ -453,11 +453,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const handleLineToggle = async () => {
     try {
       if (!settings.lineNotification) {
-        if (!verificationState?.isVerified) {
-          handleToggle('lineNotification', true);
-          setVerificationStep(VerificationStep.SCAN_QR);
-          setProgress(0);
-        }
+        handleToggle('lineNotification', true);
+        setVerificationStep(VerificationStep.SCAN_QR);
+        setProgress(0);
       } else {
         if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
           await handleResetVerification();

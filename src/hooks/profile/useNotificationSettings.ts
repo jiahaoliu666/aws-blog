@@ -144,18 +144,11 @@ export const useNotificationSettings = (userId: string) => {
   }, [settings, originalSettings]);
 
   const handleSettingChange = useCallback((key: 'emailNotification' | 'lineNotification', value: boolean) => {
-    // 如果是 LINE 通知，需要檢查驗證狀態
-    if (key === 'lineNotification' && value === true && !verificationState?.isVerified) {
-      console.log('LINE 通知需要先完成驗證');
-      showToast('請先完成 LINE 驗證流程', 'warning');
-      return;
-    }
-
     setSettings(prev => ({
       ...prev,
       [key]: value
     }));
-  }, [verificationState?.isVerified]);
+  }, []);
 
   const saveSettings = async () => {
     try {
@@ -165,7 +158,7 @@ export const useNotificationSettings = (userId: string) => {
         return false;
       }
 
-      // 檢查 LINE 通知的狀態
+      // 移到這裡：檢查 LINE 通知的狀態
       if (settings.lineNotification && !verificationState?.isVerified) {
         showToast('請先完成 LINE 驗證流程', 'warning');
         return false;
