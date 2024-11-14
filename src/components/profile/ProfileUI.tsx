@@ -211,6 +211,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     try {
       setIsLoading(true);
       
+      // 驗證碼格式檢查
+      if (!verificationCode || verificationCode.length !== 6) {
+        toast.error('請輸入6位數驗證碼');
+        return;
+      }
+
       logger.info('發送驗證請求:', {
         userId: currentUser?.userId,
         verificationCode
@@ -230,7 +236,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       const data = await response.json();
 
       if (data.success) {
-        toast.success('LINE 帳號驗證成功');
+        toast.success('LINE 帳號驗證成功！');
         setVerificationState(prev => ({
           ...prev,
           status: VerificationStatus.SUCCESS,
@@ -238,10 +244,22 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         }));
         await handleNotificationChange('line', true);
       } else {
+        // 根據不同的錯誤情況顯示不同的錯誤訊息
+        if (data.error === 'EXPIRED') {
+          toast.error('驗證碼已過期，請重新取得驗證碼');
+        } else if (data.error === 'INVALID_CODE') {
+          toast.error('驗證碼錯誤，請確認後重新輸入');
+        } else if (data.error === 'NOT_FOUND') {
+          toast.error('找不到對應的驗證資訊，請重新開始驗證流程');
+        } else {
+          toast.error(data.message || '驗證失敗，請稍後再試');
+        }
         throw new Error(data.message || '驗證失敗');
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '驗證失敗');
+      // 處理其他未預期的錯誤
+      const errorMessage = error instanceof Error ? error.message : '驗證過程發生錯誤';
+      toast.error(errorMessage);
       logger.error('驗證失敗:', error);
     } finally {
       setIsLoading(false);

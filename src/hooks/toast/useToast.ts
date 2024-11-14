@@ -22,6 +22,7 @@ interface QueuedToast {
     position?: 'top' | 'bottom' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
     icon?: IconDefinition;
     className?: string;
+    toastId?: string;
   };
 }
 
@@ -34,6 +35,7 @@ export type ToastReturnType = {
     position?: 'top' | 'bottom' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
     icon?: IconDefinition;
     className?: string;
+    toastId?: string;
   }) => void;
   success: (message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => void;
   error: (message: string, options?: Parameters<ToastReturnType['showToast']>[2]) => void;
@@ -109,6 +111,7 @@ export const useToast = (): ToastReturnType => {
       position?: 'top' | 'bottom' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
       icon?: IconDefinition;
       className?: string;
+      toastId?: string;
     }
   ) => {
     // 將新的 toast 加入佇列

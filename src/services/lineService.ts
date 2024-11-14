@@ -417,16 +417,8 @@ export class LineService implements LineServiceInterface {
           lineId: { S: params.lineUserId },
           verificationCode: { S: verificationCode },
           verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) },
-          verificationStep: { S: VerificationStep.VERIFYING },
-          verificationStatus: { S: VerificationStatus.PENDING },
           createdAt: { S: new Date().toISOString() },
-          isVerified: { BOOL: false },
-          notificationPreferences: {
-            M: {
-              news: { BOOL: false },
-              announcements: { BOOL: false }
-            }
-          }
+          isVerified: { BOOL: false }
         }
       };
 

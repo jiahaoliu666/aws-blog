@@ -40,7 +40,6 @@ export const useNotificationSettings = (userId: string) => {
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
-      console.log('開始獲取通知設定，userId:', userId);
       
       // 確保 userId 存在
       if (!userId) {
@@ -50,17 +49,10 @@ export const useNotificationSettings = (userId: string) => {
       const response = await fetch(`/api/profile/notification-settings/${userId}`, {
         headers: {
           'Content-Type': 'application/json',
-          // 添加授權標頭（如果需要）
-          // 'Authorization': `Bearer ${token}`,
         },
       });
       
-      console.log('API 響應狀態:', response.status);
-      
       if (!response.ok) {
-        console.error('獲取設定失敗:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('錯誤詳情:', errorText);
         if (response.status === 404) {
           const defaultSettings = {
             emailNotification: false,
@@ -78,13 +70,6 @@ export const useNotificationSettings = (userId: string) => {
       }
       
       const data = await response.json();
-      console.log('從資料表獲取的原始數據:', data);
-      
-      // 驗證數據格式
-      if (!data || typeof data.emailNotification === 'undefined') {
-        console.error('無效的數據格式:', data);
-        throw new Error('獲取到的數據格式無效');
-      }
       
       const newSettings = {
         emailNotification: Boolean(data.emailNotification),
@@ -92,22 +77,11 @@ export const useNotificationSettings = (userId: string) => {
         lineUserId: data.lineUserId || undefined
       };
       
-      console.log('處理後的設定:', newSettings);
-      
       setSettings(newSettings);
       setOriginalSettings(newSettings);
       
     } catch (error) {
       console.error('獲取設定時發生錯誤:', error);
-      
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        showToast('網路連接問題，請檢查網路後重試', 'error');
-      } else {
-        showToast(
-          error instanceof Error ? error.message : '無法載入通知設定，請稍後再試',
-          'error'
-        );
-      }
       
       const defaultSettings = {
         emailNotification: false,
@@ -120,13 +94,6 @@ export const useNotificationSettings = (userId: string) => {
       setIsLoading(false);
     }
   };
-
-  // 在組件掛載時獲取定
-  useEffect(() => {
-    if (userId) {
-      fetchSettings();
-    }
-  }, [userId]);
 
   const hasChanges = useMemo(() => {
     // 檢查是否有任何設定發生變化

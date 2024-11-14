@@ -23,6 +23,7 @@ import { VerificationStep, VerificationStatus, VerificationState, VERIFICATION_P
 import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { LINE_RETRY_COUNT } from '@/config/line';
 import { validateVerificationCode } from '@/utils/lineUtils';
+import { useToastContext } from '@/context/ToastContext';
 
 interface NotificationSettings {
   line: boolean;
@@ -495,11 +496,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   useEffect(() => {
     if (settingsLoading) {
-      toast.loading('載入通知設定中...', {
-        toastId: 'loadingSettings'
+      toast.info('載入通知設定中...', {
+        toastId: 'loadingSettings',
+        duration: false
       });
     } else {
-      toast.dismiss('loadingSettings');
+      toast.remove('loadingSettings');
     }
   }, [settingsLoading]);
 
@@ -674,17 +676,15 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     console.log('載入狀態:', settingsLoading);
   }, [settings, settingsLoading]);
 
+  const toast = useToastContext();
+
   const onVerify = async () => {
     try {
       setIsLoading(true);
-      
-      if (!verificationCode) {
-        toast.error('請輸入驗證碼');
-        return;
-      }
 
-      if (!validateVerificationCode(verificationCode)) {
-        toast.error('驗證碼格式不正確');
+      // 驗證碼格式檢查
+      if (!verificationCode || verificationCode.length !== 6) {
+        toast.error('請輸入6位數驗證碼');
         return;
       }
 

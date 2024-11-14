@@ -159,18 +159,9 @@ export interface LineApiResponse {
 }
 
 export interface LineUserSettings {
-  userId: string;
   lineId: string;
   isVerified: boolean;
-  isFollowing: boolean;
   displayName: string;
-  verificationCode?: string;
-  notificationPreferences: {
-    news: boolean;
-    announcements: boolean;
-  };
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface LineVerificationRecord {

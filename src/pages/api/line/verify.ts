@@ -73,10 +73,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Key: {
         userId: { S: userId }
       },
-      UpdateExpression: "SET isVerified = :verified, verificationStatus = :status, updatedAt = :updatedAt, lastVerifiedAt = :lastVerifiedAt",
+      UpdateExpression: "SET isVerified = :verified, updatedAt = :updatedAt, lastVerifiedAt = :lastVerifiedAt",
       ExpressionAttributeValues: {
         ":verified": { BOOL: true },
-        ":status": { S: "VERIFIED" },
         ":updatedAt": { S: new Date().toISOString() },
         ":lastVerifiedAt": { S: new Date().toISOString() }
       }

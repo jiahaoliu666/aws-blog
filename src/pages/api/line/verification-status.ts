@@ -22,11 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Key: {
           userId: { S: userId }
         },
-        UpdateExpression: "SET isVerified = :verified, verificationStatus = :status, lineEnabled = :enabled",
+        UpdateExpression: "SET isVerified = :verified",
         ExpressionAttributeValues: {
-          ":verified": { BOOL: false },
-          ":status": { S: "PENDING" },
-          ":enabled": { BOOL: false }
+          ":verified": { BOOL: false }
         }
       };
 
