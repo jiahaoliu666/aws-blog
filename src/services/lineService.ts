@@ -259,22 +259,51 @@ export class LineService implements LineServiceInterface {
   }
 
   async verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }> {
-    return withRetry(
-      async () => {
-        const response = await fetch('/api/line/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, code })
-        });
+    try {
+      // 驗證碼格式檢查
+      if (!code || code.length !== 6) {
+        return { success: false, message: '無效的驗證碼格式' };
+      }
 
-        if (!response.ok) {
-          throw new Error('驗證請求失敗');
+      // 查詢驗證資訊
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
         }
+      };
 
-        return await response.json();
-      },
-      { retryCount: 3, retryDelay: 1000, operationName: 'LINE 驗證碼驗證' }
-    );
+      const result = await dynamoClient.send(new GetItemCommand(params));
+      
+      if (!result.Item) {
+        return { success: false, message: '找不到驗證資訊' };
+      }
+
+      const storedCode = result.Item.verificationCode?.S;
+      const expiryTime = Number(result.Item.verificationExpiry?.N || 0);
+
+      // 驗證碼檢查
+      if (code !== storedCode) {
+        return { success: false, message: '驗證碼不正確' };
+      }
+
+      // 檢查是否過期
+      if (Date.now() > expiryTime) {
+        return { success: false, message: '驗證碼已過期' };
+      }
+
+      // 更新驗證狀態
+      await this.updateUserLineSettings({
+        userId,
+        lineId: result.Item.lineId.S!,
+        isVerified: true
+      });
+
+      return { success: true, message: '驗證成功' };
+    } catch (error) {
+      logger.error('驗證碼驗證失敗:', error);
+      throw error;
+    }
   }
 
   async getFollowers(): Promise<string[]> {

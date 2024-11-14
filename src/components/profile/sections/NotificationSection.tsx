@@ -322,7 +322,7 @@ const VerifyCodeStep: React.FC<{
         type="text"
         value={verificationCode}
         onChange={(e) => setVerificationCode(e.target.value)}
-        placeholder="請輸入驗證碼"
+        placeholder="輸入驗證碼"
         className="w-48 px-4 py-2 border border-gray-200 rounded-lg text-center text-xl tracking-wider mb-4"
         maxLength={6}
       />
@@ -340,10 +340,27 @@ const VerifyCodeStep: React.FC<{
       </button>
       <button
         onClick={onVerify}
-        className="bg-green-500 text-white px-6 py-2.5 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+        disabled={isLoading || !verificationCode || verificationCode.length !== 6}
+        className={`
+          bg-green-500 text-white px-6 py-2.5 rounded-lg 
+          hover:bg-green-600 transition-colors 
+          flex items-center gap-2
+          ${isLoading || !verificationCode || verificationCode.length !== 6 
+            ? 'opacity-50 cursor-not-allowed' 
+            : ''}
+        `}
       >
-        <span>驗證</span>
-        <FontAwesomeIcon icon={faCheckCircle} />
+        {isLoading ? (
+          <>
+            <span className="animate-spin">⌛</span>
+            驗證中...
+          </>
+        ) : (
+          <>
+            <span>驗證</span>
+            <FontAwesomeIcon icon={faCheckCircle} />
+          </>
+        )}
       </button>
     </div>
   </div>
@@ -378,20 +395,16 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     settings,
     originalSettings,
     loading,
+    hasChanges,
+    verificationStep: settingsVerificationStep,
+    verificationProgress: settingsVerificationProgress,
+    isVerified,
     handleToggle,
     saveSettings,
     resetSettings,
-    verificationStep: contextVerificationStep,
-    verificationProgress: contextVerificationProgress,
-    isVerified,
-    startVerification,
-    handleVerification: contextHandleVerification,
-    completeVerification,
     handleSendUserId,
     handleVerifyCode,
   } = useNotificationSettings(userId);
-
-  const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
 
   const handleSave = async () => {
     if (!hasChanges) {
@@ -462,7 +475,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         <p className="mt-2 text-gray-600">管理您想要接收的通知方式</p>
       </div>
 
-      {/* 電子郵件通知卡片 */}
+      {/* 電郵件通知卡片 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div className="p-6">
           <div className="flex flex-col gap-4">

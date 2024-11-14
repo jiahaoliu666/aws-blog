@@ -35,5 +35,9 @@ export const validateVerificationCode = (code: string): boolean => {
   if (!code) return false;
   // 驗證碼應為 6 位數字和大寫字母組合
   const codePattern = /^[0-9A-Z]{6}$/;
-  return codePattern.test(code.trim());
+  const isValid = codePattern.test(code.trim());
+  
+  logger.info('驗證碼格式檢查:', { code, isValid });
+  
+  return isValid;
 }; 

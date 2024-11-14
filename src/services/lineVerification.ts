@@ -7,7 +7,9 @@ export const lineVerificationService = {
     return withRetry(
       async () => {
         try {
-          const response = await fetch('/api/line/verify-code', {
+          logger.info('開始驗證碼驗證:', { userId, code });
+
+          const response = await fetch('/api/line/verify', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -18,9 +20,11 @@ export const lineVerificationService = {
           const data = await response.json();
 
           if (!response.ok) {
+            logger.error('驗證請求失敗:', data);
             throw new Error(data.message || '驗證請求失敗');
           }
 
+          logger.info('驗證結果:', data);
           return data;
         } catch (error) {
           logger.error('驗證碼驗證錯誤:', error);
@@ -34,44 +38,23 @@ export const lineVerificationService = {
       }
     );
   },
-  
-  sendUserId: async (userId: string): Promise<VerificationResponse> => {
-    const response = await fetch('/api/line/send-userid', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId })
-    });
-    
-    return response.json();
-  },
 
-  checkVerificationStatus: async (userId: string): Promise<VerificationResponse> => {
-    return withRetry(
-      async () => {
-        try {
-          const response = await fetch('/api/line/verification-status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId }),
-          });
+  async checkVerificationStatus(userId: string): Promise<VerificationResponse> {
+    try {
+      const response = await fetch('/api/line/verification-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
 
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || '驗證狀態檢查失敗');
-          }
-
-          return data;
-        } catch (error) {
-          logger.error('驗證狀態檢查錯誤:', error);
-          throw error;
-        }
-      },
-      {
-        operationName: 'LINE 驗證狀態檢查',
-        retryCount: 3,
-        retryDelay: 1000
-      }
-    );
+      const data = await response.json();
+      logger.info('驗證狀態檢查結果:', data);
+      return data;
+    } catch (error) {
+      logger.error('驗證狀態檢查錯誤:', error);
+      throw error;
+    }
   }
 }; 

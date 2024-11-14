@@ -30,6 +30,7 @@ import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import '@aws-amplify/ui-react/styles.css';  
 import { useToastContext } from '@/context/ToastContext';
 import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
+import { logger } from '@/utils/logger';
 
 interface ProfileUIProps {
   user: {
@@ -99,6 +100,7 @@ const defaultSettings: LocalSettings = {
 const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, passwordMessage, setIsEditable }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { user: authUser, logoutUser } = useAuthContext();
 
@@ -129,7 +131,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   const account = useProfileAccount({ user: currentUser });
 
-  const { preferences, updatePreferences, isLoading } = useProfilePreferences();
+  const { preferences, updatePreferences, isLoading: preferencesLoading } = useProfilePreferences();
 
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showRedirectMessage, setShowRedirectMessage] = useState(false);
@@ -141,7 +143,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     loading: notificationsLoading, 
     handleToggle: handleNotificationToggle,
     saveSettings: updateNotificationSettings,
-    hasChanges: hasNotificationChanges
+    hasChanges: hasNotificationChanges,
+    reloadSettings
   } = useNotificationSettings(currentUser?.userId || '');
 
   const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.SCAN_QR);
@@ -190,9 +193,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   }, [currentUser, router, isClient, isRedirecting]);
 
   const handleVerifyLineIdAndCode = async () => {
-    // 實作驗證邏輯
     try {
-      // 呼叫驗證 API
+      setIsLoading(true);
+      
+      logger.info('發送驗證請求:', {
+        userId: currentUser?.userId,
+        verificationCode
+      });
+
       const response = await fetch('/api/line/verify', {
         method: 'POST',
         headers: {
@@ -200,18 +208,30 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         },
         body: JSON.stringify({
           userId: currentUser?.userId,
-          lineId: settings.lineUserId,
-          verificationCode
+          code: verificationCode
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('驗證失敗');
+        throw new Error(data.message || '驗證失敗');
       }
 
-      // 處理成功響應
+      setVerificationStep(VerificationStep.COMPLETED);
+      toast.success('LINE 帳號驗證成功');
+      
+      await updateNotificationSettings();
+
+      if (reloadSettings) {
+        await reloadSettings();
+      }
+
     } catch (error) {
-      console.error('驗證過程發生錯誤:', error);
+      logger.error('驗證過程發生錯誤:', error);
+      toast.error(error instanceof Error ? error.message : '驗證失敗，請稍後再試');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -339,7 +359,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
             {core.activeTab === 'notificationSettings' && (
               <NotificationSection 
                 isLoading={notificationsLoading}
-                isVerifying={false}
+                isVerifying={isLoading}
                 saveAllSettings={handleSaveNotificationSettings}
                 notificationSettings={{
                   line: settings.line,
@@ -349,14 +369,14 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 handleNotificationChange={handleNotificationChange}
                 verificationCode={verificationCode}
                 setVerificationCode={setVerificationCode}
-                verificationStep={VerificationStep.SCAN_QR}
+                verificationStep={verificationStep}
                 verificationProgress={0}
-                handleStartVerification={() => lineVerification.handleVerifyCode(verificationCode, currentUser?.userId || '')}
-                handleConfirmVerification={() => lineVerification.handleVerifyCode(verificationCode, currentUser?.userId || '')}
+                handleStartVerification={handleVerifyLineIdAndCode}
+                handleConfirmVerification={handleVerifyLineIdAndCode}
                 verificationState={{
-                  step: VerificationStep.SCAN_QR,
-                  status: '',
-                  isVerified: false
+                  step: verificationStep,
+                  status: isLoading ? 'verifying' : '',
+                  isVerified: settings.line
                 }}
                 verifyLineIdAndCode={handleVerifyLineIdAndCode}
                 handleVerification={handleVerifyLineIdAndCode}
@@ -370,9 +390,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 }}
                 userId={currentUser?.userId || ''}
                 lineOfficialId="@601feiwz"
-                setVerificationStep={(step) => {
-                  setVerificationStep(step);
-                }}
+                setVerificationStep={setVerificationStep}
               />
             )}
 
@@ -381,7 +399,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 settings={preferences}
                 handleSettingChange={handleSettingChange}
                 onSave={handleSave}
-                isLoading={isLoading}
+                isLoading={preferencesLoading}
               />
             )}
 
