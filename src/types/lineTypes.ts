@@ -106,10 +106,10 @@ export enum VerificationStatus {
 export interface VerificationState {
   step: VerificationStep;
   status: VerificationStatus;
-  message?: string;
-  isVerified?: boolean;
-  progress?: number;
-  currentStep?: number;
+  isVerified: boolean;
+  message: string;
+  progress: number;
+  currentStep: number;
   retryCount: number;
 }
 
@@ -227,12 +227,7 @@ export const VERIFICATION_STEPS: VerificationStepInfo[] = [
 ];
 
 export interface LineVerificationProps {
-  verificationState: {
-    step: VerificationStep;
-    status: string;
-    message?: string;
-    isVerified?: boolean;
-  };
+  verificationState: VerificationState;
   lineId: string;
   setLineId: (lineId: string) => void;
   verificationCode: string;
@@ -240,4 +235,15 @@ export interface LineVerificationProps {
   verifyLineIdAndCode: () => void;
   onCopyUserId: () => void;
   userId: string;
+}
+
+export interface LineNotificationState {
+  enabled: boolean;
+  isVerified: boolean;
+  verificationStatus: VerificationStatus;
+}
+
+export interface NotificationSettingsState {
+  lineNotification: LineNotificationState;
+  // ... other notification settings ...
 }

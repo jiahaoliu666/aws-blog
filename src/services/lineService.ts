@@ -110,6 +110,7 @@ interface LineServiceInterface {
   }): Promise<void>;
   replyMessage(replyToken: string, messages: any[]): Promise<any>;
   handleVerificationCommand(params: VerificationCommandParams): Promise<{lineId: string, verificationCode: string}>;
+  resetVerification(userId: string): Promise<void>;
 }
 
 export class LineService implements LineServiceInterface {
@@ -199,26 +200,27 @@ export class LineService implements LineServiceInterface {
       });
 
       if (!response.ok) {
-        throw new Error('檢查追蹤狀態失敗');
+        logger.error('檢查追蹤狀態失敗:', { status: response.status });
+        return {
+          isFollowing: false,
+          followed: false,
+          message: '檢查追蹤狀態失敗',
+          displayName: '',
+          timestamp: new Date().toISOString()
+        };
       }
 
       const data = await response.json();
       return {
-        isFollowing: data.friendFlag === true,
-        timestamp: new Date().toISOString(),
-        followed: data.friendFlag === true,
-        message: '',
-        displayName: ''
+        isFollowing: data.friendFlag,
+        followed: data.friendFlag,
+        message: '成功檢查追蹤狀態',
+        displayName: data.displayName || '',
+        timestamp: new Date().toISOString()
       };
     } catch (error) {
-      logger.error('檢查 LINE 追蹤狀態失敗:', error);
-      return {
-        isFollowing: false,
-        timestamp: new Date().toISOString(),
-        followed: false,
-        message: '檢查失敗',
-        displayName: ''
-      };
+      logger.error('檢查追蹤狀態時發生錯誤:', error);
+      throw error;
     }
   }
 
@@ -389,6 +391,23 @@ export class LineService implements LineServiceInterface {
       logger.error('處理驗證指令失敗:', error);
       throw error;
     }
+  }
+
+  async resetVerification(userId: string): Promise<void> {
+    const params = {
+      TableName: "AWS_Blog_UserNotificationSettings",
+      Key: {
+        userId: { S: userId }
+      },
+      UpdateExpression: "SET isVerified = :verified, verificationStatus = :status, verificationStep = :step",
+      ExpressionAttributeValues: {
+        ":verified": { BOOL: false },
+        ":status": { S: VerificationStatus.IDLE },
+        ":step": { S: VerificationStep.SCAN_QR }
+      }
+    };
+
+    await dynamoClient.send(new UpdateItemCommand(params));
   }
 }
 

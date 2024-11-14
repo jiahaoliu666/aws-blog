@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent, Dispatch, SetStateAction } from 'react';
 import { Loader } from '@aws-amplify/ui-react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
@@ -21,7 +21,7 @@ import PreferencesSection from './sections/PreferencesSection';
 import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
-import { VerificationStep } from '../../types/lineTypes';
+import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
 import { FormData } from '@/types/profileTypes';
 import { ToastProvider } from '@/context/ToastContext';
 import AccountSection from './sections/AccountSection';
@@ -46,6 +46,8 @@ interface ProfileUIProps {
   uploadMessage: string;
   passwordMessage: string;
   setIsEditable: () => void;
+  verificationState: VerificationState;
+  setVerificationState: Dispatch<SetStateAction<VerificationState>>;
 }
 
 interface NotificationSettings {
@@ -97,7 +99,7 @@ const defaultSettings: LocalSettings = {
   privacy: 'private'
 };
 
-const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, passwordMessage, setIsEditable }) => {
+const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, passwordMessage, setIsEditable, verificationState, setVerificationState }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -145,7 +147,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     saveSettings: updateNotificationSettings,
     hasChanges: hasNotificationChanges,
     reloadSettings
-  } = useNotificationSettings(currentUser?.userId || '');
+  } = useNotificationSettings(currentUser?.userId || '') as unknown as {
+    settings: Partial<{
+      line: boolean;
+      email: boolean;
+      browser: boolean;
+      mobile: boolean;
+      push: boolean;
+    }>;
+    loading: boolean;
+    handleToggle: (type: keyof NotificationSettings, value: boolean) => Promise<void>;
+    saveSettings: () => Promise<void>;
+    hasChanges: boolean;
+    reloadSettings: () => Promise<void>;
+  };
 
   const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.SCAN_QR);
 
@@ -181,7 +196,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
             })
           ]);
         } catch (error) {
-          console.error('重導向失敗:', error);
+          console.error('重導失敗:', error);
           setShowRedirectMessage(false);
         } finally {
           setIsRedirecting(false);
@@ -229,9 +244,34 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
     } catch (error) {
       logger.error('驗證過程發生錯誤:', error);
-      toast.error(error instanceof Error ? error.message : '驗證失敗，請稍後再試');
+      toast.error(error instanceof Error ? error.message : '驗證失敗，請稍後再');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResetVerification = async () => {
+    try {
+      // 重置所有驗證相關的狀態
+      setVerificationStep(VerificationStep.SCAN_QR);
+      setVerificationCode('');
+      setIsLoading(false);
+      
+      // 重置 LINE 設定狀
+      await handleNotificationToggle('line', false); // 強制為 false
+      
+      // 更新通知設定
+      await updateNotificationSettings();
+      
+      // 重新載入設定
+      if (reloadSettings) {
+        await reloadSettings();
+      }
+      
+      toast.info('請重新完成 LINE 驗證流程');
+    } catch (error) {
+      console.error('重置驗證狀態失敗:', error);
+      toast.error('重置失敗，請稍後再試');
     }
   };
 
@@ -255,19 +295,39 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     );
   }
 
-  const handleNotificationChange = async (type: keyof NotificationSettings) => {
+  const handleNotificationChange = async (
+    type: 'line' | 'email' | 'browser' | 'mobile' | 'push',
+    forceValue?: boolean
+  ) => {
     if (!currentUser?.userId) {
       toast.error('請先登入');
       return;
     }
 
-    if (type === 'line' || type === 'email') {
-      try {
-        handleNotificationToggle(type);
-      } catch (error) {
-        console.error('切換通知設定失敗:', error);
-        toast.error('設定切換失敗，請稍後再試');
+    try {
+      const newValue = forceValue !== undefined ? forceValue : !settings[type];
+      
+      // 檢查 LINE 驗證狀態
+      if (type === 'line' && newValue) {
+        if (verificationState.status !== VerificationStatus.SUCCESS) {
+          toast.warning('請先完成 LINE 帳號驗證');
+          return;
+        }
       }
+
+      await handleNotificationToggle(type, newValue);
+      
+      if (type === 'line' && !newValue) {
+        setVerificationStep(VerificationStep.SCAN_QR);
+        setVerificationCode('');
+      }
+      
+      // 重新載入設定以確保狀態同步
+      await reloadSettings();
+      
+    } catch (error) {
+      console.error('切換通知設定失敗:', error);
+      toast.error('設定切換失敗，請稍後再試');
     }
   };
 
@@ -362,8 +422,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 isVerifying={isLoading}
                 saveAllSettings={handleSaveNotificationSettings}
                 notificationSettings={{
-                  line: settings.line,
-                  email: settings.email,
+                  line: settings.line ?? false,
+                  email: settings.email ?? false,
                 }}
                 formData={form.formData}
                 handleNotificationChange={handleNotificationChange}
@@ -373,11 +433,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 verificationProgress={0}
                 handleStartVerification={handleVerifyLineIdAndCode}
                 handleConfirmVerification={handleVerifyLineIdAndCode}
-                verificationState={{
-                  step: verificationStep,
-                  status: isLoading ? 'verifying' : '',
-                  isVerified: settings.line
-                }}
+                verificationState={verificationState}
+                setVerificationState={setVerificationState}
+                handleResetVerification={handleResetVerification}
                 verifyLineIdAndCode={handleVerifyLineIdAndCode}
                 handleVerification={handleVerifyLineIdAndCode}
                 onCopyUserId={() => {

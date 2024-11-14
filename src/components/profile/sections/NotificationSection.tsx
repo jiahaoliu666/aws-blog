@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Dispatch, SetStateAction } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faEnvelope, 
@@ -19,7 +19,7 @@ import { Switch } from '@mui/material';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
 import { toast } from 'react-toastify';
-import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
+import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
 import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { LINE_RETRY_COUNT } from '@/config/line';
 
@@ -35,7 +35,10 @@ interface NotificationSectionProps {
   saveAllSettings: () => Promise<void>;
   notificationSettings: NotificationSettings;
   formData: any;
-  handleNotificationChange: (type: keyof NotificationSettings) => void;
+  handleNotificationChange: (
+    type: 'line' | 'email' | 'browser' | 'mobile' | 'push',
+    forceValue?: boolean
+  ) => Promise<void>;
   lineId?: string;
   setLineId?: (id: string) => void;
   verificationCode: string;
@@ -44,11 +47,7 @@ interface NotificationSectionProps {
   verificationProgress: number;
   handleStartVerification: () => void;
   handleConfirmVerification: () => void;
-  verificationState: {
-    step: VerificationStep;
-    status: string;
-    isVerified: boolean;
-  };
+  verificationState: VerificationState;
   verifyLineIdAndCode: () => void;
   handleVerification: () => void;
   onCopyUserId: () => void;
@@ -56,6 +55,8 @@ interface NotificationSectionProps {
   userId: string;
   lineOfficialId: string;
   setVerificationStep: (step: VerificationStep) => void;
+  handleResetVerification: () => Promise<void>;
+  setVerificationState: Dispatch<SetStateAction<VerificationState>>;
 }
 
 interface StepIndicatorsProps {
@@ -175,7 +176,7 @@ const QRCodeStep: React.FC<StepProps> = ({ onNext, onCopyLineId }) => (
           <h3 className="text-lg font-semibold text-gray-800 mb-2">搜尋 LINE ID</h3>
           <p className="text-gray-600 text-sm">
             開啟 LINE 應用程式
-            <br />搜尋 ID 加入好友
+            <br />搜尋 ID 加好友
           </p>
         </div>
       </div>
@@ -389,22 +390,23 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   userId,
   lineOfficialId,
   setVerificationStep,
+  handleResetVerification,
+  setVerificationState,
 }) => {
   const { user } = useAuthContext();
   const {
     settings,
     originalSettings,
-    loading,
+    loading: settingsLoading,
     hasChanges,
-    verificationStep: settingsVerificationStep,
-    verificationProgress: settingsVerificationProgress,
-    isVerified,
     handleToggle,
     saveSettings,
-    resetSettings,
+    reloadSettings,
     handleSendUserId,
-    handleVerifyCode,
+    handleVerifyCode
   } = useNotificationSettings(userId);
+
+  const isPageLoading = isLoading || settingsLoading;
 
   const handleSave = async () => {
     if (!hasChanges) {
@@ -412,20 +414,25 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       return;
     }
 
-    if (settings.line && !isVerified) {
+    if (settings.line && !verificationState?.isVerified) {
       toast.warning('請先完成 LINE 驗證流程');
       return;
     }
 
-    await saveSettings();
+    try {
+      await saveSettings();
+      await saveAllSettings();
+    } catch (error) {
+      console.error('儲存設定時發生錯誤:', error);
+    }
   };
 
   const handleLineToggle = async () => {
     if (!settings.line) {
-      await handleToggle('line');
+      await handleToggle('line', true);
     } else {
-      if (window.confirm('定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
-        await handleToggle('line');
+      if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
+        await handleToggle('line', false);
       }
     }
   };
@@ -461,11 +468,57 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const handleRetry = async () => {
     if (lineVerificationState.retryCount >= LINE_RETRY_COUNT) {
-      toast.error('已達最大重試次數，請稍後再試');
+      toast.error('已達最大重試數，請後再試');
       return;
     }
 
     await lineHandleVerifyCode(verificationCode, userId);
+  };
+
+  const handleReVerifyClick = async () => {
+    try {
+      // 1. 先關閉 LINE 通知開關
+      await handleNotificationChange('line');
+      
+      // 2. 更新資料庫狀態
+      const response = await fetch('/api/line/verification-status', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          isVerified: false,
+          verificationStatus: 'PENDING'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('更新驗證狀態失敗');
+      }
+      
+      // 3. 重置本地驗證狀態
+      setVerificationStep(VerificationStep.SCAN_QR);
+      setProgress(0);
+      setCurrentStep(VerificationStep.SCAN_QR);
+      setVerificationCode('');
+      
+      // 4. 更新驗證狀態
+      setVerificationState((prev: VerificationState) => ({
+        ...prev,
+        isVerified: false,
+        status: VerificationStatus.PENDING,
+        step: VerificationStep.INITIAL
+      }));
+      
+      // 5. 調用重置驗證的函
+      await handleResetVerification();
+      
+      toast.info('請重新完成 LINE 驗證流程');
+    } catch (error) {
+      console.error('重置驗證失敗:', error);
+      toast.error('重置失敗，請稍後再試');
+    }
   };
 
   return (
@@ -491,8 +544,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
               <Switch
                 checked={settings.email}
-                onChange={() => handleToggle('email')}
-                disabled={loading}
+                onChange={() => handleToggle('email', !settings.email)}
+                disabled={settingsLoading}
               />
             </div>
             
@@ -525,13 +578,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             <Switch
               checked={notificationSettings.line}
               onChange={() => handleNotificationChange('line')}
-              disabled={isLoading}
+              disabled={isPageLoading || (!verificationState?.isVerified && notificationSettings.line)}
             />
           </div>
         </div>
 
         {/* 驗證流程區域 */}
-        {notificationSettings.line && !verificationState.isVerified && (
+        {notificationSettings.line && !verificationState?.isVerified && (
           <div className="p-6 bg-gray-50">
             {/* 進度條 */}
             <div className="max-w-3xl mx-auto mb-8">
@@ -573,7 +626,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
                   onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
                   onSendId={handleSendUserId}
-                  isLoading={loading}
+                  isLoading={settingsLoading}
                 />
               )}
 
@@ -583,15 +636,15 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   setVerificationCode={setVerificationCode}
                   onBack={() => handleStepChange(VerificationStep.SEND_ID)}
                   onVerify={() => handleVerifyCode(verificationCode)}
-                  isLoading={loading}
+                  isLoading={settingsLoading}
                 />
               )}
             </div>
           </div>
         )}
 
-        {/* 驗證成功狀態 */}
-        {notificationSettings.line && verificationState.isVerified && (
+        {/* 驗證成功態 */}
+        {notificationSettings.line && verificationState?.isVerified && (
           <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
@@ -602,12 +655,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
               <div>
                 <h4 className="font-semibold text-gray-800 text-lg mb-1">LINE 通知已成功啟用</h4>
-                <p className="text-gray-600">您現在可以透過 LINE 即時接收所有重要通知</p>
+                <p className="text-gray-600">您現在可以透過 LINE 即時接收所重要通知</p>
               </div>
               <div className="ml-auto">
                 <button 
                   className="text-green-600 hover:text-green-700 text-sm flex items-center gap-1"
-                  onClick={() => {/* 處理重新驗證邏輯 */}}
+                  onClick={handleReVerifyClick}
+                  disabled={isPageLoading}
                 >
                   <FontAwesomeIcon icon={faInfoCircle} />
                   <span>重新驗證</span>
@@ -620,14 +674,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
       {/* 儲存按鈕區域 */}
       <div className="flex justify-end mt-6 gap-3">
-        {/* 只有有變更時才顯示取消按鈕 */}
-        {JSON.stringify(settings) !== JSON.stringify(originalSettings) && (
+        {hasChanges && (
           <button
-            onClick={resetSettings}
-            disabled={loading}
+            onClick={reloadSettings}
+            disabled={isPageLoading}
             className={`
               px-6 py-2.5 rounded-lg flex items-center gap-2
-              ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-700'}
+              ${isPageLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-700'}
               text-white transition-colors duration-200
             `}
           >
@@ -637,17 +690,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         
         <button
           onClick={handleSave}
-          disabled={loading || !hasChanges}
+          disabled={isPageLoading || !hasChanges}
           className={`
             px-6 py-2.5 rounded-lg flex items-center gap-2
-            ${loading || !hasChanges 
+            ${isPageLoading || !hasChanges 
               ? 'bg-gray-400 cursor-not-allowed' 
               : 'bg-blue-600 hover:bg-blue-700'
             } 
             text-white transition-colors duration-200
           `}
         >
-          {loading ? (
+          {isPageLoading ? (
             <>
               <span className="animate-spin">⌛</span>
               儲存中...

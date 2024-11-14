@@ -8,12 +8,7 @@ export type {
 };
 
 // 匯出相關介面
-export interface LineVerificationState {
-  step: 'idle' | 'verifying' | 'confirming' | 'complete';
-  status: 'idle' | 'validating' | 'success' | 'error';
-  message: string;
-  isVerified: boolean;
-}
+export type { VerificationState } from '@/types/lineTypes';
 
 export interface LineUserSettings {
   lineId: string;

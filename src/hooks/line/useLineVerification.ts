@@ -15,7 +15,10 @@ export const useLineVerification = () => {
     step: VerificationStep.SCAN_QR,
     status: VerificationStatus.IDLE,
     isVerified: false,
-    retryCount: 0
+    retryCount: 0,
+    message: '',
+    progress: 0,
+    currentStep: 1
   });
 
   const handleVerifyCode = async (code: string, userId: string) => {
