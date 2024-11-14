@@ -26,9 +26,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       expressionAttributeValues[':line'] = { BOOL: lineNotification };
       
       if (!lineNotification) {
-        updateExpression += ', isVerified = :isVerified, verificationStatus = :status';
-        expressionAttributeValues[':isVerified'] = { BOOL: false };
-        expressionAttributeValues[':status'] = { S: 'IDLE' };
+        updateExpression += `
+          REMOVE lineId, 
+                 lineUserId,
+                 verificationCode,
+                 verificationExpiry,
+                 verificationStep,
+                 verificationStatus,
+                 isVerified,
+                 lastVerified,
+                 lastCancelled,
+                 verificationCount,
+                 cancellationCount
+        `;
       }
     }
 
