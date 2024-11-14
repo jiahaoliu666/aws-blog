@@ -89,6 +89,15 @@ export const useNotificationSettings = (userId: string) => {
     isSaving,
     hasChanges,
     handleSettingChange,
-    reloadSettings: loadSettings
+    saveSettings,
+    reloadSettings: loadSettings,
+    handleSendUserId: async () => {
+      // 實作發送用戶ID的邏輯
+      return true;
+    },
+    handleVerifyCode: async (code: string) => {
+      // 實作驗證碼驗證邏輯
+      return true;
+    }
   };
 };

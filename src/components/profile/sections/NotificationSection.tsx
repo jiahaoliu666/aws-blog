@@ -426,7 +426,7 @@ const VerificationProgress = ({ step, status }: { step: VerificationStep; status
                   {isCurrent && (
                     <p className="text-xs text-gray-500 mt-1">
                       {status === VerificationStatus.VALIDATING ? '處理中...' : 
-                       status === VerificationStatus.SUCCESS ? '已完成' : 
+                       status === VerificationStatus.SUCCESS ? '完成' : 
                        status === VerificationStatus.ERROR ? '發生錯誤' : '等待中'}
                     </p>
                   )}
@@ -495,17 +495,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const isPageLoading = propIsLoading || settingsLoading;
 
-  useEffect(() => {
-    if (settingsLoading) {
-      toast.info('載入通知設定中...', {
-        toastId: 'loadingSettings',
-        duration: false
-      });
-    } else {
-      toast.remove('loadingSettings');
-    }
-  }, [settingsLoading]);
-
   const handleSave = async () => {
     try {
       if (!hasChanges) {
@@ -513,26 +502,27 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         return;
       }
 
-      setIsLoading(true);
-      const saved = await saveSettings();
-      
-      if (saved) {
-        toast.success('設定已成功儲存');
-      }
+      setIsSaving(true);
+      toast.info('儲存設定中...', { toastId: 'savingSettings' });
+      await saveSettings(settings);
+      toast.success('設定已成功儲存');
     } catch (error) {
       console.error('儲存設定時發生錯誤:', error);
       toast.error('儲存設定失敗，請稍後再試');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
+      toast.remove('savingSettings');
     }
   };
 
   const handleEmailToggle = async () => {
     try {
+      toast.info('更新電子郵件通知設定...', { toastId: 'emailToggle' });
       handleToggle('emailNotification', !settings.emailNotification);
+      toast.remove('emailToggle');
     } catch (error) {
       console.error('切換電子郵件通知失敗:', error);
-      toast.error('電子郵件知設定變更失敗，請稍後再試');
+      toast.error('電子郵件通知設定變更失敗，請稍後再試');
     }
   };
 
@@ -544,6 +534,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         setProgress(VERIFICATION_PROGRESS.INITIAL);
       } else {
         if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
+          toast.info('關閉 LINE 通知中...', { toastId: 'lineToggle' });
           await handleResetVerification();
           handleToggle('lineNotification', false);
           toast.success('已關閉 LINE 通知');
@@ -552,6 +543,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     } catch (error) {
       console.error('切換 LINE 通知失敗:', error);
       toast.error('LINE 通知設定變更失敗，請稍後再試');
+    } finally {
+      toast.remove('lineToggle');
     }
   };
 
