@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           await lineServiceInstance.replyMessage(event.replyToken, [{
             type: 'text',
-            text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您��以在網站的個人設定頁面找到您的用戶ID。'
+            text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您以在網站的個人設定頁面找到您的用戶ID。'
           }]);
           continue;
         } catch (error) {
@@ -89,74 +89,182 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               altText: '驗證資訊',
               contents: {
                 type: 'bubble',
-                body: {
+                header: {
                   type: 'box',
                   layout: 'vertical',
                   contents: [
                     {
                       type: 'text',
-                      text: '驗證資訊',
+                      text: '🔐 身分驗證',
                       weight: 'bold',
                       size: 'xl',
-                      margin: 'md'
-                    },
+                      color: '#FFFFFF'
+                    }
+                  ],
+                  backgroundColor: '#4A90E2',
+                  paddingAll: '20px'
+                },
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
                     {
                       type: 'box',
                       layout: 'vertical',
-                      margin: 'lg',
-                      spacing: 'sm',
+                      spacing: 'xl',
                       contents: [
                         {
                           type: 'box',
-                          layout: 'horizontal',
+                          layout: 'vertical',
                           contents: [
                             {
                               type: 'text',
-                              text: 'LINE ID:',
+                              text: '驗證資訊',
+                              color: '#8C8C8C',
                               size: 'sm',
-                              color: '#555555',
-                              flex: 0
+                              margin: 'sm'
                             },
                             {
-                              type: 'text',
-                              text: lineId,
-                              size: 'sm',
-                              color: '#111111',
-                              align: 'end'
+                              type: 'box',
+                              layout: 'vertical',
+                              margin: 'md',
+                              spacing: 'lg',
+                              contents: [
+                                {
+                                  type: 'box',
+                                  layout: 'vertical',
+                                  spacing: 'sm',
+                                  contents: [
+                                    {
+                                      type: 'text',
+                                      text: '👤 LINE ID',
+                                      color: '#8C8C8C',
+                                      size: 'sm'
+                                    },
+                                    {
+                                      type: 'text',
+                                      text: lineId,
+                                      size: 'sm',
+                                      color: '#333333',
+                                      wrap: true,
+                                      action: {
+                                        type: 'message',
+                                        text: lineId
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  type: 'box',
+                                  layout: 'vertical',
+                                  spacing: 'sm',
+                                  contents: [
+                                    {
+                                      type: 'text',
+                                      text: '🔑 驗證碼',
+                                      color: '#8C8C8C',
+                                      size: 'sm'
+                                    },
+                                    {
+                                      type: 'text',
+                                      text: verificationCode,
+                                      size: 'xl',
+                                      color: '#1DB446',
+                                      weight: 'bold',
+                                      action: {
+                                        type: 'message',
+                                        text: verificationCode
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
                             }
                           ]
                         },
                         {
                           type: 'box',
-                          layout: 'horizontal',
+                          layout: 'vertical',
                           contents: [
                             {
                               type: 'text',
-                              text: '驗證碼:',
-                              size: 'sm',
-                              color: '#555555',
-                              flex: 0
+                              text: '驗證步驟',
+                              color: '#8C8C8C',
+                              size: 'sm'
                             },
                             {
-                              type: 'text',
-                              text: verificationCode,
-                              size: 'sm',
-                              color: '#111111',
-                              align: 'end'
+                              type: 'box',
+                              layout: 'vertical',
+                              margin: 'md',
+                              spacing: 'sm',
+                              contents: [
+                                {
+                                  type: 'text',
+                                  text: '1. 點擊上方 LINE ID 或驗證碼即可複製',
+                                  size: 'sm',
+                                  color: '#333333'
+                                },
+                                {
+                                  type: 'text',
+                                  text: '2. 前往網站的驗證頁面',
+                                  size: 'sm',
+                                  color: '#333333'
+                                },
+                                {
+                                  type: 'text',
+                                  text: '3. 輸入驗證碼完成綁定',
+                                  size: 'sm',
+                                  color: '#333333'
+                                }
+                              ]
                             }
                           ]
                         }
                       ]
-                    },
-                    {
-                      type: 'text',
-                      text: `請在 10 分鐘內完成驗證，驗證碼將於 ${formattedExpiryTime} 過期`,
-                      size: 'xs',
-                      color: '#aaaaaa',
-                      wrap: true,
-                      margin: 'xxl'
                     }
-                  ]
+                  ],
+                  paddingAll: '20px'
+                },
+                footer: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      contents: [
+                        {
+                          type: 'text',
+                          text: '⏰ 驗證碼將於',
+                          size: 'xs',
+                          color: '#8C8C8C',
+                          align: 'center'
+                        },
+                        {
+                          type: 'text',
+                          text: formattedExpiryTime,
+                          size: 'sm',
+                          color: '#EF454D',
+                          weight: 'bold',
+                          align: 'center'
+                        },
+                        {
+                          type: 'text',
+                          text: '後失效',
+                          size: 'xs',
+                          color: '#8C8C8C',
+                          align: 'center'
+                        }
+                      ],
+                      spacing: 'sm'
+                    }
+                  ],
+                  paddingAll: '20px'
+                },
+                styles: {
+                  footer: {
+                    separator: true
+                  }
                 }
               }
             }]);
