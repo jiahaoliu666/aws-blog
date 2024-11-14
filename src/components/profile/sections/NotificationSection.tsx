@@ -431,7 +431,7 @@ const VerificationProgress = ({ step, status }: { step: VerificationStep; status
                   {isCurrent && (
                     <p className="text-xs text-gray-500 mt-1">
                       {status === VerificationStatus.VALIDATING ? '處理中...' : 
-                       status === VerificationStatus.SUCCESS ? '成' : 
+                       status === VerificationStatus.SUCCESS ? '成功' : 
                        status === VerificationStatus.ERROR ? '發生錯誤' : '等待中'}
                     </p>
                   )}
@@ -502,16 +502,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const isPageLoading = propIsLoading || settingsLoading;
 
   const handleSave = async () => {
-    if (!hasChanges) {
-      return;
-    }
-
     try {
       setIsSaving(true);
       await saveSettings({
-        emailNotification: settings.emailNotification
+        emailNotification: settings.emailNotification,
+        lineNotification: settings.lineNotification
       });
-      toast.success('設定已成功儲存');
       setHasChanges(false);
     } catch (error) {
       console.error('儲存設定時發生錯誤:', error);
@@ -775,29 +771,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
       {/* 儲存按鈕區域 */}
       <div className="flex justify-end mt-6 gap-3">
-        {hasChanges && (
-          <button
-            onClick={reloadSettings}
-            disabled={isSaving}
-            className={`
-              px-6 py-2.5 rounded-lg flex items-center gap-2
-              ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-700'}
-              text-white transition-colors duration-200
-            `}
-          >
-            取消
-          </button>
-        )}
-        
         <button
           onClick={handleSave}
-          disabled={isSaving || !hasChanges}
           className={`
             px-6 py-2.5 rounded-lg flex items-center gap-2
-            ${isSaving || !hasChanges 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
-            } 
+            ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
             text-white transition-colors duration-200
           `}
         >

@@ -51,6 +51,20 @@ export const useNotificationSettings = (userId: string) => {
 
   // 儲存設定
   const saveSettings = async (newSettings: Partial<NotificationSettings>) => {
+    // 檢查是否有變更
+    const hasActualChanges = Object.keys(newSettings).some(
+      key => settings[key as keyof NotificationSettings] !== newSettings[key as keyof NotificationSettings]
+    );
+
+    if (!hasActualChanges) {
+      showToast('未變更', 'info', {
+        description: '設定未變更',
+        position: 'top-right',
+        duration: 3000
+      });
+      return;
+    }
+
     try {
       setIsSaving(true);
       const response = await fetch('/api/profile/notification-settings', {
@@ -60,7 +74,7 @@ export const useNotificationSettings = (userId: string) => {
         },
         body: JSON.stringify({
           userId,
-          emailNotification: newSettings.emailNotification
+          ...newSettings
         })
       });
 
@@ -75,7 +89,11 @@ export const useNotificationSettings = (userId: string) => {
         ...data
       }));
       
-      showToast('設定已更新', 'success');
+      showToast('設定已更新', 'success', {
+        description: '您的通知設定已成功儲存',
+        position: 'top-right',
+        duration: 3000
+      });
       return data;
     } catch (error) {
       logger.error('儲存設定失敗:', error);
