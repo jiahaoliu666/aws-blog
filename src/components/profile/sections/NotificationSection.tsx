@@ -69,7 +69,7 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
     { step: VerificationStep.SCAN_QR, label: '掃描 QR Code', icon: faQrcode },
     { step: VerificationStep.ADD_FRIEND, label: '加入好友', icon: faUserPlus },
     { step: VerificationStep.SEND_ID, label: '發送 ID', icon: faPaperPlane },
-    { step: VerificationStep.VERIFY_CODE, label: '驗證確', icon: faShield }
+    { step: VerificationStep.VERIFY_CODE, label: '驗證確認', icon: faShield }
   ];
 
   return (
@@ -421,51 +421,21 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   }, [settingsLoading]);
 
   const handleSave = async () => {
-    if (!hasChanges) {
-      toast.info('沒有需要儲存的變更');
-      return;
-    }
-
     try {
+      if (!hasChanges) {
+        toast.info('沒有需要儲存的變更');
+        return;
+      }
+
       setIsLoading(true);
+      const saved = await saveSettings();
       
-      let notificationSaved = false;
-      let otherSettingsSaved = false;
-      
-      // 儲存通知設定
-      if (hasChanges) {
-        notificationSaved = await saveSettings();
+      if (saved) {
+        toast.success('設定已成功儲存');
       }
-      
-      // 如果有其他設定需要儲存
-      if (saveAllSettings) {
-        try {
-          await saveAllSettings();
-          otherSettingsSaved = true;
-        } catch (error) {
-          console.error('儲存其他設定失敗:', error);
-          toast.error('部分設定儲存失敗');
-        }
-      }
-      
-      // 根據儲存結果顯示對應的提示訊息
-      if (notificationSaved && otherSettingsSaved) {
-        toast.success('所有設定已成功儲存');
-      } else if (notificationSaved) {
-        toast.success('通知設定已成功儲存');
-      } else if (otherSettingsSaved) {
-        toast.success('其他設定已成功儲存');
-      }
-      
     } catch (error) {
       console.error('儲存設定時發生錯誤:', error);
-      
-      // 根據錯誤類型顯示更具體的錯誤訊息
-      if (error instanceof Error) {
-        toast.error(`儲存失敗: ${error.message}`);
-      } else {
-        toast.error('儲存設定失敗，請稍後再試');
-      }
+      toast.error('儲存設定失敗，請稍後再試');
     } finally {
       setIsLoading(false);
     }
@@ -486,11 +456,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         if (!verificationState?.isVerified) {
           handleToggle('lineNotification', true);
           setVerificationStep(VerificationStep.SCAN_QR);
+          setProgress(0);
         }
       } else {
         if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
-          handleToggle('lineNotification', false);
           await handleResetVerification();
+          handleToggle('lineNotification', false);
           toast.success('已關閉 LINE 通知');
         }
       }
@@ -679,7 +650,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             <Switch
               checked={settings.lineNotification}
               onChange={handleLineToggle}
-              disabled={isPageLoading || (!verificationState?.isVerified && settings.lineNotification)}
+              disabled={isPageLoading || (settings.lineNotification && !verificationState?.isVerified)}
             />
           </div>
         </div>

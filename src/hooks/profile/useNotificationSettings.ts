@@ -31,6 +31,11 @@ export const useNotificationSettings = (userId: string) => {
     lineUserId: undefined
   });
 
+  // 新增 verificationState
+  const [verificationState, setVerificationState] = useState<{
+    isVerified: boolean;
+  }>({ isVerified: false });
+
   // 新增初始化函數來獲取資料表中的設定
   const fetchSettings = async () => {
     try {
@@ -116,7 +121,7 @@ export const useNotificationSettings = (userId: string) => {
     }
   };
 
-  // 在組件掛載時獲取設定
+  // 在組件掛載時獲取定
   useEffect(() => {
     if (userId) {
       fetchSettings();
@@ -124,19 +129,48 @@ export const useNotificationSettings = (userId: string) => {
   }, [userId]);
 
   const hasChanges = useMemo(() => {
-    return settings.emailNotification !== originalSettings.emailNotification ||
-           settings.lineNotification !== originalSettings.lineNotification;
+    // 檢查是否有任何設定發生變化
+    const hasEmailChanged = settings.emailNotification !== originalSettings.emailNotification;
+    const hasLineChanged = settings.lineNotification !== originalSettings.lineNotification;
+    
+    console.log('設定變更檢查:', {
+      原始設定: originalSettings,
+      當前設定: settings,
+      電子郵件已變更: hasEmailChanged,
+      LINE已變更: hasLineChanged
+    });
+    
+    return hasEmailChanged || hasLineChanged;
   }, [settings, originalSettings]);
 
   const handleSettingChange = useCallback((key: 'emailNotification' | 'lineNotification', value: boolean) => {
+    // 如果是 LINE 通知，需要檢查驗證狀態
+    if (key === 'lineNotification' && value === true && !verificationState?.isVerified) {
+      console.log('LINE 通知需要先完成驗證');
+      showToast('請先完成 LINE 驗證流程', 'warning');
+      return;
+    }
+
     setSettings(prev => ({
       ...prev,
       [key]: value
     }));
-  }, []);
+  }, [verificationState?.isVerified]);
 
   const saveSettings = async () => {
     try {
+      // 檢查是否有變更
+      if (!hasChanges) {
+        showToast('沒有需要儲存的變更', 'info');
+        return false;
+      }
+
+      // 檢查 LINE 通知的狀態
+      if (settings.lineNotification && !verificationState?.isVerified) {
+        showToast('請先完成 LINE 驗證流程', 'warning');
+        return false;
+      }
+
       setIsLoading(true);
       console.log('開始保存設定，當前設定:', settings);
       
@@ -144,12 +178,11 @@ export const useNotificationSettings = (userId: string) => {
         throw new Error('缺少用戶 ID');
       }
 
-      // 修改：簡化要保存的設定數據結構
       const settingsToSave = {
-        userId, // 添加 userId
+        userId,
         emailNotification: Boolean(settings.emailNotification),
         lineNotification: Boolean(settings.lineNotification),
-        lineUserId: settings.lineUserId || null, // 使用 null 而不是 undefined
+        lineUserId: settings.lineUserId || null,
       };
 
       console.log('準備發送到資料表的設定:', settingsToSave);
@@ -159,7 +192,7 @@ export const useNotificationSettings = (userId: string) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(settingsToSave) // 直接發送簡化後的設定對象
+        body: JSON.stringify(settingsToSave)
       });
 
       console.log('保存響應狀態:', response.status);
@@ -175,20 +208,20 @@ export const useNotificationSettings = (userId: string) => {
       
       // 更新本地狀態
       const normalizedSettings = {
-        emailNotification: Boolean(updatedSettings.emailNotification),
-        lineNotification: Boolean(updatedSettings.lineNotification),
-        lineUserId: updatedSettings.lineUserId || undefined
+        emailNotification: Boolean(updatedSettings.data.emailNotification),
+        lineNotification: Boolean(updatedSettings.data.lineNotification),
+        lineUserId: updatedSettings.data.lineUserId || undefined
       };
 
       setOriginalSettings(normalizedSettings);
       setSettings(normalizedSettings);
       
       console.log('設定已成功更新到本地狀態');
+      showToast('設定已成功儲存', 'success');
       return true;
       
     } catch (error) {
       console.error('保存設定時發生錯誤:', error);
-      // 修改：添加更具體的錯誤處理
       if (error instanceof Error) {
         showToast(`儲存失敗: ${error.message}`, 'error');
       } else {
