@@ -9,6 +9,8 @@ find src > src1.txt
 
 整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 
+
 更好的用戶體驗和更清晰的視覺引導
 
+當註冊帳號完成後，要在AWS_Blog_UserNotificationSettings新增userId
 

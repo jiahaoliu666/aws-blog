@@ -21,7 +21,7 @@ import PreferencesSection from './sections/PreferencesSection';
 import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
-import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
+import { VerificationStep, VerificationStatus, VerificationState, VERIFICATION_PROGRESS } from '@/types/lineTypes';
 import { FormData } from '@/types/profileTypes';
 import { ToastProvider } from '@/context/ToastContext';
 import AccountSection from './sections/AccountSection';
@@ -430,7 +430,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 verificationCode={verificationCode}
                 setVerificationCode={setVerificationCode}
                 verificationStep={verificationStep}
-                verificationProgress={0}
+                verificationProgress={verificationState?.progress ?? VERIFICATION_PROGRESS.INITIAL}
                 handleStartVerification={handleVerifyLineIdAndCode}
                 handleConfirmVerification={handleVerifyLineIdAndCode}
                 verificationState={verificationState}

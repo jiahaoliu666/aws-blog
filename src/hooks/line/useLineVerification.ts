@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { lineVerificationService } from '@/services/lineVerification';
-import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
+import { VerificationStep, VerificationStatus, VerificationState, VERIFICATION_PROGRESS } from '@/types/lineTypes';
 import { withRetry } from '@/utils/retryUtils';
 import { logger } from '@/utils/logger';
 
@@ -18,13 +18,27 @@ export const useLineVerification = () => {
     retryCount: 0,
     message: '',
     progress: 0,
-    currentStep: 1
+    currentStep: 0
   });
+
+  const updateVerificationProgress = (step: VerificationStep) => {
+    const stepIndex = Object.values(VerificationStep).indexOf(step);
+    const progress = stepIndex === 0 ? 0 : (stepIndex / (Object.values(VerificationStep).length - 1)) * 100;
+    
+    setVerificationState(prev => ({
+      ...prev,
+      step,
+      progress,
+      currentStep: stepIndex
+    }));
+  };
 
   const handleVerifyCode = async (code: string, userId: string) => {
     return withRetry(
       async () => {
         try {
+          updateVerificationProgress(VerificationStep.VERIFY_CODE);
+
           setVerificationState(prev => ({
             ...prev,
             status: VerificationStatus.VALIDATING,

@@ -19,7 +19,7 @@ import { Switch } from '@mui/material';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
 import { toast } from 'react-toastify';
-import { VerificationStep, VerificationStatus, VerificationState } from '@/types/lineTypes';
+import { VerificationStep, VerificationStatus, VerificationState, VERIFICATION_PROGRESS, type VerificationProgress } from '@/types/lineTypes';
 import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { LINE_RETRY_COUNT } from '@/config/line';
 
@@ -72,37 +72,48 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
     { step: VerificationStep.VERIFY_CODE, label: '驗證確認', icon: faShield }
   ];
 
+  // 獲取當前步驟的索引
+  const currentStepIndex = steps.findIndex(s => s.step === currentStep);
+
   return (
     <div className="flex justify-between relative">
+      {/* 背景進度條 */}
+      <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-200" />
+      
+      {/* 活動進度條 */}
+      <div 
+        className="absolute top-6 left-0 h-0.5 bg-green-500 transition-all duration-300"
+        style={{ 
+          width: `${(currentStepIndex / (steps.length - 1)) * 100}%`
+        }} 
+      />
+
       {steps.map(({ step, label, icon }, index) => (
         <div 
           key={step}
           className="relative flex flex-col items-center w-1/4"
         >
+          {/* 圓形指示器 */}
           <div className={`
             w-12 h-12 rounded-full flex items-center justify-center z-10
             transition-all duration-300 ease-in-out
             ${currentStep === step 
               ? 'bg-green-500 text-white shadow-lg scale-110' 
-              : currentStep > step
+              : index <= currentStepIndex
                 ? 'bg-green-200 text-green-700'
                 : 'bg-gray-100 text-gray-400'
             }
           `}>
             <FontAwesomeIcon icon={icon} className="text-lg" />
           </div>
+          
+          {/* 標籤文字 */}
           <span className={`
             text-sm mt-3 font-medium transition-colors duration-300
             ${currentStep === step ? 'text-green-600' : 'text-gray-500'}
           `}>
             {label}
           </span>
-          {index < steps.length - 1 && (
-            <div className={`
-              absolute top-6 left-1/2 w-full h-0.5
-              ${currentStep > step ? 'bg-green-500' : 'bg-gray-200'}
-            `} />
-          )}
         </div>
       ))}
     </div>
@@ -238,7 +249,7 @@ const SendIdStep: React.FC<StepProps & {
     <div className="bg-white p-8 rounded-xl mb-6">
       <FontAwesomeIcon icon={faPaperPlane} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">發送您的用戶 ID</h3>
-      <p className="text-gray-600 mb-6">請將以下 ID 複製並發送給官方帳號</p>
+      <p className="text-gray-600 mb-6">請將以下 ID 複製發送給官方帳號</p>
       
       {/* 優化後的 ID 複製區域 */}
       <div className="flex items-center justify-center gap-2 mb-6">
@@ -369,6 +380,91 @@ const VerifyCodeStep: React.FC<{
   </div>
 );
 
+const VerificationProgress = ({ step, status }: { step: VerificationStep; status: VerificationStatus }) => {
+  const steps = [
+    { key: 'SCAN_QR', label: '掃描 QR Code', icon: '📱' },
+    { key: 'VERIFYING', label: '輸入驗證碼', icon: '🔑' },
+    { key: 'COMPLETED', label: '完成驗證', icon: '✅' }
+  ];
+
+  const currentStepIndex = steps.findIndex(s => s.key === step);
+
+  return (
+    <div className="mt-4 mb-6">
+      {/* 進度條標題 */}
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="text-lg font-medium">LINE 驗證進度</h4>
+        <span className="text-sm text-gray-500">
+          {currentStepIndex + 1} / {steps.length}
+        </span>
+      </div>
+
+      {/* 進度條主體 */}
+      <div className="relative">
+        {/* 背景線 */}
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2" />
+        
+        {/* 進度線 */}
+        <div 
+          className="absolute top-1/2 left-0 h-1 bg-blue-500 -translate-y-1/2 transition-all duration-500"
+          style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
+        />
+
+        {/* 步驟點 */}
+        <div className="relative flex justify-between">
+          {steps.map((s, index) => {
+            const isCompleted = index <= currentStepIndex;
+            const isCurrent = index === currentStepIndex;
+            
+            return (
+              <div key={s.key} className="flex flex-col items-center">
+                {/* 步驟圖示 */}
+                <div
+                  className={`
+                    w-10 h-10 rounded-full flex items-center justify-center
+                    transition-all duration-300 relative z-10
+                    ${isCompleted ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}
+                    ${isCurrent ? 'ring-4 ring-blue-100' : ''}
+                  `}
+                >
+                  <span className="text-lg">{s.icon}</span>
+                </div>
+                
+                {/* 步驟標籤 */}
+                <div className="mt-2 text-center">
+                  <p className={`text-sm font-medium ${isCurrent ? 'text-blue-600' : 'text-gray-600'}`}>
+                    {s.label}
+                  </p>
+                  {isCurrent && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {status === VerificationStatus.VALIDATING ? '處理中...' : 
+                       status === VerificationStatus.SUCCESS ? '已完成' : 
+                       status === VerificationStatus.ERROR ? '發生錯誤' : '等待中'}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 提示訊息 */}
+      {status === VerificationStatus.ERROR && (
+        <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+          驗證過程發生錯誤，請重新嘗試或聯繫客服支援
+        </div>
+      )}
+      
+      {status === VerificationStatus.PENDING && step === 'VERIFYING' && (
+        <div className="mt-4 p-3 bg-blue-50 text-blue-600 rounded-lg text-sm">
+          請在 10 分鐘內完成驗證，驗證碼已發送至您的 LINE
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   isLoading: propIsLoading,
   isVerifying,
@@ -446,7 +542,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       handleToggle('emailNotification', !settings.emailNotification);
     } catch (error) {
       console.error('切換電子郵件通知失敗:', error);
-      toast.error('電子郵件通知設定變更失敗，請稍後再試');
+      toast.error('電子郵件知設定變更失敗，請稍後再試');
     }
   };
 
@@ -455,7 +551,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       if (!settings.lineNotification) {
         handleToggle('lineNotification', true);
         setVerificationStep(VerificationStep.SCAN_QR);
-        setProgress(0);
+        setProgress(VERIFICATION_PROGRESS.INITIAL);
       } else {
         if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
           await handleResetVerification();
@@ -470,25 +566,25 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   };
 
   const [currentStep, setCurrentStep] = useState(verificationStep);
-  const [progress, setProgress] = useState(verificationProgress);
+  const [progress, setProgress] = useState<VerificationProgress>(VERIFICATION_PROGRESS.INITIAL);
 
   const handleStepChange = (newStep: VerificationStep) => {
     setCurrentStep(newStep);
     switch (newStep) {
       case VerificationStep.SCAN_QR:
-        setProgress(25);
+        setProgress(VERIFICATION_PROGRESS.SCAN_QR);
         break;
       case VerificationStep.ADD_FRIEND:
-        setProgress(50);
+        setProgress(VERIFICATION_PROGRESS.ADD_FRIEND);
         break;
       case VerificationStep.SEND_ID:
-        setProgress(75);
+        setProgress(VERIFICATION_PROGRESS.SEND_ID);
         break;
       case VerificationStep.VERIFY_CODE:
-        setProgress(100);
+        setProgress(VERIFICATION_PROGRESS.VERIFY_CODE);
         break;
       default:
-        setProgress(0);
+        setProgress(VERIFICATION_PROGRESS.INITIAL);
     }
     setVerificationStep(newStep);
   };
@@ -531,7 +627,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       
       // 3. 重置本地驗證狀態
       setVerificationStep(VerificationStep.SCAN_QR);
-      setProgress(0);
+      setProgress(VERIFICATION_PROGRESS.INITIAL);
       setCurrentStep(VerificationStep.SCAN_QR);
       setVerificationCode('');
       
@@ -631,9 +727,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         </div>
       </div>
 
-      {/* LINE 通知卡片 */}
+      {/* LINE 知卡片 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-        {/* 卡片標題區域 */}
+        {/* 卡片標區域 */}
         <div className="p-6 border-b border-gray-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -656,16 +752,10 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         {/* 驗證流程區域 */}
         {settings.lineNotification && !verificationState?.isVerified && (
           <div className="p-6 bg-gray-50">
-            {/* 進度條 */}
+            {/* 進度條容器 */}
             <div className="max-w-3xl mx-auto mb-8">
               <div className="relative">
-                <div className="absolute top-5 left-0 w-full h-1 bg-gray-200">
-                  <div 
-                    className="h-full bg-green-500 transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                
+                {/* 移除原本的進度線 */}
                 <StepIndicators 
                   currentStep={currentStep}
                   onStepClick={handleStepChange}
@@ -734,7 +824,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   disabled={isPageLoading}
                 >
                   <FontAwesomeIcon icon={faInfoCircle} />
-                  <span>重新驗證</span>
+                  <span>新驗證</span>
                 </button>
               </div>
             </div>

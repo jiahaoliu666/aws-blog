@@ -258,3 +258,13 @@ export interface LineVerificationHistory {
   verificationCount: number;
   cancellationCount: number;
 }
+
+export const VERIFICATION_PROGRESS = {
+  INITIAL: 0,
+  SCAN_QR: 25,
+  ADD_FRIEND: 50,
+  SEND_ID: 75,
+  VERIFY_CODE: 100
+} as const;
+
+export type VerificationProgress = typeof VERIFICATION_PROGRESS[keyof typeof VERIFICATION_PROGRESS];
