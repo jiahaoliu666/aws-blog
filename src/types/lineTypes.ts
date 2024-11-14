@@ -109,6 +109,7 @@ export interface VerificationState {
   isVerified?: boolean;
   progress?: number;
   currentStep?: number;
+  retryCount: number;
 }
 
 export interface VerificationRequest {

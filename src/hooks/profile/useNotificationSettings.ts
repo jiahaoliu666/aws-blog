@@ -3,21 +3,25 @@ import { toast } from 'react-toastify';
 import { logger } from '@/utils/logger';
 import { useToastContext } from '@/context/ToastContext';
 import { VerificationStep } from '@/types/lineTypes';
+import { lineVerificationService } from '@/services/lineVerification';
 
 interface NotificationSettings {
   email: boolean;
   line: boolean;
+  lineUserId?: string;
 }
 
 export const useNotificationSettings = (userId: string) => {
   const { showToast } = useToastContext();
   const [settings, setSettings] = useState<NotificationSettings>({
     email: false,
-    line: false
+    line: false,
+    lineUserId: undefined
   });
   const [tempSettings, setTempSettings] = useState<NotificationSettings>({
     email: false,
-    line: false
+    line: false,
+    lineUserId: undefined
   });
   const [loading, setLoading] = useState(false);
   const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.ADD_FRIEND);
@@ -40,7 +44,8 @@ export const useNotificationSettings = (userId: string) => {
         const data = await response.json();
         const newSettings = {
           email: data.email,
-          line: data.line
+          line: data.line,
+          lineUserId: data.lineUserId
         };
         
         setSettings(newSettings);
@@ -99,7 +104,8 @@ export const useNotificationSettings = (userId: string) => {
         body: JSON.stringify({
           userId,
           email: tempSettings.email,
-          line: tempSettings.line
+          line: tempSettings.line,
+          lineUserId: tempSettings.lineUserId
         })
       });
 
@@ -110,11 +116,13 @@ export const useNotificationSettings = (userId: string) => {
       const data = await response.json();
       setSettings({
         email: data.email,
-        line: data.line
+        line: data.line,
+        lineUserId: data.lineUserId
       });
       setTempSettings({
         email: data.email,
-        line: data.line
+        line: data.line,
+        lineUserId: data.lineUserId
       });
       
       showToast('通知設定已更新', 'success', {
@@ -164,6 +172,71 @@ export const useNotificationSettings = (userId: string) => {
     setIsVerified(true);
   };
 
+  // 發送用戶 ID
+  const handleSendUserId = async () => {
+    try {
+      setLoading(true);
+      const response = await lineVerificationService.sendUserId(userId);
+      
+      if (response.success) {
+        toast.success('ID 發送成功，請查看 LINE 訊息');
+        setVerificationStep(VerificationStep.VERIFY_CODE);
+        setVerificationProgress(75);
+      } else {
+        toast.error(response.message || '發送失敗，請稍後重試');
+      }
+    } catch (error) {
+      toast.error('發送失敗，請稍後重試');
+      logger.error('發送用戶 ID 錯誤:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 驗證驗證碼
+  const handleVerifyCode = async (code: string) => {
+    try {
+      setLoading(true);
+      const response = await lineVerificationService.verifyCode(userId, code);
+      
+      if (response.success) {
+        toast.success('驗證成功！');
+        setIsVerified(true);
+        setVerificationStep(VerificationStep.COMPLETED);
+        setVerificationProgress(100);
+      } else {
+        toast.error(response.message || '驗證失敗，請檢查驗證碼');
+      }
+    } catch (error) {
+      toast.error('驗證失敗，請稍後重試');
+      logger.error('驗證碼驗證錯誤:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 檢查驗證狀態
+  const checkVerificationStatus = async () => {
+    try {
+      const response = await lineVerificationService.checkVerificationStatus(userId);
+      
+      if (response.success) {
+        setIsVerified(true);
+        setVerificationStep(VerificationStep.COMPLETED);
+        setVerificationProgress(100);
+      }
+    } catch (error) {
+      logger.error('檢查驗證狀態錯誤:', error);
+    }
+  };
+
+  // 初始化時檢查驗證狀態
+  useEffect(() => {
+    if (userId) {
+      checkVerificationStatus();
+    }
+  }, [userId]);
+
   return {
     settings: tempSettings,
     originalSettings: settings,
@@ -178,5 +251,8 @@ export const useNotificationSettings = (userId: string) => {
     startVerification,
     handleVerification,
     completeVerification,
+    handleSendUserId,
+    handleVerifyCode,
+    checkVerificationStatus,
   };
 };

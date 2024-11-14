@@ -1,81 +1,31 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { DynamoDBClient, GetItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { withRetry } from '@/utils/retryUtils';
+import { lineService } from '@/services/lineService';
 import { logger } from '@/utils/logger';
-
-enum VerificationStep {
-  COMPLETE = 'COMPLETE'
-}
-
-enum VerificationStatus {
-  SUCCESS = 'SUCCESS'
-}
-
-const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).end();
+    return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { userId, lineId, verificationCode } = req.body;
-
   try {
-    // 從 DynamoDB 獲取驗證資訊
-    const params = {
-      TableName: 'AWS_Blog_UserNotificationSettings',
-      Key: {
-        userId: { S: lineId }
+    const { userId, code } = req.body;
+
+    const result = await withRetry(
+      async () => await lineService.verifyCode(userId, code),
+      { 
+        retryCount: 3,
+        retryDelay: 1000,
+        operationName: 'LINE API 驗證' 
       }
-    };
+    );
 
-    const { Item } = await dynamoClient.send(new GetItemCommand(params));
-
-    if (!Item) {
-      return res.status(400).json({
-        success: false,
-        message: '找不到驗證資訊'
-      });
-    }
-
-    // 驗證碼檢查
-    if (Item.verificationCode.S !== verificationCode) {
-      return res.status(400).json({
-        success: false,
-        message: '驗證碼不正確'
-      });
-    }
-
-    // 檢查是否過期
-    if (Number(Item.verificationExpiry.N) < Date.now()) {
-      return res.status(400).json({
-        success: false,
-        message: '驗證碼已過期'
-      });
-    }
-
-    // 更新驗證狀態並關聯 Cognito userId
-    await dynamoClient.send(new UpdateItemCommand({
-      TableName: 'AWS_Blog_UserNotificationSettings',
-      Key: { userId: { S: lineId } },
-      UpdateExpression: 'SET cognitoUserId = :cognitoId, isVerified = :verified, verificationStep = :step, verificationStatus = :status, updatedAt = :updatedAt',
-      ExpressionAttributeValues: {
-        ':cognitoId': { S: userId },
-        ':verified': { BOOL: true },
-        ':step': { S: VerificationStep.COMPLETE },
-        ':status': { S: VerificationStatus.SUCCESS },
-        ':updatedAt': { S: new Date().toISOString() }
-      }
-    }));
-
-    res.status(200).json({
-      success: true,
-      message: '驗證成功'
-    });
+    return res.status(200).json(result);
   } catch (error) {
     logger.error('驗證處理失敗:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: '驗證處理發生錯誤'
+      message: '系統發生錯誤，請稍後再試'
     });
   }
 } 

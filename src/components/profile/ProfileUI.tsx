@@ -10,7 +10,7 @@ import {
   useProfileActivity,
   useProfileArticles,
 } from '@/hooks/profile';
-import { useLineVerification, useLineSettings } from '@/hooks/line';
+import { useLineVerification  } from '@/hooks/line';
 import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 import Sidebar from './common/Sidebar';
@@ -54,6 +54,7 @@ interface NotificationSettings {
   mobile: boolean;
   push: boolean;
   email: boolean;
+  lineUserId?: string;
 }
 
 interface LocalSettings {
@@ -120,11 +121,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const password = useProfilePassword({ user: currentUser, handleLogout: logoutUser });
   const activity = useProfileActivity({ user: currentUser });
   const articles = useProfileArticles({ user: currentUser });
-  const lineVerification = useLineVerification({ 
-    user: currentUser,
-    updateUserLineSettings: () => Promise.resolve()
-  });
-  const lineSettings = useLineSettings({ user: currentUser });
+  const lineVerification = useLineVerification();
 
   const [localSettings, setLocalSettings] = useState<LocalSettings>(defaultSettings);
 
@@ -203,7 +200,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         },
         body: JSON.stringify({
           userId: currentUser?.userId,
-          lineId: lineSettings.lineUserId,
+          lineId: settings.lineUserId,
           verificationCode
         }),
       });
@@ -350,14 +347,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 }}
                 formData={form.formData}
                 handleNotificationChange={handleNotificationChange}
-                lineId={lineSettings.lineUserId}
-                setLineId={lineSettings.setLineUserId}
                 verificationCode={verificationCode}
                 setVerificationCode={setVerificationCode}
                 verificationStep={VerificationStep.SCAN_QR}
                 verificationProgress={0}
-                handleStartVerification={() => lineVerification.handleVerification()}
-                handleConfirmVerification={() => lineVerification.confirmVerification(verificationCode)}
+                handleStartVerification={() => lineVerification.handleVerifyCode(verificationCode, currentUser?.userId || '')}
+                handleConfirmVerification={() => lineVerification.handleVerifyCode(verificationCode, currentUser?.userId || '')}
                 verificationState={{
                   step: VerificationStep.SCAN_QR,
                   status: '',

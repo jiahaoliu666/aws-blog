@@ -29,4 +29,11 @@ export function verifyLineSignature(req: NextApiRequest): boolean {
     logger.error('驗證 LINE 簽章時發生錯誤:', error);
     return false;
   }
-} 
+}
+
+export const validateVerificationCode = (code: string): boolean => {
+  if (!code) return false;
+  // 驗證碼應為 6 位數字和大寫字母組合
+  const codePattern = /^[0-9A-Z]{6}$/;
+  return codePattern.test(code.trim());
+}; 

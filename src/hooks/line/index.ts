@@ -1,16 +1,10 @@
 import type { UseLineVerificationReturn } from './useLineVerification';
-import type { UseLineSettingsReturn } from './useLineSettings';
-import type { UseLineMulticastReturn } from './useLineMulticast';
 
 export { useLineVerification } from './useLineVerification';
-export { useLineSettings } from './useLineSettings';
-export { useLineMulticast } from './useLineMulticast';
 
 // 匯出型別定義
 export type {
   UseLineVerificationReturn,
-  UseLineSettingsReturn,
-  UseLineMulticastReturn
 };
 
 // 匯出相關介面

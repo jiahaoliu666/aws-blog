@@ -79,9 +79,7 @@ src/
 │   │   ├── useFetchNews.ts         // 新聞獲取 Hook
 │   │   └── useNewsPageLogic.ts     // 新聞頁面邏輯 Hook
 │   ├── line
-│   │   ├── useLineSettings.ts      // LINE 設定 Hook
 │   │   ├── useLineVerification.ts  // LINE 驗證 Hook
-│   │   └── useLineMulticast.ts     // LINE 多播 Hook
 │   ├── useAppLogic.ts              // 應用程式邏輯 Hook
 │   ├── notifications
 │   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
@@ -122,7 +120,6 @@ src/
 │   │   │   ├── updateNews.js       // 更新新聞 API
 │   │   │   └── getFavorites.ts     // 獲取收藏 API
 │   │   ├── line
-│   │   │   ├── verify.ts           // LINE 驗證 API
 │   │   │   └── webhook.ts          // LINE Webhook
 │   │   └── notifications
 │   │       └── sendEmail.ts        // 發送郵件 API

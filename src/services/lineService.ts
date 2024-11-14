@@ -8,6 +8,7 @@ import { LineFollowStatus, ArticleData, LineMessage, LineWebhookEvent, LineUserS
 import { createClient } from 'redis';
 import crypto from 'crypto';
 import axios from 'axios';
+import { withRetry } from '@/utils/retryUtils';
 
 // 驗證 LINE 設定
 const validateLineMessagingConfig = () => {
@@ -258,8 +259,22 @@ export class LineService implements LineServiceInterface {
   }
 
   async verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }> {
-    // ... 實作驗證碼驗證邏輯 ...
-    throw new Error('Method not implemented.');
+    return withRetry(
+      async () => {
+        const response = await fetch('/api/line/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, code })
+        });
+
+        if (!response.ok) {
+          throw new Error('驗證請求失敗');
+        }
+
+        return await response.json();
+      },
+      { retryCount: 3, retryDelay: 1000, operationName: 'LINE 驗證碼驗證' }
+    );
   }
 
   async getFollowers(): Promise<string[]> {

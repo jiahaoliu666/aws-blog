@@ -19,11 +19,14 @@ import { Switch } from '@mui/material';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
 import { toast } from 'react-toastify';
-import { VerificationStep } from '@/types/lineTypes';
+import { VerificationStep, VerificationStatus } from '@/types/lineTypes';
+import { useLineVerification } from '@/hooks/line/useLineVerification';
+import { LINE_RETRY_COUNT } from '@/config/line';
 
 interface NotificationSettings {
   line: boolean;
   email: boolean;
+  lineUserId?: string;
 }
 
 interface NotificationSectionProps {
@@ -33,8 +36,8 @@ interface NotificationSectionProps {
   notificationSettings: NotificationSettings;
   formData: any;
   handleNotificationChange: (type: keyof NotificationSettings) => void;
-  lineId: string;
-  setLineId: (id: string) => void;
+  lineId?: string;
+  setLineId?: (id: string) => void;
   verificationCode: string;
   setVerificationCode: (code: string) => void;
   verificationStep: VerificationStep;
@@ -215,11 +218,20 @@ const AddFriendStep: React.FC<StepProps> = ({ onBack, onNext }) => (
   </div>
 );
 
-const SendIdStep: React.FC<StepProps & { userId: string; onCopyUserId: () => void }> = ({ 
+const SendIdStep: React.FC<StepProps & { 
+  userId: string; 
+  onCopyUserId: () => void;
+  onBack: () => void;
+  onNext: () => void;
+  onSendId: () => Promise<void>;
+  isLoading: boolean;
+}> = ({ 
   onBack, 
   onNext, 
   userId,
-  onCopyUserId 
+  onCopyUserId,
+  onSendId,
+  isLoading 
 }) => (
   <div className="text-center">
     <div className="bg-white p-8 rounded-xl mb-6">
@@ -262,19 +274,33 @@ const SendIdStep: React.FC<StepProps & { userId: string; onCopyUserId: () => voi
     <div className="flex justify-center gap-4">
       <button
         onClick={onBack}
+        disabled={isLoading}
         className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg 
                    hover:bg-gray-200 transition-colors"
       >
         返回
       </button>
       <button
-        onClick={onNext}
+        onClick={async () => {
+          await onSendId();
+          onNext();
+        }}
+        disabled={isLoading}
         className="bg-green-500 text-white px-6 py-2.5 rounded-lg 
                    hover:bg-green-600 transition-colors 
                    flex items-center gap-2"
       >
-        <span>下一步</span>
-        <FontAwesomeIcon icon={faArrowRight} />
+        {isLoading ? (
+          <>
+            <span className="animate-spin">⌛</span>
+            發送中...
+          </>
+        ) : (
+          <>
+            <span>下一步</span>
+            <FontAwesomeIcon icon={faArrowRight} />
+          </>
+        )}
       </button>
     </div>
   </div>
@@ -285,7 +311,8 @@ const VerifyCodeStep: React.FC<{
   setVerificationCode: (code: string) => void;
   onBack: () => void;
   onVerify: () => void;
-}> = ({ verificationCode, setVerificationCode, onBack, onVerify }) => (
+  isLoading: boolean;
+}> = ({ verificationCode, setVerificationCode, onBack, onVerify, isLoading }) => (
   <div className="text-center">
     <div className="bg-white p-8 rounded-xl mb-6">
       <FontAwesomeIcon icon={faShield} className="text-5xl text-green-500 mb-4" />
@@ -360,6 +387,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     startVerification,
     handleVerification: contextHandleVerification,
     completeVerification,
+    handleSendUserId,
+    handleVerifyCode,
   } = useNotificationSettings(userId);
 
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
@@ -410,6 +439,20 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         setProgress(0);
     }
     setVerificationStep(newStep);
+  };
+
+  const {
+    verificationState: lineVerificationState,
+    handleVerifyCode: lineHandleVerifyCode
+  } = useLineVerification();
+
+  const handleRetry = async () => {
+    if (lineVerificationState.retryCount >= LINE_RETRY_COUNT) {
+      toast.error('已達最大重試次數，請稍後再試');
+      return;
+    }
+
+    await lineHandleVerifyCode(verificationCode, userId);
   };
 
   return (
@@ -516,6 +559,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   onCopyUserId={onCopyUserId}
                   onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
                   onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
+                  onSendId={handleSendUserId}
+                  isLoading={loading}
                 />
               )}
 
@@ -524,7 +569,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   verificationCode={verificationCode}
                   setVerificationCode={setVerificationCode}
                   onBack={() => handleStepChange(VerificationStep.SEND_ID)}
-                  onVerify={handleVerification}
+                  onVerify={() => handleVerifyCode(verificationCode)}
+                  isLoading={loading}
                 />
               )}
             </div>
