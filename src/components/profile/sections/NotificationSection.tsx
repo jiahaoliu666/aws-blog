@@ -495,6 +495,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const isPageLoading = propIsLoading || settingsLoading;
 
+  useEffect(() => {
+    if (settingsLoading) {
+      toast.info('載入通知設定中...', {
+        toastId: 'loadingSettings',
+        duration: false
+      });
+    } else {
+      toast.remove('loadingSettings');
+    }
+  }, [settingsLoading]);
+
   const handleSave = async () => {
     try {
       if (!hasChanges) {
@@ -509,7 +520,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         toast.success('設定已成功儲存');
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '儲存設定失敗，請稍後再試');
+      console.error('儲存設定時發生錯誤:', error);
+      toast.error('儲存設定失敗，請稍後再試');
     } finally {
       setIsLoading(false);
     }
@@ -661,12 +673,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   };
 
   useEffect(() => {
-    if (settingsLoading) {
-      setIsLoading(true);
-    } else {
-      setIsLoading(false);
-    }
-  }, [settingsLoading]);
+    console.log('當前設定狀態:', settings);
+    console.log('載入狀態:', settingsLoading);
+  }, [settings, settingsLoading]);
 
   const toast = useToastContext();
 
