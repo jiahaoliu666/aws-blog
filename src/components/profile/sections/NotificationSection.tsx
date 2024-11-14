@@ -217,7 +217,7 @@ const AddFriendStep: React.FC<StepProps> = ({ onBack, onNext }) => (
     <div className="bg-white p-8 rounded-xl mb-6 inline-block">
       <FontAwesomeIcon icon={faUserPlus} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">加入好友</h3>
-      <p className="text-gray-600">請確認您���將我們的官方帳號加為好友</p>
+      <p className="text-gray-600">請確認您我們的官方帳號加為好友</p>
     </div>
     <div className="flex justify-center gap-4">
       <button
@@ -491,12 +491,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     settings,
     isLoading: settingsLoading,
     hasChanges,
-    setHasChanges,
     handleSettingChange: handleToggle,
     saveSettings,
-    reloadSettings,
+    resetSettings,
     handleSendUserId,
-    handleVerifyCode
+    handleVerifyCode,
+    reloadSettings
   } = useNotificationSettings(userId);
 
   const isPageLoading = propIsLoading || settingsLoading;
@@ -755,11 +755,25 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
       {/* 儲存按鈕區域 */}
       <div className="flex justify-end mt-6 gap-3">
+        {/* 只在有未儲存的變更時顯示取消按鈕 */}
+        {hasChanges && (
+          <button
+            onClick={resetSettings}
+            className="px-6 py-2.5 bg-gray-600 text-white rounded-lg 
+                     hover:bg-gray-700 transition-colors duration-200
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSaving}
+          >
+            取消
+          </button>
+        )}
+        
         <button
           onClick={handleSave}
+          disabled={isSaving || !hasChanges}
           className={`
             px-6 py-2.5 rounded-lg flex items-center gap-2
-            ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
+            ${isSaving || !hasChanges ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
             text-white transition-colors duration-200
           `}
         >
