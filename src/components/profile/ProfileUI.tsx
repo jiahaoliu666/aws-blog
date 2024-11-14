@@ -216,7 +216,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         verificationCode
       });
 
-      const response = await fetch('/api/line/verify', {
+      const response = await fetch('/api/line/verify-code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,22 +229,20 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (data.success) {
+        toast.success('LINE 帳號驗證成功');
+        setVerificationState(prev => ({
+          ...prev,
+          status: VerificationStatus.SUCCESS,
+          isVerified: true
+        }));
+        await handleNotificationChange('line', true);
+      } else {
         throw new Error(data.message || '驗證失敗');
       }
-
-      setVerificationStep(VerificationStep.COMPLETED);
-      toast.success('LINE 帳號驗證成功');
-      
-      await updateNotificationSettings();
-
-      if (reloadSettings) {
-        await reloadSettings();
-      }
-
     } catch (error) {
-      logger.error('驗證過程發生錯誤:', error);
-      toast.error(error instanceof Error ? error.message : '驗證失敗，請稍後再');
+      toast.error(error instanceof Error ? error.message : '驗證失敗');
+      logger.error('驗證失敗:', error);
     } finally {
       setIsLoading(false);
     }

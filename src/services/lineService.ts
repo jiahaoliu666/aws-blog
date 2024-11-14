@@ -96,7 +96,14 @@ interface LineServiceInterface {
   sendMulticastWithTemplate(articleData: ArticleData): Promise<LineApiResponse>;
   updateFollowerStatus(lineId: string, isFollowing: boolean): Promise<void>;
   requestVerification(lineId: string, userId: string): Promise<{ success: boolean; verificationCode: string }>;
-  verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }>;
+  verifyCode(userId: string, code: string): Promise<{ 
+    success: boolean; 
+    message?: string;
+    data?: {
+      isVerified: boolean;
+      verificationStatus: string;
+    }
+  }>;
   getFollowers(): Promise<string[]>;
   checkFollowStatus(lineUserId: string): Promise<LineFollowStatus>;
   updateUserLineSettings(params: { userId: string; lineId: string; isVerified: boolean }): Promise<void>;
@@ -260,10 +267,17 @@ export class LineService implements LineServiceInterface {
     throw new Error('Method not implemented.');
   }
 
-  async verifyCode(userId: string, code: string): Promise<{ success: boolean; message?: string }> {
+  async verifyCode(userId: string, code: string): Promise<{ 
+    success: boolean; 
+    message?: string;
+    data?: {
+      isVerified: boolean;
+      verificationStatus: string;
+    }
+  }> {
     try {
       // 驗證碼格式檢查
-      if (!code || code.length !== 6) {
+      if (!validateVerificationCode(code)) {
         return { success: false, message: '無效的驗證碼格式' };
       }
 
@@ -278,6 +292,7 @@ export class LineService implements LineServiceInterface {
       const result = await dynamoClient.send(new GetItemCommand(params));
       
       if (!result.Item) {
+        logger.error('找不到驗證資訊:', { userId });
         return { success: false, message: '找不到驗證資訊' };
       }
 
@@ -285,23 +300,41 @@ export class LineService implements LineServiceInterface {
       const expiryTime = Number(result.Item.verificationExpiry?.N || 0);
 
       // 驗證碼檢查
-      if (code !== storedCode) {
+      if (!storedCode || code !== storedCode) {
+        logger.warn('驗證碼不正確:', { 
+          userId,
+          inputCode: code,
+          storedCode 
+        });
         return { success: false, message: '驗證碼不正確' };
       }
 
       // 檢查是否過期
       if (Date.now() > expiryTime) {
+        logger.warn('驗證碼已過期:', {
+          userId,
+          expiryTime,
+          currentTime: Date.now()
+        });
         return { success: false, message: '驗證碼已過期' };
       }
 
       // 更新驗證狀態
       await this.updateUserLineSettings({
         userId,
-        lineId: result.Item.lineId.S!,
+        lineId: result.Item.lineId?.S || '',
         isVerified: true
       });
 
-      return { success: true, message: '驗證成功' };
+      logger.info('驗證成功:', { userId });
+      return { 
+        success: true, 
+        message: '驗證成功',
+        data: {
+          isVerified: true,
+          verificationStatus: 'VERIFIED'
+        }
+      };
     } catch (error) {
       logger.error('驗證碼驗證失敗:', error);
       throw error;
@@ -503,3 +536,8 @@ async function saveVerificationInfo(lineUserId: string, verificationCode: string
     throw error;
   }
 }
+
+const validateVerificationCode = (code: string): boolean => {
+    // 驗證碼必須是 6 位的英數字組合
+    return /^[0-9A-Z]{6}$/.test(code);
+};

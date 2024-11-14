@@ -34,52 +34,28 @@ export const useLineVerification = () => {
   };
 
   const handleVerifyCode = async (code: string, userId: string) => {
-    return withRetry(
-      async () => {
-        try {
-          updateVerificationProgress(VerificationStep.VERIFY_CODE);
+    try {
+      logger.info('開始驗證碼驗證:', { userId, code });
 
-          setVerificationState(prev => ({
-            ...prev,
-            status: VerificationStatus.VALIDATING,
-            message: '驗證進行中...',
-            retryCount: prev.retryCount + 1
-          }));
+      const response = await fetch('/api/line/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, code }),
+      });
 
-          const response = await lineVerificationService.verifyCode(userId, code);
+      const data = await response.json();
 
-          if (response.success) {
-            setVerificationState(prev => ({
-              ...prev,
-              step: VerificationStep.VERIFY_CODE,
-              status: VerificationStatus.SUCCESS,
-              message: '驗證成功！',
-              isVerified: true,
-              progress: 100
-            }));
-            return true;
-          }
-
-          throw new Error(response.message || '驗證失敗');
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-          
-          setVerificationState(prev => ({
-            ...prev,
-            status: VerificationStatus.ERROR,
-            message: errorMessage
-          }));
-
-          logger.error('LINE 驗證失敗:', { error: errorMessage });
-          throw error;
-        }
-      },
-      {
-        operationName: 'LINE 驗證碼驗證',
-        retryCount: 3,
-        retryDelay: 1000
+      if (!response.ok) {
+        throw new Error(data.message || '驗證失敗');
       }
-    );
+
+      return data;
+    } catch (error) {
+      logger.error('驗證碼驗證失敗:', error);
+      throw error;
+    }
   };
 
   return {

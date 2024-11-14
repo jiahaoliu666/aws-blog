@@ -22,6 +22,7 @@ import { toast } from 'react-toastify';
 import { VerificationStep, VerificationStatus, VerificationState, VERIFICATION_PROGRESS, type VerificationProgress } from '@/types/lineTypes';
 import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { LINE_RETRY_COUNT } from '@/config/line';
+import { validateVerificationCode } from '@/utils/lineUtils';
 
 interface NotificationSettings {
   line: boolean;
@@ -673,6 +674,36 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     console.log('載入狀態:', settingsLoading);
   }, [settings, settingsLoading]);
 
+  const onVerify = async () => {
+    try {
+      setIsLoading(true);
+      
+      if (!verificationCode) {
+        toast.error('請輸入驗證碼');
+        return;
+      }
+
+      if (!validateVerificationCode(verificationCode)) {
+        toast.error('驗證碼格式不正確');
+        return;
+      }
+
+      const result = await lineHandleVerifyCode(verificationCode, userId);
+      
+      if (result.success) {
+        toast.success('驗證成功');
+        setVerificationStep(VerificationStep.COMPLETED);
+        await reloadSettings();
+      } else {
+        toast.error(result.message || '驗證失敗');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '驗證失敗');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -781,7 +812,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   verificationCode={verificationCode}
                   setVerificationCode={setVerificationCode}
                   onBack={() => handleStepChange(VerificationStep.SEND_ID)}
-                  onVerify={() => handleVerifyCode(verificationCode)}
+                  onVerify={onVerify}
                   isLoading={settingsLoading}
                 />
               )}
@@ -801,7 +832,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
               <div>
                 <h4 className="font-semibold text-gray-800 text-lg mb-1">LINE 通知已成功啟用</h4>
-                <p className="text-gray-600">您現在可以透��� LINE 即時接收所重要通知</p>
+                <p className="text-gray-600">您現在可以透 LINE 即時接收所重要通知</p>
               </div>
               <div className="ml-auto">
                 <button 
