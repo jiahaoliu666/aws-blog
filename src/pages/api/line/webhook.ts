@@ -95,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   contents: [
                     {
                       type: 'text',
-                      text: '🔐 身分驗證',
+                      text: '🔐 AWS Blog 365 驗證',
                       weight: 'bold',
                       size: 'xl',
                       color: '#FFFFFF'
@@ -142,15 +142,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                       size: 'sm'
                                     },
                                     {
-                                      type: 'text',
-                                      text: lineId,
-                                      size: 'sm',
-                                      color: '#333333',
-                                      wrap: true,
-                                      action: {
-                                        type: 'message',
-                                        text: lineId
-                                      }
+                                      type: 'box',
+                                      layout: 'horizontal',
+                                      spacing: 'md',
+                                      contents: [
+                                        {
+                                          type: 'text',
+                                          text: lineId,
+                                          size: 'sm',
+                                          color: '#333333',
+                                          flex: 5,
+                                          wrap: true
+                                        },
+                                        {
+                                          type: 'box',
+                                          layout: 'vertical',
+                                          contents: [
+                                            {
+                                              type: 'text',
+                                              text: '複製',
+                                              size: 'xs',
+                                              color: '#FFFFFF',
+                                              align: 'center'
+                                            }
+                                          ],
+                                          backgroundColor: '#4A90E2',
+                                          cornerRadius: '4px',
+                                          paddingAll: '8px',
+                                          flex: 1,
+                                          action: {
+                                            type: 'uri',
+                                            uri: `https://line.me/R/oaMessage/@YOUR_BOT_ID/?${lineId}`
+                                          }
+                                        }
+                                      ]
                                     }
                                   ]
                                 },
@@ -166,15 +191,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                       size: 'sm'
                                     },
                                     {
-                                      type: 'text',
-                                      text: verificationCode,
-                                      size: 'xl',
-                                      color: '#1DB446',
-                                      weight: 'bold',
-                                      action: {
-                                        type: 'message',
-                                        text: verificationCode
-                                      }
+                                      type: 'box',
+                                      layout: 'horizontal',
+                                      spacing: 'md',
+                                      contents: [
+                                        {
+                                          type: 'text',
+                                          text: verificationCode,
+                                          size: 'xl',
+                                          color: '#1DB446',
+                                          weight: 'bold',
+                                          flex: 5
+                                        },
+                                        {
+                                          type: 'box',
+                                          layout: 'vertical',
+                                          contents: [
+                                            {
+                                              type: 'text',
+                                              text: '複製',
+                                              size: 'xs',
+                                              color: '#FFFFFF',
+                                              align: 'center'
+                                            }
+                                          ],
+                                          backgroundColor: '#4A90E2',
+                                          cornerRadius: '4px',
+                                          paddingAll: '8px',
+                                          flex: 1,
+                                          action: {
+                                            type: 'uri',
+                                            uri: `https://line.me/R/oaMessage/@YOUR_BOT_ID/?${verificationCode}`
+                                          }
+                                        }
+                                      ],
+                                      alignItems: 'center'
                                     }
                                   ]
                                 }
@@ -200,7 +251,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                               contents: [
                                 {
                                   type: 'text',
-                                  text: '1. 點擊上方 LINE ID 或驗證碼即可複製',
+                                  text: '1. 點擊右側複製按鈕複製資訊',
                                   size: 'sm',
                                   color: '#333333'
                                 },
