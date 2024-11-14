@@ -57,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       logger.warn('驗證碼不正確:', { userId, inputCode: code });
       return res.status(400).json({
         success: false,
-        message: '驗證碼不正確，請輸入正確的值'
+        message: '請輸入正確的驗證碼'
       });
     }
 

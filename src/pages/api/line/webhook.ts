@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Client } from '@line/bot-sdk';
 import { lineConfig } from '@/config/line';
 import { verifyLineSignature } from '@/utils/lineUtils';
-import { DynamoDBClient, GetItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, GetItemCommand, PutItemCommand, QueryCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '@/utils/logger';
 import { LineService } from '@/services/lineService';
 
@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           await lineServiceInstance.replyMessage(event.replyToken, [{
             type: 'text',
-            text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您可以在網站的個人設定頁面找到您的用戶ID。'
+            text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您��以在網站的個人設定頁面找到您的用戶ID。'
           }]);
           continue;
         } catch (error) {
@@ -150,7 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     },
                     {
                       type: 'text',
-                      text: `驗證碼將於 ${formattedExpiryTime} 過期`,
+                      text: `請在 10 分鐘內完成驗證，驗證碼將於 ${formattedExpiryTime} 過期`,
                       size: 'xs',
                       color: '#aaaaaa',
                       wrap: true,
