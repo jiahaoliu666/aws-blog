@@ -669,9 +669,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               }`}>
                 <FontAwesomeIcon 
                   icon={faLine} 
-                  className={`text-2xl ${
-                    settings.lineNotification ? 'text-green-500' : 'text-gray-400'
-                  }`} 
+                  className="text-2xl text-green-500"
                 />
               </div>
               <div>
