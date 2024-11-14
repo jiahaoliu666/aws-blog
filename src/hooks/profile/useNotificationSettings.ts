@@ -15,8 +15,9 @@ interface UserNotificationSettings {
 
 export const useNotificationSettings = (userId: string) => {
   const { user } = useAuthContext();
-  const { showToast } = useToastContext();
+  const toast = useToastContext();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   // 更新 state 以匹配資料表結構
   const [settings, setSettings] = useState<Partial<UserNotificationSettings>>({
@@ -41,16 +42,11 @@ export const useNotificationSettings = (userId: string) => {
     try {
       setIsLoading(true);
       
-      // 確保 userId 存在
       if (!userId) {
         throw new Error('缺少用戶 ID');
       }
 
-      const response = await fetch(`/api/profile/notification-settings/${userId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(`/api/profile/notification-settings/${userId}`);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -62,15 +58,11 @@ export const useNotificationSettings = (userId: string) => {
           setSettings(defaultSettings);
           setOriginalSettings(defaultSettings);
           return;
-        } else if (response.status === 401) {
-          throw new Error('請重新登入');
-        } else {
-          throw new Error('無法載入通知設定');
         }
+        throw new Error(response.status === 401 ? '請重新登入' : '無法載入通知設定');
       }
       
       const data = await response.json();
-      
       const newSettings = {
         emailNotification: Boolean(data.emailNotification),
         lineNotification: Boolean(data.lineNotification),
@@ -82,14 +74,16 @@ export const useNotificationSettings = (userId: string) => {
       
     } catch (error) {
       console.error('獲取設定時發生錯誤:', error);
-      
-      const defaultSettings = {
+      setSettings({
         emailNotification: false,
         lineNotification: false,
         lineUserId: undefined
-      };
-      setSettings(defaultSettings);
-      setOriginalSettings(defaultSettings);
+      });
+      setOriginalSettings({
+        emailNotification: false,
+        lineNotification: false,
+        lineUserId: undefined
+      });
     } finally {
       setIsLoading(false);
     }
@@ -119,77 +113,51 @@ export const useNotificationSettings = (userId: string) => {
 
   const saveSettings = async () => {
     try {
-      // 檢查是否有變更
-      if (!hasChanges) {
-        showToast('沒有需要儲存的變更', 'info');
-        return false;
-      }
+      if (!hasChanges) return false;
 
-      // 移到這裡：檢查 LINE 通知的狀態
       if (settings.lineNotification && !verificationState?.isVerified) {
-        showToast('請先完成 LINE 驗證流程', 'warning');
-        return false;
+        throw new Error('請先完成 LINE 驗證流程');
       }
 
-      setIsLoading(true);
-      console.log('開始保存設定，當前設定:', settings);
+      setIsSaving(true);
       
       if (!userId) {
         throw new Error('缺少用戶 ID');
       }
 
-      const settingsToSave = {
-        userId,
-        emailNotification: Boolean(settings.emailNotification),
-        lineNotification: Boolean(settings.lineNotification),
-        lineUserId: settings.lineUserId || null,
-      };
-
-      console.log('準備發送到資料表的設定:', settingsToSave);
-
       const response = await fetch('/api/profile/notification-settings', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settingsToSave)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          emailNotification: Boolean(settings.emailNotification),
+          lineNotification: Boolean(settings.lineNotification),
+          lineUserId: settings.lineUserId || null,
+        })
       });
 
-      console.log('保存響應狀態:', response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('保存設定失敗:', response.status, errorText);
         throw new Error('儲存設定失敗');
       }
 
-      const updatedSettings = await response.json();
-      console.log('資料表返回的更新後設定:', updatedSettings);
+      const { data: updatedSettings } = await response.json();
       
-      // 更新本地狀態
       const normalizedSettings = {
-        emailNotification: Boolean(updatedSettings.data.emailNotification),
-        lineNotification: Boolean(updatedSettings.data.lineNotification),
-        lineUserId: updatedSettings.data.lineUserId || undefined
+        emailNotification: Boolean(updatedSettings.emailNotification),
+        lineNotification: Boolean(updatedSettings.lineNotification),
+        lineUserId: updatedSettings.lineUserId || undefined
       };
 
       setOriginalSettings(normalizedSettings);
       setSettings(normalizedSettings);
       
-      console.log('設定已成功更新到本地狀態');
-      showToast('設定已成功儲存', 'success');
       return true;
       
     } catch (error) {
       console.error('保存設定時發生錯誤:', error);
-      if (error instanceof Error) {
-        showToast(`儲存失敗: ${error.message}`, 'error');
-      } else {
-        showToast('儲存設定失敗，請稍後再試', 'error');
-      }
       throw error;
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -201,6 +169,7 @@ export const useNotificationSettings = (userId: string) => {
   return {
     settings,
     isLoading,
+    isSaving,
     hasChanges,
     handleSettingChange,
     saveSettings,

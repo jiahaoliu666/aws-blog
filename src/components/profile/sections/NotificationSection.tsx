@@ -480,6 +480,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   setVerificationState,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuthContext();
   const {
     settings,
@@ -493,17 +494,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   } = useNotificationSettings(userId);
 
   const isPageLoading = propIsLoading || settingsLoading;
-
-  useEffect(() => {
-    if (settingsLoading) {
-      toast.info('載入通知設定中...', {
-        toastId: 'loadingSettings',
-        duration: false
-      });
-    } else {
-      toast.remove('loadingSettings');
-    }
-  }, [settingsLoading]);
 
   const handleSave = async () => {
     try {
@@ -519,8 +509,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         toast.success('設定已成功儲存');
       }
     } catch (error) {
-      console.error('儲存設定時發生錯誤:', error);
-      toast.error('儲存設定失敗，請稍後再試');
+      toast.error(error instanceof Error ? error.message : '儲存設定失敗，請稍後再試');
     } finally {
       setIsLoading(false);
     }
@@ -672,9 +661,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   };
 
   useEffect(() => {
-    console.log('當前設定狀態:', settings);
-    console.log('載入狀態:', settingsLoading);
-  }, [settings, settingsLoading]);
+    if (settingsLoading) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+  }, [settingsLoading]);
 
   const toast = useToastContext();
 
@@ -854,10 +846,10 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         {hasChanges && (
           <button
             onClick={reloadSettings}
-            disabled={isPageLoading}
+            disabled={isSaving}
             className={`
               px-6 py-2.5 rounded-lg flex items-center gap-2
-              ${isPageLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-700'}
+              ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-700'}
               text-white transition-colors duration-200
             `}
           >
@@ -867,17 +859,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         
         <button
           onClick={handleSave}
-          disabled={isPageLoading || !hasChanges}
+          disabled={isSaving || !hasChanges}
           className={`
             px-6 py-2.5 rounded-lg flex items-center gap-2
-            ${isPageLoading || !hasChanges 
+            ${isSaving || !hasChanges 
               ? 'bg-gray-400 cursor-not-allowed' 
               : 'bg-blue-600 hover:bg-blue-700'
             } 
             text-white transition-colors duration-200
           `}
         >
-          {isPageLoading ? (
+          {isSaving ? (
             <>
               <span className="animate-spin">⌛</span>
               儲存中...
