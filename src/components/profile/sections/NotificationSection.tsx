@@ -486,6 +486,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     settings,
     isLoading: settingsLoading,
     hasChanges,
+    setHasChanges,
     handleSettingChange: handleToggle,
     saveSettings,
     reloadSettings,
@@ -496,30 +497,28 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const isPageLoading = propIsLoading || settingsLoading;
 
   const handleSave = async () => {
-    try {
-      if (!hasChanges) {
-        toast.info('沒有需要儲存的變更');
-        return;
-      }
+    if (!hasChanges) {
+      return;
+    }
 
+    try {
       setIsSaving(true);
-      toast.info('儲存設定中...', { toastId: 'savingSettings' });
-      await saveSettings(settings);
+      await saveSettings({
+        emailNotification: settings.emailNotification
+      });
       toast.success('設定已成功儲存');
+      setHasChanges(false);
     } catch (error) {
       console.error('儲存設定時發生錯誤:', error);
       toast.error('儲存設定失敗，請稍後再試');
     } finally {
       setIsSaving(false);
-      toast.remove('savingSettings');
     }
   };
 
   const handleEmailToggle = async () => {
     try {
-      toast.info('更新電子郵件通知設定...', { toastId: 'emailToggle' });
-      handleToggle('emailNotification', !settings.emailNotification);
-      toast.remove('emailToggle');
+      await handleToggle('emailNotification', !settings.emailNotification);
     } catch (error) {
       console.error('切換電子郵件通知失敗:', error);
       toast.error('電子郵件通知設定變更失敗，請稍後再試');
@@ -529,22 +528,22 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const handleLineToggle = async () => {
     try {
       if (!settings.lineNotification) {
-        handleToggle('lineNotification', true);
-        setVerificationStep(VerificationStep.SCAN_QR);
-        setProgress(VERIFICATION_PROGRESS.INITIAL);
+        const wasChanged = await handleToggle('lineNotification', true);
+        if (wasChanged) {
+          setVerificationStep(VerificationStep.SCAN_QR);
+          setProgress(VERIFICATION_PROGRESS.INITIAL);
+        }
       } else {
         if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
-          toast.info('關閉 LINE 通知中...', { toastId: 'lineToggle' });
-          await handleResetVerification();
-          handleToggle('lineNotification', false);
-          toast.success('已關閉 LINE 通知');
+          const wasChanged = await handleToggle('lineNotification', false);
+          if (wasChanged) {
+            await handleResetVerification();
+          }
         }
       }
     } catch (error) {
       console.error('切換 LINE 通知失敗:', error);
       toast.error('LINE 通知設定變更失敗，請稍後再試');
-    } finally {
-      toast.remove('lineToggle');
     }
   };
 
@@ -716,7 +715,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                  <p className="text-sm text-gray-600">接收最新消息和重要更新</p>
+                  <p className="text-sm text-gray-600">接收新消息和重要更新</p>
                 </div>
               </div>
               <Switch

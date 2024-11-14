@@ -9,24 +9,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { userId, emailNotification, lineNotification } = req.body;
+  const { userId, emailNotification } = req.body;
 
   try {
-    const updateExpressions: string[] = [];
-    const expressionAttributeValues: Record<string, any> = {};
-
-    if (typeof emailNotification === 'boolean') {
-      updateExpressions.push('emailNotification = :email');
-      expressionAttributeValues[':email'] = { BOOL: emailNotification };
+    if (!userId) {
+      return res.status(400).json({ message: '缺少使用者 ID' });
     }
 
-    if (typeof lineNotification === 'boolean') {
-      updateExpressions.push('lineNotification = :line');
-      expressionAttributeValues[':line'] = { BOOL: lineNotification };
-    }
-
-    if (updateExpressions.length === 0) {
-      return res.status(400).json({ message: '沒有要更新的設定' });
+    if (typeof emailNotification !== 'boolean') {
+      return res.status(400).json({ message: '無效的電子郵件通知設定值' });
     }
 
     const params = {
@@ -34,9 +25,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Key: {
         userId: { S: userId }
       },
-      UpdateExpression: `SET ${updateExpressions.join(', ')}`,
-      ExpressionAttributeValues: expressionAttributeValues,
-      ReturnValues: ReturnValue.ALL_NEW
+      UpdateExpression: 'SET emailNotification = :email',
+      ExpressionAttributeValues: {
+        ':email': { BOOL: emailNotification }
+      },
+      ReturnValues: ReturnValue.ALL_NEW,
+      ConditionExpression: 'attribute_exists(userId) OR attribute_not_exists(userId)'
     };
 
     const command = new UpdateItemCommand(params);
@@ -45,20 +39,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     logger.info('通知設定已更新:', {
       userId,
       emailNotification,
-      lineNotification
+      result: result.Attributes
     });
 
-    return res.status(200).json({
+    const updatedSettings = {
       emailNotification: result.Attributes?.emailNotification?.BOOL || false,
       lineNotification: result.Attributes?.lineNotification?.BOOL || false,
       lineUserId: result.Attributes?.lineUserId?.S || null
-    });
+    };
+
+    return res.status(200).json(updatedSettings);
 
   } catch (error) {
     logger.error('更新通知設定失敗:', error);
     return res.status(500).json({
       success: false,
-      message: '更新設定失敗'
+      message: '更新設定失敗',
+      error: error instanceof Error ? error.message : '未知錯誤'
     });
   }
 } 
