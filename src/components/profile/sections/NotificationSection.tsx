@@ -217,7 +217,7 @@ const AddFriendStep: React.FC<StepProps> = ({ onBack, onNext }) => (
     <div className="bg-white p-8 rounded-xl mb-6 inline-block">
       <FontAwesomeIcon icon={faUserPlus} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">加入好友</h3>
-      <p className="text-gray-600">請確認您已將我們的官方帳號加為好友</p>
+      <p className="text-gray-600">請確認您���將我們的官方帳號加為好友</p>
     </div>
     <div className="flex justify-center gap-4">
       <button
@@ -502,28 +502,14 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const isPageLoading = propIsLoading || settingsLoading;
 
   const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      await saveSettings({
-        emailNotification: settings.emailNotification,
-        lineNotification: settings.lineNotification
-      });
-      setHasChanges(false);
-    } catch (error) {
-      console.error('儲存設定時發生錯誤:', error);
-      toast.error('儲存設定失敗，請稍後再試');
-    } finally {
-      setIsSaving(false);
+    if (!hasChanges) {
+      return;
     }
+    await saveSettings(settings);
   };
 
   const handleEmailToggle = async () => {
-    try {
-      await handleToggle('emailNotification', !settings.emailNotification);
-    } catch (error) {
-      console.error('切換電子郵件通知失敗:', error);
-      toast.error('電子郵件通知設定變更失敗，請稍後再試');
-    }
+    await handleToggle('emailNotification', !settings.emailNotification);
   };
 
   const handleLineToggle = async () => {

@@ -51,52 +51,50 @@ export const useNotificationSettings = (userId: string) => {
 
   // 儲存設定
   const saveSettings = async (newSettings: Partial<NotificationSettings>) => {
-    // 檢查是否有變更
-    const hasActualChanges = Object.keys(newSettings).some(
-      key => settings[key as keyof NotificationSettings] !== newSettings[key as keyof NotificationSettings]
-    );
-
-    if (!hasActualChanges) {
-      showToast('未變更', 'info', {
-        description: '設定未變更',
-        position: 'top-right',
-        duration: 3000
-      });
-      return;
-    }
-
     try {
       setIsSaving(true);
+      
+      // 準備要更新的資料
+      const updateData = {
+        userId,
+        emailNotification: settings.emailNotification,  // 使用當前的本地狀態
+        lineNotification: settings.lineNotification     // 使用當前的本地狀態
+      };
+
+      logger.info('準備更新設定:', updateData);
+
       const response = await fetch('/api/profile/notification-settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId,
-          ...newSettings
-        })
+        body: JSON.stringify(updateData)
       });
 
       if (!response.ok) {
-        showToast('儲存設定失敗', 'error');
         throw new Error('儲存設定失敗');
       }
 
       const data = await response.json();
+      logger.info('設定更新成功:', data);
+
+      // 更新本地狀態
       setSettings(prevSettings => ({
         ...prevSettings,
         ...data
       }));
-      
+
+      setHasChanges(false);
       showToast('設定已更新', 'success', {
         description: '您的通知設定已成功儲存',
         position: 'top-right',
         duration: 3000
       });
+
       return data;
     } catch (error) {
       logger.error('儲存設定失敗:', error);
+      showToast('儲存設定失敗', 'error');
       throw error;
     } finally {
       setIsSaving(false);
@@ -106,37 +104,15 @@ export const useNotificationSettings = (userId: string) => {
   // 處理設定變更
   const handleSettingChange = async (key: string, value: any) => {
     try {
-      if (settings[key as keyof NotificationSettings] !== value) {
-        // 特別處理 LINE 通知關閉的情況
-        if (key === 'lineNotification' && !value) {
-          const response = await fetch('/api/profile/notification-settings', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId,
-              lineNotification: false,
-              emailNotification: settings.emailNotification
-            })
-          });
-
-          if (!response.ok) {
-            throw new Error('更新設定失敗');
-          }
-
-          const data = await response.json();
-          setSettings(prev => ({
-            ...prev,
-            lineNotification: false,
-            lineUserId: null,
-            lineId: null
-          }));
-          setIsLineVerified(false);
-        } else {
-          setSettings(prev => ({ ...prev, [key]: value }));
-        }
-        setHasChanges(true);
+      // 將新值轉換為布林值
+      const newValue = Boolean(value);
+      const currentValue = settings[key as keyof NotificationSettings];
+      
+      // 檢查值是否真的改變
+      if (currentValue !== newValue) {
+        // 只更新本地狀態
+        setSettings(prev => ({ ...prev, [key]: newValue }));
+        setHasChanges(true); // 標記有未儲存的變更
         return true;
       }
       return false;

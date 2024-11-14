@@ -381,7 +381,7 @@ export class LineService implements LineServiceInterface {
         Key: {
           userId: { S: userId }
         },
-        UpdateExpression: "SET mail = :email, lineNotification = :line, updatedAt = :updatedAt",
+        UpdateExpression: "SET emailNotification = :email, lineNotification = :line, updatedAt = :updatedAt",
         ExpressionAttributeValues: {
           ":email": { BOOL: settings.emailNotification },
           ":line": { BOOL: settings.lineNotification },
