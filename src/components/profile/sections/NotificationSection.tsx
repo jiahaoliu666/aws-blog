@@ -686,83 +686,83 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
           </div>
         </div>
 
-        {/* 驗證狀態顯示 */}
-        {settings.lineNotification ? (
+        {/* 驗證狀態顯示 - 只在 lineNotification 為 true 時顯示 */}
+        {settings.lineNotification && (
           <div className="p-6 bg-white border-t border-gray-100">
-            <div className="flex items-center">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-xl bg-green-50 
-                                text-green-500 flex items-center justify-center">
-                    <FontAwesomeIcon icon={faCheckCircle} className="text-2xl" />
+            {settings.lineId ? (
+              // 已驗證狀態
+              <div className="flex items-center">
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-green-50 
+                                  text-green-500 flex items-center justify-center">
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-2xl" />
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-gray-800">LINE 通知已啟用</h4>
-                    <span className="px-2 py-0.5 text-xs font-medium bg-green-50 
-                                   text-green-600 rounded-full">已驗證</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <p className="text-sm text-gray-500">
-                      綁定 LINE ID：{settings.lineId || '未設定'}
-                    </p>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-gray-800">LINE 通知已啟用</h4>
+                      <span className="px-2 py-0.5 text-xs font-medium bg-green-50 
+                                     text-green-600 rounded-full">已驗證</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <p className="text-sm text-gray-500">
+                        綁定 LINE ID：{settings.lineId}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          // 顯示驗證流程
-          <div className="p-6 bg-gray-50">
-            {/* 進度條容器 */}
-            <div className="max-w-3xl mx-auto mb-8">
-              <div className="relative">
-                {/* 移除原本的進度線 */}
-                <StepIndicators 
-                  currentStep={currentStep}
-                  onStepClick={handleStepChange}
-                />
+            ) : (
+              // 驗證流程介面
+              <div className="p-6 bg-gray-50">
+                <div className="max-w-3xl mx-auto mb-8">
+                  <div className="relative">
+                    <StepIndicators 
+                      currentStep={currentStep}
+                      onStepClick={handleStepChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="max-w-2xl mx-auto">
+                  {currentStep === VerificationStep.SCAN_QR && (
+                    <QRCodeStep 
+                      onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)}
+                      onCopyLineId={onCopyLineId}
+                    />
+                  )}
+
+                  {currentStep === VerificationStep.ADD_FRIEND && (
+                    <AddFriendStep 
+                      onBack={() => handleStepChange(VerificationStep.SCAN_QR)}
+                      onNext={() => handleStepChange(VerificationStep.SEND_ID)}
+                    />
+                  )}
+
+                  {currentStep === VerificationStep.SEND_ID && (
+                    <SendIdStep 
+                      userId={userId}
+                      onCopyUserId={onCopyUserId}
+                      onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
+                      onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
+                      onSendId={handleSendUserId}
+                      isLoading={settingsLoading}
+                    />
+                  )}
+
+                  {currentStep === VerificationStep.VERIFY_CODE && (
+                    <VerifyCodeStep 
+                      verificationCode={verificationCode}
+                      setVerificationCode={setVerificationCode}
+                      onBack={() => handleStepChange(VerificationStep.SEND_ID)}
+                      onVerify={onVerify}
+                      isLoading={settingsLoading}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-
-            {/* 步驟內容 */}
-            <div className="max-w-2xl mx-auto">
-              {currentStep === VerificationStep.SCAN_QR && (
-                <QRCodeStep 
-                  onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)}
-                  onCopyLineId={onCopyLineId}
-                />
-              )}
-
-              {currentStep === VerificationStep.ADD_FRIEND && (
-                <AddFriendStep 
-                  onBack={() => handleStepChange(VerificationStep.SCAN_QR)}
-                  onNext={() => handleStepChange(VerificationStep.SEND_ID)}
-                />
-              )}
-
-              {currentStep === VerificationStep.SEND_ID && (
-                <SendIdStep 
-                  userId={userId}
-                  onCopyUserId={onCopyUserId}
-                  onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
-                  onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
-                  onSendId={handleSendUserId}
-                  isLoading={settingsLoading}
-                />
-              )}
-
-              {currentStep === VerificationStep.VERIFY_CODE && (
-                <VerifyCodeStep 
-                  verificationCode={verificationCode}
-                  setVerificationCode={setVerificationCode}
-                  onBack={() => handleStepChange(VerificationStep.SEND_ID)}
-                  onVerify={onVerify}
-                  isLoading={settingsLoading}
-                />
-              )}
-            </div>
+            )}
           </div>
         )}
       </div>
