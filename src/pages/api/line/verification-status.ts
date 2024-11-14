@@ -46,5 +46,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  if (req.method === 'DELETE') {
+    try {
+      const { userId } = req.body;
+
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
+        },
+        UpdateExpression: `
+          SET isVerified = :isVerified,
+              verificationStatus = :status,
+              lineId = :lineId,
+              updatedAt = :updatedAt
+        `,
+        ExpressionAttributeValues: {
+          ':isVerified': { BOOL: false },
+          ':status': { S: 'IDLE' },
+          ':lineId': { S: '' },
+          ':updatedAt': { S: new Date().toISOString() }
+        }
+      };
+
+      await dynamoClient.send(new UpdateItemCommand(params));
+      
+      res.status(200).json({
+        success: true,
+        message: '驗證已取消'
+      });
+    } catch (error) {
+      logger.error('取消驗證失敗:', error);
+      res.status(500).json({
+        success: false,
+        message: '取消驗證失敗'
+      });
+    }
+  }
+
   return res.status(405).json({ message: '方法不允許' });
 } 

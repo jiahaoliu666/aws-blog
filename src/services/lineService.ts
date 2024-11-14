@@ -106,7 +106,7 @@ interface LineServiceInterface {
   generateVerificationCode(userId: string, lineId: string): Promise<string>;
   updateNotificationSettings(userId: string, settings: {
     lineNotification: boolean;
-    lineId?: string;
+    emailNotification: boolean;
   }): Promise<void>;
   replyMessage(replyToken: string, messages: any[]): Promise<any>;
   handleVerificationCommand(params: VerificationCommandParams): Promise<{lineId: string, verificationCode: string}>;
@@ -340,10 +340,33 @@ export class LineService implements LineServiceInterface {
 
   async updateNotificationSettings(userId: string, settings: {
     lineNotification: boolean;
-    lineId?: string;
+    emailNotification: boolean;
   }): Promise<void> {
-    // ... 實作更新通知設定邏輯 ...
-    throw new Error('Method not implemented.');
+    try {
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
+        },
+        UpdateExpression: "SET mail = :email, lineNotification = :line, updatedAt = :updatedAt",
+        ExpressionAttributeValues: {
+          ":email": { BOOL: settings.emailNotification },
+          ":line": { BOOL: settings.lineNotification },
+          ":updatedAt": { S: new Date().toISOString() }
+        }
+      };
+
+      await dynamoClient.send(new UpdateItemCommand(params));
+      
+      logger.info('通知設定已更新:', {
+        userId,
+        settings,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('更新通知設定失敗:', error);
+      throw error;
+    }
   }
 
   async handleVerificationCommand(params: VerificationCommandParams): Promise<{lineId: string, verificationCode: string}> {

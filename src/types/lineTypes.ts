@@ -111,6 +111,10 @@ export interface VerificationState {
   progress: number;
   currentStep: number;
   retryCount: number;
+  lastVerified?: string;
+  verificationCount?: number;
+  lastCancelled?: string;
+  cancellationCount?: number;
 }
 
 export interface VerificationRequest {
@@ -246,4 +250,11 @@ export interface LineNotificationState {
 export interface NotificationSettingsState {
   lineNotification: LineNotificationState;
   // ... other notification settings ...
+}
+
+export interface LineVerificationHistory {
+  lastVerified: string | null;
+  lastCancelled: string | null;
+  verificationCount: number;
+  cancellationCount: number;
 }

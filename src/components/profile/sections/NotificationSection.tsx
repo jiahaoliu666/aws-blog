@@ -224,7 +224,7 @@ const SendIdStep: React.FC<StepProps & {
   onCopyUserId: () => void;
   onBack: () => void;
   onNext: () => void;
-  onSendId: () => Promise<void>;
+  onSendId: () => Promise<boolean>;
   isLoading: boolean;
 }> = ({ 
   onBack, 
@@ -283,8 +283,10 @@ const SendIdStep: React.FC<StepProps & {
       </button>
       <button
         onClick={async () => {
-          await onSendId();
-          onNext();
+          const success = await onSendId();
+          if (success) {
+            onNext();
+          }
         }}
         disabled={isLoading}
         className="bg-green-500 text-white px-6 py-2.5 rounded-lg 
@@ -396,10 +398,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const { user } = useAuthContext();
   const {
     settings,
-    originalSettings,
-    loading: settingsLoading,
+    isLoading: settingsLoading,
     hasChanges,
-    handleToggle,
+    handleSettingChange: handleToggle,
     saveSettings,
     reloadSettings,
     handleSendUserId,
@@ -414,26 +415,48 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       return;
     }
 
-    if (settings.line && !verificationState?.isVerified) {
-      toast.warning('請先完成 LINE 驗證流程');
-      return;
-    }
-
     try {
+      // 儲存通知設定
       await saveSettings();
+      
+      // 如果有其他設定需要儲存
       await saveAllSettings();
+      
+      toast.success('設定已儲存');
     } catch (error) {
       console.error('儲存設定時發生錯誤:', error);
+      toast.error('儲存設定失敗');
+    }
+  };
+
+  const handleEmailToggle = async () => {
+    try {
+      handleToggle('emailNotification', !settings.emailNotification);
+    } catch (error) {
+      console.error('切換電子郵件通知失敗:', error);
+      toast.error('設定變更失敗');
     }
   };
 
   const handleLineToggle = async () => {
-    if (!settings.line) {
-      await handleToggle('line', true);
-    } else {
-      if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
-        await handleToggle('line', false);
+    try {
+      if (!settings.lineNotification) {
+        // 開啟 LINE 通知
+        if (!verificationState?.isVerified) {
+          // 如果尚未驗證，開始驗證流程
+          handleToggle('lineNotification', true);
+          setVerificationStep(VerificationStep.SCAN_QR);
+        }
+      } else {
+        // 關閉 LINE 通知
+        if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
+          handleToggle('lineNotification', false);
+          await handleResetVerification();
+        }
       }
+    } catch (error) {
+      console.error('切換 LINE 通知失敗:', error);
+      toast.error('設定變更失敗');
     }
   };
 
@@ -521,6 +544,39 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
   };
 
+  const handleCancelVerification = async () => {
+    try {
+      // 1. 關閉 LINE 通知
+      await handleNotificationChange('line');
+      
+      // 2. 更新驗證狀態
+      const response = await fetch('/api/line/verification-status', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        throw new Error('取消驗證失敗');
+      }
+
+      // 3. 重置本地狀態
+      setVerificationState((prev) => ({
+        ...prev,
+        isVerified: false,
+        status: VerificationStatus.IDLE,
+        step: VerificationStep.INITIAL
+      }));
+
+      toast.success('已取消 LINE 驗證');
+    } catch (error) {
+      console.error('取消驗證失敗:', error);
+      toast.error('取消驗證失敗，請稍後再試');
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -543,9 +599,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 </div>
               </div>
               <Switch
-                checked={settings.email}
-                onChange={() => handleToggle('email', !settings.email)}
-                disabled={settingsLoading}
+                checked={settings.emailNotification}
+                onChange={handleEmailToggle}
+                disabled={isPageLoading}
               />
             </div>
             
@@ -576,15 +632,15 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
             </div>
             <Switch
-              checked={notificationSettings.line}
-              onChange={() => handleNotificationChange('line')}
-              disabled={isPageLoading || (!verificationState?.isVerified && notificationSettings.line)}
+              checked={settings.lineNotification}
+              onChange={handleLineToggle}
+              disabled={isPageLoading || (!verificationState?.isVerified && settings.lineNotification)}
             />
           </div>
         </div>
 
         {/* 驗證流程區域 */}
-        {notificationSettings.line && !verificationState?.isVerified && (
+        {settings.lineNotification && !verificationState?.isVerified && (
           <div className="p-6 bg-gray-50">
             {/* 進度條 */}
             <div className="max-w-3xl mx-auto mb-8">
@@ -644,7 +700,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         )}
 
         {/* 驗證成功態 */}
-        {notificationSettings.line && verificationState?.isVerified && (
+        {settings.lineNotification && verificationState?.isVerified && (
           <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
