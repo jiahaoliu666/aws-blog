@@ -293,28 +293,14 @@ const SendIdStep: React.FC<StepProps & {
         返回
       </button>
       <button
-        onClick={async () => {
-          const success = await onSendId();
-          if (success) {
-            onNext();
-          }
-        }}
+        onClick={onNext}
         disabled={isLoading}
         className="bg-green-500 text-white px-6 py-2.5 rounded-lg 
                    hover:bg-green-600 transition-colors 
                    flex items-center gap-2"
       >
-        {isLoading ? (
-          <>
-            <span className="animate-spin">⌛</span>
-            發送中...
-          </>
-        ) : (
-          <>
-            <span>下一步</span>
-            <FontAwesomeIcon icon={faArrowRight} />
-          </>
-        )}
+        <span>下一步</span>
+        <FontAwesomeIcon icon={faArrowRight} />
       </button>
     </div>
   </div>
@@ -815,7 +801,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
               <div>
                 <h4 className="font-semibold text-gray-800 text-lg mb-1">LINE 通知已成功啟用</h4>
-                <p className="text-gray-600">您現在可以透過 LINE 即時接收所重要通知</p>
+                <p className="text-gray-600">您現在可以透��� LINE 即時接收所重要通知</p>
               </div>
               <div className="ml-auto">
                 <button 
