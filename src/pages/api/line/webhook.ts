@@ -76,6 +76,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               userId: messageText
             });
 
+            // 計算過期時間
+            const expiryTime = new Date(Date.now() + 10 * 60 * 1000);
+            const formattedExpiryTime = expiryTime.toLocaleTimeString('zh-TW', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
             // 發送驗證資訊給用戶
             await lineServiceInstance.replyMessage(event.replyToken, [{
               type: 'flex',
@@ -143,7 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     },
                     {
                       type: 'text',
-                      text: '請在 10 分鐘內完成驗證',
+                      text: `驗證碼將於 ${formattedExpiryTime} 過期`,
                       size: 'xs',
                       color: '#aaaaaa',
                       wrap: true,

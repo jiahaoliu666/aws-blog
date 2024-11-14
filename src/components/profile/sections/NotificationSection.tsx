@@ -335,7 +335,7 @@ const VerifyCodeStep: React.FC<{
       />
       <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
         <FontAwesomeIcon icon={faInfoCircle} />
-        <span>驗證碼將在 5 分鐘後失效</span>
+        <span>驗證碼將在 10 分鐘後失效</span>
       </div>
     </div>
     <div className="flex justify-center gap-4">

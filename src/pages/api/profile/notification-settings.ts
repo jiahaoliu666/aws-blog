@@ -9,15 +9,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { userId, emailNotification } = req.body;
+  const { userId, emailNotification, lineNotification } = req.body;
 
   try {
     if (!userId) {
       return res.status(400).json({ message: '缺少使用者 ID' });
     }
 
-    if (typeof emailNotification !== 'boolean') {
-      return res.status(400).json({ message: '無效的電子郵件通知設定值' });
+    let updateExpression = 'SET emailNotification = :email';
+    let expressionAttributeValues: any = {
+      ':email': { BOOL: emailNotification }
+    };
+
+    if (lineNotification !== undefined) {
+      updateExpression += ', lineNotification = :line';
+      expressionAttributeValues[':line'] = { BOOL: lineNotification };
+      
+      if (!lineNotification) {
+        updateExpression += ', isVerified = :isVerified, verificationStatus = :status';
+        expressionAttributeValues[':isVerified'] = { BOOL: false };
+        expressionAttributeValues[':status'] = { S: 'IDLE' };
+      }
     }
 
     const params = {
@@ -25,11 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Key: {
         userId: { S: userId }
       },
-      UpdateExpression: 'SET emailNotification = :email, lineNotification = :line',
-      ExpressionAttributeValues: {
-        ':email': { BOOL: emailNotification },
-        ':line': { BOOL: false }
-      },
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
       ReturnValues: ReturnValue.ALL_NEW,
       ConditionExpression: 'attribute_exists(userId) OR attribute_not_exists(userId)'
     };
@@ -40,6 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     logger.info('通知設定已更新:', {
       userId,
       emailNotification,
+      lineNotification,
       result: result.Attributes
     });
 

@@ -74,23 +74,38 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     }));
   }, []);
 
-  // 初始化載入效果
+  // 修改初始化載入效果
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    const initializeProfile = async () => {
+      try {
+        setIsLoading(true);
+        // 這裡可以加入其他初始化邏輯
+      } catch (error) {
+        // 不在初始化時顯示錯誤 toast
+        console.error('初始化設定時發生錯誤:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeProfile();
   }, []);
 
-  // 檢查用戶登入狀態
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
+  // 修改檢查用戶登入狀態
   useEffect(() => {
     if (!isClient) return;
 
-    const storedUser = localStorage.getItem("user");
+    const checkUserStatus = async () => {
+      try {
+        const storedUser = localStorage.getItem("user");
+        // 這裡可以加入其他用戶狀態檢查邏輯
+      } catch (error) {
+        // 不在初始檢查時顯示錯誤 toast
+        console.error('檢查用戶狀態時發生錯誤:', error);
+      }
+    };
+
+    checkUserStatus();
   }, [authUser, router, isClient]);
 
   // 響應式布局處理
@@ -124,9 +139,8 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     initialAttachments: attachments
   });
 
-  // 修改 handleSubmitFeedback 函數
+  // 修改提交反饋的處理函數
   const handleSubmitFeedback = async () => {
-    console.log('開始提交反饋:', { feedback, attachments });
     if (!feedback.category || !feedback.content) {
       showToast('請填寫必要欄位', 'error');
       return;
@@ -134,7 +148,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
 
     setIsSubmitting(true);
     try {
-      // 直接使用 feedbackHook 的方法提交，包含當前的 feedback 和 attachments
       await feedbackHook.handleSubmitFeedback({
         title: feedback.title,
         content: feedback.content,
@@ -142,7 +155,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
         attachments: attachments
       });
       
-      // 重置表單
       setFeedback({
         category: '',
         content: '',
@@ -152,6 +164,7 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
       
       showToast('反饋提交成功', 'success');
     } catch (error) {
+      // 只在實際操作時顯示錯誤 toast
       console.error('Feedback submission error:', error);
       showToast('提交反饋時發生錯誤', 'error');
     } finally {
@@ -159,13 +172,16 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     }
   };
 
+  // 修改表單提交處理函數
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage('');
     try {
+      // 實際的更新操作
       showToast('更新成功', 'success');
     } catch (error) {
+      // 只在實際操作時顯示錯誤 toast
       showToast('更新失敗', 'error');
       setErrorMessage('更新資料時發生錯誤');
       console.error('Update error:', error);
