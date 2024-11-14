@@ -26,26 +26,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const command = new GetItemCommand(params);
     const result = await dynamoClient.send(command);
 
+    logger.info('資料庫回應:', result.Item);
+
     if (!result.Item) {
-      // 如果找不到記錄，返回預設值
       return res.status(200).json({
         emailNotification: false,
         lineNotification: false,
-        lineUserId: null
+        lineUserId: null,
+        lineId: null
       });
     }
 
-    return res.status(200).json({
+    const settings = {
       emailNotification: result.Item.emailNotification?.BOOL || false,
       lineNotification: result.Item.lineNotification?.BOOL || false,
-      lineUserId: result.Item.lineUserId?.S || null
-    });
+      lineUserId: result.Item.lineUserId?.S || null,
+      lineId: result.Item.lineId?.S || null
+    };
+
+    logger.info('返回的設定:', settings);
+
+    return res.status(200).json(settings);
 
   } catch (error) {
     logger.error('獲取通知設定失敗:', error);
     return res.status(500).json({
       success: false,
-      message: '獲取設定失敗'
+      message: '獲取設定失敗',
+      error: error instanceof Error ? error.message : '未知錯誤'
     });
   }
 } 

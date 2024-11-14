@@ -154,6 +154,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       browser: boolean;
       mobile: boolean;
       push: boolean;
+      lineId?: string;
     }>;
     loading: boolean;
     handleToggle: (type: keyof NotificationSettings, value: boolean) => Promise<void>;
@@ -244,7 +245,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         }));
         await handleNotificationChange('line', true);
       } else {
-        // 根據不同的錯誤情況顯示不同的錯誤訊息
+        // 根不同的錯誤情況顯示不同的錯誤訊息
         if (data.error === 'EXPIRED') {
           toast.error('驗證碼已過期，請重新取得驗證碼');
         } else if (data.error === 'INVALID_CODE') {
@@ -323,7 +324,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     try {
       const newValue = forceValue !== undefined ? forceValue : !settings[type];
       
-      // 檢查 LINE 驗證狀態
+      // 查 LINE 驗證狀態
       if (type === 'line' && newValue) {
         if (verificationState.status !== VerificationStatus.SUCCESS) {
           toast.warning('請先完成 LINE 帳號驗證');
@@ -440,6 +441,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                 notificationSettings={{
                   line: settings.line ?? false,
                   email: settings.email ?? false,
+                  lineId: settings.lineId ?? null,
                 }}
                 formData={form.formData}
                 handleNotificationChange={handleNotificationChange}
@@ -459,8 +461,10 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
                   toast.success('已複製用戶 ID');
                 }}
                 onCopyLineId={() => {
-                  navigator.clipboard.writeText('@601feiwz');
-                  toast.success('已複製官方 LINE ID');
+                  if (settings.lineId) {
+                    navigator.clipboard.writeText(settings.lineId);
+                    toast.success('已複製 LINE ID');
+                  }
                 }}
                 userId={currentUser?.userId || ''}
                 lineOfficialId="@601feiwz"

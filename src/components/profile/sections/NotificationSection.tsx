@@ -29,13 +29,18 @@ interface NotificationSettings {
   line: boolean;
   email: boolean;
   lineUserId?: string;
+  lineId: string | null;
 }
 
 interface NotificationSectionProps {
   isLoading: boolean;
   isVerifying: boolean;
   saveAllSettings: () => Promise<void>;
-  notificationSettings: NotificationSettings;
+  notificationSettings: {
+    line: boolean;
+    email: boolean;
+    lineId: string | null;
+  };
   formData: any;
   handleNotificationChange: (
     type: 'line' | 'email' | 'browser' | 'mobile' | 'push',
@@ -319,7 +324,7 @@ const VerifyCodeStep: React.FC<{
     <div className="bg-white p-8 rounded-xl mb-6">
       <FontAwesomeIcon icon={faShield} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">輸入驗證碼</h3>
-      <p className="text-gray-600 mb-4">請輸入官方帳號傳送給您的驗證碼</p>
+      <p className="text-gray-600 mb-4">請輸入官方帳號傳給您的驗證碼</p>
       <input
         type="text"
         value={verificationCode}
@@ -426,7 +431,7 @@ const VerificationProgress = ({ step, status }: { step: VerificationStep; status
                   {isCurrent && (
                     <p className="text-xs text-gray-500 mt-1">
                       {status === VerificationStatus.VALIDATING ? '處理中...' : 
-                       status === VerificationStatus.SUCCESS ? '完成' : 
+                       status === VerificationStatus.SUCCESS ? '成' : 
                        status === VerificationStatus.ERROR ? '發生錯誤' : '等待中'}
                     </p>
                   )}
@@ -585,85 +590,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     await lineHandleVerifyCode(verificationCode, userId);
   };
 
-  const handleReVerifyClick = async () => {
-    try {
-      // 1. 先關閉 LINE 通知開關
-      await handleNotificationChange('line');
-      
-      // 2. 更新資料庫狀態
-      const response = await fetch('/api/line/verification-status', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          isVerified: false,
-          verificationStatus: 'PENDING'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('更新驗證狀態失敗');
-      }
-      
-      // 3. 重置本地驗證狀態
-      setVerificationStep(VerificationStep.SCAN_QR);
-      setProgress(VERIFICATION_PROGRESS.INITIAL);
-      setCurrentStep(VerificationStep.SCAN_QR);
-      setVerificationCode('');
-      
-      // 4. 更新驗證狀態
-      setVerificationState((prev: VerificationState) => ({
-        ...prev,
-        isVerified: false,
-        status: VerificationStatus.PENDING,
-        step: VerificationStep.INITIAL
-      }));
-      
-      // 5. 調用重置驗證的函
-      await handleResetVerification();
-      
-      toast.info('請重新完成 LINE 驗證流程');
-    } catch (error) {
-      console.error('重置驗證失敗:', error);
-      toast.error('重置失敗，請稍後再試');
-    }
-  };
-
-  const handleCancelVerification = async () => {
-    try {
-      // 1. 關閉 LINE 通知
-      await handleNotificationChange('line');
-      
-      // 2. 更新驗證狀態
-      const response = await fetch('/api/line/verification-status', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId })
-      });
-
-      if (!response.ok) {
-        throw new Error('取消驗證失敗');
-      }
-
-      // 3. 重置本地狀態
-      setVerificationState((prev) => ({
-        ...prev,
-        isVerified: false,
-        status: VerificationStatus.IDLE,
-        step: VerificationStep.INITIAL
-      }));
-
-      toast.success('已取消 LINE 驗證');
-    } catch (error) {
-      console.error('取消驗證失敗:', error);
-      toast.error('取消驗證失敗，請稍後再試');
-    }
-  };
-
   useEffect(() => {
     console.log('當前設定狀態:', settings);
     console.log('載入狀態:', settingsLoading);
@@ -737,14 +663,20 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         </div>
       </div>
 
-      {/* LINE 知卡片 */}
+      {/* LINE 通知卡片 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-        {/* 卡片標區域 */}
         <div className="p-6 border-b border-gray-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-50">
-                <FontAwesomeIcon icon={faLine} className="text-2xl text-green-500" />
+              <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${
+                settings.lineNotification ? 'bg-green-50' : 'bg-gray-50'
+              }`}>
+                <FontAwesomeIcon 
+                  icon={faLine} 
+                  className={`text-2xl ${
+                    settings.lineNotification ? 'text-green-500' : 'text-gray-400'
+                  }`} 
+                />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
@@ -754,13 +686,40 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             <Switch
               checked={settings.lineNotification}
               onChange={handleLineToggle}
-              disabled={isPageLoading || (settings.lineNotification && !verificationState?.isVerified)}
+              disabled={isPageLoading}
+              className={settings.lineNotification ? 'active-switch' : ''}
             />
           </div>
         </div>
 
-        {/* 驗證流程區域 */}
-        {settings.lineNotification && !verificationState?.isVerified && (
+        {/* 驗證狀態顯示 */}
+        {settings.lineNotification ? (
+          <div className="p-6 bg-white border-t border-gray-100">
+            <div className="flex items-center">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-green-50 
+                                text-green-500 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faCheckCircle} className="text-2xl" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-gray-800">LINE 通知已啟用</h4>
+                    <span className="px-2 py-0.5 text-xs font-medium bg-green-50 
+                                   text-green-600 rounded-full">已驗證</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <p className="text-sm text-gray-500">
+                      綁定 LINE ID：{settings.lineId || '未設定'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // 顯示驗證流程
           <div className="p-6 bg-gray-50">
             {/* 進度條容器 */}
             <div className="max-w-3xl mx-auto mb-8">
@@ -809,34 +768,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   isLoading={settingsLoading}
                 />
               )}
-            </div>
-          </div>
-        )}
-
-        {/* 驗證成功態 */}
-        {settings.lineNotification && verificationState?.isVerified && (
-          <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50">
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 
-                              text-white flex items-center justify-center shadow-lg">
-                  <FontAwesomeIcon icon={faCheckCircle} className="text-2xl" />
-                </div>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800 text-lg mb-1">LINE 通知已成功啟用</h4>
-                <p className="text-gray-600">您現在可以透 LINE 即時接收所重要通知</p>
-              </div>
-              <div className="ml-auto">
-                <button 
-                  className="text-green-600 hover:text-green-700 text-sm flex items-center gap-1"
-                  onClick={handleReVerifyClick}
-                  disabled={isPageLoading}
-                >
-                  <FontAwesomeIcon icon={faInfoCircle} />
-                  <span>新驗證</span>
-                </button>
-              </div>
             </div>
           </div>
         )}

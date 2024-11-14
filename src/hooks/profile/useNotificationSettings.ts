@@ -6,25 +6,41 @@ interface NotificationSettings {
   emailNotification: boolean;
   lineNotification: boolean;
   lineUserId: string | null;
+  lineId: string | null;
 }
 
 export const useNotificationSettings = (userId: string) => {
   const [settings, setSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
-    lineUserId: null
+    lineUserId: null,
+    lineId: null
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const { showToast } = useToastContext();
+  const [isLineVerified, setIsLineVerified] = useState(false);
 
   // 載入設定
   const loadSettings = async () => {
     try {
       const response = await fetch(`/api/profile/notification-settings/${userId}`);
+      if (!response.ok) {
+        throw new Error('載入設定失敗');
+      }
+      
       const data = await response.json();
-      setSettings(data);
+      console.log('從 API 獲取的設定:', data); // 添加日誌
+      
+      setSettings({
+        emailNotification: data.emailNotification || false,
+        lineNotification: data.lineNotification || false,
+        lineUserId: data.lineUserId || null,
+        lineId: data.lineId || null  // 確保設置 lineId
+      });
+      
+      setIsLineVerified(data.lineNotification || false);
     } catch (error) {
       logger.error('載入通知設定失敗:', error);
       showToast('載入設定失敗', 'error');
@@ -64,6 +80,7 @@ export const useNotificationSettings = (userId: string) => {
       logger.error('儲存設定失敗:', error);
       throw error;
     }
+
   };
 
   // 處理設定變更
@@ -82,6 +99,7 @@ export const useNotificationSettings = (userId: string) => {
 
   return {
     settings,
+    isLineVerified,
     isLoading,
     isSaving,
     hasChanges,

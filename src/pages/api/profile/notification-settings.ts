@@ -25,9 +25,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Key: {
         userId: { S: userId }
       },
-      UpdateExpression: 'SET emailNotification = :email',
+      UpdateExpression: 'SET emailNotification = :email, lineNotification = :line',
       ExpressionAttributeValues: {
-        ':email': { BOOL: emailNotification }
+        ':email': { BOOL: emailNotification },
+        ':line': { BOOL: false }
       },
       ReturnValues: ReturnValue.ALL_NEW,
       ConditionExpression: 'attribute_exists(userId) OR attribute_not_exists(userId)'
@@ -45,10 +46,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const updatedSettings = {
       emailNotification: result.Attributes?.emailNotification?.BOOL || false,
       lineNotification: result.Attributes?.lineNotification?.BOOL || false,
-      lineUserId: result.Attributes?.lineUserId?.S || null
+      lineUserId: result.Attributes?.lineUserId?.S || null,
+      lineId: result.Attributes?.lineId?.S || null
     };
 
-    return res.status(200).json(updatedSettings);
+    return res.status(200).json({
+      ...updatedSettings,
+      lineNotification: result.Attributes?.lineNotification?.BOOL || false,
+      lineId: result.Attributes?.lineId?.S || null
+    });
 
   } catch (error) {
     logger.error('更新通知設定失敗:', error);
