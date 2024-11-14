@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { userId, settings } = req.body;
+    const { userId, emailNotification, lineNotification, lineUserId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: '缺少必要參數' });
@@ -22,9 +22,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Key: {
         userId: { S: userId }
       },
-      UpdateExpression: "SET email = :email, updatedAt = :updatedAt",
+      UpdateExpression: "SET emailNotification = :email, lineNotification = :line, lineUserId = :lineId, updatedAt = :updatedAt",
       ExpressionAttributeValues: {
-        ":email": { BOOL: settings.email },
+        ":email": { BOOL: emailNotification },
+        ":line": { BOOL: lineNotification },
+        ":lineId": lineUserId ? { S: lineUserId } : { NULL: true },
         ":updatedAt": { S: new Date().toISOString() }
       },
       ReturnValues: "ALL_NEW" as const
@@ -35,14 +37,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     logger.info('通知設定已更新:', {
       userId,
-      settings,
+      settings: {
+        emailNotification,
+        lineNotification,
+        lineUserId
+      },
       result: result.Attributes
     });
 
     return res.status(200).json({
       success: true,
       message: '設定已更新',
-      data: result.Attributes
+      data: {
+        emailNotification: result.Attributes?.emailNotification?.BOOL || false,
+        lineNotification: result.Attributes?.lineNotification?.BOOL || false,
+        lineUserId: result.Attributes?.lineUserId?.S || null
+      }
     });
 
   } catch (error) {

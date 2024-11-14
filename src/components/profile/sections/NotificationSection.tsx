@@ -1,4 +1,4 @@
-import React, { useState, Dispatch, SetStateAction } from 'react';
+import React, { useState, Dispatch, SetStateAction, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faEnvelope, 
@@ -69,7 +69,7 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
     { step: VerificationStep.SCAN_QR, label: '掃描 QR Code', icon: faQrcode },
     { step: VerificationStep.ADD_FRIEND, label: '加入好友', icon: faUserPlus },
     { step: VerificationStep.SEND_ID, label: '發送 ID', icon: faPaperPlane },
-    { step: VerificationStep.VERIFY_CODE, label: '驗證確認', icon: faShield }
+    { step: VerificationStep.VERIFY_CODE, label: '驗證確', icon: faShield }
   ];
 
   return (
@@ -370,7 +370,7 @@ const VerifyCodeStep: React.FC<{
 );
 
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
-  isLoading,
+  isLoading: propIsLoading,
   isVerifying,
   saveAllSettings,
   notificationSettings,
@@ -395,6 +395,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   handleResetVerification,
   setVerificationState,
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuthContext();
   const {
     settings,
@@ -407,7 +408,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     handleVerifyCode
   } = useNotificationSettings(userId);
 
-  const isPageLoading = isLoading || settingsLoading;
+  const isPageLoading = propIsLoading || settingsLoading;
+
+  useEffect(() => {
+    if (settingsLoading) {
+      toast.loading('載入通知設定中...', {
+        toastId: 'loadingSettings'
+      });
+    } else {
+      toast.dismiss('loadingSettings');
+    }
+  }, [settingsLoading]);
 
   const handleSave = async () => {
     if (!hasChanges) {
@@ -416,16 +427,47 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
 
     try {
+      setIsLoading(true);
+      
+      let notificationSaved = false;
+      let otherSettingsSaved = false;
+      
       // 儲存通知設定
-      await saveSettings();
+      if (hasChanges) {
+        notificationSaved = await saveSettings();
+      }
       
       // 如果有其他設定需要儲存
-      await saveAllSettings();
+      if (saveAllSettings) {
+        try {
+          await saveAllSettings();
+          otherSettingsSaved = true;
+        } catch (error) {
+          console.error('儲存其他設定失敗:', error);
+          toast.error('部分設定儲存失敗');
+        }
+      }
       
-      toast.success('設定已儲存');
+      // 根據儲存結果顯示對應的提示訊息
+      if (notificationSaved && otherSettingsSaved) {
+        toast.success('所有設定已成功儲存');
+      } else if (notificationSaved) {
+        toast.success('通知設定已成功儲存');
+      } else if (otherSettingsSaved) {
+        toast.success('其他設定已成功儲存');
+      }
+      
     } catch (error) {
       console.error('儲存設定時發生錯誤:', error);
-      toast.error('儲存設定失敗');
+      
+      // 根據錯誤類型顯示更具體的錯誤訊息
+      if (error instanceof Error) {
+        toast.error(`儲存失敗: ${error.message}`);
+      } else {
+        toast.error('儲存設定失敗，請稍後再試');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -434,29 +476,27 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       handleToggle('emailNotification', !settings.emailNotification);
     } catch (error) {
       console.error('切換電子郵件通知失敗:', error);
-      toast.error('設定變更失敗');
+      toast.error('電子郵件通知設定變更失敗，請稍後再試');
     }
   };
 
   const handleLineToggle = async () => {
     try {
       if (!settings.lineNotification) {
-        // 開啟 LINE 通知
         if (!verificationState?.isVerified) {
-          // 如果尚未驗證，開始驗證流程
           handleToggle('lineNotification', true);
           setVerificationStep(VerificationStep.SCAN_QR);
         }
       } else {
-        // 關閉 LINE 通知
         if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
           handleToggle('lineNotification', false);
           await handleResetVerification();
+          toast.success('已關閉 LINE 通知');
         }
       }
     } catch (error) {
       console.error('切換 LINE 通知失敗:', error);
-      toast.error('設定變更失敗');
+      toast.error('LINE 通知設定變更失敗，請稍後再試');
     }
   };
 
@@ -576,6 +616,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       toast.error('取消驗證失敗，請稍後再試');
     }
   };
+
+  useEffect(() => {
+    console.log('當前設定狀態:', settings);
+    console.log('載入狀態:', settingsLoading);
+  }, [settings, settingsLoading]);
 
   return (
     <div className="w-full">
