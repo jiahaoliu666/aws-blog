@@ -377,7 +377,7 @@ export class LineService implements LineServiceInterface {
   }): Promise<void> {
     try {
       const params = {
-        TableName: "AWS_Blog_UserNotificationSettings",
+        TableName: "AWS_Blog_UserNotificat´ionSettings",
         Key: {
           userId: { S: userId }
         },
