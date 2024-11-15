@@ -146,7 +146,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     handleToggle: handleNotificationToggle,
     saveSettings: updateNotificationSettings,
     hasChanges: hasNotificationChanges,
-    reloadSettings
+    reloadSettings,
+    setSettings
   } = useNotificationSettings(currentUser?.userId || '') as unknown as {
     settings: Partial<{
       line: boolean;
@@ -161,6 +162,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     saveSettings: () => Promise<void>;
     hasChanges: boolean;
     reloadSettings: () => Promise<void>;
+    setSettings: React.Dispatch<React.SetStateAction<typeof settings>>;
   };
 
   const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.SCAN_QR);
@@ -269,26 +271,51 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
   const handleResetVerification = async () => {
     try {
-      // 重置所有驗證相關的狀態
-      setVerificationStep(VerificationStep.SCAN_QR);
-      setVerificationCode('');
-      setIsLoading(false);
+      setIsLoading(true);
       
-      // 重置 LINE 設定狀
-      await handleNotificationToggle('line', false); // 強制為 false
-      
-      // 更新通知設定
-      await updateNotificationSettings();
-      
-      // 重新載入設定
-      if (reloadSettings) {
-        await reloadSettings();
+      // 1. 更新驗證狀態
+      setVerificationState(prev => ({
+        ...prev,
+        step: VerificationStep.INITIAL,
+        status: VerificationStatus.IDLE,
+        isVerified: false,
+        progress: VERIFICATION_PROGRESS.INITIAL,
+        currentStep: 0
+      }));
+
+      // 2. 發送請求更新通知設定
+      const response = await fetch('/api/profile/notification-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: currentUser?.id,
+          lineNotification: false
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('重置驗證失敗');
       }
+
+      // 3. 更新本地設定狀態
+      setSettings(prev => ({
+        ...prev,
+        line: false,
+        lineId: undefined
+      }));
+
+      // 4. 顯示成功訊息
+      toast.success('LINE 通知已關閉，所有驗證資料已清除');
       
-      toast.info('請重新完成 LINE 驗證流程');
+      logger.info('LINE 驗證已重置:', { userId: currentUser?.id });
+
     } catch (error) {
-      console.error('重置驗證狀態失敗:', error);
+      logger.error('重置 LINE 驗證失敗:', error);
       toast.error('重置失敗，請稍後再試');
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -4,6 +4,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { User } from '@/types/userType';
 import { useToastContext } from '@/context/ToastContext';
 import { useProfileFeedback } from './useProfileFeedback';
+import { logger } from '@/utils/logger';
 
 interface UseProfileCoreProps {
   user?: User | null;
@@ -36,6 +37,7 @@ export type UseProfileCoreReturn = {
   errorMessage: string;
   attachments: File[];
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
+  handleResetVerification: () => Promise<void>;
 };
 
 export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UseProfileCoreReturn => {
@@ -190,6 +192,45 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     }
   };
 
+  const handleResetVerification = async () => {
+    setIsSubmitting(true);
+    try {
+      // 更新設定
+      const response = await fetch('/api/profile/notification-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: currentUser?.id,
+          lineNotification: false
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || '重置驗證失敗');
+      }
+
+      // 更新本地狀態
+      setSettings(prev => ({
+        ...prev,
+        lineNotification: false
+      }));
+
+      // 顯示成功訊息
+      showToast('LINE 通知已關閉，所有驗證資料已清除', 'success');
+
+    } catch (error) {
+      // 顯示錯誤訊息
+      showToast('重置驗證失敗，請稍後再試', 'error');
+      logger.error('重置驗證失敗:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     user: currentUser,
     isLoading,
@@ -211,5 +252,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     errorMessage,
     attachments,
     setAttachments,
+    handleResetVerification,
   };
 }; 
