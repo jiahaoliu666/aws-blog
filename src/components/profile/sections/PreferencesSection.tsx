@@ -100,7 +100,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
 
   const handleCancel = () => {
     setTempSettings(preferences);
-    showToast('設定已重置為默認值', 'info', {
+    showToast('已取消設定', 'info', {
       description: '設定已重置為伺服器上的值',
       position: 'top-right',
       duration: 3000

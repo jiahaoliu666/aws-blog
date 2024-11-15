@@ -127,7 +127,7 @@ export const useNotificationSettings = (userId: string) => {
   const resetSettings = () => {
     loadSettings(); // 重新載入伺服器上的設定
     setHasChanges(false);
-    showToast('設定已重置', 'info', {
+    showToast('已取消設定', 'info', {
       description: '設定已重置為原始狀態',
       position: 'top-right',
       duration: 3000
