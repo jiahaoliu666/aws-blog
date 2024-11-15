@@ -217,7 +217,7 @@ const AddFriendStep: React.FC<StepProps> = ({ onBack, onNext }) => (
     <div className="bg-white p-8 rounded-xl mb-6 inline-block">
       <FontAwesomeIcon icon={faUserPlus} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">加入好友</h3>
-      <p className="text-gray-600">請確認您���的官方帳號加為好友</p>
+      <p className="text-gray-600">請確認您已將官方帳號加為好友</p>
     </div>
     <div className="flex justify-center gap-4">
       <button
@@ -524,7 +524,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         }
       } else {
         if (settings.lineId) {
-          if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
+          if (window.confirm('確定關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
             const wasChanged = await handleToggle('lineNotification', false);
             if (wasChanged) {
               await handleResetVerification();
@@ -534,7 +534,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       }
     } catch (error) {
       console.error('切換 LINE 通知失敗:', error);
-      toast.error('LINE 通知設定變更失敗，請稍後再試');
+      toast.error('LINE 通知設定更失敗，請稍後再試');
     }
   };
 
@@ -589,7 +589,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
       // 驗證碼格式檢查
       if (!verificationCode || verificationCode.length !== 6) {
-        toast.error('請輸入6位數驗���碼');
+        toast.error('請輸入6位數驗證碼');
         return;
       }
 
@@ -619,32 +619,38 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       {/* 電郵件通知卡片 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
         <div className="p-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
-                  <FontAwesomeIcon icon={faEnvelope} className="text-xl text-blue-500" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                  <p className="text-sm text-gray-600">接收新消息和重要更新</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${
+                settings.emailNotification ? 'bg-blue-50' : 'bg-gray-50'
+              }`}>
+                <FontAwesomeIcon 
+                  icon={faEnvelope} 
+                  className="text-2xl text-blue-600"
+                />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
+                <p className="text-sm text-gray-600">接收新消息和重要更新</p>
+                
+                {/* 無論是否啟用通知都顯示綁定狀態 */}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                    <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500" />
+                    已綁定
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {formData.email}
+                  </span>
                 </div>
               </div>
-              <Switch
-                checked={settings.emailNotification}
-                onChange={handleEmailToggle}
-                disabled={isPageLoading}
-              />
             </div>
-            
-            <div className="pl-[3.25rem]">
-              <input 
-                type="email" 
-                value={formData.email} 
-                readOnly 
-                className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 w-full max-w-md focus:outline-none"
-              />
-            </div>
+            <Switch
+              checked={settings.emailNotification}
+              onChange={handleEmailToggle}
+              disabled={isPageLoading}
+              className={settings.emailNotification ? 'active-switch' : ''}
+            />
           </div>
         </div>
       </div>
@@ -659,7 +665,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               }`}>
                 <FontAwesomeIcon 
                   icon={faLine} 
-                  className="text-2xl text-green-500"
+                  className="text-2xl text-green-600"
                 />
               </div>
               <div>

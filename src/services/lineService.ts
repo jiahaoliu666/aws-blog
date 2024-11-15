@@ -421,8 +421,6 @@ export class LineService implements LineServiceInterface {
           verificationCode: { S: verificationCode },
           verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) }, // 10分鐘過期
           createdAt: { S: new Date().toISOString() },
-          status: { S: 'PENDING' },
-          attempts: { N: '0' },
           isVerified: { BOOL: false }
         }
       };
