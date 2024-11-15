@@ -217,7 +217,7 @@ const AddFriendStep: React.FC<StepProps> = ({ onBack, onNext }) => (
     <div className="bg-white p-8 rounded-xl mb-6 inline-block">
       <FontAwesomeIcon icon={faUserPlus} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">加入好友</h3>
-      <p className="text-gray-600">請確認您們的官方帳號加為好友</p>
+      <p className="text-gray-600">請確認您���的官方帳號加為好友</p>
     </div>
     <div className="flex justify-center gap-4">
       <button
@@ -430,7 +430,7 @@ const VerificationProgress = ({ step, status }: { step: VerificationStep; status
                   </p>
                   {isCurrent && (
                     <p className="text-xs text-gray-500 mt-1">
-                      {status === VerificationStatus.VALIDATING ? '理��...' : 
+                      {status === VerificationStatus.VALIDATING ? '理...' : 
                        status === VerificationStatus.SUCCESS ? '成功' : 
                        status === VerificationStatus.ERROR ? '發生錯誤' : '等待中'}
                     </p>
@@ -589,7 +589,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
       // 驗證碼格式檢查
       if (!verificationCode || verificationCode.length !== 6) {
-        toast.error('請輸入6位數驗證碼');
+        toast.error('請輸入6位數驗���碼');
         return;
       }
 
@@ -665,6 +665,19 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
                 <p className="text-sm text-gray-600">透過 LINE 接收即時通知與重要更新</p>
+                
+                {/* 新增: 顯示已綁定的 LINE ID */}
+                {settings.lineNotification && settings.lineId && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+                      已綁定
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      LINE ID: {settings.lineId}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <Switch

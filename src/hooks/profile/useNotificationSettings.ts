@@ -5,21 +5,18 @@ import { logger } from '@/utils/logger';
 interface NotificationSettings {
   emailNotification: boolean;
   lineNotification: boolean;
-  lineUserId: string | null;
-  lineId: string | null;
+  lineId?: string | null;
 }
 
 export const useNotificationSettings = (userId: string) => {
   const [originalSettings, setOriginalSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
-    lineUserId: null,
     lineId: null
   });
   const [tempSettings, setTempSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
-    lineUserId: null,
     lineId: null
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -31,27 +28,24 @@ export const useNotificationSettings = (userId: string) => {
   // 載入設定
   const loadSettings = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch(`/api/profile/notification-settings/${userId}`);
-      if (!response.ok) {
-        console.error('載入設定失敗');
-        return;
-      }
-      
       const data = await response.json();
-      console.log('從 API 獲取的設定:', data);
       
-      const newSettings = {
+      setOriginalSettings({
         emailNotification: data.emailNotification || false,
         lineNotification: data.lineNotification || false,
-        lineUserId: data.lineUserId || null,
         lineId: data.lineId || null
-      };
+      });
       
-      setOriginalSettings(newSettings);
-      setTempSettings(newSettings);
-      setIsLineVerified(data.lineNotification || false);
+      setTempSettings({
+        emailNotification: data.emailNotification || false,
+        lineNotification: data.lineNotification || false,
+        lineId: data.lineId || null
+      });
     } catch (error) {
-      console.error('載入通知設定失敗:', error);
+      logger.error('載入通知設定失敗:', error);
+      showToast('載入設定失敗，請重新整理頁面', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -122,6 +116,27 @@ export const useNotificationSettings = (userId: string) => {
       }
 
       const newValue = Boolean(value);
+
+      // 檢查互斥條件
+      if (newValue) {
+        if (key === 'emailNotification' && tempSettings.lineNotification) {
+          showToast('無法同時開啟兩種通知', 'warning', {
+            description: '請先關閉 LINE 通知',
+            position: 'top-right',
+            duration: 3000
+          });
+          return false;
+        }
+        if (key === 'lineNotification' && tempSettings.emailNotification) {
+          showToast('無法同時開啟兩種通知', 'warning', {
+            description: '請先關閉電子郵件通知',
+            position: 'top-right',
+            duration: 3000
+          });
+          return false;
+        }
+      }
+
       setTempSettings(prev => ({ ...prev, [key]: newValue }));
 
       // 如果是關閉 LINE 通知，立即更新資料庫
@@ -167,7 +182,7 @@ export const useNotificationSettings = (userId: string) => {
     }
   };
 
-  // 重置設定
+  // 置設定
   const resetSettings = () => {
     setTempSettings(originalSettings);
     showToast('已取消設定', 'info', {

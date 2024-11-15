@@ -16,6 +16,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: '缺少使用者 ID' });
     }
 
+    if (lineNotification && emailNotification) {
+      return res.status(400).json({ 
+        message: '無法同時啟用 LINE 通知和電子郵件通知' 
+      });
+    }
+
     if (lineNotification === false) {
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
