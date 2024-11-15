@@ -10,7 +10,13 @@ interface NotificationSettings {
 }
 
 export const useNotificationSettings = (userId: string) => {
-  const [settings, setSettings] = useState<NotificationSettings>({
+  const [originalSettings, setOriginalSettings] = useState<NotificationSettings>({
+    emailNotification: false,
+    lineNotification: false,
+    lineUserId: null,
+    lineId: null
+  });
+  const [tempSettings, setTempSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
     lineUserId: null,
@@ -18,7 +24,6 @@ export const useNotificationSettings = (userId: string) => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const { showToast } = useToastContext();
   const [isLineVerified, setIsLineVerified] = useState(false);
 
@@ -34,13 +39,15 @@ export const useNotificationSettings = (userId: string) => {
       const data = await response.json();
       console.log('從 API 獲取的設定:', data);
       
-      setSettings({
+      const newSettings = {
         emailNotification: data.emailNotification || false,
         lineNotification: data.lineNotification || false,
         lineUserId: data.lineUserId || null,
         lineId: data.lineId || null
-      });
+      };
       
+      setOriginalSettings(newSettings);
+      setTempSettings(newSettings);
       setIsLineVerified(data.lineNotification || false);
     } catch (error) {
       console.error('載入通知設定失敗:', error);
@@ -57,8 +64,8 @@ export const useNotificationSettings = (userId: string) => {
       // 準備要更新的資料
       const updateData = {
         userId,
-        emailNotification: settings.emailNotification,  // 使用當前的本地狀態
-        lineNotification: settings.lineNotification     // 使用當前的本地狀態
+        emailNotification: tempSettings.emailNotification,
+        lineNotification: tempSettings.lineNotification
       };
 
       logger.info('準備更新設定:', updateData);
@@ -79,12 +86,11 @@ export const useNotificationSettings = (userId: string) => {
       logger.info('設定更新成功:', data);
 
       // 更新本地狀態
-      setSettings(prevSettings => ({
+      setTempSettings((prevSettings: NotificationSettings) => ({
         ...prevSettings,
         ...data
       }));
 
-      setHasChanges(false);
       showToast('設定已更新', 'success', {
         description: '您的通知設定已成功儲存',
         position: 'top-right',
@@ -104,18 +110,9 @@ export const useNotificationSettings = (userId: string) => {
   // 處理設定變更
   const handleSettingChange = async (key: string, value: any) => {
     try {
-      // 將新值轉換為布林值
       const newValue = Boolean(value);
-      const currentValue = settings[key as keyof NotificationSettings];
-      
-      // 檢查值是否真的改變
-      if (currentValue !== newValue) {
-        // 只更新本地狀態
-        setSettings(prev => ({ ...prev, [key]: newValue }));
-        setHasChanges(true); // 標記有未儲存的變更
-        return true;
-      }
-      return false;
+      setTempSettings(prev => ({ ...prev, [key]: newValue }));
+      return true;
     } catch (error) {
       logger.error('更新設定失敗:', error);
       showToast('更新設定失敗', 'error');
@@ -123,10 +120,9 @@ export const useNotificationSettings = (userId: string) => {
     }
   };
 
-  // 新增重置設定方法
+  // 重置設定
   const resetSettings = () => {
-    loadSettings(); // 重新載入伺服器上的設定
-    setHasChanges(false);
+    setTempSettings(originalSettings);
     showToast('已取消設定', 'info', {
       description: '設定已重置為原始狀態',
       position: 'top-right',
@@ -134,26 +130,27 @@ export const useNotificationSettings = (userId: string) => {
     });
   };
 
+  // 檢查是否有變更
+  const hasChanges = JSON.stringify(tempSettings) !== JSON.stringify(originalSettings);
+
   useEffect(() => {
     loadSettings();
   }, [userId]);
 
   return {
-    settings,
+    settings: tempSettings,
+    originalSettings,
     isLineVerified,
     isLoading,
     isSaving,
     hasChanges,
-    setHasChanges,
     handleSettingChange,
     saveSettings,
     reloadSettings: loadSettings,
     handleSendUserId: async () => {
-      // 實作發送用戶ID的邏輯
       return true;
     },
     handleVerifyCode: async (code: string) => {
-      // 實作驗證碼驗證邏輯
       return true;
     },
     resetSettings,

@@ -217,7 +217,7 @@ const AddFriendStep: React.FC<StepProps> = ({ onBack, onNext }) => (
     <div className="bg-white p-8 rounded-xl mb-6 inline-block">
       <FontAwesomeIcon icon={faUserPlus} className="text-5xl text-green-500 mb-4" />
       <h3 className="text-xl font-semibold mb-3">加入好友</h3>
-      <p className="text-gray-600">請確認您我們的官方帳號加為好友</p>
+      <p className="text-gray-600">請確認您���們的官方帳號加為好友</p>
     </div>
     <div className="flex justify-center gap-4">
       <button
@@ -430,7 +430,7 @@ const VerificationProgress = ({ step, status }: { step: VerificationStep; status
                   </p>
                   {isCurrent && (
                     <p className="text-xs text-gray-500 mt-1">
-                      {status === VerificationStatus.VALIDATING ? '處理中...' : 
+                      {status === VerificationStatus.VALIDATING ? '��理中...' : 
                        status === VerificationStatus.SUCCESS ? '成功' : 
                        status === VerificationStatus.ERROR ? '發生錯誤' : '等待中'}
                     </p>
