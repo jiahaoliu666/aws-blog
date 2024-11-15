@@ -283,7 +283,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         currentStep: 0
       }));
 
-      // 2. 發送請求更新通知設定
+      // 2. 立即發送請求更新通知設定
       const response = await fetch('/api/profile/notification-settings', {
         method: 'POST',
         headers: {
@@ -310,6 +310,11 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       toast.success('LINE 通知已關閉，所有驗證資料已清除');
       
       logger.info('LINE 驗證已重置:', { userId: currentUser?.id });
+
+      // 5. 三秒後重整頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
 
     } catch (error) {
       logger.error('重置 LINE 驗證失敗:', error);

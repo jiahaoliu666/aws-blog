@@ -123,6 +123,42 @@ export const useNotificationSettings = (userId: string) => {
 
       const newValue = Boolean(value);
       setTempSettings(prev => ({ ...prev, [key]: newValue }));
+
+      // 如果是關閉 LINE 通知，立即更新資料庫
+      if (key === 'lineNotification' && !newValue) {
+        try {
+          // 更新資料庫
+          await fetch('/api/profile/notification-settings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId,
+              lineNotification: false,
+              emailNotification: tempSettings.emailNotification
+            })
+          });
+
+          // 顯示成功訊息
+          showToast('LINE 通知已關閉', 'success', {
+            description: '設定已更新',
+            position: 'top-right',
+            duration: 3000
+          });
+
+          // 3秒後重整頁面
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+
+        } catch (error) {
+          logger.error('更新 LINE 通知設定失敗:', error);
+          showToast('更新設定失敗', 'error');
+          throw error;
+        }
+      }
+
       return true;
     } catch (error) {
       logger.error('更新設定失敗:', error);
