@@ -404,31 +404,36 @@ export class LineService implements LineServiceInterface {
 
   async handleVerificationCommand(params: VerificationCommandParams): Promise<{lineId: string, verificationCode: string}> {
     try {
+      // 檢查LINE用戶ID
       if (!params.lineUserId) {
         throw new Error('無效的 LINE 用戶 ID');
       }
 
+      // 生成6位驗證碼
       const verificationCode = generateVerificationCode(6);
       
+      // 儲存驗證資訊到新的資料表
       const dynamoParams = {
-        TableName: "AWS_Blog_UserNotificationSettings",
+        TableName: "AWS_Blog_LineVerifications",
         Item: {
           userId: { S: params.userId },
           lineId: { S: params.lineUserId },
           verificationCode: { S: verificationCode },
-          verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) },
+          verificationExpiry: { N: String(Date.now() + 10 * 60 * 1000) }, // 10分鐘過期
           createdAt: { S: new Date().toISOString() },
+          status: { S: 'PENDING' },
+          attempts: { N: '0' },
           isVerified: { BOOL: false }
         }
       };
 
       await dynamoClient.send(new PutItemCommand(dynamoParams));
-      
-      logger.info('驗證資訊已儲存', { 
+
+      // 記錄驗證嘗試
+      logger.info('已建立驗證記錄:', {
         userId: params.userId,
         lineId: params.lineUserId,
-        verificationCode,
-        timestamp: new Date().toISOString()
+        expiryTime: new Date(Date.now() + 10 * 60 * 1000).toISOString()
       });
 
       return {

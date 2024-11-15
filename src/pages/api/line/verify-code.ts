@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { DynamoDBClient, GetItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
-import { validateVerificationCode } from '@/utils/lineUtils';
 import { logger } from '@/utils/logger';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
@@ -13,9 +12,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { userId, code } = req.body;
 
-    logger.info('收到驗證請求:', { userId, code });
-
-    // 驗證參數
     if (!userId || !code) {
       return res.status(400).json({
         success: false,
@@ -23,17 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // 驗證碼格式檢查
-    if (!validateVerificationCode(code)) {
-      return res.status(400).json({
-        success: false,
-        message: '驗證碼格式不正確'
-      });
-    }
-
-    // 從 DynamoDB 獲取驗證資訊
+    // 從 AWS_Blog_LineVerifications 表中獲取驗證資訊
     const getParams = {
-      TableName: "AWS_Blog_UserNotificationSettings",
+      TableName: "AWS_Blog_LineVerifications",
       Key: {
         userId: { S: userId }
       }
@@ -41,59 +29,104 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const result = await dynamoClient.send(new GetItemCommand(getParams));
     
+    logger.info('查詢驗證記錄:', {
+      userId,
+      code,
+      result: result.Item
+    });
+
     if (!result.Item) {
-      logger.error('找不到用戶驗證資訊:', { userId });
       return res.status(400).json({
         success: false,
-        message: '找不到用戶驗證資訊'
+        message: '找不到驗證記錄',
+        error: 'NOT_FOUND'
       });
     }
 
     const storedCode = result.Item.verificationCode?.S;
     const expiryTime = Number(result.Item.verificationExpiry?.N || 0);
+    const lineId = result.Item.lineId?.S;
 
-    // 驗證碼檢查
-    if (!storedCode || code !== storedCode) {
-      logger.warn('驗證碼不正確:', { userId, inputCode: code });
-      return res.status(400).json({
-        success: false,
-        message: '請輸入正確的驗證碼'
-      });
-    }
-
-    // 檢查是否過期
+    // 檢查驗證碼是否過期
     if (Date.now() > expiryTime) {
-      logger.warn('驗證碼已過期:', { userId, expiryTime });
       return res.status(400).json({
         success: false,
-        message: '驗證碼已過期'
+        message: '驗證碼已過期',
+        error: 'EXPIRED'
       });
     }
 
-    // 更新驗證狀態
-    const updateParams = {
-      TableName: "AWS_Blog_UserNotificationSettings",
-      Key: {
-        userId: { S: userId }
-      },
-      UpdateExpression: "SET isVerified = :verified, verificationStatus = :status, updatedAt = :updatedAt, lineNotification = :lineNotification",
+    // 比對驗證碼
+    if (!storedCode || code !== storedCode) {
+      // 更新嘗試次數
+      await dynamoClient.send(new UpdateItemCommand({
+        TableName: "AWS_Blog_LineVerifications",
+        Key: { userId: { S: userId } },
+        UpdateExpression: "SET attempts = if_not_exists(attempts, :zero) + :inc",
+        ExpressionAttributeValues: {
+          ":zero": { N: "0" },
+          ":inc": { N: "1" }
+        }
+      }));
+
+      return res.status(400).json({
+        success: false,
+        message: '驗證碼不正確',
+        error: 'INVALID_CODE'
+      });
+    }
+
+    // 驗證成功，更新狀態
+    await dynamoClient.send(new UpdateItemCommand({
+      TableName: "AWS_Blog_LineVerifications",
+      Key: { userId: { S: userId } },
+      UpdateExpression: `
+        SET isVerified = :verified,
+            verificationStatus = :status,
+            verifiedAt = :now,
+            updatedAt = :now
+      `,
       ExpressionAttributeValues: {
         ":verified": { BOOL: true },
         ":status": { S: "VERIFIED" },
-        ":updatedAt": { N: Date.now().toString() },
-        ":lineNotification": { BOOL: true }
+        ":now": { S: new Date().toISOString() }
       }
-    };
+    }));
 
-    await dynamoClient.send(new UpdateItemCommand(updateParams));
+    // 檢查 lineId 是否存在
+    if (!lineId) {
+      throw new Error('找不到 Line ID');
+    }
 
-    logger.info('驗證成功:', { userId });
+    // 更新用戶通知設定
+    await dynamoClient.send(new UpdateItemCommand({
+      TableName: "AWS_Blog_UserNotificationSettings",
+      Key: { userId: { S: userId } },
+      UpdateExpression: `
+        SET lineId = :lineId,
+            lineNotification = :enabled,
+            updatedAt = :now
+      `,
+      ExpressionAttributeValues: {
+        ":lineId": { S: lineId },
+        ":enabled": { BOOL: true },
+        ":now": { S: new Date().toISOString() }
+      }
+    }));
+
+    logger.info('驗證成功:', {
+      userId,
+      lineId,
+      verificationStatus: 'VERIFIED'
+    });
+
     return res.status(200).json({
       success: true,
       message: '驗證成功',
       data: {
+        lineId,
         isVerified: true,
-        verificationStatus: 'VERIFIED'
+        status: 'VERIFIED'
       }
     });
 
@@ -101,7 +134,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     logger.error('驗證處理失敗:', error);
     return res.status(500).json({
       success: false,
-      message: '驗證處理失敗，請稍後再試'
+      message: '驗證處理失敗，請稍後再試',
+      error: error instanceof Error ? error.message : '未知錯誤'
     });
   }
 } 

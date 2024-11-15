@@ -430,7 +430,7 @@ const VerificationProgress = ({ step, status }: { step: VerificationStep; status
                   </p>
                   {isCurrent && (
                     <p className="text-xs text-gray-500 mt-1">
-                      {status === VerificationStatus.VALIDATING ? '理中...' : 
+                      {status === VerificationStatus.VALIDATING ? '理��...' : 
                        status === VerificationStatus.SUCCESS ? '成功' : 
                        status === VerificationStatus.ERROR ? '發生錯誤' : '等待中'}
                     </p>
@@ -490,6 +490,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const {
     settings,
     isLoading: settingsLoading,
+    showVerification,
+    startVerification,
     hasChanges,
     handleSettingChange: handleToggle,
     saveSettings,
@@ -668,89 +670,82 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             <Switch
               checked={settings.lineNotification}
               onChange={handleLineToggle}
-              disabled={isPageLoading || (settings.lineNotification && !settings.lineId)}
+              disabled={!settings.lineNotification}
               className={settings.lineNotification ? 'active-switch' : ''}
             />
           </div>
         </div>
 
-        {/* 驗證狀態顯示 - 只在 lineNotification 為 true 時顯示 */}
-        {settings.lineNotification && (
-          <div className="p-6 bg-white border-t border-gray-100">
-            {settings.lineId ? (
-              // 已驗證狀態
-              <div className="flex items-center">
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-green-50 
-                                  text-green-500 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faCheckCircle} className="text-2xl" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-gray-800">LINE 通知已啟用</h4>
-                      <span className="px-2 py-0.5 text-xs font-medium bg-green-50 
-                                     text-green-600 rounded-full">已驗證</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <p className="text-sm text-gray-500">
-                        綁定 LINE ID：{settings.lineId}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        {/* 未驗證且未開始驗證時顯示開始驗證按鈕 */}
+        {!settings.lineNotification && !showVerification && (
+          <div className="p-6 bg-gray-50">
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">需要先完成 LINE 驗證才能啟用通知功能</p>
+              <button
+                onClick={() => {
+                  startVerification();
+                  setVerificationStep(VerificationStep.SCAN_QR);
+                  setCurrentStep(VerificationStep.SCAN_QR);
+                }}
+                className="bg-green-500 text-white px-6 py-2.5 rounded-lg 
+                         hover:bg-green-600 transition-colors
+                         flex items-center gap-2 mx-auto"
+              >
+                <FontAwesomeIcon icon={faLine} />
+                開始 LINE 驗證
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 驗證流程介面 - 只在開始驗證後顯示 */}
+        {!settings.lineNotification && showVerification && (
+          <div className="p-6 bg-gray-50">
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="relative">
+                <StepIndicators 
+                  currentStep={currentStep}
+                  onStepClick={handleStepChange}
+                />
               </div>
-            ) : (
-              // 驗證流程介面
-              <div className="p-6 bg-gray-50">
-                <div className="max-w-3xl mx-auto mb-8">
-                  <div className="relative">
-                    <StepIndicators 
-                      currentStep={currentStep}
-                      onStepClick={handleStepChange}
-                    />
-                  </div>
-                </div>
+            </div>
+            
+            <div className="max-w-2xl mx-auto">
+              {currentStep === VerificationStep.SCAN_QR && (
+                <QRCodeStep 
+                  onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)}
+                  onCopyLineId={onCopyLineId}
+                />
+              )}
 
-                <div className="max-w-2xl mx-auto">
-                  {currentStep === VerificationStep.SCAN_QR && (
-                    <QRCodeStep 
-                      onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)}
-                      onCopyLineId={onCopyLineId}
-                    />
-                  )}
+              {currentStep === VerificationStep.ADD_FRIEND && (
+                <AddFriendStep 
+                  onBack={() => handleStepChange(VerificationStep.SCAN_QR)}
+                  onNext={() => handleStepChange(VerificationStep.SEND_ID)}
+                />
+              )}
 
-                  {currentStep === VerificationStep.ADD_FRIEND && (
-                    <AddFriendStep 
-                      onBack={() => handleStepChange(VerificationStep.SCAN_QR)}
-                      onNext={() => handleStepChange(VerificationStep.SEND_ID)}
-                    />
-                  )}
+              {currentStep === VerificationStep.SEND_ID && (
+                <SendIdStep 
+                  userId={userId}
+                  onCopyUserId={onCopyUserId}
+                  onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
+                  onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
+                  onSendId={handleSendUserId}
+                  isLoading={settingsLoading}
+                />
+              )}
 
-                  {currentStep === VerificationStep.SEND_ID && (
-                    <SendIdStep 
-                      userId={userId}
-                      onCopyUserId={onCopyUserId}
-                      onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
-                      onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
-                      onSendId={handleSendUserId}
-                      isLoading={settingsLoading}
-                    />
-                  )}
-
-                  {currentStep === VerificationStep.VERIFY_CODE && (
-                    <VerifyCodeStep 
-                      verificationCode={verificationCode}
-                      setVerificationCode={setVerificationCode}
-                      onBack={() => handleStepChange(VerificationStep.SEND_ID)}
-                      onVerify={onVerify}
-                      isLoading={settingsLoading}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
+              {currentStep === VerificationStep.VERIFY_CODE && (
+                <VerifyCodeStep 
+                  verificationCode={verificationCode}
+                  setVerificationCode={setVerificationCode}
+                  onBack={() => handleStepChange(VerificationStep.SEND_ID)}
+                  onVerify={onVerify}
+                  isLoading={settingsLoading}
+                />
+              )}
+            </div>
           </div>
         )}
       </div>

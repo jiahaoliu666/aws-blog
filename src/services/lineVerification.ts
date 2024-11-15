@@ -25,6 +25,13 @@ export const lineVerificationService = {
           }
 
           logger.info('驗證結果:', data);
+          
+          if (data.success) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000);
+          }
+          
           return data;
         } catch (error) {
           logger.error('驗證碼驗證錯誤:', error);

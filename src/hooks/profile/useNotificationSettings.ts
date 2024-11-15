@@ -26,6 +26,7 @@ export const useNotificationSettings = (userId: string) => {
   const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToastContext();
   const [isLineVerified, setIsLineVerified] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
 
   // 載入設定
   const loadSettings = async () => {
@@ -97,6 +98,11 @@ export const useNotificationSettings = (userId: string) => {
         duration: 3000
       });
 
+      // 在 Toast 消息顯示後重新載入頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+
       return data;
     } catch (error) {
       logger.error('儲存設定失敗:', error);
@@ -110,6 +116,11 @@ export const useNotificationSettings = (userId: string) => {
   // 處理設定變更
   const handleSettingChange = async (key: string, value: any) => {
     try {
+      // 如果是 lineNotification 且目前為 false，則不允許直接切換
+      if (key === 'lineNotification' && !originalSettings.lineNotification) {
+        return false;
+      }
+
       const newValue = Boolean(value);
       setTempSettings(prev => ({ ...prev, [key]: newValue }));
       return true;
@@ -133,6 +144,60 @@ export const useNotificationSettings = (userId: string) => {
   // 檢查是否有變更
   const hasChanges = JSON.stringify(tempSettings) !== JSON.stringify(originalSettings);
 
+  // 新增驗證完成後的處理函數
+  const handleVerificationComplete = async () => {
+    try {
+      setIsLoading(true);
+      // 更新 LINE 通知設定
+      const response = await fetch('/api/profile/notification-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          lineNotification: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('更新 LINE 通知設定失敗');
+      }
+
+      const data = await response.json();
+      setOriginalSettings(prev => ({
+        ...prev,
+        lineNotification: true,
+        lineId: data.lineId
+      }));
+      setTempSettings(prev => ({
+        ...prev,
+        lineNotification: true,
+        lineId: data.lineId
+      }));
+
+      showToast('LINE 驗證成功', 'success');
+      
+      // 延遲 3 秒後重新載入頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+      
+      return true;
+    } catch (error) {
+      logger.error('LINE 驗證完成處理失敗:', error);
+      showToast('更新 LINE 通知設定失敗', 'error');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 新增開始驗證的處理函數
+  const startVerification = () => {
+    setShowVerification(true);
+  };
+
   useEffect(() => {
     loadSettings();
   }, [userId]);
@@ -154,5 +219,8 @@ export const useNotificationSettings = (userId: string) => {
       return true;
     },
     resetSettings,
+    handleVerificationComplete,
+    showVerification,
+    startVerification,
   };
 };

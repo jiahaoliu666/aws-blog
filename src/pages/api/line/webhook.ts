@@ -95,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   contents: [
                     {
                       type: 'text',
-                      text: '🔐 AWS Blog 365 驗證',
+                      text: '🔐 身份驗證',
                       weight: 'bold',
                       size: 'xl',
                       color: '#FFFFFF'
@@ -153,27 +153,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                           color: '#333333',
                                           flex: 5,
                                           wrap: true
-                                        },
-                                        {
-                                          type: 'box',
-                                          layout: 'vertical',
-                                          contents: [
-                                            {
-                                              type: 'text',
-                                              text: '複製',
-                                              size: 'xs',
-                                              color: '#FFFFFF',
-                                              align: 'center'
-                                            }
-                                          ],
-                                          backgroundColor: '#4A90E2',
-                                          cornerRadius: '4px',
-                                          paddingAll: '8px',
-                                          flex: 1,
-                                          action: {
-                                            type: 'uri',
-                                            uri: `https://line.me/R/oaMessage/@YOUR_BOT_ID/?${lineId}`
-                                          }
                                         }
                                       ]
                                     }
@@ -201,28 +180,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                           size: 'xl',
                                           color: '#1DB446',
                                           weight: 'bold',
-                                          flex: 5
-                                        },
-                                        {
-                                          type: 'box',
-                                          layout: 'vertical',
-                                          contents: [
-                                            {
-                                              type: 'text',
-                                              text: '複製',
-                                              size: 'xs',
-                                              color: '#FFFFFF',
-                                              align: 'center'
-                                            }
-                                          ],
-                                          backgroundColor: '#4A90E2',
-                                          cornerRadius: '4px',
-                                          paddingAll: '8px',
-                                          flex: 1,
-                                          action: {
-                                            type: 'uri',
-                                            uri: `https://line.me/R/oaMessage/@YOUR_BOT_ID/?${verificationCode}`
-                                          }
+                                          flex: 1
                                         }
                                       ],
                                       alignItems: 'center'
@@ -251,19 +209,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                               contents: [
                                 {
                                   type: 'text',
-                                  text: '1. 點擊右側複製按鈕複製資訊',
+                                  text: '1. 前往網站的驗證頁面',
                                   size: 'sm',
                                   color: '#333333'
                                 },
                                 {
                                   type: 'text',
-                                  text: '2. 前往網站的驗證頁面',
-                                  size: 'sm',
-                                  color: '#333333'
-                                },
-                                {
-                                  type: 'text',
-                                  text: '3. 輸入驗證碼完成綁定',
+                                  text: '2. 輸入驗證碼完成綁定',
                                   size: 'sm',
                                   color: '#333333'
                                 }
