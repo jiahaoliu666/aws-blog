@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface UseProfileAccountReturn {
   isLoading: boolean;
@@ -8,7 +8,6 @@ interface UseProfileAccountReturn {
     email: string;
     username: string;
     joinDate: string;
-    lastLogin: string;
     twoFactorEnabled: boolean;
   };
   handleStatusChange: (newStatus: 'active' | 'suspended' | 'deactivated') => Promise<void>;
@@ -25,13 +24,12 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
   const [accountStatus, setAccountStatus] = useState<'active' | 'suspended' | 'deactivated'>('active');
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [accountInfo, setAccountInfo] = useState({
+  const accountInfo = {
     email: user?.email || '',
     username: user?.username || '',
-    joinDate: user?.registrationDate || '',
-    lastLogin: new Date().toISOString(),
+    joinDate: user?.registrationDate || new Date().toISOString().split('T')[0],
     twoFactorEnabled: false
-  });
+  };
 
   const handleStatusChange = async (newStatus: 'active' | 'suspended' | 'deactivated') => {
     try {
@@ -74,10 +72,7 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
     try {
       setIsLoading(true);
       // 實作雙重認證開關的 API 呼叫
-      setAccountInfo(prev => ({
-        ...prev,
-        twoFactorEnabled: !prev.twoFactorEnabled
-      }));
+      accountInfo.twoFactorEnabled = !accountInfo.twoFactorEnabled;
     } catch (err) {
       setError('雙重認證設定失敗');
     } finally {

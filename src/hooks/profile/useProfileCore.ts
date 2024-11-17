@@ -81,9 +81,14 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     const initializeProfile = async () => {
       try {
         setIsLoading(true);
-        // 這裡可以加入其他初始化邏輯
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          if (!parsedUser.registrationDate) {
+            console.warn('找不到註冊日期，嘗試從 Cognito 重新獲取');
+          }
+        }
       } catch (error) {
-        // 不在初始化時顯示錯誤 toast
         console.error('初始化設定時發生錯誤:', error);
       } finally {
         setIsLoading(false);
@@ -250,6 +255,21 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     
     prevTabRef.current = activeTab;
   }, [activeTab, isSubmitting]);
+
+  // 調試日誌
+  useEffect(() => {
+    console.log('User in useProfileCore:', currentUser);
+    console.log('Registration date in useProfileCore:', currentUser?.registrationDate);
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser && !currentUser.registrationDate) {
+      console.warn('用戶缺少註冊日期，嘗試從 Cognito 獲取');
+      // 這裡可以添加從 Cognito 獲取 custom:registrationDate 的邏輯
+      const defaultDate = new Date().toISOString().split('T')[0];
+      updateUser({ registrationDate: defaultDate });
+    }
+  }, [currentUser]);
 
   return {
     user: currentUser,

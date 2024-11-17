@@ -7,15 +7,9 @@ import {
   faTrash,
   faExclamationTriangle 
 } from '@fortawesome/free-solid-svg-icons';
+import { useAuthContext } from '@/context/AuthContext';
 
 interface AccountSectionProps {
-  accountInfo: {
-    email: string;
-    username: string;
-    joinDate: string;
-    lastLogin: string;
-    twoFactorEnabled: boolean;
-  };
   accountStatus: string;
   isLoading: boolean;
   error: string | null;
@@ -28,7 +22,6 @@ interface AccountSectionProps {
 }
 
 const AccountSection: React.FC<AccountSectionProps> = ({
-  accountInfo,
   accountStatus,
   isLoading,
   error,
@@ -41,6 +34,42 @@ const AccountSection: React.FC<AccountSectionProps> = ({
 }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const { user } = useAuthContext();
+
+  const accountInfo = {
+    email: user?.email || '',
+    username: user?.username || '',
+    joinDate: user?.registrationDate || '',
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) {
+      console.warn('註冊日期未定義:', dateString);
+      return '未知日期';
+    }
+
+    try {
+      // 處理 ISO 格式的日期字串
+      if (dateString.includes('T')) {
+        dateString = dateString.split('T')[0];
+      }
+      
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.warn('無效的日期格式:', dateString);
+        return '未知日期';
+      }
+      
+      return new Intl.DateTimeFormat('zh-TW', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(date);
+    } catch (error) {
+      console.error('日期格式化錯誤:', error);
+      return '未知日期';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -51,20 +80,18 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         <div className="space-y-4 mb-8">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-gray-600">使用者名稱</label>
+              <label className="text-sm text-gray-600">用戶名稱</label>
               <p className="font-medium">{accountInfo.username}</p>
             </div>
             <div>
               <label className="text-sm text-gray-600">電子郵件</label>
               <p className="font-medium">{accountInfo.email}</p>
             </div>
-            <div>
-              <label className="text-sm text-gray-600">註冊日期</label>
-              <p className="font-medium">{new Date(accountInfo.joinDate).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">最後登入</label>
-              <p className="font-medium">{new Date(accountInfo.lastLogin).toLocaleDateString()}</p>
+            <div className="flex items-center gap-2">
+              <label className="text-lg font-semibold text-gray-800">註冊日期：</label>
+              <span className="text-lg text-gray-900">
+                {formatDate(user?.registrationDate)}
+              </span>
             </div>
           </div>
         </div>

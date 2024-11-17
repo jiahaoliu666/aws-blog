@@ -23,7 +23,6 @@ export interface User {
   notifications?: NotificationSettings;
   avatar?: string;
   role?: UserRole; // 新增：用戶角色
-  lastLoginDate?: string; // 新增：最後登入時間
   isActive?: boolean; // 新增：帳戶是否啟用
   lineId?: string;  // 添加這個可選屬性
 }

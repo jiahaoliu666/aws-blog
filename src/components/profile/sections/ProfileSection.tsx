@@ -11,6 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FormData } from '@/types/profileTypes';
 import { useToastContext } from '@/context/ToastContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 interface ProfileSectionProps {
   formData: FormData;
@@ -49,6 +50,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 }) => {
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
   const { showToast } = useToastContext();
+  const { user } = useAuthContext();
 
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
@@ -78,6 +80,34 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
       await handleSaveProfileChanges(localUsername);
     } catch (error) {
       showToast('儲存失敗', 'error');
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) {
+      console.log('註冊日期不存在:', dateString);
+      return '未知日期';
+    }
+
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+          const [year, month, day] = dateString.split('-');
+          return `${year}年${parseInt(month)}月${parseInt(day)}日`;
+        }
+        console.error('無效的日期格式:', dateString);
+        return '未知日期';
+      }
+
+      return new Intl.DateTimeFormat('zh-TW', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(date);
+    } catch (error) {
+      console.error('日期格式化錯誤:', error);
+      return '未知日期';
     }
   };
 
@@ -202,7 +232,9 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 <div className="flex flex-col md:flex-row md:items-center">
                   <div className="flex items-center gap-2">
                     <label className="text-lg font-semibold text-gray-800">註冊日期：</label>
-                    <span className="text-lg text-gray-900">{formData.registrationDate}</span>
+                    <span className="text-lg text-gray-900">
+                      {formatDate(formData.registrationDate || user?.registrationDate)}
+                    </span>
                   </div>
                 </div>
               </div>

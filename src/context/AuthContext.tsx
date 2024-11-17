@@ -37,49 +37,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchUserFromCognito = async () => {
       if (!isClient) return;
       
-      try {
-        const storedUser = window.localStorage.getItem("user");
-        if (!storedUser) {
-          setUser(null);
-          return;
-        }
-
-        const parsedUser: User = JSON.parse(storedUser);
-        if (!parsedUser.accessToken) {
-          setUser(null);
-          window.localStorage.removeItem("user");
-          return;
-        }
-
-        const userCommand = new GetUserCommand({ AccessToken: parsedUser.accessToken });
-        
-        try {
-          const userResponse = await cognitoClient.send(userCommand);
-          const nameAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'name');
-          const userIdAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'sub');
-
-          if (!userIdAttribute?.Value) {
-            throw new Error("無法獲取用戶的 ID（sub）。");
-          }
-
-          const updatedUser: User = {
-            ...parsedUser,
-            username: nameAttribute?.Value ?? parsedUser.email ?? '',
-            sub: userIdAttribute.Value!
-          };
-
-          setUser(updatedUser);
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem("user", JSON.stringify(updatedUser));
-          }
-        } catch (err) {
-          const currentUser = JSON.parse(storedUser);
-          setUser({ ...currentUser, needsReauth: true });
-        }
-      } catch (err) {
-        console.error('獲取用戶資訊失敗:', err);
-        setUser(null);
-        window.localStorage.removeItem("user");
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('Stored user data:', parsedUser);
+        setUser(parsedUser);
       }
     };
 
@@ -88,8 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
-      const date = new Date();
-      const registrationDate = date.toISOString().split('T')[0];
+      const registrationDate = new Date().toISOString().split('T')[0];
+      
       const command = new SignUpCommand({
         ClientId: clientId,
         Username: email,
@@ -97,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         UserAttributes: [
           { Name: "email", Value: email },
           { Name: "name", Value: name },
-          { Name: "custom:registrationDate", Value: registrationDate },
+          { Name: "custom:registrationDate", Value: registrationDate }
         ],
       });
 
@@ -140,6 +102,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         const userId = userIdAttribute.Value;
 
+        const registrationDateAttribute = userResponse.UserAttributes?.find(
+          attr => attr.Name === 'custom:registrationDate'
+        );
+
         const user: User = { 
           accessToken, 
           refreshToken, 
@@ -149,7 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar: '',
           userId: userId,
           id: userId,
-          favorites: []
+          favorites: [],
+          registrationDate: registrationDateAttribute?.Value || new Date().toISOString().split('T')[0]
         };
         setUser(user);
         if (typeof window !== 'undefined') {

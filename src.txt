@@ -48,14 +48,14 @@ src/
 │   │       └── Toast.tsx           // Toast 組件
 │   ├── profile
 │   │   ├── sections
-│   │   │   ├── HistorySection.tsx  // 觀看紀錄區塊
-│   │   │   ├── NotificationSection.tsx   // 訂閱通知區塊
-│   │   │   ├── PasswordSection.tsx    // 修改密碼區塊
-│   │   │   ├── AccountSection.tsx     // 帳號管理區塊
-│   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
 │   │   │   ├── ProfileSection.tsx     // 個人資訊區塊
-│   │   │   ├── FeedbackSection.tsx    // 意見反饋區塊
+│   │   │   ├── PasswordSection.tsx    // 修改密碼區塊
+│   │   │   ├── NotificationSection.tsx   // 訂閱通知區塊
 │   │   │   └── PreferencesSection.tsx    // 偏好設定區塊
+│   │   │   ├── HistorySection.tsx  // 觀看紀錄區塊
+│   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
+│   │   │   ├── FeedbackSection.tsx    // 意見反饋區塊
+│   │   │   ├── AccountSection.tsx     // 帳號管理區塊
 │   │   ├── common
 │   │   │   └── Sidebar.tsx         // 側邊欄導航組件
 │   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
