@@ -32,6 +32,13 @@ interface PasswordSectionProps {
   setNewPassword: (password: string) => void;
   setConfirmPassword: (password: string) => void;
   areAllPasswordFieldsEmpty: () => boolean;
+  checkPasswordRequirements: (password: string) => {
+    minLength: boolean;
+    hasUpperCase: boolean;
+    hasLowerCase: boolean;
+    hasNumbers: boolean;
+    hasSpecialChar: boolean;
+  };
 }
 
 const calculatePasswordStrength = (password: string): number => {
@@ -66,6 +73,7 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
   setNewPassword,
   setConfirmPassword,
   areAllPasswordFieldsEmpty,
+  checkPasswordRequirements,
 }) => {
   const { toast } = useToastContext();
   
@@ -105,6 +113,8 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
     e.preventDefault();
     await handleChangePassword();
   };
+
+  const requirements = checkPasswordRequirements(newPassword);
 
   return (
     <form onSubmit={handlePasswordSubmit} className="space-y-6">
@@ -248,19 +258,38 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
             <h4 className="text-sm font-medium text-gray-800 mb-4">基本要求</h4>
             <ul className="space-y-3 text-sm text-gray-600">
               <li className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
+                <FontAwesomeIcon 
+                  icon={requirements.minLength ? faCheckCircle : faTimesCircle} 
+                  className={requirements.minLength ? "text-blue-500" : "text-red-500"} 
+                />
                 <span>至少 8 個字符</span>
               </li>
               <li className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
-                <span>包含大小寫字母</span>
+                <FontAwesomeIcon 
+                  icon={requirements.hasUpperCase ? faCheckCircle : faTimesCircle} 
+                  className={requirements.hasUpperCase ? "text-blue-500" : "text-red-500"} 
+                />
+                <span>包含大寫字母</span>
               </li>
               <li className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
+                <FontAwesomeIcon 
+                  icon={requirements.hasLowerCase ? faCheckCircle : faTimesCircle} 
+                  className={requirements.hasLowerCase ? "text-blue-500" : "text-red-500"} 
+                />
+                <span>包含小寫字母</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon 
+                  icon={requirements.hasNumbers ? faCheckCircle : faTimesCircle} 
+                  className={requirements.hasNumbers ? "text-blue-500" : "text-red-500"} 
+                />
                 <span>包含數字</span>
               </li>
               <li className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 flex-shrink-0" />
+                <FontAwesomeIcon 
+                  icon={requirements.hasSpecialChar ? faCheckCircle : faTimesCircle} 
+                  className={requirements.hasSpecialChar ? "text-blue-500" : "text-red-500"} 
+                />
                 <span>包含特殊字符</span>
               </li>
             </ul>

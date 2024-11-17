@@ -10,6 +10,14 @@ interface UseProfilePasswordProps {
   handleLogout: () => void;
 }
 
+interface PasswordRequirements {
+  minLength: boolean;
+  hasUpperCase: boolean;
+  hasLowerCase: boolean;
+  hasNumbers: boolean;
+  hasSpecialChar: boolean;
+}
+
 export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps) => {
   const { showToast } = useToastContext();
   const [oldPassword, setOldPassword] = useState('');
@@ -111,7 +119,7 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
       // AWS Cognito 錯誤處理
       switch (error.name) {
         case 'NotAuthorizedException':
-          showToast('目前密碼錯誤，請重新確認', 'error');
+          showToast('當前密碼錯誤，請重新確認', 'error');
           break;
         case 'InvalidPasswordException':
           showToast('新密碼格式不符合要求，請確認密碼規則', 'error');
@@ -199,6 +207,16 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     return !oldPassword && !newPassword && !confirmPassword;
   };
 
+  const checkPasswordRequirements = (password: string): PasswordRequirements => {
+    return {
+      minLength: password.length >= 8,
+      hasUpperCase: /[A-Z]/.test(password),
+      hasLowerCase: /[a-z]/.test(password),
+      hasNumbers: /\d/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+  };
+
   return {
     oldPassword,
     setOldPassword,
@@ -226,6 +244,7 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     handleCancel,
     handleChange,
     areAllPasswordFieldsEmpty,
+    checkPasswordRequirements,
   };
 };
 
