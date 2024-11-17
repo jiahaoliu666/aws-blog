@@ -9,6 +9,7 @@ import {
   faShieldAlt,
   faKey
 } from '@fortawesome/free-solid-svg-icons';
+import { UseProfilePasswordReturn } from '@/hooks/profile/useProfilePassword';
 
 interface PasswordSectionProps {
   oldPassword: string;
@@ -29,6 +30,7 @@ interface PasswordSectionProps {
   handleCancel: () => void;
   setNewPassword: (password: string) => void;
   setConfirmPassword: (password: string) => void;
+  areAllPasswordFieldsEmpty: () => boolean;
 }
 
 const calculatePasswordStrength = (password: string): number => {
@@ -43,7 +45,7 @@ const calculatePasswordStrength = (password: string): number => {
   return score;
 };
 
-const PasswordSection: React.FC<PasswordSectionProps> = ({
+const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
   oldPassword,
   setOldPassword,
   newPassword,
@@ -61,7 +63,8 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
   handleChange,
   handleCancel,
   setNewPassword,
-  setConfirmPassword
+  setConfirmPassword,
+  areAllPasswordFieldsEmpty,
 }) => {
   const passwordStrength = newPassword ? calculatePasswordStrength(newPassword) : 0;
   
@@ -189,15 +192,17 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
 
         {/* 按鈕群組 */}
         <div className="flex justify-end px-8 pb-8 gap-3">
-          <button
-            onClick={handleCancel}
-            className="px-6 py-2.5 bg-gray-600 text-white rounded-lg 
-                      hover:bg-gray-700 transition-colors duration-200
-                      disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isLoading}
-          >
-            取消
-          </button>
+          {!areAllPasswordFieldsEmpty() && (
+            <button
+              onClick={handleCancel}
+              className="px-6 py-2.5 bg-gray-600 text-white rounded-lg 
+                        hover:bg-gray-700 transition-colors duration-200
+                        disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              取消
+            </button>
+          )}
           <button
             onClick={handleChangePassword}
             disabled={isLoading}
@@ -251,7 +256,7 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
               </li>
               <li className="flex items-start gap-2">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 mt-1 flex-shrink-0" />
-                <span>建議定期��換密碼以提高帳號安全性</span>
+                <span>建議定期換密碼以提高帳號安全性</span>
               </li>
               <li className="flex items-start gap-2">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 mt-1 flex-shrink-0" />

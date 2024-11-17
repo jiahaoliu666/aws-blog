@@ -162,6 +162,11 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     }
   };
 
+  // 新增一個函數來檢查是否所有密碼欄位都為空
+  const areAllPasswordFieldsEmpty = () => {
+    return !oldPassword && !newPassword && !confirmPassword;
+  };
+
   return {
     oldPassword,
     setOldPassword,
@@ -188,6 +193,7 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     handleClosePasswordModal,
     handleCancel,
     handleChange,
+    areAllPasswordFieldsEmpty,
   };
 };
 
