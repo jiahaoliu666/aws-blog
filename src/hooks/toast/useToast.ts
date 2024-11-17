@@ -29,6 +29,7 @@ interface QueuedToast {
 export type ToastReturnType = {
   toasts: ToastState[];
   remove: (id: string) => void;
+  toast: (params: { message: string; type: ToastType; options?: Parameters<ToastReturnType['showToast']>[2] }) => void;
   showToast: (message: string, type: ToastType, options?: {
     description?: string;
     duration?: number | false;
@@ -79,7 +80,13 @@ export const useToast = (): ToastReturnType => {
       loading: 1500
     };
 
-    const duration = options?.duration ?? defaultDurations[type] ?? 3000;
+    const passwordDurations: Partial<Record<ToastType, number>> = {
+      success: 3000,
+      error: 4000,
+    };
+
+    const duration = options?.duration ?? 
+      (message.includes('密碼') ? passwordDurations[type] ?? defaultDurations[type] : defaultDurations[type]);
 
     if (duration !== false) {
       setTimeout(() => {
@@ -139,9 +146,14 @@ export const useToast = (): ToastReturnType => {
     showToast(message, 'warning', options);
   }, [showToast]);
 
+  const toast = useCallback((params: { message: string; type: ToastType; options?: Parameters<ToastReturnType['showToast']>[2] }) => {
+    showToast(params.message, params.type, params.options);
+  }, [showToast]);
+
   return {
     toasts,
     remove,
+    toast,
     showToast,
     success,
     error,

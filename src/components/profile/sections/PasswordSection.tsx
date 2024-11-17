@@ -10,6 +10,7 @@ import {
   faKey
 } from '@fortawesome/free-solid-svg-icons';
 import { UseProfilePasswordReturn } from '@/hooks/profile/useProfilePassword';
+import { useToastContext } from '@/context/ToastContext';
 
 interface PasswordSectionProps {
   oldPassword: string;
@@ -66,6 +67,8 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
   setConfirmPassword,
   areAllPasswordFieldsEmpty,
 }) => {
+  const { toast } = useToastContext();
+  
   const passwordStrength = newPassword ? calculatePasswordStrength(newPassword) : 0;
   
   const getStrengthColor = (strength: number) => {
@@ -88,8 +91,23 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
     };
   }, [setOldPassword, setNewPassword, setConfirmPassword]);
 
+  useEffect(() => {
+    if (passwordMessage) {
+      const isSuccess = passwordMessage.includes('成功');
+      toast({
+        message: passwordMessage,
+        type: isSuccess ? 'success' : 'error'
+      });
+    }
+  }, [passwordMessage, toast]);
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleChangePassword();
+  };
+
   return (
-    <div className="w-full">
+    <form onSubmit={handlePasswordSubmit} className="space-y-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">修改密碼</h1>
         <p className="mt-2 text-gray-600">請定期更新您的密碼以確保帳號安全</p>
@@ -194,6 +212,7 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
         <div className="flex justify-end px-8 pb-8 gap-3">
           {!areAllPasswordFieldsEmpty() && (
             <button
+              type="button"
               onClick={handleCancel}
               className="px-6 py-2.5 bg-gray-600 text-white rounded-lg 
                         hover:bg-gray-700 transition-colors duration-200
@@ -204,7 +223,7 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
             </button>
           )}
           <button
-            onClick={handleChangePassword}
+            type="submit"
             disabled={isLoading}
             className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 
                       text-white rounded-lg transition-colors duration-200
@@ -277,7 +296,7 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
           <p className="text-sm">{passwordMessage}</p>
         </div>
       )}
-    </div>
+    </form>
   );
 };
 
