@@ -75,9 +75,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 
   const handleSave = async () => {
     try {
-      showToast('正在儲存...', 'loading');
       await handleSaveProfileChanges(localUsername);
-      showToast('儲存成功！', 'success');
     } catch (error) {
       showToast('儲存失敗', 'error');
     }
@@ -99,14 +97,20 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 <img
                   src={currentAvatar || '/images/default-avatar.png'}
                   alt="個人頭像"
-                  className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                  className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 
+                  transition-all duration-300 flex items-center justify-center">
+                  <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 
+                    transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                    更換頭像
+                  </span>
+                </div>
               </div>
               
               <label className="absolute bottom-2 right-2 flex items-center justify-center w-10 h-10 
                 bg-white/90 backdrop-blur-sm rounded-full shadow-lg cursor-pointer
-                hover:bg-blue-50 hover:scale-105 active:scale-100
+                hover:bg-blue-50 hover:scale-110 active:scale-95
                 ring-2 ring-white/50 hover:ring-blue-200
                 transform transition-all duration-200 ease-out
                 disabled:opacity-50 disabled:cursor-not-allowed

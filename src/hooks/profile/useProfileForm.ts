@@ -101,7 +101,7 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
     }
 
     setIsLoading(true);
-    showToast('正在更新用戶名稱...', 'loading');
+    showToast('正在儲存...', 'loading');
 
     try {
       if (!user) {
@@ -127,7 +127,7 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
 
       await logActivity(user.sub, `變更用戶名稱為 ${localUsername}`);
 
-      showToast('用戶名稱已更新成功！', 'success');
+      showToast('用戶名稱更新成功！', 'success');
 
       setTimeout(() => {
         window.location.reload();
