@@ -65,6 +65,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     { tab: 'accountManagement', label: '帳號管理', icon: faUserCog }
   ];
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setIsProfileMenuOpen(false);
+  };
+
   return (
     <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-6 min-h-[calc(100vh-8rem)]">
       {/* 用戶資訊區塊 - 簡潔設計 */}
@@ -137,10 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
               }
             `}
-            onClick={() => {
-              setActiveTab(tab);
-              setIsProfileMenuOpen(false);
-            }}
+            onClick={() => handleTabChange(tab)}
           >
             <FontAwesomeIcon icon={icon} className={`text-lg ${activeTab === tab ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
             <span className="font-medium">{label}</span>

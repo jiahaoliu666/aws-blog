@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CognitoIdentityProviderClient, ChangePasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { User } from '@/types/userType';
 import { toast } from 'react-toastify';
@@ -117,15 +117,35 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     setPasswordMessage(null);
   };
 
-  const resetPasswordFields = () => {
-    setOldPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setShowOldPassword(false);
-    setShowNewPassword(false);
-    setShowConfirmPassword(false);
-    setPasswordMessage(null);
-  };
+  const resetPasswordFields = useCallback(() => {
+    // 只在非提交狀態下重置
+    if (!isLoading) {
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowOldPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      setPasswordMessage(null);
+      setIsPasswordModalOpen(false);
+    }
+  }, [isLoading]);
+
+  // 修改事件監聽
+  useEffect(() => {
+    const handleResetPasswords = () => {
+      // 只在非提交狀態下重置
+      if (!isLoading) {
+        resetPasswordFields();
+      }
+    };
+
+    window.addEventListener('resetPasswords', handleResetPasswords);
+
+    return () => {
+      window.removeEventListener('resetPasswords', handleResetPasswords);
+    };
+  }, [resetPasswordFields, isLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -156,14 +176,16 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     showConfirmPassword,
     setShowConfirmPassword,
     passwordMessage,
+    setPasswordMessage,
     isPasswordModalOpen,
+    setIsPasswordModalOpen,
     isLoading,
-    handleChangePassword,
-    handleOpenPasswordModal,
-    handleClosePasswordModal,
     resetPasswordFields,
     calculatePasswordStrength,
     validatePassword,
+    handleChangePassword,
+    handleOpenPasswordModal,
+    handleClosePasswordModal,
     handleCancel,
     handleChange,
   };

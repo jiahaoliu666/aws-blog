@@ -100,14 +100,22 @@ const defaultSettings: LocalSettings = {
 };
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, passwordMessage, setIsEditable, verificationState, setVerificationState }) => {
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showRedirectMessage, setShowRedirectMessage] = useState(false);
+  const [localSettings, setLocalSettings] = useState<LocalSettings>(defaultSettings);
+  const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.SCAN_QR);
+
   const router = useRouter();
   const { user: authUser, logoutUser } = useAuthContext();
+  const toast = useToastContext();
 
   const currentUser = authUser || propUser;
 
+  // 將所有的 hooks 移到頂部
   const core = useProfileCore({ user: currentUser });
   const form = useProfileForm({ user: currentUser, updateUser: core.updateUser }) as unknown as { 
     formData: FormData, 
@@ -126,19 +134,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const activity = useProfileActivity({ user: currentUser });
   const articles = useProfileArticles({ user: currentUser });
   const lineVerification = useLineVerification();
-
-  const [localSettings, setLocalSettings] = useState<LocalSettings>(defaultSettings);
-
-  const [verificationCode, setVerificationCode] = useState('');
-
   const account = useProfileAccount({ user: currentUser });
-
   const { preferences, updatePreferences, isLoading: preferencesLoading } = useProfilePreferences();
-
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [showRedirectMessage, setShowRedirectMessage] = useState(false);
-
-  const toast = useToastContext();
 
   const { 
     settings,
@@ -165,7 +162,24 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     setSettings: React.Dispatch<React.SetStateAction<typeof settings>>;
   };
 
-  const [verificationStep, setVerificationStep] = useState<VerificationStep>(VerificationStep.SCAN_QR);
+  // 將路由監聽的 useEffect 移到其他 useEffect 之前
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (core.activeTab === 'changePassword') {
+        password.resetPasswordFields();
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [core.activeTab, password, router.events]);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (core.settings) {
@@ -173,11 +187,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         setLocalSettings(core.settings as LocalSettings);
       }
     }
-  }, [core.settings]);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  }, [core.settings, localSettings]);
 
   useEffect(() => {
     if (!isClient) return;

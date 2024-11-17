@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faLock, 
@@ -27,6 +27,8 @@ interface PasswordSectionProps {
   handleChangePassword: () => void;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleCancel: () => void;
+  setNewPassword: (password: string) => void;
+  setConfirmPassword: (password: string) => void;
 }
 
 const calculatePasswordStrength = (password: string): number => {
@@ -57,7 +59,9 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
   isLoading,
   handleChangePassword,
   handleChange,
-  handleCancel
+  handleCancel,
+  setNewPassword,
+  setConfirmPassword
 }) => {
   const passwordStrength = newPassword ? calculatePasswordStrength(newPassword) : 0;
   
@@ -72,6 +76,14 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
     if (strength < 60) return '中';
     return '強';
   };
+
+  useEffect(() => {
+    return () => {
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    };
+  }, [setOldPassword, setNewPassword, setConfirmPassword]);
 
   return (
     <div className="w-full">
@@ -239,7 +251,7 @@ const PasswordSection: React.FC<PasswordSectionProps> = ({
               </li>
               <li className="flex items-start gap-2">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 mt-1 flex-shrink-0" />
-                <span>建議定期更換密碼以提高帳號安全性</span>
+                <span>建議定期��換密碼以提高帳號安全性</span>
               </li>
               <li className="flex items-start gap-2">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500 mt-1 flex-shrink-0" />

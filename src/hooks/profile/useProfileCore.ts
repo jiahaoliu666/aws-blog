@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
 import { User } from '@/types/userType';
@@ -230,6 +230,26 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
       setIsSubmitting(false);
     }
   };
+
+  // 添加 prevTabRef
+  const prevTabRef = useRef<string>('profile');
+
+  // 修改重置密碼的事件監聽
+  useEffect(() => {
+    const handleResetPasswords = () => {
+      const resetEvent = new CustomEvent('resetPasswords');
+      window.dispatchEvent(resetEvent);
+    };
+
+    // 只在完全離開密碼修改頁面時重置
+    if (prevTabRef.current === 'changePassword' && 
+        activeTab !== 'changePassword' && 
+        !isSubmitting) {  // 添加提交狀態檢查
+      handleResetPasswords();
+    }
+    
+    prevTabRef.current = activeTab;
+  }, [activeTab, isSubmitting]);
 
   return {
     user: currentUser,
