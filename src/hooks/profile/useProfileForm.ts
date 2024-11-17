@@ -32,6 +32,7 @@ interface UseProfileFormProps {
 
 export type UseProfileFormReturn = {
   formData: FormData;
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   isEditable: {
     username: boolean;
   };
@@ -197,6 +198,7 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
 
   return {
     formData,
+    setFormData,
     isEditable,
     localUsername,
     setLocalUsername,

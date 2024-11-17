@@ -371,7 +371,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         setVerificationCode('');
       }
       
-      // 重新載入設定以確保狀態同步
+      // 重新載入設定以確保同步
       await reloadSettings();
       
     } catch (error) {
@@ -452,15 +452,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
           {core.activeTab === 'changePassword' && (
             <PasswordSection 
-              {...password} 
-              passwordMessage={password.passwordMessage || undefined}
-              newPassword={password.newPassword || ''}
-              setNewPassword={password.setNewPassword}
-              formData={{
-                password: form.formData.password,
-                confirmPassword: form.formData.confirmPassword
-              }}
-              handleChange={form.handleChange}
+              {...password}
+              passwordMessage={passwordMessage}
             />
           )}
 

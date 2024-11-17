@@ -12,8 +12,10 @@ interface UseProfilePasswordProps {
 export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps) => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,8 +58,8 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     setIsLoading(true);
     try {
       // 基本驗證
-      if (!oldPassword || !newPassword) {
-        throw new Error('請輸入舊密碼和新密碼');
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        throw new Error('請輸入舊密碼、新密碼和確認密碼');
       }
 
       if (!validatePassword(newPassword)) {
@@ -104,32 +106,66 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     resetPasswordFields();
   };
 
+  const handleCancel = () => {
+    // 重置所有密碼相關的狀態
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowOldPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+    setPasswordMessage(null);
+  };
+
   const resetPasswordFields = () => {
     setOldPassword('');
     setNewPassword('');
+    setConfirmPassword('');
     setShowOldPassword(false);
     setShowNewPassword(false);
+    setShowConfirmPassword(false);
     setPasswordMessage(null);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    switch (name) {
+      case 'oldPassword':
+        setOldPassword(value);
+        break;
+      case 'newPassword':
+        setNewPassword(value);
+        break;
+      case 'confirmPassword':
+        setConfirmPassword(value);
+        break;
+    }
   };
 
   return {
     oldPassword,
+    setOldPassword,
     newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
     showOldPassword,
+    setShowOldPassword,
     showNewPassword,
+    setShowNewPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
     passwordMessage,
     isPasswordModalOpen,
     isLoading,
-    setOldPassword,
-    setNewPassword,
-    setShowOldPassword,
-    setShowNewPassword,
     handleChangePassword,
     handleOpenPasswordModal,
     handleClosePasswordModal,
     resetPasswordFields,
     calculatePasswordStrength,
-    validatePassword
+    validatePassword,
+    handleCancel,
+    handleChange,
   };
 };
 
