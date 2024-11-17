@@ -8,7 +8,7 @@ import { faKey } from '@fortawesome/free-solid-svg-icons';
 interface UseProfilePasswordProps {
   user: User | null;
   handleLogout: () => void;
-  logActivity: (userId: string, action: string) => Promise<void>;
+  addActivityLog: (action: string, details?: string) => Promise<void>;
 }
 
 interface PasswordRequirements {
@@ -20,7 +20,7 @@ interface PasswordRequirements {
   passwordsMatch: boolean;
 }
 
-export const useProfilePassword = ({ user, handleLogout, logActivity }: UseProfilePasswordProps) => {
+export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UseProfilePasswordProps) => {
   const { showToast } = useToastContext();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -113,11 +113,11 @@ export const useProfilePassword = ({ user, handleLogout, logActivity }: UseProfi
         throw new Error('使用者未登入');
       }
       
-      if (typeof logActivity !== 'function') {
-        throw new Error('logActivity 函數未正確初始化');
+      if (typeof addActivityLog !== 'function') {
+        throw new Error('addActivityLog 函數未正確初始化');
       }
       
-      await logActivity(user.sub, '變更密碼');
+      await addActivityLog(user.sub, '變更密碼');
       
       // 重置表單
       resetPasswordFields();
