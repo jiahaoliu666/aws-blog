@@ -11,11 +11,15 @@ import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';
 import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react'; // 導入 Loader
 import '@aws-amplify/ui-react/styles.css';
+import { useTheme } from '@/context/ThemeContext';
+import { useToastContext } from '@/context/ToastContext';
 
 const NewsPage: React.FC = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true); // 管理加載狀態
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新新聞'); // 設置默認值
+    const { isDarkMode } = useTheme();
+    const toast = useToastContext(); // 現在應該可以正常工作
 
     const {
         language,
@@ -26,8 +30,6 @@ const NewsPage: React.FC = () => {
         totalPages,
         gridView,
         setGridView,
-        isDarkMode,
-        setIsDarkMode,
         showFavorites,
         setShowFavorites,
         sortOrder,
@@ -84,8 +86,6 @@ const NewsPage: React.FC = () => {
 
     const resetFilters = () => {
         setGridView(false);
-        setIsDarkMode(false);
-        setShowFavorites(false);
         setStartDate('');
         setEndDate('');
         setSortOrder('newest');
@@ -114,10 +114,8 @@ const NewsPage: React.FC = () => {
                 
                 <NewsFilters
                     gridView={gridView}
-                    isDarkMode={isDarkMode}
                     showFavorites={showFavorites}
                     setGridView={setGridView}
-                    setIsDarkMode={setIsDarkMode}
                     setShowFavorites={setShowFavorites}
                     startDate={startDate}
                     endDate={endDate}
@@ -151,7 +149,6 @@ const NewsPage: React.FC = () => {
                                     article={article}
                                     index={index}
                                     gridView={gridView}
-                                    isDarkMode={isDarkMode}
                                     toggleFavorite={toggleFavorite}
                                     language={language}
                                     showSummaries={showSummaries}

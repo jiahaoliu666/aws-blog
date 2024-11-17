@@ -410,157 +410,155 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   };
 
   return (
-    <ToastProvider>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <div className="flex-grow container mx-auto px-2 sm:px-6 lg:px-8 py-4 lg:py-8 flex flex-col lg:flex-row gap-3 lg:gap-6">
+        <Sidebar 
+          activeTab={core.activeTab}
+          setActiveTab={core.setActiveTab}
+          isProfileMenuOpen={isProfileMenuOpen}
+          setIsProfileMenuOpen={setIsProfileMenuOpen}
+          formData={form.formData}
+          tempAvatar={avatar.tempAvatar}
+        />
         
-        <div className="flex-grow container mx-auto px-2 sm:px-6 lg:px-8 py-4 lg:py-8 flex flex-col lg:flex-row gap-3 lg:gap-6">
-          <Sidebar 
-            activeTab={core.activeTab}
-            setActiveTab={core.setActiveTab}
-            isProfileMenuOpen={isProfileMenuOpen}
-            setIsProfileMenuOpen={setIsProfileMenuOpen}
-            formData={form.formData}
-            tempAvatar={avatar.tempAvatar}
-          />
+        <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
+          {core.activeTab === 'profile' && (
+            <ProfileSection 
+              formData={form.formData}
+              isEditable={form.isEditable}
+              localUsername={form.localUsername}
+              setLocalUsername={form.setLocalUsername}
+              handleEditClick={form.handleEditClick}
+              handleCancelChanges={form.handleCancelChanges}
+              handleSaveProfileChanges={form.handleSaveProfileChanges}
+              isLoading={form.isLoading || avatar.isUploading}
+              uploadMessage={avatar.uploadMessage}
+              handleAvatarChange={avatar.handleAvatarChange}
+              tempAvatar={avatar.tempAvatar}
+              handleSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                core.handleSubmit(e);
+              }}
+              isSubmitting={core.isSubmitting}
+              errorMessage={core.errorMessage}
+              toggleEditableField={() => setIsEditable()}
+              resetUsername={form.handleCancelChanges}
+              setFormData={form.setFormData}
+              setIsEditable={setIsEditable}
+            />
+          )}
+
+          {core.activeTab === 'changePassword' && (
+            <PasswordSection 
+              {...password} 
+              passwordMessage={password.passwordMessage || undefined}
+              newPassword={password.newPassword || ''}
+              setNewPassword={password.setNewPassword}
+              formData={{
+                password: form.formData.password,
+                confirmPassword: form.formData.confirmPassword
+              }}
+              handleChange={form.handleChange}
+            />
+          )}
+
+          {core.activeTab === 'notificationSettings' && (
+            <NotificationSection 
+              isLoading={notificationsLoading}
+              isVerifying={isLoading}
+              saveAllSettings={handleSaveNotificationSettings}
+              notificationSettings={{
+                line: settings.line ?? false,
+                email: settings.email ?? false,
+                lineId: settings.lineId ?? null,
+              }}
+              formData={form.formData}
+              handleNotificationChange={handleNotificationChange}
+              verificationCode={verificationCode}
+              setVerificationCode={setVerificationCode}
+              verificationStep={verificationStep}
+              verificationProgress={verificationState?.progress ?? VERIFICATION_PROGRESS.INITIAL}
+              handleStartVerification={handleVerifyLineIdAndCode}
+              handleConfirmVerification={handleVerifyLineIdAndCode}
+              verificationState={verificationState}
+              setVerificationState={setVerificationState}
+              handleResetVerification={handleResetVerification}
+              verifyLineIdAndCode={handleVerifyLineIdAndCode}
+              handleVerification={handleVerifyLineIdAndCode}
+              onCopyUserId={() => {
+                navigator.clipboard.writeText(currentUser?.userId || '');
+                toast.success('已複製用戶 ID');
+              }}
+              onCopyLineId={() => {
+                if (settings.lineId) {
+                  navigator.clipboard.writeText(settings.lineId);
+                  toast.success('已複製 LINE ID');
+                }
+              }}
+              userId={currentUser?.userId || ''}
+              lineOfficialId="@601feiwz"
+              setVerificationStep={setVerificationStep}
+            />
+          )}
+
+          {core.activeTab === 'preferences' && (
+            <PreferencesSection
+              settings={preferences}
+              handleSettingChange={handleSettingChange}
+              onSave={handleSave}
+              isLoading={preferencesLoading}
+            />
+          )}
+
+          {core.activeTab === 'feedback' && (
+            <FeedbackSection 
+              feedback={core.feedback}
+              setFeedback={core.setFeedback}
+              handleSubmitFeedback={core.handleSubmitFeedback}
+              isSubmitting={core.isSubmitting}
+              userEmail={form.formData.email}
+              attachments={core.attachments}
+              handleAttachmentChange={(e) => {
+                if (e.target.files) {
+                  const files = Array.from(e.target.files);
+                  core.setAttachments(prev => [...prev, ...files]);
+                }
+              }}
+              removeAttachment={(index) => {
+                core.setAttachments(prev => prev.filter((_, i) => i !== index));
+              }}
+            />
+          )}
+
+          {core.activeTab === 'activityLog' && (
+            <ActivityLogSection 
+              activityLog={activity.activityLog.map(log => ({
+                ...log,
+                parsedDate: new Date(log.timestamp)
+              }))}
+            />
+          )}
+
+          {core.activeTab === 'history' && (
+            <HistorySection 
+              recentArticles={articles.recentArticles}
+            />
+          )}
+
+          {core.activeTab === 'accountManagement' && (
+            <AccountSection 
+              {...account}
+            />
+          )}
+
           
-          <div className="w-full lg:w-3/4 bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-6">
-            {core.activeTab === 'profile' && (
-              <ProfileSection 
-                formData={form.formData}
-                isEditable={form.isEditable}
-                localUsername={form.localUsername}
-                setLocalUsername={form.setLocalUsername}
-                handleEditClick={form.handleEditClick}
-                handleCancelChanges={form.handleCancelChanges}
-                handleSaveProfileChanges={form.handleSaveProfileChanges}
-                isLoading={form.isLoading || avatar.isUploading}
-                uploadMessage={avatar.uploadMessage}
-                handleAvatarChange={avatar.handleAvatarChange}
-                tempAvatar={avatar.tempAvatar}
-                handleSubmit={(e: FormEvent) => {
-                  e.preventDefault();
-                  core.handleSubmit(e);
-                }}
-                isSubmitting={core.isSubmitting}
-                errorMessage={core.errorMessage}
-                toggleEditableField={() => setIsEditable()}
-                resetUsername={form.handleCancelChanges}
-                setFormData={form.setFormData}
-                setIsEditable={setIsEditable}
-              />
-            )}
-
-            {core.activeTab === 'changePassword' && (
-              <PasswordSection 
-                {...password} 
-                passwordMessage={password.passwordMessage || undefined}
-                newPassword={password.newPassword || ''}
-                setNewPassword={password.setNewPassword}
-                formData={{
-                  password: form.formData.password,
-                  confirmPassword: form.formData.confirmPassword
-                }}
-                handleChange={form.handleChange}
-              />
-            )}
-
-            {core.activeTab === 'notificationSettings' && (
-              <NotificationSection 
-                isLoading={notificationsLoading}
-                isVerifying={isLoading}
-                saveAllSettings={handleSaveNotificationSettings}
-                notificationSettings={{
-                  line: settings.line ?? false,
-                  email: settings.email ?? false,
-                  lineId: settings.lineId ?? null,
-                }}
-                formData={form.formData}
-                handleNotificationChange={handleNotificationChange}
-                verificationCode={verificationCode}
-                setVerificationCode={setVerificationCode}
-                verificationStep={verificationStep}
-                verificationProgress={verificationState?.progress ?? VERIFICATION_PROGRESS.INITIAL}
-                handleStartVerification={handleVerifyLineIdAndCode}
-                handleConfirmVerification={handleVerifyLineIdAndCode}
-                verificationState={verificationState}
-                setVerificationState={setVerificationState}
-                handleResetVerification={handleResetVerification}
-                verifyLineIdAndCode={handleVerifyLineIdAndCode}
-                handleVerification={handleVerifyLineIdAndCode}
-                onCopyUserId={() => {
-                  navigator.clipboard.writeText(currentUser?.userId || '');
-                  toast.success('已複製用戶 ID');
-                }}
-                onCopyLineId={() => {
-                  if (settings.lineId) {
-                    navigator.clipboard.writeText(settings.lineId);
-                    toast.success('已複製 LINE ID');
-                  }
-                }}
-                userId={currentUser?.userId || ''}
-                lineOfficialId="@601feiwz"
-                setVerificationStep={setVerificationStep}
-              />
-            )}
-
-            {core.activeTab === 'preferences' && (
-              <PreferencesSection
-                settings={preferences}
-                handleSettingChange={handleSettingChange}
-                onSave={handleSave}
-                isLoading={preferencesLoading}
-              />
-            )}
-
-            {core.activeTab === 'feedback' && (
-              <FeedbackSection 
-                feedback={core.feedback}
-                setFeedback={core.setFeedback}
-                handleSubmitFeedback={core.handleSubmitFeedback}
-                isSubmitting={core.isSubmitting}
-                userEmail={form.formData.email}
-                attachments={core.attachments}
-                handleAttachmentChange={(e) => {
-                  if (e.target.files) {
-                    const files = Array.from(e.target.files);
-                    core.setAttachments(prev => [...prev, ...files]);
-                  }
-                }}
-                removeAttachment={(index) => {
-                  core.setAttachments(prev => prev.filter((_, i) => i !== index));
-                }}
-              />
-            )}
-
-            {core.activeTab === 'activityLog' && (
-              <ActivityLogSection 
-                activityLog={activity.activityLog.map(log => ({
-                  ...log,
-                  parsedDate: new Date(log.timestamp)
-                }))}
-              />
-            )}
-
-            {core.activeTab === 'history' && (
-              <HistorySection 
-                recentArticles={articles.recentArticles}
-              />
-            )}
-
-            {core.activeTab === 'accountManagement' && (
-              <AccountSection 
-                {...account}
-              />
-            )}
-
-            
-          </div>
         </div>
-        
-        <Footer />
       </div>
-    </ToastProvider>
+      
+      <Footer />
+    </div>
   );
 };
 

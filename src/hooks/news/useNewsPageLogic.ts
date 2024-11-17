@@ -4,11 +4,40 @@ import { ExtendedNews } from "../../types/newsType";
 import useFetchNews from "./useFetchNews";  
 import { extractDateFromInfo } from "../../utils/extractDateFromInfo";  
 import { useNewsFavorites } from "./useNewsFavorites";  
+import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
+import { useAuthContext } from '@/context/AuthContext';
 
 function useNewsPageLogic() {  
-    const [language, setLanguage] = useState<string>("zh-TW");  
+    const { user } = useAuthContext();
+    const { preferences } = useProfilePreferences();
+    
+    // 從 preferences 初始化狀態，但保持獨立的前端狀態
+    const [language, setLanguage] = useState<string>(preferences?.language || "zh-TW");  
+    const [gridView, setGridView] = useState<boolean>(preferences?.viewMode === 'grid');
+    const [showSummaries, setShowSummaries] = useState<boolean>(preferences?.autoSummarize || false);
+    
+    // 其他狀態保持不變
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(false);  
+    const [showFavorites, setShowFavorites] = useState<boolean>(false);  
+    const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");  
+    const [startDate, setStartDate] = useState<string>("");  
+    const [endDate, setEndDate] = useState<string>("");  
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const [filteredArticles, setFilteredArticles] = useState<ExtendedNews[]>([]);  
+    const [currentArticles, setCurrentArticles] = useState<ExtendedNews[]>([]);  
+
     const fetchedArticles = useFetchNews(language);  
     const { favorites, toggleFavorite } = useNewsFavorites();  
+
+    // 當 preferences 改變時更新本地狀態
+    useEffect(() => {
+        if (preferences) {
+            setLanguage(preferences.language);
+            setGridView(preferences.viewMode === 'grid');
+            setShowSummaries(preferences.autoSummarize);
+        }
+    }, [preferences]);
 
     const articles: ExtendedNews[] = useMemo(() => {  
         return fetchedArticles.map(article => ({  
@@ -18,18 +47,6 @@ function useNewsPageLogic() {
             translated_title: article.translated_title || '', 
         }));  
     }, [fetchedArticles, favorites]);  
-
-    const [filteredArticles, setFilteredArticles] = useState<ExtendedNews[]>([]);  
-    const [currentArticles, setCurrentArticles] = useState<ExtendedNews[]>([]);  
-    const [currentPage, setCurrentPage] = useState<number>(1);  
-    const [totalPages, setTotalPages] = useState<number>(1);  
-    const [gridView, setGridView] = useState<boolean>(false);  
-    const [isDarkMode, setIsDarkMode] = useState<boolean>(false);  
-    const [showFavorites, setShowFavorites] = useState<boolean>(false);  
-    const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");  
-    const [startDate, setStartDate] = useState<string>("");  
-    const [endDate, setEndDate] = useState<string>("");  
-    const [showSummaries, setShowSummaries] = useState<boolean>(false);  
 
     useEffect(() => {  
         let updatedArticles: ExtendedNews[] = showFavorites ? favorites : filteredArticles;
@@ -98,7 +115,7 @@ function useNewsPageLogic() {
             setEndDate(end);  
         },  
         favorites, 
-        articles, // 確保這裡返回完整的文章列表
+        articles,
     };  
 }  
 

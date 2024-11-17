@@ -35,8 +35,7 @@ const BlogSearch: React.FC<BlogSearchProps> = ({ articles, setFilteredArticles, 
         hasSearchIcon={true}  
         value={searchTerm}  
         onChange={(event) => setSearchTerm(event.target.value)}  
-        className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}  
-        style={{ color: isDarkMode ? '#D1D5DB' : '#1F2937' }}  
+        className={`w-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}  
       />  
     </div>  
   );  

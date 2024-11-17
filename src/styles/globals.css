@@ -2,22 +2,23 @@
 @tailwind components;  
 @tailwind utilities;  
 
-:root {  
-  --background: #ffffff;  
-  --foreground: #171717;  
-}  
-
-@media (prefers-color-scheme: dark) {  
-  :root {  
-    --background: #0a0a0a;  
-    --foreground: #ededed;  
-  }  
-}  
-
 body {  
-  color: var(--foreground);  
-  background: var(--background);  
   font-family: Arial, Helvetica, sans-serif;  
+}  
+
+.animate-fade-up {  
+  animation: fade-up 0.3s ease-out forwards;  
+}  
+
+@keyframes fade-up {  
+  from {  
+    opacity: 0;  
+    transform: translateY(1rem);  
+  }  
+  to {  
+    opacity: 1;  
+    transform: translateY(0);  
+  }  
 }  
 
 @layer utilities {  
@@ -25,19 +26,3 @@ body {
     text-wrap: balance;  
   }  
 }  
-
-/* 統一的淡入上移動畫 */
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(1rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-up {
-  animation: fade-up 0.3s ease-out forwards;
-}

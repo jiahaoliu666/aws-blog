@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { ExtendedNews } from '@/types/newsType';
 import { useAuthContext } from '@/context/AuthContext';
 import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
+import { useTheme } from '@/context/ThemeContext';
+import { useToastContext } from '@/context/ToastContext';
 
 interface NewsCardProps {
     article: ExtendedNews;
     index: number;
     gridView: boolean;
-    isDarkMode: boolean;
     language: string;
     showSummaries: boolean;
     toggleFavorite: (article: ExtendedNews) => Promise<void>;
@@ -19,7 +20,6 @@ const NewsCard: React.FC<NewsCardProps> = ({
     article,
     index,
     gridView,
-    isDarkMode,
     language,
     showSummaries,
     toggleFavorite,
@@ -29,6 +29,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
     const { user } = useAuthContext();
     const { logRecentArticle } = useProfileArticles({ user });
+    const { isDarkMode } = useTheme();
+    const toast = useToastContext();
 
     useEffect(() => {
         setIsSummaryVisible(showSummaries);
@@ -64,7 +66,14 @@ const NewsCard: React.FC<NewsCardProps> = ({
     };
 
     return (
-        <div className={`border rounded-lg p-4 transition-shadow duration-300 ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-900'} ${gridView ? 'shadow-md hover:shadow-lg' : 'mb-4'}`}>
+        <div className={`
+            border rounded-lg p-4 transition-shadow duration-300 
+            ${isDarkMode 
+                ? 'bg-dark-card text-dark-text border-dark-border' 
+                : 'bg-white text-textColor border-gray-200'
+            }
+            ${gridView ? 'shadow-md hover:shadow-lg' : 'mb-4'}
+        `}>
             <h2 className="text-xl font-bold mb-2">
                 <a href={article.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-blue-500 transition-colors duration-300" onClick={handleTitleClick}>
                     {displayTitle}

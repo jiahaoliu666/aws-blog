@@ -8,21 +8,24 @@ import { ToastProvider } from '@/context/ToastContext';
 import Head from 'next/head';
 import '@/styles/globals.css';
 import '@/styles/toast.css';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
-    <AuthProvider>
-      <AppProvider>
-        <LanguageProvider>
-          <ToastProvider>
-            <Head>
-              <title>AWS Blog 365</title>
-            </Head>
-            <Component {...pageProps} />
-          </ToastProvider>
-        </LanguageProvider>
-      </AppProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <AppProvider>
+            <LanguageProvider>
+              <Head>
+                <title>AWS Blog 365</title>
+              </Head>
+              <Component {...pageProps} />
+            </LanguageProvider>
+          </AppProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 };
 

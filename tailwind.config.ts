@@ -6,6 +6,7 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",  
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",  
   ],  
+  darkMode: 'class',
   theme: {  
     extend: {  
       colors: {  
@@ -15,7 +16,7 @@ const config: Config = {
         secondary: '#B794F4',  
         background: '#F9FAFB',  
         textColor: '#2D3748',  
-        accent: '#4A5568',  
+        accent: '#4A5568',
       },  
       fontFamily: {  
         sans: ['"Inter"', 'sans-serif'],  

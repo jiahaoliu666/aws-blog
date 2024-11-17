@@ -12,6 +12,7 @@ src/
 │   ├── AuthContext.tsx             // 用戶認證相關的上下文
 │   ├── AppContext.tsx              // 應用程式邏輯相關的上下文
 │   └── LanguageContext.tsx         // 語言設定相關的上下文
+│   └── ThemeContext.tsx            // 主題設定相關的上下文
 ├── config
 │   ├── email.ts                    // 集中管理郵件相關配置
 │   ├── aws.ts                      // 設定 AWS 相關的客戶端配置

@@ -183,3 +183,12 @@ export type ToastType = {
   type: 'success' | 'error' | 'warning' | 'info';
   message?: string;
 };
+
+export interface PreferenceSettings {
+  categories: string[];
+  frequency: 'daily' | 'weekly' | 'monthly';
+  language: string;
+  sortBy: 'date' | 'relevance' | 'popularity';
+  autoSummarize: boolean;
+  viewMode: 'grid' | 'list';
+}

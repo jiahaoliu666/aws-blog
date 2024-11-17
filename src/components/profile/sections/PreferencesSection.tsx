@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faMoon, 
@@ -14,6 +14,7 @@ import {
 import { useAuthContext } from '@/context/AuthContext';
 import { useToastContext } from '@/context/ToastContext';
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
+import { useTheme } from '@/context/ThemeContext';
 
 interface SettingsSectionProps {
   settings: {
@@ -36,80 +37,75 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
   const { user } = useAuthContext();
   const { showToast } = useToastContext();
   const { preferences } = useProfilePreferences();
-  const [tempSettings, setTempSettings] = React.useState(initialSettings);
+  const { setThemeMode } = useTheme();
+  
+  // 使用本地狀態來追蹤暫時的設定變更
+  const [tempSettings, setTempSettings] = useState(initialSettings);
+  // 追蹤是否有未儲存的變更
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleSettingsChange = (key: string, value: any) => {
-    console.log('設定變更:', key, value);
-    const newSettings = {
-      ...tempSettings,
+  // 當初始設定或資料庫設定改變時更新本地狀態
+  useEffect(() => {
+    if (preferences) {
+      setTempSettings({
+        theme: preferences.theme,
+        language: preferences.language,
+        viewMode: preferences.viewMode,
+        autoSummarize: preferences.autoSummarize
+      });
+    }
+  }, [preferences]);
+
+  // 處理本地設定變更
+  const handleLocalSettingChange = (key: string, value: any) => {
+    setTempSettings(prev => ({
+      ...prev,
       [key]: value
-    };
-    setTempSettings(newSettings);
-    handleSettingChange(key, value);
+    }));
+    setHasChanges(true);
   };
 
+  // 處理視圖模式切換
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    handleLocalSettingChange('viewMode', mode);
+  };
+
+  // 儲存設定到資料庫
   const handleSave = async () => {
     const userId = user?.id || user?.sub;
     
     if (!userId) {
       showToast('無法儲存設定', 'error', {
-        description: '請先登入後再試',
-        position: 'top-right',
-        duration: 3000
-      });
-      return;
-    }
-
-    if (JSON.stringify(tempSettings) === JSON.stringify(preferences)) {
-      showToast('未變更', 'info', {
-        description: '設定未變更',
-        position: 'top-right',
-        duration: 3000
+        description: '請先登入後再試'
       });
       return;
     }
 
     try {
-      const settingsToSave = {
-        ...tempSettings,
-        userId: userId
-      };
-      
-      showToast('正在儲存設定...', 'loading', {
-        description: '請稍候',
-        position: 'top-right',
-        duration: 1000
-      });
-      
-      await onSave(settingsToSave);
-      
-      showToast('偏好設定已成功儲存！', 'success', {
-        description: '您的偏好設定已成功儲存',
-        position: 'top-right',
-        duration: 3000
-      });
+      await onSave({ ...tempSettings, userId });
+      setThemeMode(tempSettings.theme === 'dark');
+      setHasChanges(false);
+      showToast('設定已儲存', 'success');
     } catch (error) {
-      console.error('儲存設定時發生錯誤:', error);
-      showToast('儲存失敗', 'error', {
-        description: '無法儲存設定，請稍後再試',
-        position: 'top-right',
-        duration: 4000
-      });
+      showToast('儲存失敗', 'error');
     }
   };
 
+  // 取消變更，重置為資料庫中的設定
   const handleCancel = () => {
-    setTempSettings(preferences);
+    if (preferences) {
+      setTempSettings({
+        theme: preferences.theme,
+        language: preferences.language,
+        viewMode: preferences.viewMode,
+        autoSummarize: preferences.autoSummarize
+      });
+      setHasChanges(false);
+    }
     showToast('已取消設定', 'info', {
-      description: '設定已重置為伺服器上的值',
-      position: 'top-right',
-      duration: 3000
+      description: '設定已重置為伺服器上的值'
     });
   };
-
-  React.useEffect(() => {
-    setTempSettings(initialSettings);
-  }, [initialSettings]);
 
   return (
     <div className="w-full">
@@ -136,7 +132,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
               ].map((theme) => (
                 <button
                   key={theme.id}
-                  onClick={() => handleSettingsChange('theme', theme.id)}
+                  onClick={() => handleLocalSettingChange('theme', theme.id)}
                   className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                     tempSettings.theme === theme.id
                       ? 'bg-blue-50 border-2 border-blue-500'
@@ -163,17 +159,17 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
               <FontAwesomeIcon icon={faTableColumns} className="text-xl text-blue-500" />
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">視圖設定</h3>
-                <p className="text-sm text-gray-600">選擇您偏好的顯示方式</p>
+                <p className="text-sm text-gray-600">選擇您偏好的文章顯示方式</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
-                { id: 'grid', icon: faList, label: '列表視圖' },
-                { id: 'list', icon: faTableCells, label: '網格視圖' }
+                { id: 'list', icon: faList, label: '列表視圖' },
+                { id: 'grid', icon: faTableCells, label: '網格視圖' }
               ].map((view) => (
                 <button
                   key={view.id}
-                  onClick={() => handleSettingsChange('viewMode', view.id)}
+                  onClick={() => handleLocalSettingChange('viewMode', view.id)}
                   className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                     tempSettings.viewMode === view.id
                       ? 'bg-blue-50 border-2 border-blue-500'
@@ -209,7 +205,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
                 <input
                   type="checkbox"
                   checked={tempSettings.autoSummarize}
-                  onChange={(e) => handleSettingsChange('autoSummarize', e.target.checked)}
+                  onChange={(e) => handleLocalSettingChange('autoSummarize', e.target.checked)}
                   className="sr-only peer"
                   disabled={isLoading}
                 />
@@ -234,7 +230,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
             </div>
             <select
               value={tempSettings.language}
-              onChange={(e) => handleSettingsChange('language', e.target.value)}
+              onChange={(e) => handleLocalSettingChange('language', e.target.value)}
               className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isLoading}
             >
@@ -246,31 +242,19 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
 
         {/* 儲存和取消按鈕 */}
         <div className="flex justify-end pt-4 gap-2">
-          {JSON.stringify(tempSettings) !== JSON.stringify(preferences) && (
-            <button
-              onClick={handleCancel}
-              disabled={isLoading}
-              className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              取消
-            </button>
-          )}
+          <button
+            onClick={handleCancel}
+            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+            disabled={isLoading || !hasChanges}
+          >
+            取消
+          </button>
           <button
             onClick={handleSave}
-            disabled={isLoading}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
+            className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
+            disabled={isLoading || !hasChanges}
           >
-            {isLoading ? (
-              <>
-                <span className="animate-spin">⌛</span>
-                儲存中...
-              </>
-            ) : (
-              <>
-                <FontAwesomeIcon icon={faSave} className="mr-2" />
-                儲存設定
-              </>
-            )}
+            儲存設定
           </button>
         </div>
       </div>
