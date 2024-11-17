@@ -106,6 +106,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           attr => attr.Name === 'custom:registrationDate'
         );
 
+        const registrationDate = registrationDateAttribute?.Value;
+        console.log('Cognito registrationDate:', registrationDate); // 用於調試
+
         const user: User = { 
           accessToken, 
           refreshToken, 
@@ -116,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           userId: userId,
           id: userId,
           favorites: [],
-          registrationDate: registrationDateAttribute?.Value || new Date().toISOString().split('T')[0]
+          registrationDate: registrationDate || new Date().toISOString().split('T')[0]
         };
         setUser(user);
         if (typeof window !== 'undefined') {

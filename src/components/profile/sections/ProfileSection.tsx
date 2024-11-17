@@ -85,24 +85,26 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) {
-      console.log('註冊日期不存在:', dateString);
+      console.warn('註冊日期未定義');
       return '未知日期';
     }
 
     try {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dateRegex.test(dateString)) {
+        const [year, month, day] = dateString.split('-');
+        return `${year}年${parseInt(month)}月${parseInt(day)}日`;
+      }
+
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-          const [year, month, day] = dateString.split('-');
-          return `${year}年${parseInt(month)}月${parseInt(day)}日`;
-        }
         console.error('無效的日期格式:', dateString);
         return '未知日期';
       }
 
       return new Intl.DateTimeFormat('zh-TW', {
         year: 'numeric',
-        month: 'long',
+        month: 'numeric',
         day: 'numeric'
       }).format(date);
     } catch (error) {
@@ -233,7 +235,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   <div className="flex items-center gap-2">
                     <label className="text-lg font-semibold text-gray-800">註冊日期：</label>
                     <span className="text-lg text-gray-900">
-                      {formatDate(formData.registrationDate || user?.registrationDate)}
+                      {formatDate(user?.registrationDate || formData.registrationDate)}
                     </span>
                   </div>
                 </div>
