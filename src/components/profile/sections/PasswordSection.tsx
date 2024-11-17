@@ -40,6 +40,7 @@ interface PasswordSectionProps {
     hasLowerCase: boolean;
     hasNumbers: boolean;
     hasSpecialChar: boolean;
+    passwordsMatch: boolean;
   };
 }
 
@@ -261,13 +262,7 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
           <div>
             <h4 className="text-sm font-medium text-gray-800 mb-4">基本要求</h4>
             <ul className="space-y-3 text-sm text-gray-600">
-              <li className="flex items-center gap-2">
-                <FontAwesomeIcon 
-                  icon={oldPassword !== newPassword ? faCheckCircle : faTimesCircle} 
-                  className={oldPassword !== newPassword ? "text-blue-500" : "text-red-500"} 
-                />
-                <span>新密碼不能與當前密碼相同</span>
-              </li>
+              
               <li className="flex items-center gap-2">
                 <FontAwesomeIcon 
                   icon={requirements.minLength ? faCheckCircle : faTimesCircle} 
@@ -302,6 +297,21 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
                   className={requirements.hasSpecialChar ? "text-blue-500" : "text-red-500"} 
                 />
                 <span>包含特殊字符</span>
+              </li>
+              
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon 
+                  icon={requirements.passwordsMatch ? faCheckCircle : faTimesCircle} 
+                  className={requirements.passwordsMatch ? "text-blue-500" : "text-red-500"} 
+                />
+                <span>新密碼與確認密碼一致</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon 
+                  icon={oldPassword !== newPassword ? faCheckCircle : faTimesCircle} 
+                  className={oldPassword !== newPassword ? "text-blue-500" : "text-red-500"} 
+                />
+                <span>新密碼不能與當前密碼相同</span>
               </li>
             </ul>
           </div>

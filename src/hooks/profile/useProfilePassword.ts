@@ -17,6 +17,7 @@ interface PasswordRequirements {
   hasLowerCase: boolean;
   hasNumbers: boolean;
   hasSpecialChar: boolean;
+  passwordsMatch: boolean;
 }
 
 export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UseProfilePasswordProps) => {
@@ -107,8 +108,8 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
 
       await cognitoClient.send(changePasswordCommand);
       
-      // 添加活動記錄
-      await addActivityLog('更改密碼', '使用者成功更改密碼');
+      // 只記錄必要的活動資訊
+      await addActivityLog('成功更改密碼');
       
       // 重置表單
       resetPasswordFields();
@@ -122,7 +123,7 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
       // 等待 toast 顯示後再登出
       setTimeout(() => {
         handleLogout();
-      }, 3300); // 設定比 toast duration 稍長的時間
+      }, 3300);
 
     } catch (error: any) {
       // AWS Cognito 錯誤處理
@@ -229,7 +230,8 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
       hasUpperCase: /[A-Z]/.test(password),
       hasLowerCase: /[a-z]/.test(password),
       hasNumbers: /\d/.test(password),
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      passwordsMatch: newPassword === confirmPassword && newPassword !== ''
     };
   };
 
