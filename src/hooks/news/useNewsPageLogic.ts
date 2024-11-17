@@ -6,13 +6,35 @@ import { extractDateFromInfo } from "../../utils/extractDateFromInfo";
 import { useNewsFavorites } from "./useNewsFavorites";  
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import { useAuthContext } from '@/context/AuthContext';
+import { browserStorage } from '@/utils/browserStorage';
 
 function useNewsPageLogic() {  
     const { user } = useAuthContext();
     const { preferences } = useProfilePreferences();
+    const [isClient, setIsClient] = useState(false);
     
+    // 初始化語言設定
+    const [language, setLanguage] = useState<string>('zh-TW'); // 預設值
+
+    // 在客戶端初始化後再讀取 localStorage
+    useEffect(() => {
+        setIsClient(true);
+        const savedLanguage = browserStorage.getItem('newsLanguage');
+        if (savedLanguage) {
+            setLanguage(savedLanguage);
+        } else if (preferences?.language) {
+            setLanguage(preferences.language);
+        }
+    }, [preferences?.language]);
+
+    // 當語言改變時，保存到 localStorage
+    useEffect(() => {
+        if (isClient) {
+            browserStorage.setItem('newsLanguage', language);
+        }
+    }, [language, isClient]);
+
     // 從 preferences 初始化狀態，但保持獨立的前端狀態
-    const [language, setLanguage] = useState<string>(preferences?.language || "zh-TW");  
     const [gridView, setGridView] = useState<boolean>(preferences?.viewMode === 'grid');
     const [showSummaries, setShowSummaries] = useState<boolean>(preferences?.autoSummarize || false);
     
@@ -30,15 +52,6 @@ function useNewsPageLogic() {
     const fetchedArticles = useFetchNews(language);  
     const { favorites, toggleFavorite } = useNewsFavorites();  
 
-    // 當 preferences 改變時更新本地狀態
-    useEffect(() => {
-        if (preferences) {
-            setLanguage(preferences.language);
-            setGridView(preferences.viewMode === 'grid');
-            setShowSummaries(preferences.autoSummarize);
-        }
-    }, [preferences]);
-
     const articles: ExtendedNews[] = useMemo(() => {  
         return fetchedArticles.map(article => ({  
             ...article,  
@@ -46,7 +59,7 @@ function useNewsPageLogic() {
             translated_description: article.translated_description || '', 
             translated_title: article.translated_title || '', 
         }));  
-    }, [fetchedArticles, favorites]);  
+    }, [fetchedArticles, favorites, language]);  
 
     useEffect(() => {  
         let updatedArticles: ExtendedNews[] = showFavorites ? favorites : filteredArticles;
@@ -84,9 +97,23 @@ function useNewsPageLogic() {
         }  
     }, [totalPages]);  
 
+    const [isLanguageChanging, setIsLanguageChanging] = useState(false);
+
+    const handleLanguageChange = async (newLanguage: string) => {
+        setIsLanguageChanging(true);
+        try {
+            setLanguage(newLanguage);
+            browserStorage.setItem('newsLanguage', newLanguage);
+            // 等待內容更新
+            await new Promise(resolve => setTimeout(resolve, 100));
+        } finally {
+            setIsLanguageChanging(false);
+        }
+    };
+
     return {  
         language,  
-        setLanguage,  
+        setLanguage: handleLanguageChange,  
         currentArticles,  
         setFilteredArticles, 
         currentPage,  
@@ -116,6 +143,7 @@ function useNewsPageLogic() {
         },  
         favorites, 
         articles,
+        isLanguageChanging,
     };  
 }  
 

@@ -68,7 +68,7 @@ const NewsPage: React.FC = () => {
         const loadData = async () => {
             // 模擬一個 API 請求或其他異步操作
             await new Promise(resolve => setTimeout(resolve, 1000)); // 模擬 1 秒的加載時間
-            setIsLoading(false); // 加載完成後設置 isLoading 為 false
+            setIsLoading(false); // 加載完��後設置 isLoading 為 false
         };
 
         loadData();
@@ -93,6 +93,17 @@ const NewsPage: React.FC = () => {
         setFilteredArticles([]);
         setShowSummaries(false);
     };
+
+    useEffect(() => {
+        const initializeLanguage = async () => {
+            const savedLanguage = localStorage.getItem('newsLanguage');
+            if (savedLanguage && savedLanguage !== language) {
+                setLanguage(savedLanguage);
+            }
+        };
+
+        initializeLanguage();
+    }, []);
 
     if (isLoading) {
         return (

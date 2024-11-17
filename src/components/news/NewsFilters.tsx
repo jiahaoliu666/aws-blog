@@ -1,5 +1,5 @@
 // src/components/news/NewsFilters.tsx
-import React from 'react';  
+import React, { useEffect, useState } from 'react';  
 import { SwitchField } from "@aws-amplify/ui-react";  
 import { News } from '@/types/newsType';  
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
@@ -51,10 +51,29 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   const { preferences, updatePreferences } = useProfilePreferences();
   const { user } = useAuthContext();
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const [isClient, setIsClient] = useState(false);
 
-  const handlePreferenceChange = (key: keyof PreferenceSettings, value: PreferenceSettings[keyof PreferenceSettings]) => {
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem('newsLanguage');
+      if (savedLanguage && savedLanguage !== language) {
+        setLanguage(savedLanguage);
+      }
+    }
+  }, []);
+
+  const handlePreferenceChange = async (key: keyof PreferenceSettings, value: PreferenceSettings[keyof PreferenceSettings]) => {
     if (user?.id) {
-      updatePreferences({ ...preferences, [key]: value, userId: user.id });
+      try {
+        await updatePreferences({
+          ...preferences,
+          [key]: value,
+          userId: user.id
+        });
+      } catch (error) {
+        console.error('更新偏好設定失敗:', error);
+      }
     }
   };
 
@@ -72,10 +91,29 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
     handlePreferenceChange('viewMode', e.target.checked ? 'grid' : 'list');
   };
 
-  const handleLanguageChange = (value: string) => {
+  const handleLanguageChange = async (value: string) => {
     setLanguage(value);
-    handlePreferenceChange('language', value);
+    if (user?.id) {
+      try {
+        await updatePreferences({
+          ...preferences,
+          language: value,
+          userId: user.id
+        });
+        localStorage.setItem('newsLanguage', value);
+      } catch (error) {
+        console.error('更新語言偏好設定失敗:', error);
+      }
+    }
   };
+
+  useEffect(() => {
+    if (preferences) {
+      setShowSummaries(preferences.autoSummarize || false);
+      setGridView(preferences.viewMode === 'grid');
+      setLanguage(preferences.language || 'zh-TW');
+    }
+  }, [preferences]);
 
   return (
     <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>

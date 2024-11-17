@@ -30,6 +30,7 @@ src/
 │   ├── extractDateFromInfo.ts      // 從字串中提取日期的工具函數
 │   ├── cacheUtils.ts               // 管理快取的工具
 │   └── retryUtils.ts               // 提供重試機制的工具函數
+│   └── browserStorage.ts           // 瀏覽器本地儲存工具
 ├── libs
 │   └── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
 ├── styles

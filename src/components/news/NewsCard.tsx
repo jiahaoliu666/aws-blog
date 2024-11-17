@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ExtendedNews } from '@/types/newsType';
 import { useAuthContext } from '@/context/AuthContext';
 import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
@@ -31,13 +31,25 @@ const NewsCard: React.FC<NewsCardProps> = ({
     const { logRecentArticle } = useProfileArticles({ user });
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsSummaryVisible(showSummaries);
     }, [showSummaries]);
 
-    const displayTitle = language === 'zh-TW' ? article.translated_title || article.title : article.title;
-    const displayDescription = language === 'zh-TW' ? article.translated_description || article.description : article.description;
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    const [displayTitle, setDisplayTitle] = useState(article.title);
+    const [displayDescription, setDisplayDescription] = useState(article.description);
+
+    useEffect(() => {
+        if (isClient) {
+            setDisplayTitle(language === 'zh-TW' ? article.translated_title || article.title : article.title);
+            setDisplayDescription(language === 'zh-TW' ? article.translated_description || article.description : article.description);
+        }
+    }, [language, article, isClient]);
 
     const buttonClass = `px-3 py-2 text-sm rounded transition-colors duration-300 focus:outline-none ${
         isFavorited ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'
