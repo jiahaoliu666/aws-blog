@@ -62,7 +62,20 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
       ...prev,
       [key]: value
     }));
-    setHasChanges(true);
+
+    // 檢查是否所有設定都與原始設定相同
+    const newSettings = {
+      ...tempSettings,
+      [key]: value
+    };
+    
+    const hasAnyChanges = 
+      newSettings.theme !== preferences.theme ||
+      newSettings.language !== preferences.language ||
+      newSettings.viewMode !== preferences.viewMode ||
+      newSettings.autoSummarize !== preferences.autoSummarize;
+
+    setHasChanges(hasAnyChanges);
   };
 
   // 處理視圖模式切換
@@ -86,6 +99,10 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
       setThemeMode(tempSettings.theme === 'dark');
       setHasChanges(false);
       showToast('設定已儲存', 'success');
+      // 使用 setTimeout 延遲重整頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000); // 2秒後重整
     } catch (error) {
       showToast('儲存失敗', 'error');
     }
