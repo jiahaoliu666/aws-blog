@@ -8,6 +8,7 @@ import { faKey } from '@fortawesome/free-solid-svg-icons';
 interface UseProfilePasswordProps {
   user: User | null;
   handleLogout: () => void;
+  addActivityLog: (action: string, details?: string) => Promise<void>;
 }
 
 interface PasswordRequirements {
@@ -18,7 +19,7 @@ interface PasswordRequirements {
   hasSpecialChar: boolean;
 }
 
-export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps) => {
+export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UseProfilePasswordProps) => {
   const { showToast } = useToastContext();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -75,6 +76,11 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
         return;
       }
 
+      if (oldPassword === newPassword) {
+        showToast('新密碼不能與當前密碼相同', 'error');
+        return;
+      }
+
       if (newPassword !== confirmPassword) {
         showToast('新密碼與確認密碼不符', 'error');
         return;
@@ -101,25 +107,35 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
 
       await cognitoClient.send(changePasswordCommand);
       
-      // 成功訊息
-      showToast('密碼變更成功！3秒後將自動登出...', 'success', {
-        duration: 3000,
-        icon: faKey
-      });
+      // 添加活動記錄
+      await addActivityLog('更改密碼', '使用者成功更改密碼');
       
       // 重置表單
       resetPasswordFields();
       
-      // 延遲登出
+      // 修改成功訊息顯示邏輯
+      showToast('密碼變更成功！請重新登入', 'success', {
+        duration: 3000,
+        icon: faKey
+      });
+      
+      // 等待 toast 顯示後再登出
       setTimeout(() => {
         handleLogout();
-      }, 3000);
+      }, 3300); // 設定比 toast duration 稍長的時間
 
     } catch (error: any) {
       // AWS Cognito 錯誤處理
       switch (error.name) {
         case 'NotAuthorizedException':
-          showToast('當前密碼錯誤，請重新確認', 'error');
+          if (error.message.includes('Access Token has expired')) {
+            showToast('登入已過期，請重新登入', 'error');
+            setTimeout(() => {
+              handleLogout();
+            }, 2000);
+          } else {
+            showToast('當前密碼錯誤，請重新確認', 'error');
+          }
           break;
         case 'InvalidPasswordException':
           showToast('新密碼格式不符合要求，請確認密碼規則', 'error');
@@ -218,6 +234,7 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
   };
 
   return {
+    user,
     oldPassword,
     setOldPassword,
     newPassword,

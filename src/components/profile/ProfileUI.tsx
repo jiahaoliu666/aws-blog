@@ -130,8 +130,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     isLoading: boolean
   };
   const avatar = useProfileAvatar({ user: currentUser, updateUser: core.updateUser, setFormData: form.setFormData });
-  const password = useProfilePassword({ user: currentUser, handleLogout: logoutUser });
   const activity = useProfileActivity({ user: currentUser });
+  const password = useProfilePassword({ 
+    user: currentUser, 
+    handleLogout: logoutUser,
+    addActivityLog: activity.addActivityLog 
+  });
   const articles = useProfileArticles({ user: currentUser });
   const lineVerification = useLineVerification();
   const account = useProfileAccount({ user: currentUser });
@@ -395,7 +399,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   };
 
   const handleSave = async (settings: any) => {
-    console.log('接收到要儲存的設定:', settings);
+    console.log('接���到要儲存的設定:', settings);
     await updatePreferences(settings);
   };
 

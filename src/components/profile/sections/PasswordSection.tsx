@@ -11,8 +11,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { UseProfilePasswordReturn } from '@/hooks/profile/useProfilePassword';
 import { useToastContext } from '@/context/ToastContext';
+import { useProfileActivity } from '@/hooks/profile/useProfileActivity';
 
 interface PasswordSectionProps {
+  user: any;
   oldPassword: string;
   setOldPassword: (password: string) => void;
   newPassword: string;
@@ -54,6 +56,7 @@ const calculatePasswordStrength = (password: string): number => {
 };
 
 const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
+  user,
   oldPassword,
   setOldPassword,
   newPassword,
@@ -76,6 +79,7 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
   checkPasswordRequirements,
 }) => {
   const { toast } = useToastContext();
+  const { addActivityLog } = useProfileActivity({ user });
   
   const passwordStrength = newPassword ? calculatePasswordStrength(newPassword) : 0;
   
@@ -257,6 +261,13 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
           <div>
             <h4 className="text-sm font-medium text-gray-800 mb-4">基本要求</h4>
             <ul className="space-y-3 text-sm text-gray-600">
+              <li className="flex items-center gap-2">
+                <FontAwesomeIcon 
+                  icon={oldPassword !== newPassword ? faCheckCircle : faTimesCircle} 
+                  className={oldPassword !== newPassword ? "text-blue-500" : "text-red-500"} 
+                />
+                <span>新密碼不能與當前密碼相同</span>
+              </li>
               <li className="flex items-center gap-2">
                 <FontAwesomeIcon 
                   icon={requirements.minLength ? faCheckCircle : faTimesCircle} 
