@@ -4,7 +4,6 @@ import { UseProfileAvatarReturn } from './useProfileAvatar';
 import { UseProfilePasswordReturn } from './useProfilePassword';
 import { UseProfileActivityReturn } from './useProfileActivity';
 import { UseProfileArticlesReturn } from './useProfileArticles';
-import { UseProfileNotificationsReturn } from './useNotificationSettings';
 import { UseProfilePreferencesReturn } from './useProfilePreferences';
 import { useProfileAccount as UseProfileAccountReturn } from './useProfileAccount';
 
@@ -15,7 +14,6 @@ export { useProfileAvatar } from './useProfileAvatar';
 export { useProfilePassword } from './useProfilePassword';
 export { useProfileActivity } from './useProfileActivity';
 export { useProfileArticles } from './useProfileArticles';
-export { useProfileNotifications } from './useNotificationSettings';
 export { useProfilePreferences } from './useProfilePreferences';
 export { useProfileAccount } from './useProfileAccount';
 
@@ -27,7 +25,6 @@ export type {
   UseProfilePasswordReturn,
   UseProfileActivityReturn,
   UseProfileArticlesReturn,
-  UseProfileNotificationsReturn,
   UseProfilePreferencesReturn,
   UseProfileAccountReturn,
 };

@@ -15,6 +15,7 @@ export const useProfileLine = (user: User | null) => {
     status: VerificationStatus.IDLE,
     message: '',
     isVerified: false,
+    retryCount: 0,
     progress: 0,
     currentStep: 0
   });
@@ -88,6 +89,7 @@ export const useProfileLine = (user: User | null) => {
           status: VerificationStatus.IDLE,
           message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
           isVerified: false,
+          retryCount: 0,
           progress: 0,
           currentStep: 0
         } : {
@@ -95,6 +97,7 @@ export const useProfileLine = (user: User | null) => {
           status: VerificationStatus.IDLE,
           message: '請先加入 LINE 官方帳號為好友',
           isVerified: false,
+          retryCount: 0,
           progress: 0,
           currentStep: 0
         };
@@ -138,6 +141,7 @@ export const useProfileLine = (user: User | null) => {
         status: VerificationStatus.IDLE,
         message: '請輸入您的 LINE ID，然後發送「驗證 {您的用戶ID}」到 LINE 官方帳號',
         isVerified: false,
+        retryCount: 0,
         progress: 0,
         currentStep: 0
       };
@@ -156,6 +160,7 @@ export const useProfileLine = (user: User | null) => {
         step: VerificationStep.IDLE,
         status: VerificationStatus.ERROR,
         message: '驗證請求失敗，請稍後重試',
+        retryCount: 0,
         progress: 0,
         currentStep: 0,
         isVerified: false
@@ -189,6 +194,7 @@ export const useProfileLine = (user: User | null) => {
           status: VerificationStatus.SUCCESS,
           message: '驗證成功！',
           isVerified: true,
+          retryCount: 0,
           progress: 100,
           currentStep: 2
         };
@@ -219,6 +225,7 @@ export const useProfileLine = (user: User | null) => {
         status: VerificationStatus.ERROR,
         message: '已超過最大重試次數，請稍後再試',
         isVerified: false,
+        retryCount: 0,
         progress: 0,
         currentStep: 0
       });

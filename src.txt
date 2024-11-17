@@ -8,31 +8,32 @@ src/
 │   ├── lineTypes.ts                // LINE 相關類型
 │   └── userType.ts                 // 定義用戶類型
 ├── context
+│   ├── ToastContext.tsx            // Toast 通知上下文
 │   ├── AuthContext.tsx             // 用戶認證相關的上下文
 │   ├── AppContext.tsx              // 應用程式邏輯相關的上下文
-│   ├── LanguageContext.tsx         // 語言設定相關的上下文
-│   └── ToastContext.tsx            // Toast 通知上下文
+│   └── LanguageContext.tsx         // 語言設定相關的上下文
 ├── config
 │   ├── email.ts                    // 集中管理郵件相關配置
 │   ├── aws.ts                      // 設定 AWS 相關的客戶端配置
-│   ├── constants.ts                // 定義應用程式的常數配置 
-│   └── line.ts                     // 設定 LINE 通訊的相關配置 
+│   ├── constants.ts                // 定義應用程式的常數配置
+│   └── line.ts                     // 設定 LINE 通訊的相關配置
 ├── utils
 │   ├── notificationUtils.ts        // 處理通知重試機制的工具
 │   ├── errorHandler.ts             // 處理應用程式錯誤的工具
+│   ├── dateUtils.ts                // 日期時間差格式化工具
 │   ├── redis.ts                    // Redis 客戶端配置
 │   ├── lineUtils.ts                // 與 LINE 通訊相關的工具函數
-│   ├── logger.ts                   // 提供日誌記錄功能的工具 
+│   ├── logger.ts                   // 提供日誌記錄功能的工具
 │   ├── cognitoClient.ts            // 設定 AWS Cognito 客戶端的工具
 │   ├── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
 │   ├── extractDateFromInfo.ts      // 從字串中提取日期的工具函數
-│   └── cacheUtils.ts               // 管理快取的工具
-│   └── dateUtils.ts                // 日期時間差格式化工具
+│   ├── cacheUtils.ts               // 管理快取的工具
+│   └── retryUtils.ts               // 提供重試機制的工具函數
 ├── libs
 │   └── dynamodb.ts                 // 設定 AWS DynamoDB 客戶端的工具
 ├── styles
-│   ├── globals.css                 // 定義全域的 CSS 樣式
-│   └── toast.css                   // Toast 通知的 CSS 樣式
+│   ├── toast.css                   // Toast 通知的 CSS 樣式
+│   └── globals.css                 // 定義全域的 CSS 樣式
 ├── components
 │   ├── common
 │   │   ├── Navbar.tsx              // 導航欄組件
@@ -41,19 +42,19 @@ src/
 │   │   ├── Footer.tsx              // 頁腳組件
 │   │   ├── Notification.tsx        // 通知組件
 │   │   └── Toast
-│   │       ├── Toast.tsx           // Toast 組件
-│   │       └── index.ts            // 導出 Toast 組件和類型
-│   ├── profile/                    
-│   │   ├── sections/               
-│   │   │   ├── ProfileSection.tsx     // 個人資訊區塊
-│   │   │   ├── PasswordSection.tsx    // 修改密碼區塊
-│   │   │   ├── NotificationSection.tsx   // 訂閱通知區塊
-│   │   │   ├── PreferencesSection.tsx    // 偏好設定區塊
+│   │       ├── index.ts            // 導出 Toast 組件和類型
+│   │       └── Toast.tsx           // Toast 組件
+│   ├── profile
+│   │   ├── sections
 │   │   │   ├── HistorySection.tsx  // 觀看紀錄區塊
-│   │   │   └── FeedbackSection.tsx    // 意見反饋區塊
-│   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
+│   │   │   ├── NotificationSection.tsx   // 訂閱通知區塊
+│   │   │   ├── PasswordSection.tsx    // 修改密碼區塊
 │   │   │   ├── AccountSection.tsx     // 帳號管理區塊
-│   │   ├── common/                 // 共用組件
+│   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
+│   │   │   ├── ProfileSection.tsx     // 個人資訊區塊
+│   │   │   ├── FeedbackSection.tsx    // 意見反饋區塊
+│   │   │   └── PreferencesSection.tsx    // 偏好設定區塊
+│   │   ├── common
 │   │   │   └── Sidebar.tsx         // 側邊欄導航組件
 │   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
 │   └── news
@@ -61,38 +62,40 @@ src/
 │       ├── NewsCard.tsx            // 新聞卡片組件
 │       └── NewsFilters.tsx         // 新聞過濾器組件
 ├── hooks
+│   ├── toast
+│   │   └── useToast.ts             // Toast 通知 Hook
 │   ├── useAuth.ts                  // 用戶認證 Hook
-│   ├── profile/                   
+│   ├── profile
 │   │   ├── useProfileAvatar.ts     // 用戶頭像
 │   │   ├── useProfileFeedback.ts   // 用戶反饋
 │   │   ├── useProfileForm.ts       // 個人資訊
 │   │   ├── useProfileActivity.ts   // 活動日誌
-│   │   ├── useNotificationSettings.ts  //訂閱通知
+│   │   ├── useNotificationSettings.ts  // 訂閱通知
+│   │   ├── useProfileLine.ts       // 管理用戶 LINE 設定和驗證的 Hook
+│   │   ├── useProfilePreferences.ts // 偏好設定
 │   │   ├── useProfileCore.ts       // 用戶認證狀態
 │   │   ├── useProfileArticles.ts   // 觀看紀錄
+│   │   ├── index.ts                // 匯出所有 profile hooks 和型別定義
 │   │   ├── useProfilePassword.ts   // 密碼變更和驗證
-│   │   ├── useProfilePreferences.ts // 偏好設定
-│   │   ├── useProfileAccount.ts    // 帳號管理
-│   │   └── index.ts                // profile hooks 和共用類型定義
+│   │   └── useProfileAccount.ts    // 帳號管理
 │   ├── news
 │   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
 │   │   ├── useFetchNews.ts         // 新聞獲取 Hook
 │   │   └── useNewsPageLogic.ts     // 新聞頁面邏輯 Hook
 │   ├── line
 │   │   ├── useLineVerification.ts  // LINE 驗證 Hook
+│   │   └── index.ts                // 匯出 LINE 驗證相關的 Hook 和型別定義
 │   ├── useAppLogic.ts              // 應用程式邏輯 Hook
 │   ├── notifications
-│   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
-│   └── toast
-│       └── useToast.ts             // Toast 通知 Hook
+│   │   ├── useEmailNotifications.ts // 電子郵件通知 Hook
 ├── lambda
 │   ├── fetchNews.ts                // 獲取新聞 Lambda
 │   ├── fetchAnnouncement.ts        // 獲取公告 Lambda
 │   └── updateNews.ts               // 更新新聞 Lambda
 ├── api
-│   └── user.ts                     // 用戶 API
+│   ├── user.ts                     // 用戶 API
 ├── templates
-│   └── lineTemplates.ts            // LINE 訊息模板
+│   ├── lineTemplates.ts            // LINE 訊息模板
 ├── pages
 │   ├── index.tsx                   // 首頁
 │   ├── settings
@@ -110,16 +113,22 @@ src/
 │   ├── api
 │   │   ├── profile
 │   │   │   ├── recent-log.ts       // 最近活動 API
+│   │   │   ├── notification-settings
+│   │   │   │   ├── [userId].ts     // 獲取用戶通知設定的 API
 │   │   │   ├── sendFeedback.ts     // 反饋 API
+│   │   │   ├── notification-settings.ts // 通知設定 API
 │   │   │   └── activity-log.ts     // 活動日誌 API
-│   │   │   └── notification-settings.ts // 通知設定 API
 │   │   ├── news
 │   │   │   ├── summary.ts          // 新聞摘要 API
 │   │   │   ├── addFavorite.ts      // 添加收藏 API
 │   │   │   ├── removeFavorite.ts   // 移除收藏 API
 │   │   │   ├── updateNews.js       // 更新新聞 API
+│   │   │   ├── index.ts            // 獲取新聞列表的 API
 │   │   │   └── getFavorites.ts     // 獲取收藏 API
 │   │   ├── line
+│   │   │   ├── verify-code.ts      // 驗證 LINE 驗證碼的 API
+│   │   │   ├── verification-status.ts // 獲取驗證狀態的 API
+│   │   │   ├── message.ts          // 發送 LINE 訊息的 API
 │   │   │   └── webhook.ts          // LINE Webhook
 │   │   └── notifications
 │   │       └── sendEmail.ts        // 發送郵件 API
