@@ -191,4 +191,5 @@ export interface PreferenceSettings {
   sortBy: 'date' | 'relevance' | 'popularity';
   autoSummarize: boolean;
   viewMode: 'grid' | 'list';
+  theme: 'light' | 'dark';
 }

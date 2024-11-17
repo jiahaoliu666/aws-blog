@@ -39,13 +39,33 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
 
   return (  
     <div className="flex flex-col items-center mt-6 py-4">  
-      <AmplifyPagination  
-        currentPage={currentPage}  
-        totalPages={totalPages}  
-        onNext={() => onPageChange(currentPage + 1)}  
-        onPrevious={() => onPageChange(currentPage - 1)}  
-        onChange={onPageChange}  
-      />  
+      <div className="dark:text-white">
+        <AmplifyPagination  
+          currentPage={currentPage}  
+          totalPages={totalPages}  
+          onNext={() => onPageChange(currentPage + 1)}  
+          onPrevious={() => onPageChange(currentPage - 1)}  
+          onChange={onPageChange}  
+          className="
+            [&_.amplify-pagination-button]:dark:text-white 
+            [&_.amplify-pagination-button]:dark:bg-gray-600
+            [&_.amplify-pagination-button]:dark:border-gray-300
+            [&_.amplify-pagination-button]:dark:font-semibold
+            [&_.amplify-pagination-button]:dark:shadow-lg
+            [&_.amplify-pagination-button]:dark:ring-1
+            [&_.amplify-pagination-button]:dark:ring-gray-300
+            [&_.amplify-pagination-button-active]:dark:bg-blue-500 
+            [&_.amplify-pagination-button-active]:dark:text-white
+            [&_.amplify-pagination-button-active]:dark:border-blue-400
+            [&_.amplify-pagination-button-active]:dark:ring-blue-400
+            [&_.amplify-pagination-button-active]:dark:font-bold
+            [&_.amplify-pagination-button]:dark:hover:bg-blue-600
+            [&_.amplify-pagination-button]:dark:hover:text-white
+            [&_.amplify-pagination-button]:dark:hover:border-blue-400
+            [&_.amplify-pagination-button]:dark:hover:ring-blue-400
+          "
+        />  
+      </div>
 
       <button  
         className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition duration-300 fixed right-4 bottom-6 flex items-center justify-center p-3"  

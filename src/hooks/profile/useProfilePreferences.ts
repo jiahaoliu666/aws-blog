@@ -53,14 +53,14 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
       
       if (response.Item) {
         console.log('成功讀取設定:', response.Item);
-        setPreferences({
+        const newPreferences = {
           theme: response.Item.theme || 'light',
           language: response.Item.language || 'zh-TW',
           viewMode: response.Item.viewMode || 'grid',
           autoSummarize: response.Item.autoSummarize || false
-        });
-      } else {
-        console.log('未找到使用者設定，使用預設值');
+        };
+        setPreferences(newPreferences);
+        localStorage.setItem('userPreferences', JSON.stringify(newPreferences));
       }
     } catch (err) {
       console.error('讀取偏好設定失敗:', err);

@@ -83,7 +83,9 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   };
 
   const handleDarkModeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTheme = e.target.checked ? 'dark' : 'light';
     toggleDarkMode();
+    handlePreferenceChange('theme', newTheme);
   };
 
   const handleViewModeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,12 +110,18 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   };
 
   useEffect(() => {
-    if (preferences) {
+    if (preferences && isClient) {
       setShowSummaries(preferences.autoSummarize || false);
       setGridView(preferences.viewMode === 'grid');
       setLanguage(preferences.language || 'zh-TW');
+      
+      if (preferences.theme === 'dark' && !isDarkMode) {
+        toggleDarkMode();
+      } else if (preferences.theme === 'light' && isDarkMode) {
+        toggleDarkMode();
+      }
     }
-  }, [preferences]);
+  }, [preferences, isClient]);
 
   return (
     <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>

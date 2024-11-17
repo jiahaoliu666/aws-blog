@@ -26,3 +26,113 @@ body {
     text-wrap: balance;  
   }  
 }  
+
+/* Amplify UI 深色模式覆蓋 */
+:root[class~="dark"] .amplify-pagination,
+.dark .amplify-pagination {
+  --amplify-components-pagination-button-color: white;
+  --amplify-components-pagination-button-background-color: rgb(75 85 99);
+  --amplify-components-pagination-button-hover-background-color: rgb(37 99 235);
+  --amplify-components-pagination-button-active-background-color: rgb(37 99 235);
+  --amplify-components-pagination-button-hover-color: white;
+  --amplify-components-pagination-button-active-color: white;
+  --amplify-components-pagination-button-border-color: rgb(209 213 219);
+}  
+
+:root[class~="dark"] .amplify-searchfield__input,
+.dark .amplify-searchfield__input {
+  --amplify-components-searchfield-input-color: white !important;
+  --amplify-components-searchfield-input-text-color: white !important;
+  background-color: rgb(31 41 55) !important;
+  color: white !important;
+}
+
+:root[class~="dark"] .amplify-searchfield,
+.dark .amplify-searchfield {
+  --amplify-components-searchfield-color: white !important;
+  --amplify-components-searchfield-input-color: white !important;
+  --amplify-components-searchfield-input-background-color: rgb(31 41 55) !important;
+  --amplify-components-searchfield-border-color: rgb(75 85 99) !important;
+}
+
+/* 添加搜尋圖標的顏色覆蓋 */
+:root[class~="dark"] .amplify-searchfield__icon,
+.dark .amplify-searchfield__icon {
+  color: white !important;
+}
+
+/* 確保輸入框文字顏色 */
+.dark .amplify-searchfield input {
+  color: white !important;
+}
+
+/* 確保佔位符文字顏色 */
+.dark .amplify-searchfield input::placeholder {
+  color: rgb(156 163 175) !important;
+}  
+
+/* Amplify UI SearchField 深色模式樣式 */
+.dark .amplify-searchfield {
+  --amplify-components-searchfield-color: white;
+  --amplify-components-field-label-color: rgb(156 163 175);
+  background-color: rgb(31 41 55);
+  border-color: rgb(75 85 99);
+}
+
+.dark .amplify-searchfield__input {
+  color: white !important;
+  background-color: rgb(31 41 55) !important;
+  border-color: rgb(75 85 99) !important;
+}
+
+.dark .amplify-searchfield__input:focus {
+  border-color: rgb(59 130 246) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  outline: none !important;
+}
+
+.dark .amplify-searchfield__input::placeholder {
+  color: rgb(156 163 175) !important;
+}
+
+.dark .amplify-searchfield__icon {
+  color: rgb(156 163 175) !important;
+}
+
+/* 淺色模式樣式 */
+.amplify-searchfield {
+  --amplify-components-searchfield-color: rgb(17 24 39);
+  --amplify-components-field-label-color: rgb(107 114 128);
+  background-color: white;
+  border-color: rgb(209 213 219);
+}
+
+.amplify-searchfield__input {
+  color: rgb(17 24 39) !important;
+  background-color: white !important;
+  border-color: rgb(209 213 219) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.amplify-searchfield__input:focus {
+  border-color: rgb(59 130 246) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  outline: none !important;
+}
+
+.amplify-searchfield__input::placeholder {
+  color: rgb(107 114 128) !important;
+}
+
+.amplify-searchfield__icon {
+  color: rgb(107 114 128) !important;
+}
+
+/* 懸停效果 */
+.amplify-searchfield__input:hover {
+  border-color: rgb(107 114 128) !important;
+}
+
+.dark .amplify-searchfield__input:hover {
+  border-color: rgb(107 114 128) !important;
+}  

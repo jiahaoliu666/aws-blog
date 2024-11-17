@@ -17,8 +17,11 @@ export const useTheme = () => useContext(ThemeContext);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      const tempTheme = localStorage.getItem('tempTheme');
-      return tempTheme === 'dark';
+      const savedTheme = localStorage.getItem('tempTheme');
+      if (savedTheme) {
+        return savedTheme === 'dark';
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
   });
@@ -35,10 +38,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (typeof window !== 'undefined') {
       localStorage.setItem('tempTheme', isDarkMode ? 'dark' : 'light');
       
+      const root = document.documentElement;
       if (isDarkMode) {
-        document.documentElement.classList.add('dark');
+        root.classList.add('dark');
+        document.body.classList.add('dark');
       } else {
-        document.documentElement.classList.remove('dark');
+        root.classList.remove('dark');
+        document.body.classList.remove('dark');
       }
     }
   }, [isDarkMode]);
@@ -49,3 +55,5 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     </ThemeContext.Provider>
   );
 };
+
+export default ThemeContext;
