@@ -8,7 +8,7 @@ import { faKey } from '@fortawesome/free-solid-svg-icons';
 interface UseProfilePasswordProps {
   user: User | null;
   handleLogout: () => void;
-  addActivityLog: (action: string, details?: string) => Promise<void>;
+  logActivity: (userId: string, action: string) => Promise<void>;
 }
 
 interface PasswordRequirements {
@@ -20,7 +20,7 @@ interface PasswordRequirements {
   passwordsMatch: boolean;
 }
 
-export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UseProfilePasswordProps) => {
+export const useProfilePassword = ({ user, handleLogout, logActivity }: UseProfilePasswordProps) => {
   const { showToast } = useToastContext();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -108,47 +108,36 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
 
       await cognitoClient.send(changePasswordCommand);
       
-      // 只記錄必要的活動資訊
-      await addActivityLog('成功更改密碼');
+      // 記錄活動，使用與 useProfileForm 相的格式
+      if (!user) {
+        throw new Error('使用者未登入');
+      }
+      
+      if (typeof logActivity !== 'function') {
+        throw new Error('logActivity 函數未正確初始化');
+      }
+      
+      await logActivity(user.sub, '變更密碼');
       
       // 重置表單
       resetPasswordFields();
       
-      // 修改成功訊息顯示邏輯
-      showToast('密碼變更成功！請重新登入', 'success', {
-        duration: 3000,
-        icon: faKey
-      });
+      showToast('密碼變更成功！請重新登入', 'success');
       
-      // 等待 toast 顯示後再登出
       setTimeout(() => {
         handleLogout();
       }, 3300);
 
     } catch (error: any) {
-      // AWS Cognito 錯誤處理
-      switch (error.name) {
-        case 'NotAuthorizedException':
-          if (error.message.includes('Access Token has expired')) {
-            showToast('登入已過期，請重新登入', 'error');
-            setTimeout(() => {
-              handleLogout();
-            }, 2000);
-          } else {
-            showToast('當前密碼錯誤，請重新確認', 'error');
-          }
-          break;
-        case 'InvalidPasswordException':
-          showToast('新密碼格式不符合要求，請確認密碼規則', 'error');
-          break;
-        case 'LimitExceededException':
-          showToast('嘗試次數過多，請稍後再試', 'error');
-          break;
-        default:
-          showToast(error.message || '密碼變更失敗，請稍後再試', 'error');
-      }
+      const errorMessage = 
+        error.message === 'Incorrect username or password.' 
+          ? '密碼錯誤，請重新輸入'
+          : error.message === 'Attempt limit exceeded, please try after some time.'
+            ? '嘗試次數過多，請稍後再試'
+            : error.message || '更新失敗，請稍後再試';
       
-      logger.error('密碼變更失敗:', error);
+      showToast(errorMessage, 'error');
+      logger.error('更新密碼失敗:', error);
     } finally {
       setIsLoading(false);
     }
