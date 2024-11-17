@@ -230,6 +230,8 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   </div>
                 </div>
 
+                
+
                 {/* 註冊日期 */}
                 <div className="flex flex-col md:flex-row md:items-center">
                   <div className="flex items-center gap-2">
@@ -237,6 +239,16 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                     <span className="text-lg text-gray-900">
                       {formatDate(user?.registrationDate || formData.registrationDate)}
                     </span>
+                  </div>
+                </div>
+                {/* 用戶 ID */}
+                <div className="flex flex-col md:flex-row md:items-center">
+                  <div className="flex items-center gap-2">
+                    <label className="text-lg font-semibold text-gray-800">用戶 ID：</label>
+                    <span className="text-lg text-gray-600 font-mono">
+                      {user?.sub || '未知'}
+                    </span>
+                    <span className="text-sm text-gray-500"></span>
                   </div>
                 </div>
               </div>

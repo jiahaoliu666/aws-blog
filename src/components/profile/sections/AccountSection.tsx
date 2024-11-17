@@ -5,9 +5,10 @@ import {
   faShieldAlt, 
   faUserSlash, 
   faTrash,
-  faExclamationTriangle 
+  faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthContext } from '@/context/AuthContext';
+import { useToastContext } from '@/context/ToastContext';
 
 interface AccountSectionProps {
   accountStatus: string;
@@ -35,11 +36,13 @@ const AccountSection: React.FC<AccountSectionProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const { user } = useAuthContext();
+  const { showToast } = useToastContext();
 
   const accountInfo = {
     email: user?.email || '',
     username: user?.username || '',
     joinDate: user?.registrationDate || '',
+    userId: user?.sub || ''
   };
 
   const formatDate = (dateString?: string) => {
@@ -78,7 +81,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         
         {/* 帳號資訊 */}
         <div className="space-y-4 mb-8">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="text-sm text-gray-600">用戶名稱</label>
               <p className="font-medium">{accountInfo.username}</p>
@@ -87,11 +90,15 @@ const AccountSection: React.FC<AccountSectionProps> = ({
               <label className="text-sm text-gray-600">電子郵件</label>
               <p className="font-medium">{accountInfo.email}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-lg font-semibold text-gray-800">註冊日期：</label>
-              <span className="text-lg text-gray-900">
-                {formatDate(user?.registrationDate)}
-              </span>
+            <div>
+              <label className="text-sm text-gray-600">用戶 ID</label>
+              <p className="font-mono text-gray-700">{accountInfo.userId}</p>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">註冊日期</label>
+              <p className="font-medium">
+                {formatDate(accountInfo.joinDate)}
+              </p>
             </div>
           </div>
         </div>
