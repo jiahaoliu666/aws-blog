@@ -120,7 +120,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
       <div className="mb-8">
         <SectionTitle 
           title="個人資訊"
-          description="管理您的個人資料與帳號設定"
+          description="管理您的個人資訊"
         />
       </div>
 
