@@ -28,6 +28,13 @@ interface NewsFiltersProps {
   setShowSummaries: (value: boolean) => void;  
 }  
 
+const DEFAULT_PREFERENCES = {
+  showSummaries: false,  // 一鍵總結預設關閉
+  gridView: false,       // 預設列表視圖
+  theme: 'light',        // 預設亮色主題
+  language: 'zh-TW'      // 預設繁體中文
+};
+
 const NewsFilters: React.FC<NewsFiltersProps> = ({  
   gridView,  
   showFavorites,  
@@ -56,79 +63,95 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== 'undefined') {
+      const savedSummary = localStorage.getItem('newsSummaryPreference');
+      const savedTheme = localStorage.getItem('newsThemePreference');
+      const savedViewMode = localStorage.getItem('newsViewModePreference');
       const savedLanguage = localStorage.getItem('newsLanguage');
-      if (savedLanguage && savedLanguage !== language) {
-        setLanguage(savedLanguage);
-      }
-    }
-  }, []);
 
-  const handlePreferenceChange = async (key: keyof PreferenceSettings, value: PreferenceSettings[keyof PreferenceSettings]) => {
-    if (user?.id) {
-      try {
-        await updatePreferences({
-          ...preferences,
-          [key]: value,
-          userId: user.id
-        });
-      } catch (error) {
-        console.error('更新偏好設定失敗:', error);
+      if (user?.id && preferences) {
+        setShowSummaries(preferences.autoSummarize);
+        setGridView(preferences.viewMode === 'grid');
+        setLanguage(preferences.language);
+        if (preferences.theme === 'dark' && !isDarkMode) {
+          toggleDarkMode();
+        } else if (preferences.theme === 'light' && isDarkMode) {
+          toggleDarkMode();
+        }
+      } else {
+        setShowSummaries(savedSummary !== null ? savedSummary === 'true' : DEFAULT_PREFERENCES.showSummaries);
+        setGridView(savedViewMode ? savedViewMode === 'grid' : DEFAULT_PREFERENCES.gridView);
+        setLanguage(savedLanguage || DEFAULT_PREFERENCES.language);
+        
+        const savedThemeValue = savedTheme || DEFAULT_PREFERENCES.theme;
+        if (savedThemeValue === 'dark' && !isDarkMode) {
+          toggleDarkMode();
+        } else if (savedThemeValue === 'light' && isDarkMode) {
+          toggleDarkMode();
+        }
       }
     }
-  };
+  }, [isClient, user?.id, preferences]);
 
   const handleSummariesToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setShowSummaries(e.target.checked);
-    handlePreferenceChange('autoSummarize', e.target.checked);
+    const newValue = e.target.checked;
+    setShowSummaries(newValue);
+    
+    if (user?.id) {
+      updatePreferences({
+        ...preferences,
+        userId: user.id,
+        autoSummarize: newValue
+      });
+    }
+    localStorage.setItem('newsSummaryPreference', newValue.toString());
   };
 
   const handleDarkModeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTheme = e.target.checked ? 'dark' : 'light';
     toggleDarkMode();
-    handlePreferenceChange('theme', newTheme);
+    
+    if (user?.id) {
+      updatePreferences({
+        ...preferences,
+        userId: user.id,
+        theme: newTheme
+      });
+    }
+    localStorage.setItem('newsThemePreference', newTheme);
   };
 
   const handleViewModeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newViewMode = e.target.checked ? 'grid' : 'list';
     setGridView(e.target.checked);
-    handlePreferenceChange('viewMode', e.target.checked ? 'grid' : 'list');
+    
+    if (user?.id) {
+      updatePreferences({
+        ...preferences,
+        userId: user.id,
+        viewMode: newViewMode
+      });
+    }
+    localStorage.setItem('newsViewModePreference', newViewMode);
   };
 
   const handleLanguageChange = async (value: string) => {
     setLanguage(value);
+    
     if (user?.id) {
-      try {
-        await updatePreferences({
-          ...preferences,
-          language: value,
-          userId: user.id
-        });
-        localStorage.setItem('newsLanguage', value);
-      } catch (error) {
-        console.error('更新語言偏好設定失敗:', error);
-      }
+      updatePreferences({
+        ...preferences,
+        userId: user.id,
+        language: value
+      });
     }
+    localStorage.setItem('newsLanguage', value);
   };
-
-  useEffect(() => {
-    if (preferences && isClient) {
-      setShowSummaries(preferences.autoSummarize || false);
-      setGridView(preferences.viewMode === 'grid');
-      setLanguage(preferences.language || 'zh-TW');
-      
-      if (preferences.theme === 'dark' && !isDarkMode) {
-        toggleDarkMode();
-      } else if (preferences.theme === 'light' && isDarkMode) {
-        toggleDarkMode();
-      }
-    }
-  }, [preferences, isClient]);
 
   return (
     <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
       <div className="flex items-center space-x-4">
 
         <SwitchField
-          isDisabled={false}
           label={<span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>一鍵總結</span>}
           labelPosition="start"
           isChecked={showSummaries}

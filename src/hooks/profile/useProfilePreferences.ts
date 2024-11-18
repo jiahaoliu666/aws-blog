@@ -60,25 +60,45 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
           autoSummarize: response.Item.autoSummarize || false
         };
         setPreferences(newPreferences);
+        // 將資料庫的設定同步到 localStorage
         localStorage.setItem('userPreferences', JSON.stringify(newPreferences));
       }
     } catch (err) {
       console.error('讀取偏好設定失敗:', err);
-      showToast('讀取設定失敗', 'error', {
-        description: '無法讀取您的偏好設定'
-      });
+      // 如果讀取資料庫失敗，嘗試從 localStorage 讀取
+      const localPreferences = localStorage.getItem('userPreferences');
+      if (localPreferences) {
+        try {
+          const parsed = JSON.parse(localPreferences);
+          setPreferences(parsed);
+        } catch (e) {
+          console.error('解析本地設定失敗:', e);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [authUser?.id, showToast]);
+  }, [authUser?.id]);
 
-  // 更新設定
+  // 處理設定變更
+  const handleSettingChange = useCallback((key: string, value: any) => {
+    console.log('設定變更:', key, value);
+    setPreferences(prev => {
+      const newPreferences = {
+        ...prev,
+        [key]: value
+      };
+      // 暫時保存到 localStorage
+      localStorage.setItem('userPreferences', JSON.stringify(newPreferences));
+      return newPreferences;
+    });
+  }, []);
+
+  // 更新設定到資料庫
   const updatePreferences = useCallback(async (newSettings: PreferenceSettings & { userId: string }) => {
     if (!newSettings.userId) {
       showToast('無法儲存設定', 'error', {
-        description: '找不到用戶ID，請重新登入',
-        position: 'top-right',
-        duration: 3000
+        description: '找不到用戶ID，請重新登入'
       });
       return Promise.reject(new Error('找不到用戶ID'));
     }
@@ -110,32 +130,9 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
     }
   }, [showToast]);
 
-  // 處理設定變更
-  const handleSettingChange = useCallback((key: string, value: any) => {
-    console.log('設定變更:', key, value);
-    setPreferences(prev => {
-      const newPreferences = {
-        ...prev,
-        [key]: value
-      };
-      console.log('更新後的設定狀態:', newPreferences);
-      return newPreferences;
-    });
-  }, []);
-
   // 初始載入設定
   useEffect(() => {
     console.log('初始化設定...');
-    const localPreferences = localStorage.getItem('userPreferences');
-    if (localPreferences) {
-      try {
-        console.log('從本地儲存讀取設定');
-        const parsed = JSON.parse(localPreferences);
-        setPreferences(parsed);
-      } catch (e) {
-        console.error('解析本地設定失敗:', e);
-      }
-    }
     fetchPreferences();
   }, [fetchPreferences]);
 
