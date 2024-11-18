@@ -95,55 +95,23 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   const handleSummariesToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.checked;
     setShowSummaries(newValue);
-    
-    if (user?.id) {
-      updatePreferences({
-        ...preferences,
-        userId: user.id,
-        autoSummarize: newValue
-      });
-    }
     localStorage.setItem('newsSummaryPreference', newValue.toString());
   };
 
   const handleDarkModeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTheme = e.target.checked ? 'dark' : 'light';
     toggleDarkMode();
-    
-    if (user?.id) {
-      updatePreferences({
-        ...preferences,
-        userId: user.id,
-        theme: newTheme
-      });
-    }
     localStorage.setItem('newsThemePreference', newTheme);
   };
 
   const handleViewModeToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newViewMode = e.target.checked ? 'grid' : 'list';
     setGridView(e.target.checked);
-    
-    if (user?.id) {
-      updatePreferences({
-        ...preferences,
-        userId: user.id,
-        viewMode: newViewMode
-      });
-    }
     localStorage.setItem('newsViewModePreference', newViewMode);
   };
 
   const handleLanguageChange = async (value: string) => {
     setLanguage(value);
-    
-    if (user?.id) {
-      updatePreferences({
-        ...preferences,
-        userId: user.id,
-        language: value
-      });
-    }
     localStorage.setItem('newsLanguage', value);
   };
 
