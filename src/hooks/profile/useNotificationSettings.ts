@@ -244,9 +244,22 @@ export const useNotificationSettings = (userId: string) => {
     }
   };
 
-  // 新增開始驗證的處理函數
+  // 修改 startVerification 函數
   const startVerification = () => {
     setShowVerification(true);
+    // 重置相關狀態
+    setTempSettings(prev => ({
+      ...prev,
+      lineNotification: false,
+      lineId: null
+    }));
+  };
+
+  // 新增取消驗證的函數
+  const cancelVerification = () => {
+    setShowVerification(false);
+    // 重置相關狀態
+    setTempSettings(originalSettings);
   };
 
   useEffect(() => {
@@ -273,5 +286,6 @@ export const useNotificationSettings = (userId: string) => {
     handleVerificationComplete,
     showVerification,
     startVerification,
+    cancelVerification,
   };
 };

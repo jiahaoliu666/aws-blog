@@ -15,6 +15,8 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useToastContext } from '@/context/ToastContext';
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import { useTheme } from '@/context/ThemeContext';
+import { SectionTitle } from '../common/SectionTitle';
+import { Card } from '../common/Card';
 
 interface SettingsSectionProps {
   settings: {
@@ -127,14 +129,16 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">文章偏好設定</h1>
-        <p className="mt-2 text-gray-600">自訂您的使用體驗</p>
+        <SectionTitle  // 使用共用的 SectionTitle 組件
+          title="偏好設定"
+          description="自訂您閱讀文章的偏好設定"
+        />
       </div>
 
       <div className="space-y-6">
         {/* 主題設定 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
+        <Card>
+          <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faPalette} className="text-xl text-blue-500" />
               <div>
@@ -168,10 +172,10 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
               ))}
             </div>
           </div>
-        </div>
+        </Card>
         {/* 視圖設定 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
+        <Card>
+          <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faTableColumns} className="text-xl text-blue-500" />
               <div>
@@ -205,11 +209,11 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
               ))}
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* 一鍵總結設定 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
+        <Card>
+          <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faMagicWandSparkles} className="text-xl text-blue-500" />
               <div>
@@ -233,11 +237,11 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
               </label>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* 語言設定 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
+        <Card>
+          <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faLanguage} className="text-xl text-blue-500" />
               <div>
@@ -255,16 +259,17 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
               <option value="en">English</option>
             </select>
           </div>
-        </div>
+        </Card>
 
         {/* 儲存和取消按鈕 */}
         <div className="flex justify-end pt-4 gap-3">
           {hasChanges && (
             <button
               onClick={handleCancel}
-              className="px-6 py-2.5 bg-gray-600 text-white rounded-lg 
-                        hover:bg-gray-700 transition-colors duration-200
-                        disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 rounded-lg text-gray-700 border border-gray-200
+                hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300
+                transition-all duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               取消
@@ -276,8 +281,11 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
             disabled={isLoading || !hasChanges}
             className={`
               px-6 py-2.5 rounded-lg flex items-center gap-2
-              ${isLoading || !hasChanges ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
-              text-white transition-colors duration-200
+              ${isLoading || !hasChanges 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }
+              transition-all duration-200
             `}
           >
             {isLoading ? (

@@ -12,7 +12,8 @@ import {
   faUserPlus,
   faPaperPlane,
   faExclamationTriangle,
-  faCopy
+  faCopy,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -24,6 +25,8 @@ import { useLineVerification } from '@/hooks/line/useLineVerification';
 import { LINE_RETRY_COUNT } from '@/config/line';
 import { validateVerificationCode } from '@/utils/lineUtils';
 import { useToastContext } from '@/context/ToastContext';
+import { SectionTitle } from '../common/SectionTitle';
+import { Card } from '../common/Card';
 
 interface NotificationSettings {
   line: boolean;
@@ -498,7 +501,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     resetSettings,
     handleSendUserId,
     handleVerifyCode,
-    reloadSettings
+    reloadSettings,
+    cancelVerification
   } = useNotificationSettings(userId);
 
   const isPageLoading = propIsLoading || settingsLoading;
@@ -524,7 +528,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         }
       } else {
         if (settings.lineId) {
-          if (window.confirm('確定關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
+          if (window.confirm('確定關閉 LINE 通知嗎？這將會清您的驗證狀態。')) {
             const wasChanged = await handleToggle('lineNotification', false);
             if (wasChanged) {
               await handleResetVerification();
@@ -609,203 +613,283 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
   };
 
+  const LINE_OFFICIAL_ID = '@601feiwz'; // 可以移到配置文件中
+
+  const handleCopyLineId = () => {
+    try {
+      navigator.clipboard.writeText(LINE_OFFICIAL_ID);
+      toast.success('已複製 LINE ID ', {
+        position: 'top-right',
+        duration: 3000
+      });
+    } catch (error) {
+      toast.error('複製失敗，請手動複製', {
+        position: 'top-right',
+        duration: 3000
+      });
+      console.error('複製 LINE ID 失敗:', error);
+    }
+  };
+
   return (
     <div className="w-full">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">通知設定</h1>
-        <p className="mt-2 text-gray-600">管理您想要接收的通知方式</p>
-      </div>
+      {/* 如果正在進行驗證，顯示驗證介面 */}
+      {showVerification ? (
+        <div className="mb-8 relative">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold text-gray-800">LINE 驗證</h2>
+            <p className="text-gray-600">請依照以下步驟完成 LINE 驗證</p>
+          </div>
 
-      {/* 電郵件通知卡片 */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${
-                settings.emailNotification ? 'bg-blue-50' : 'bg-gray-50'
-              }`}>
-                <FontAwesomeIcon 
-                  icon={faEnvelope} 
-                  className="text-2xl text-blue-600"
-                />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                <p className="text-sm text-gray-600">接收新消息和重要更新</p>
-                
-                {/* 無論是否啟用通知都顯示綁定狀態 */}
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-                    <FontAwesomeIcon icon={faCheckCircle} className="text-blue-500" />
-                    已綁定
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formData.email}
-                  </span>
+          {/* 步驟指示器 */}
+          <StepIndicators 
+            currentStep={currentStep} 
+            onStepClick={handleStepChange} 
+          />
+
+          {/* 驗證步驟內容 */}
+          <div className="mt-8">
+            {currentStep === VerificationStep.SCAN_QR && (
+              <QRCodeStep 
+                onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)} 
+                onCopyLineId={handleCopyLineId}  // 使用新的處理函數
+              />
+            )}
+            
+            {currentStep === VerificationStep.ADD_FRIEND && (
+              <AddFriendStep 
+                onBack={() => handleStepChange(VerificationStep.SCAN_QR)}
+                onNext={() => handleStepChange(VerificationStep.SEND_ID)}
+              />
+            )}
+            
+            {currentStep === VerificationStep.SEND_ID && (
+              <SendIdStep 
+                userId={userId}
+                onCopyUserId={onCopyUserId}
+                onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
+                onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
+                onSendId={handleSendUserId}
+                isLoading={isLoading}
+              />
+            )}
+            
+            {currentStep === VerificationStep.VERIFY_CODE && (
+              <VerifyCodeStep 
+                verificationCode={verificationCode}
+                setVerificationCode={setVerificationCode}
+                onBack={() => handleStepChange(VerificationStep.SEND_ID)}
+                onVerify={onVerify}
+                isLoading={isLoading}
+              />
+            )}
+          </div>
+
+          {/* 取消按鈕 - 調整樣式讓它更明顯 */}
+          <button
+            onClick={cancelVerification}
+            className="absolute top-0 right-0 p-2 rounded-full
+                       hover:bg-gray-100 text-gray-500 hover:text-gray-700
+                       transition-all duration-200 flex items-center gap-2"
+            title="取消驗證"
+          >
+            <span className="text-sm">取消</span>
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+      ) : (
+        // 原有的通知設定介面
+        <>
+          <div className="mb-8">
+            <SectionTitle 
+              title="通知設定"
+              description="管理您想要接收的通知方式"
+            />
+          </div>
+
+          <div className="space-y-6">
+            {/* 電子郵件通知卡片 */}
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                      <FontAwesomeIcon 
+                        icon={faEnvelope} 
+                        className="text-xl text-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
+                      <p className="text-sm text-gray-600">接收新消息和重要更新</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                          <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
+                          已綁定
+                        </span>
+                        <span className="text-xs text-gray-500">{formData.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.emailNotification}
+                    onChange={handleEmailToggle}
+                    disabled={isPageLoading}
+                    sx={{
+                      '& .MuiSwitch-switchBase': {
+                        color: '#9ca3af',
+                        '&:hover': {
+                          backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                        },
+                        '&.Mui-checked': {
+                          color: '#2563eb',
+                          '&:hover': {
+                            backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                          },
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#2563eb',
+                            opacity: 0.5,
+                          },
+                        },
+                      },
+                      '& .MuiSwitch-track': {
+                        backgroundColor: '#d1d5db',
+                        opacity: 0.3,
+                      },
+                    }}
+                  />
                 </div>
               </div>
-            </div>
-            <Switch
-              checked={settings.emailNotification}
-              onChange={handleEmailToggle}
-              disabled={isPageLoading}
-              className={settings.emailNotification ? 'active-switch' : ''}
-            />
-          </div>
-        </div>
-      </div>
+            </Card>
 
-      {/* LINE 通知卡片 */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-        <div className="p-6 border-b border-gray-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${
-                settings.lineNotification ? 'bg-green-50' : 'bg-gray-50'
-              }`}>
-                <FontAwesomeIcon 
-                  icon={faLine} 
-                  className="text-2xl text-green-600"
-                />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
-                <p className="text-sm text-gray-600">透過 LINE 接收即時通知與重要更新</p>
-                
-                {/* 新增: 顯示已綁定的 LINE ID */}
-                {settings.lineNotification && settings.lineId && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
-                      <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
-                      已綁定
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      LINE ID: {settings.lineId}
-                    </span>
+            {/* LINE 通知卡片 */}
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+                      <FontAwesomeIcon 
+                        icon={faLine} 
+                        className="text-xl text-green-500"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
+                      <p className="text-sm text-gray-600">透過 LINE 接收即時通知與重要更新</p>
+                      {settings.lineNotification && settings.lineId && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
+                            <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
+                            已綁定
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            LINE ID: {settings.lineId}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                  <Switch
+                    checked={settings.lineNotification}
+                    onChange={handleLineToggle}
+                    disabled={!settings.lineId}
+                    sx={{
+                      '& .MuiSwitch-switchBase': {
+                        color: '#9ca3af',
+                        '&:hover': {
+                          backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                        },
+                        '&.Mui-checked': {
+                          color: '#2563eb',
+                          '&:hover': {
+                            backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                          },
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#2563eb',
+                            opacity: 0.5,
+                          },
+                        },
+                        '&.Mui-disabled': {
+                          color: '#e5e7eb',
+                        },
+                      },
+                      '& .MuiSwitch-track': {
+                        backgroundColor: '#d1d5db',
+                        opacity: 0.3,
+                      },
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-            <Switch
-              checked={settings.lineNotification}
-              onChange={handleLineToggle}
-              disabled={!settings.lineNotification}
-              className={settings.lineNotification ? 'active-switch' : ''}
-            />
-          </div>
-        </div>
 
-        {/* 未驗證且未開始驗證時顯示開始驗證按鈕 */}
-        {!settings.lineNotification && !showVerification && (
-          <div className="p-6 bg-gray-50">
-            <div className="text-center">
-              <p className="text-gray-600 mb-4">需要先完成 LINE 驗證才能啟用通知功能</p>
+              {/* LINE 驗證流程區域 */}
+              {!settings.lineId && (
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                  <div className="text-center">
+                    <p className="text-gray-600 mb-4">需要先完成 LINE 驗證才能啟用通知功能</p>
+                    <button
+                      onClick={() => {
+                        startVerification();
+                        setVerificationStep(VerificationStep.SCAN_QR);
+                        setCurrentStep(VerificationStep.SCAN_QR);
+                      }}
+                      className="bg-blue-600 text-white px-6 py-2.5 rounded-lg 
+                        hover:bg-blue-700 active:bg-blue-800
+                        transition-all duration-200 ease-in-out
+                        flex items-center gap-2 mx-auto
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <FontAwesomeIcon icon={faLine} />
+                      開始 LINE 驗證
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* 儲存按鈕區域 */}
+          <div className="flex justify-end mt-6 gap-3">
+            {hasChanges && (
               <button
-                onClick={() => {
-                  startVerification();
-                  setVerificationStep(VerificationStep.SCAN_QR);
-                  setCurrentStep(VerificationStep.SCAN_QR);
-                }}
-                className="bg-green-500 text-white px-6 py-2.5 rounded-lg 
-                         hover:bg-green-600 transition-colors
-                         flex items-center gap-2 mx-auto"
+                onClick={resetSettings}
+                className="px-6 py-2.5 rounded-lg text-gray-700 border border-gray-200
+                  hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300
+                  transition-all duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSaving}
               >
-                <FontAwesomeIcon icon={faLine} />
-                開始 LINE 驗證
+                取消
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* 驗證流程介面 - 只在開始驗證後顯示 */}
-        {!settings.lineNotification && showVerification && (
-          <div className="p-6 bg-gray-50">
-            <div className="max-w-3xl mx-auto mb-8">
-              <div className="relative">
-                <StepIndicators 
-                  currentStep={currentStep}
-                  onStepClick={handleStepChange}
-                />
-              </div>
-            </div>
+            )}
             
-            <div className="max-w-2xl mx-auto">
-              {currentStep === VerificationStep.SCAN_QR && (
-                <QRCodeStep 
-                  onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)}
-                  onCopyLineId={onCopyLineId}
-                />
+            <button
+              onClick={handleSave}
+              disabled={isSaving || !hasChanges}
+              className={`
+                px-6 py-2.5 rounded-lg flex items-center gap-2
+                ${isSaving || !hasChanges 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }
+                transition-all duration-200
+              `}
+            >
+              {isSaving ? (
+                <>
+                  <span className="animate-spin">⌛</span>
+                  儲存中...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faSave} />
+                  儲存設定
+                </>
               )}
-
-              {currentStep === VerificationStep.ADD_FRIEND && (
-                <AddFriendStep 
-                  onBack={() => handleStepChange(VerificationStep.SCAN_QR)}
-                  onNext={() => handleStepChange(VerificationStep.SEND_ID)}
-                />
-              )}
-
-              {currentStep === VerificationStep.SEND_ID && (
-                <SendIdStep 
-                  userId={userId}
-                  onCopyUserId={onCopyUserId}
-                  onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
-                  onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
-                  onSendId={handleSendUserId}
-                  isLoading={settingsLoading}
-                />
-              )}
-
-              {currentStep === VerificationStep.VERIFY_CODE && (
-                <VerifyCodeStep 
-                  verificationCode={verificationCode}
-                  setVerificationCode={setVerificationCode}
-                  onBack={() => handleStepChange(VerificationStep.SEND_ID)}
-                  onVerify={onVerify}
-                  isLoading={settingsLoading}
-                />
-              )}
-            </div>
+            </button>
           </div>
-        )}
-      </div>
-
-      {/* 儲存按鈕區域 */}
-      <div className="flex justify-end mt-6 gap-3">
-        {/* 只在有未儲存的變更時顯示取消按鈕 */}
-        {hasChanges && (
-          <button
-            onClick={resetSettings}
-            className="px-6 py-2.5 bg-gray-600 text-white rounded-lg 
-                     hover:bg-gray-700 transition-colors duration-200
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isSaving}
-          >
-            取消
-          </button>
-        )}
-        
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !hasChanges}
-          className={`
-            px-6 py-2.5 rounded-lg flex items-center gap-2
-            ${isSaving || !hasChanges ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
-            text-white transition-colors duration-200
-          `}
-        >
-          {isSaving ? (
-            <>
-              <span className="animate-spin">⌛</span>
-              儲存中...
-            </>
-          ) : (
-            <>
-              <FontAwesomeIcon icon={faSave} />
-              儲存設定
-            </>
-          )}
-        </button>
-      </div>
+        </>
+      )}
     </div>
   );
 };

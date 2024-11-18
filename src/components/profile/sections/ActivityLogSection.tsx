@@ -9,9 +9,14 @@ import {
   faExclamationTriangle,
   faHistory,
   faCheckCircle,
-  faTimesCircle
+  faTimesCircle,
+  faShieldAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { formatTimeAgo } from '@/utils/dateUtils';
+import { SectionContainer } from '../common/SectionContainer';
+import { Card } from '../common/Card';
+import { commonStyles as styles } from '../common/styles';
+import { SectionTitle } from '../common/SectionTitle';
 
 interface ActivityLog {
   id: string;
@@ -73,17 +78,17 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
 
   return (
     <div className="w-full">
-      <div className="mb-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">活動日誌</h1>
-          <p className="mt-1 text-gray-600">追蹤您的帳戶活動記錄</p>
-        </div>
+      <div className="mb-8">
+        <SectionTitle 
+          title="活動日誌"
+          description="追蹤您的帳戶活動記錄"
+        />
       </div>
 
-      <div className="bg-white rounded-xl border-2 border-gray-300 shadow-sm overflow-hidden">
+      <Card>
         <div className="p-6">
           {activityLog.length === 0 ? (
-            <div className="text-center py-16 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
               <FontAwesomeIcon 
                 icon={faClock} 
                 className="text-6xl text-gray-300 mb-4" 
@@ -100,32 +105,31 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
                   <div className="absolute left-0 top-1/2 -translate-y-1/2">
                     <time className="text-xs font-medium text-gray-600 
                       flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full
-                      shadow border-2 border-gray-300 hover:border-gray-400 transition-colors">
+                      border border-gray-200 group-hover:border-gray-300 
+                      transition-all duration-200 shadow-sm">
                       <FontAwesomeIcon icon={faClock} className="h-3.5 w-3.5" />
-                      <span>
-                        {getDisplayTime(activity)}
-                      </span>
+                      <span>{getDisplayTime(activity)}</span>
                     </time>
                   </div>
 
                   <div className={`absolute left-[6.5rem] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full 
                     bg-white border-2 z-10 transition-all duration-200
                     ${activity.type === 'security_alert' 
-                      ? 'border-yellow-500 ring-4 ring-yellow-100' 
+                      ? 'border-yellow-500 ring-4 ring-yellow-50' 
                       : activity.type === 'account_delete'
-                      ? 'border-red-500 ring-4 ring-red-100'
-                      : 'border-blue-500 ring-4 ring-blue-100'
+                      ? 'border-red-500 ring-4 ring-red-50'
+                      : 'border-blue-500 ring-4 ring-blue-50'
                     }`}>
                   </div>
 
-                  <div className="absolute left-[7rem] top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                  <div className="absolute left-[7rem] top-0 bottom-0 w-0.5 bg-gray-200"></div>
                   
-                  <div className="bg-white p-4 rounded-xl border-2 border-gray-300 
-                    transition-all duration-200 hover:border-gray-400 hover:shadow-lg">
+                  <div className="bg-white p-5 rounded-xl border border-gray-200 
+                    transition-all duration-200 hover:border-gray-300 hover:shadow-md">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center border
                         transition-colors ${getActivityColor(activity.type).replace('text-', 'border-')}
-                        ${getActivityColor(activity.type).replace('text-', 'bg-').replace('500', '100')}`}>
+                        ${getActivityColor(activity.type).replace('text-', 'bg-').replace('500', '50')}`}>
                         <FontAwesomeIcon 
                           icon={getActivityIcon(activity.type)}
                           className={`text-lg ${getActivityColor(activity.type)}`}
@@ -137,20 +141,20 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
                     </div>
                     
                     {activity.details && (
-                      <p className="text-sm text-gray-600 ml-[3.25rem] leading-relaxed">
+                      <p className="text-sm text-gray-600 ml-14 leading-relaxed">
                         {activity.details}
                       </p>
                     )}
                     
                     {activity.status && (
-                      <div className="ml-[3.25rem] mt-2.5">
+                      <div className="ml-14 mt-3">
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
                           border transition-colors
                           ${activity.status === 'success'
-                            ? 'bg-green-50 text-green-700 border-green-300'
+                            ? 'bg-green-50 text-green-700 border-green-200'
                             : activity.status === 'warning'
-                            ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
-                            : 'bg-red-50 text-red-700 border-red-300'
+                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
                           }`}>
                           <FontAwesomeIcon 
                             icon={
@@ -172,7 +176,7 @@ const ActivityLogSection: React.FC<ActivityLogSectionProps> = ({ activityLog }) 
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
