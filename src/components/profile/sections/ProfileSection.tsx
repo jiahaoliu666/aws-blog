@@ -12,6 +12,8 @@ import {
 import { FormData } from '@/types/profileTypes';
 import { useToastContext } from '@/context/ToastContext';
 import { useAuthContext } from '@/context/AuthContext';
+import { SectionTitle } from '../common/SectionTitle';
+import { Card } from '../common/Card';
 
 interface ProfileSectionProps {
   formData: FormData;
@@ -116,13 +118,15 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">個人資訊</h1>
-        <p className="mt-2 text-gray-600">管理您的個人資料與帳號設定</p>
+        <SectionTitle 
+          title="個人資訊"
+          description="管理您的個人資料與帳號設定"
+        />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      <Card>
         {/* 頭像區塊 */}
-        <div className="p-8 border-b border-gray-100">
+        <div className="p-8">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="relative group">
               <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-gray-50">
@@ -166,96 +170,85 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
             <div className="flex-1">
               <div className="space-y-6">
                 {/* 用戶名稱 */}
-                <div className="flex flex-col md:flex-row md:items-center">
-                  <div className="flex items-center gap-2">
-                    <label className="text-lg font-semibold text-gray-800">用戶名稱：</label>
-                    {isEditable.username ? (
-                      <div className="flex gap-3">
-                        <input
-                          type="text"
-                          value={localUsername}
-                          onChange={(e) => setLocalUsername(e.target.value)}
-                          className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
-                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                            transition duration-150 text-lg"
-                          disabled={isLoading}
-                        />
-                        <button
-                          onClick={handleSave}
-                          disabled={isLoading || !localUsername.trim()}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg 
-                            hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                            transition duration-150"
-                        >
-                          {isLoading ? (
-                            <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                          ) : (
-                            <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                          )}
-                          {isLoading ? '儲存中...' : '儲存'}
-                        </button>
-                        <button
-                          onClick={handleCancelChanges}
-                          disabled={isLoading}
-                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg
-                            hover:bg-gray-200 transition duration-150"
-                        >
-                          <FontAwesomeIcon icon={faTimes} className="mr-2" />
-                          取消
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg text-gray-900">{formData.username}</span>
-                        <button
-                          onClick={() => handleEditClick('username')}
-                          className="p-2 text-gray-400 hover:text-blue-600 rounded-full
-                            hover:bg-blue-50 transition duration-150"
-                        >
-                          <FontAwesomeIcon icon={faEdit} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">用戶名稱：</label>
+                  {isEditable.username ? (
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={localUsername}
+                        onChange={(e) => setLocalUsername(e.target.value)}
+                        className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
+                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                          transition duration-150"
+                        disabled={isLoading}
+                      />
+                      <button
+                        onClick={handleSave}
+                        disabled={isLoading || !localUsername.trim()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg 
+                          hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                          transition duration-150 flex items-center gap-2"
+                      >
+                        <FontAwesomeIcon icon={isLoading ? faSpinner : faCheck} 
+                          className={isLoading ? 'animate-spin' : ''} />
+                        {isLoading ? '儲存中' : '儲存'}
+                      </button>
+                      <button
+                        onClick={handleCancelChanges}
+                        disabled={isLoading}
+                        className="px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
+                          hover:bg-gray-50 transition duration-150 flex items-center gap-2"
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                        取消
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-900">{formData.username}</span>
+                      <button
+                        onClick={() => handleEditClick('username')}
+                        className="p-2 text-gray-400 hover:text-blue-600 rounded-full
+                          hover:bg-blue-50 transition duration-150"
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* 電子郵件 */}
-                <div className="flex flex-col md:flex-row md:items-center">
+                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">電子郵件：</label>
                   <div className="flex items-center gap-2">
-                    <label className="text-lg font-semibold text-gray-800">電子郵件：</label>
-                    <span className="text-lg text-gray-900">{formData.email}</span>
-                    <span className="px-2.5 py-1 bg-green-50 text-green-600 text-base font-medium rounded-full">
+                    <span className="text-gray-900">{formData.email}</span>
+                    <span className="px-2.5 py-1 bg-green-50 text-green-600 text-xs font-medium rounded-full">
                       已驗證
                     </span>
                   </div>
                 </div>
 
-                
-
                 {/* 註冊日期 */}
-                <div className="flex flex-col md:flex-row md:items-center">
-                  <div className="flex items-center gap-2">
-                    <label className="text-lg font-semibold text-gray-800">註冊日期：</label>
-                    <span className="text-lg text-gray-900">
-                      {formatDate(user?.registrationDate || formData.registrationDate)}
-                    </span>
-                  </div>
+                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">註冊日期：</label>
+                  <span className="text-gray-900">
+                    {formatDate(user?.registrationDate || formData.registrationDate)}
+                  </span>
                 </div>
+
                 {/* 用戶 ID */}
-                <div className="flex flex-col md:flex-row md:items-center">
-                  <div className="flex items-center gap-2">
-                    <label className="text-lg font-semibold text-gray-800">用戶 ID：</label>
-                    <span className="text-lg text-gray-600 font-mono">
-                      {user?.sub || '未知'}
-                    </span>
-                    <span className="text-sm text-gray-500"></span>
-                  </div>
+                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">用戶 ID：</label>
+                  <span className="text-gray-600 font-mono">
+                    {user?.sub || '未知'}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
