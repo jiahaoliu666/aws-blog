@@ -57,7 +57,11 @@ src/
 │   │   │   ├── FeedbackSection.tsx    // 意見反饋區塊
 │   │   │   ├── AccountSection.tsx     // 帳號管理區塊
 │   │   ├── common
+│   │   │   └── SectionTitle.tsx     // 區塊標題組件    
+│   │   │   └── SectionContainer.tsx  // 區塊容器組件
 │   │   │   └── Sidebar.tsx         // 側邊欄導航組件
+│   │   │   └── Card.tsx            // 卡片組件
+│   │   │   └── styles.ts           // 卡片樣式
 │   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
 │   └── news
 │       ├── NewsSearch.tsx          // 新聞搜尋組件

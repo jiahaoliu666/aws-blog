@@ -12,7 +12,6 @@ import {
   faCalendar
 } from '@fortawesome/free-solid-svg-icons';
 import { SectionContainer } from '../common/SectionContainer';
-import { SectionHeader } from '../common/SectionHeader';
 import { Card } from '../common/Card';
 import { commonStyles as styles } from '../common/styles';
 import { useAuthContext } from '@/context/AuthContext';
