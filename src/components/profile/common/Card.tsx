@@ -9,11 +9,17 @@ interface CardProps {
 export const Card: React.FC<CardProps> = ({ children, className = '' }) => {
   return (
     <div className={`
-      ${commonStyles.container}
+      bg-white 
+      border-2 
+      border-gray-300 
+      rounded-2xl 
+      shadow-sm 
+      hover:border-gray-400 
+      transition-all 
+      duration-200
       ${className}
       w-full
       overflow-hidden
-      p-4 lg:p-6
     `}>
       {children}
     </div>
