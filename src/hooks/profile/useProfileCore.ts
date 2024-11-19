@@ -38,6 +38,7 @@ export type UseProfileCoreReturn = {
   attachments: File[];
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   handleResetVerification: () => Promise<void>;
+  addActivityLog: (action: string, details?: string) => Promise<void>;
 };
 
 export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UseProfileCoreReturn => {
@@ -271,6 +272,24 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     }
   }, [currentUser]);
 
+  const addActivityLog = async (action: string, details?: string) => {
+    try {
+      await fetch('/api/activity-log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: currentUser?.id,
+          action,
+          details
+        })
+      });
+    } catch (error) {
+      console.error('記錄活動失敗:', error);
+    }
+  };
+
   return {
     user: currentUser,
     isLoading,
@@ -293,5 +312,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     attachments,
     setAttachments,
     handleResetVerification,
+    addActivityLog,
   };
 }; 
