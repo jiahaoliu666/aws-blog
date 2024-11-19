@@ -11,9 +11,9 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
   description 
 }) => {
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">{title}</h1>
-      <p className="text-gray-600">{description}</p>
+    <div className="space-y-2">
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">{title}</h1>
+      <p className="text-sm sm:text-base text-gray-600">{description}</p>
     </div>
   );
 };

@@ -71,52 +71,55 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-6 min-h-[calc(100vh-8rem)]">
-      {/* 用戶資訊區塊 - 簡潔設計 */}
-      <div className="relative mb-8">
-        <div className="flex flex-col items-center p-4">
-          <div className="relative group mb-4">
+    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-4 lg:p-6 min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-8rem)]">
+      {/* 用戶資訊區塊 - 改為更緊湊的移動版設計 */}
+      <div className="relative mb-4 lg:mb-8">
+        <div className="flex items-center lg:flex-col lg:items-center p-2 lg:p-4">
+          <div className="relative group">
             <div className="relative">
               <img
                 src={currentAvatar || '/images/default-avatar.png'}
                 alt="Profile"
-                className="w-20 h-20 rounded-full object-cover ring-2 ring-blue-500/80 ring-offset-2 ring-offset-gray-800 transition-all duration-300 group-hover:scale-105 shadow-xl"
+                className="w-14 h-14 lg:w-20 lg:h-20 rounded-full object-cover ring-2 ring-blue-500/80 ring-offset-2 ring-offset-gray-800 transition-all duration-300 group-hover:scale-105 shadow-xl"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = '/images/default-avatar.png';
                 }}
               />
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-gray-800 shadow-lg">
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full border-2 border-gray-800 shadow-lg">
                 <span className="absolute inset-0 rounded-full animate-ping bg-green-500 opacity-75"></span>
               </div>
             </div>
           </div>
           
-          <div className="text-center">
-            <h2 className="font-semibold text-xl tracking-wide mb-2">
+          <div className="ml-4 lg:ml-0 lg:text-center lg:mt-4">
+            <h2 className="font-semibold text-lg lg:text-xl tracking-wide">
               {formData.username}
             </h2>
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-400 hover:text-gray-300 transition-colors duration-300">
+            <div className="flex items-center space-x-2 text-sm text-gray-400">
               <svg 
-                className="w-4 h-4" 
+                className="w-4 h-4 hidden lg:block" 
                 fill="currentColor" 
                 viewBox="0 0 20 20"
               >
                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
               </svg>
-              <span className="truncate max-w-[200px]">{formData.email}</span>
+              <span className="truncate max-w-[180px] lg:max-w-[200px]">{formData.email}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 手機版選單按鈕 - 改善互動效果 */}
+      {/* 改進的手機版選單按鈕 */}
       <button
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-        className="w-full text-white hover:bg-gray-700/50 transition-all duration-300 flex items-center justify-between p-4 rounded-xl border border-gray-700/30 backdrop-blur-sm lg:hidden mb-6"
+        className="w-full bg-gray-700/30 hover:bg-gray-700/50 transition-all duration-300 flex items-center justify-between p-3 rounded-xl border border-gray-700/30 backdrop-blur-sm lg:hidden mb-4"
       >
-        <span className="text-base font-medium">個人選單</span>
+        <div className="flex items-center space-x-3">
+          <FontAwesomeIcon icon={faUser} className="text-blue-400" />
+          <span className="text-base font-medium">個人選單</span>
+        </div>
         <svg 
           className={`w-5 h-5 transform transition-all duration-300 ${
             isProfileMenuOpen ? 'rotate-180' : ''
@@ -129,23 +132,42 @@ const Sidebar: React.FC<SidebarProps> = ({
         </svg>
       </button>
 
-      {/* 選單列表 - 改善視覺效果和互動體驗 */}
-      <ul className={`space-y-2.5 ${isProfileMenuOpen ? 'block' : 'hidden'} lg:block`}>
-        {menuItems.map(({ tab, label, icon }) => (
+      {/* 優化的選單列表 */}
+      <ul className={`
+        space-y-1.5 lg:space-y-2.5 
+        custom-scrollbar
+        ${isProfileMenuOpen 
+          ? 'block animate-menu-expand' 
+          : 'hidden'
+        } 
+        lg:block
+        max-h-[calc(100vh-16rem)] overflow-y-auto
+      `}>
+        {menuItems.map(({ tab, label, icon }, index) => (
           <li
             key={tab}
             className={`
-              p-4 cursor-pointer rounded-xl transition-all duration-300 
-              flex items-center space-x-4 group
+              p-3 lg:p-4 cursor-pointer rounded-xl 
+              transition-all duration-300 
+              flex items-center space-x-3 lg:space-x-4 group
+              animate-slide-in
               ${activeTab === tab 
                 ? 'bg-blue-600/90 text-white shadow-lg shadow-blue-500/20' 
                 : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
               }
             `}
+            style={{ 
+              animationDelay: `${index * 0.05}s`
+            }}
             onClick={() => handleTabChange(tab)}
           >
-            <FontAwesomeIcon icon={icon} className={`text-lg ${activeTab === tab ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
-            <span className="font-medium">{label}</span>
+            <FontAwesomeIcon 
+              icon={icon} 
+              className={`text-base lg:text-lg ${
+                activeTab === tab ? 'text-white' : 'text-gray-400 group-hover:text-white'
+              }`} 
+            />
+            <span className="font-medium text-sm lg:text-base">{label}</span>
           </li>
         ))}
       </ul>
