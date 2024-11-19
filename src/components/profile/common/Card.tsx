@@ -1,27 +1,20 @@
 import React from 'react';
+import { commonStyles } from './styles';
 
-export const Card: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export const Card: React.FC<CardProps> = ({ children, className = '' }) => {
   return (
-    <div className="
-      bg-white 
-      rounded-2xl 
-      shadow-sm 
-      border border-gray-200/80
-      transition-all 
-      duration-300
-      hover:shadow-lg
-      hover:shadow-gray-200/50
-      hover:border-gray-300/80
-      hover:bg-gray-50/50
-      backdrop-blur-xl 
-      backdrop-saturate-150
-      transform-gpu
-      dark:bg-gray-800
-      dark:border-gray-700/80
-      dark:hover:bg-gray-750
-      dark:hover:border-gray-600/80
-      dark:hover:shadow-gray-900/30
-    ">
+    <div className={`
+      ${commonStyles.container}
+      ${className}
+      w-full
+      overflow-hidden
+      p-4 lg:p-6
+    `}>
       {children}
     </div>
   );

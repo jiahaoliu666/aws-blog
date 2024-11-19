@@ -5,7 +5,7 @@ export const commonStyles = {
     cardContainer: 'bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md',
     
     // 內容區塊
-    contentPadding: 'p-4 sm:p-6 lg:p-8',
+    contentPadding: 'p-4 lg:p-6',
     contentDivider: 'border-b border-gray-100',
     
     // 按鈕基礎樣式

@@ -2,6 +2,51 @@
 @tailwind components;  
 @tailwind utilities;  
 
+@layer base {  
+  /* 基礎字體大小調整 */  
+  html {  
+    font-size: 16px;  
+  }  
+  
+  @media (max-width: 1024px) {  
+    html {  
+      font-size: 18px;  
+    }  
+  }  
+  
+  /* 基礎間距調整 */  
+  .container {  
+    @apply px-4 lg:px-6;  
+  }  
+  
+  /* 表單元素基礎樣式 */  
+  input, select, textarea {  
+    @apply text-base lg:text-lg;  
+    @apply p-2 lg:p-3;  
+  }  
+  
+  /* 按鈕基礎樣式 */  
+  button {  
+    @apply text-base lg:text-lg;  
+    @apply px-4 py-2 lg:px-6 lg:py-3;  
+  }  
+}  
+
+/* 自訂組件樣式 */  
+@layer components {  
+  .profile-section {  
+    @apply space-y-4 lg:space-y-6;  
+  }  
+  
+  .profile-card {  
+    @apply p-4 lg:p-6;  
+  }  
+  
+  .profile-grid {  
+    @apply grid gap-4 lg:gap-6;  
+  }  
+}  
+
 body {  
   font-family: Arial, Helvetica, sans-serif;  
 }  
