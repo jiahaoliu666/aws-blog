@@ -9,13 +9,39 @@ export const commonStyles = {
     contentDivider: 'border-b border-gray-100',
     
     // 按鈕基礎樣式
-    button: `
-      px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-medium
-      transition-all duration-200
-      flex items-center gap-2
-      disabled:opacity-50 disabled:cursor-not-allowed
-      focus:outline-none focus:ring-2 focus:ring-offset-2
-    `,
+    button: {
+      primary: `
+        px-4 
+        py-2.5 
+        bg-blue-600 
+        text-white 
+        rounded-lg 
+        hover:bg-blue-700 
+        disabled:opacity-50 
+        disabled:cursor-not-allowed
+        transition-all 
+        duration-150 
+        flex 
+        items-center 
+        gap-2
+        sm:px-6
+      `,
+      
+      secondary: `
+        px-4 
+        py-2.5 
+        text-gray-700 
+        border 
+        border-gray-200 
+        rounded-lg
+        hover:bg-gray-50 
+        hover:text-gray-900 
+        hover:border-gray-300
+        transition-all 
+        duration-150
+        sm:px-6
+      `
+    },
     
     // 主要按鈕
     primaryButton: `
@@ -40,11 +66,20 @@ export const commonStyles = {
     
     // 輸入框
     input: `
-      w-full px-4 py-2.5 sm:py-3
-      bg-gray-50 border border-gray-200 rounded-lg
-      focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-      transition duration-150
-      placeholder:text-gray-400
+      w-full 
+      px-4 
+      py-2.5 
+      bg-gray-50 
+      border 
+      border-gray-200 
+      rounded-lg
+      focus:ring-2 
+      focus:ring-blue-500 
+      focus:border-blue-500 
+      transition-all 
+      duration-150
+      disabled:opacity-50 
+      disabled:cursor-not-allowed
     `,
     
     // 標籤
