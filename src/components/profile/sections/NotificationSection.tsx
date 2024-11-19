@@ -13,7 +13,8 @@ import {
   faPaperPlane,
   faExclamationTriangle,
   faCopy,
-  faTimes
+  faTimes,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -723,8 +724,10 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                       <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
                       <p className="text-sm text-gray-600">接收新消息和重要更新</p>
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-                          <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-50 
+                          text-blue-700 text-xs font-medium rounded-full border border-blue-200
+                          shadow-sm shadow-blue-100/50">
+                          <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                           已綁定
                         </span>
                         <span className="text-xs text-gray-500">{formData.email}</span>
@@ -776,14 +779,23 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
                       <p className="text-sm text-gray-600">透過 LINE 接收即時通知與重要更新</p>
-                      {settings.lineNotification && settings.lineId && (
+                      {settings.lineId ? (
                         <div className="mt-2 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
-                            <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 
+                            text-green-700 text-xs font-medium rounded-full border border-green-200
+                            shadow-sm shadow-green-100/50">
+                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                             已綁定
                           </span>
                           <span className="text-xs text-gray-500">
                             LINE ID: {settings.lineId}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-50 
+                            text-gray-500 text-xs font-medium rounded-full border border-gray-200">
+                            未綁定
                           </span>
                         </div>
                       )}

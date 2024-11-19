@@ -6,7 +6,9 @@ import {
   faTag,
   faComment,
   faUpload,
-  faXmark
+  faXmark,
+  faEnvelope,
+  faPencil
 } from '@fortawesome/free-solid-svg-icons';
 import { SectionContainer } from '../common/SectionContainer';
 import { Card } from '../common/Card';
@@ -63,34 +65,50 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
           {/* 電子郵件 */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
             <div className="p-6">
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2">電子郵件</label>
-                <input
-                  type="email"
-                  value={userEmail}
-                  disabled
-                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600"
-                />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 
+                  flex items-center justify-center">
+                  <FontAwesomeIcon icon={faEnvelope} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">電子郵件</h3>
+                  <p className="text-sm text-gray-600">您的聯絡信箱</p>
+                </div>
               </div>
+              
+              <input
+                type="email"
+                value={userEmail}
+                disabled
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600"
+              />
             </div>
           </div>
 
           {/* 標題輸入 */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
             <div className="p-6">
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2">標題</label>
-                <input
-                  type="text"
-                  value={initialFeedback.title}
-                  onChange={(e) => setParentFeedback((prev: Feedback) => ({
-                    ...prev,
-                    title: e.target.value
-                  }))}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="請輸入標題"
-                />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 
+                  flex items-center justify-center">
+                  <FontAwesomeIcon icon={faPencil} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">標題</h3>
+                  <p className="text-sm text-gray-600">請輸入反饋標題</p>
+                </div>
               </div>
+              
+              <input
+                type="text"
+                value={initialFeedback.title}
+                onChange={(e) => setParentFeedback((prev: Feedback) => ({
+                  ...prev,
+                  title: e.target.value
+                }))}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="請輸入標題"
+              />
             </div>
           </div>
 
