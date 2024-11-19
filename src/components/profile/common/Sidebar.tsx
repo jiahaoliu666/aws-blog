@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faUser, 
@@ -15,6 +15,8 @@ import { FormData } from '@/types/profileTypes';
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isProfileMenuOpen: boolean;
+  setIsProfileMenuOpen: Dispatch<SetStateAction<boolean>>;
   formData: FormData;
   tempAvatar?: string | null;
 }
@@ -22,6 +24,8 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
+  isProfileMenuOpen,
+  setIsProfileMenuOpen,
   formData,
   tempAvatar
 }) => {
@@ -63,6 +67,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    
+    // 觸發側邊欄切換事件
+    const event = new CustomEvent('sectionChange', { 
+      detail: tab 
+    });
+    window.dispatchEvent(event);
   };
 
   return (

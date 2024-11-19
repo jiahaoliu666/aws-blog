@@ -39,6 +39,7 @@ export type UseProfileCoreReturn = {
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   handleResetVerification: () => Promise<void>;
   addActivityLog: (action: string, details?: string) => Promise<void>;
+  resetFeedbackForm: () => void;
 };
 
 export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UseProfileCoreReturn => {
@@ -290,6 +291,15 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     }
   };
 
+  const resetFeedbackForm = useCallback(() => {
+    setFeedback({
+      category: '',
+      content: '',
+      title: ''
+    });
+    setAttachments([]);
+  }, []);
+
   return {
     user: currentUser,
     isLoading,
@@ -313,5 +323,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     setAttachments,
     handleResetVerification,
     addActivityLog,
+    resetFeedbackForm,
   };
 }; 

@@ -325,7 +325,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       
       logger.info('LINE 驗證已重置:', { userId: currentUser?.id });
 
-      // 5. 三秒後重整頁面
+      // 5. 三秒��重整頁面
       setTimeout(() => {
         window.location.reload();
       }, 3000);
@@ -399,7 +399,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   };
 
   const handleSave = async (settings: any) => {
-    console.log('接���到要儲存的設定:', settings);
+    console.log('接到要儲存的設定:', settings);
     await updatePreferences(settings);
   };
 
@@ -501,7 +501,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               onCopyLineId={() => {
                 if (settings.lineId) {
                   navigator.clipboard.writeText(settings.lineId);
-                  toast.success('已複製 LINE ID');
+                  toast.success('已���製 LINE ID');
                 }
               }}
               userId={currentUser?.userId || ''}
@@ -536,6 +536,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               removeAttachment={(index) => {
                 core.setAttachments(prev => prev.filter((_, i) => i !== index));
               }}
+              resetFeedbackForm={core.resetFeedbackForm}
             />
           )}
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPaperPlane,
@@ -36,6 +36,7 @@ interface FeedbackSectionProps {
   attachments: File[];
   handleAttachmentChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   removeAttachment: (index: number) => void;
+  resetFeedbackForm: () => void;
 }
 
 const FeedbackSection: React.FC<FeedbackSectionProps> = ({ 
@@ -48,8 +49,16 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
   attachments,
   handleAttachmentChange,
   removeAttachment,
+  resetFeedbackForm,
 }) => {
   const categories = ['使用體驗', '系統錯誤', '內容相關', '其他'];
+
+  useEffect(() => {
+    // 組件卸載時清理表單
+    return () => {
+      resetFeedbackForm();
+    };
+  }, [resetFeedbackForm]);
 
   return (
     <div className="w-full">
@@ -231,29 +240,36 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
             </div>
           </div>
 
-          {/* 提交按鈕 */}
-          <div className="flex justify-end">
-            <button
-              onClick={onSubmit}
-              disabled={initialIsSubmitting || !initialFeedback.category || !initialFeedback.content}
-              className={`px-6 py-2.5 rounded-lg flex items-center gap-2
-                ${initialIsSubmitting || !initialFeedback.category || !initialFeedback.content
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-                } text-white transition-colors duration-200`}
-            >
-              {initialIsSubmitting ? (
-                <>
-                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                  <span>提交中...</span>
-                </>
-              ) : (
-                <>
-                  <FontAwesomeIcon icon={faPaperPlane} />
-                  <span>提交反饋</span>
-                </>
-              )}
-            </button>
+          {/* 提交按鈕容器 */}
+          <div className="mt-6 px-6 mr-2 pb-6 -mx-6 border-gray-100 ">
+            <div className="flex justify-end">
+              <button
+                onClick={onSubmit}
+                disabled={initialIsSubmitting}
+                className={`
+                  px-6 py-3
+                  rounded-xl
+                  flex items-center gap-2
+                  transition-all duration-200
+                  ${initialIsSubmitting
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+                  }
+                `}
+              >
+                {initialIsSubmitting ? (
+                  <>
+                    <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                    提交中...
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faPaperPlane} />
+                    提交反饋
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* 提交訊息 */}

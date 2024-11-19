@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -257,6 +257,22 @@ export const useProfileFeedback = ({
     setAttachments([]);
     setFeedbackMessage(null);
   };
+
+  useEffect(() => {
+    // 監聽側邊欄切換事件
+    const handleSectionChange = (event: CustomEvent) => {
+      const newSection = event.detail;
+      if (newSection !== 'feedback') {
+        resetFeedbackForm();
+      }
+    };
+
+    window.addEventListener('sectionChange', handleSectionChange as EventListener);
+
+    return () => {
+      window.removeEventListener('sectionChange', handleSectionChange as EventListener);
+    };
+  }, []);
 
   return {
     feedback,
