@@ -15,8 +15,6 @@ import { FormData } from '@/types/profileTypes';
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  isProfileMenuOpen: boolean;
-  setIsProfileMenuOpen: (isOpen: boolean) => void;
   formData: FormData;
   tempAvatar?: string | null;
 }
@@ -24,8 +22,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
-  isProfileMenuOpen,
-  setIsProfileMenuOpen,
   formData,
   tempAvatar
 }) => {
@@ -67,13 +63,17 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setIsProfileMenuOpen(false);
   };
 
   return (
-    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-4 lg:p-6 min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-8rem)]">
-      {/* 用戶資訊區塊 - 改為更緊湊的移動版設計 */}
-      <div className="relative mb-4 lg:mb-8">
+    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-4 lg:p-6 
+      min-h-fit lg:min-h-[calc(100vh-8rem)]
+      flex flex-col
+      relative
+    ">
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 rounded-2xl -z-10" />
+      
+      <div className="relative mb-3 lg:mb-8 flex-shrink-0">
         <div className="flex items-center lg:flex-col lg:items-center p-2 lg:p-4">
           <div className="relative group">
             <div className="relative">
@@ -111,43 +111,21 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* 改進的手機版選單按鈕 */}
-      <button
-        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-        className="w-full bg-gray-700/30 hover:bg-gray-700/50 transition-all duration-300 flex items-center justify-between p-3 rounded-xl border border-gray-700/30 backdrop-blur-sm lg:hidden mb-4"
-      >
-        <div className="flex items-center space-x-3">
-          <FontAwesomeIcon icon={faUser} className="text-blue-400" />
-          <span className="text-base font-medium">個人選單</span>
-        </div>
-        <svg 
-          className={`w-5 h-5 transform transition-all duration-300 ${
-            isProfileMenuOpen ? 'rotate-180' : ''
-          }`} 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {/* 優化的選單列表 */}
-      <ul className={`
+      <ul className="
         space-y-1.5 lg:space-y-2.5 
         custom-scrollbar
-        ${isProfileMenuOpen 
-          ? 'block animate-menu-expand' 
-          : 'hidden'
-        } 
-        lg:block
-        max-h-[calc(100vh-16rem)] overflow-y-auto
-      `}>
+        block
+        max-h-[min(60vh,400px)] lg:max-h-[calc(100vh-16rem)]
+        overflow-y-auto
+        flex-grow
+        relative
+        mb-2 lg:mb-4
+      ">
         {menuItems.map(({ tab, label, icon }, index) => (
           <li
             key={tab}
             className={`
-              p-3 lg:p-4 cursor-pointer rounded-xl 
+              p-2.5 lg:p-4 cursor-pointer rounded-xl 
               transition-all duration-300 
               flex items-center space-x-3 lg:space-x-4 group
               animate-slide-in
@@ -171,6 +149,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           </li>
         ))}
       </ul>
+
+      <div className="h-4 flex-shrink-0" />
     </div>
   );
 };
