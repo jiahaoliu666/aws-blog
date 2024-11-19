@@ -12,20 +12,25 @@ import { ThemeProvider } from '@/context/ThemeContext';
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <ThemeProvider>
-          <AppProvider>
-            <LanguageProvider>
-              <Head>
-                <title>AWS Blog 365</title>
-              </Head>
-              <Component {...pageProps} />
-            </LanguageProvider>
-          </AppProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </ToastProvider>
+    <>
+      <Head>
+        <title>AWS Blog 365</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      </Head>
+      <ToastProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <AppProvider>
+              <LanguageProvider>
+                <div className="min-h-screen flex flex-col">
+                  <Component {...pageProps} />
+                </div>
+              </LanguageProvider>
+            </AppProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </>
   );
 };
 

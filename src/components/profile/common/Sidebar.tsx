@@ -76,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className="
+    <div className={`
       w-full lg:w-1/4 
       bg-gradient-to-br from-gray-800/95 via-gray-850 to-gray-900/95
       backdrop-blur-sm
@@ -86,7 +86,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       min-h-fit lg:min-h-[calc(100vh-8rem)]
       flex flex-col
       relative
-    ">
+      z-0
+    `}>
       <div className="absolute inset-0 bg-gradient-to-br from-gray-800/95 via-gray-850 to-gray-900/95 rounded-xl lg:rounded-2xl -z-10" />
       
       <div className="relative mb-4 lg:mb-8 flex-shrink-0">

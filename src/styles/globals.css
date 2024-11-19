@@ -3,33 +3,20 @@
 @tailwind utilities;  
 
 @layer base {  
-  /* 基礎字體大小調整 */  
-  html {  
-    font-size: 16px;  
+  body {  
+    @apply m-0 p-0 min-h-screen bg-gray-50;  
   }  
-  
-  @media (max-width: 1024px) {  
-    html {  
-      font-size: 18px;  
-    }  
-  }  
-  
-  /* 基礎間距調整 */  
-  .container {  
-    @apply px-4 lg:px-6;  
-  }  
-  
-  /* 表單元素基礎樣式 */  
-  input, select, textarea {  
-    @apply text-base lg:text-lg;  
-    @apply p-2 lg:p-3;  
-  }  
-  
-  /* 按鈕基礎樣式 */  
-  button {  
-    @apply text-base lg:text-lg;  
-    @apply px-4 py-2 lg:px-6 lg:py-3;  
-  }  
+}  
+
+/* 確保導航欄的固定定位 */  
+.navbar {  
+  @apply fixed top-0 left-0 w-full z-50;  
+}  
+
+/* 容器基礎樣式 */  
+.container {  
+  @apply mx-auto;  
+  max-width: 1280px;  
 }  
 
 /* 自訂組件樣式 */  
@@ -238,4 +225,43 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(156, 163, 175, 0.5);
+}  
+
+/* 導航欄特定樣式 */
+.navbar-container {
+  @apply w-full bg-white border-b border-gray-200;
+}
+
+.navbar-content {
+  @apply container flex items-center justify-between h-16;
+}
+
+/* 確保導航欄固定寬度 */
+.navbar-fixed {
+  @apply fixed top-0 left-0 right-0 z-50;
+  width: 100%;
+}  
+
+/* 移除可能影響全局布局的樣式 */
+@layer base {
+  body {
+    @apply min-h-screen bg-gray-50;
+  }
+  
+  /* 確保主要內容區域不會影響導航欄 */
+  main {
+    @apply pt-16; /* 為固定導航欄留出空間 */
+  }
+}
+
+/* 修正容器類 */
+.container {
+  @apply mx-auto px-4 lg:px-6;
+  max-width: 1280px; /* 限制最大寬度 */
+}
+
+/* 確保導航欄樣式優先級 */
+.navbar {
+  @apply fixed top-0 left-0 right-0 z-50;
+  width: 100% !important;
 }  
