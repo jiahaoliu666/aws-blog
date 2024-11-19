@@ -223,7 +223,10 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   <label className="text-sm font-medium text-gray-700">電子郵件：</label>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-900">{formData.email}</span>
-                    <span className="px-2.5 py-1 bg-green-50 text-green-600 text-xs font-medium rounded-full">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 
+                      text-green-700 text-xs font-medium rounded-full border border-green-200
+                      shadow-sm shadow-green-100/50">
+                      <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                       已驗證
                     </span>
                   </div>

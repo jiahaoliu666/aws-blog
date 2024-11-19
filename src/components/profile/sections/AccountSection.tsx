@@ -9,7 +9,8 @@ import {
   faUser,
   faEnvelope,
   faFingerprint,
-  faCalendar
+  faCalendar,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import { SectionContainer } from '../common/SectionContainer';
 import { Card } from '../common/Card';
@@ -92,7 +93,14 @@ const AccountSection: React.FC<AccountSectionProps> = ({
       icon: faEnvelope,
       label: '電子郵件',
       value: accountInfo.email,
-      badge: '已驗證'
+      badge: (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 
+          text-green-700 text-xs font-medium rounded-full border border-green-200
+          shadow-sm shadow-green-100/50">
+          <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+          已驗證
+        </span>
+      )
     },
     {
       icon: faFingerprint,
@@ -137,9 +145,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
                       {item.value}
                     </p>
                     {item.badge && (
-                      <span className={styles.badge.success}>
-                        {item.badge}
-                      </span>
+                      item.badge
                     )}
                   </div>
                 </div>
