@@ -6,17 +6,17 @@ interface SectionContainerProps {
   className?: string;
 }
 
-export const SectionContainer: React.FC<SectionContainerProps> = ({ 
-  children,
-  className = ''
-}) => {
+export const SectionContainer: React.FC<SectionContainerProps> = ({ children, className = '' }) => {
   return (
     <div className={`
-      w-full
-      max-w-screen-xl
-      mx-auto
-      px-4 lg:px-6
-      py-4 lg:py-8
+      w-full 
+      max-w-7xl 
+      mx-auto 
+      px-4 
+      sm:px-6 
+      lg:px-8 
+      transition-all 
+      duration-200 
       ${className}
     `}>
       {children}
