@@ -66,37 +66,51 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className="w-full lg:w-1/4 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 text-white rounded-2xl shadow-2xl p-4 lg:p-6 
+    <div className="
+      w-full lg:w-1/4 
+      bg-gradient-to-br from-gray-800/95 via-gray-850 to-gray-900/95
+      backdrop-blur-sm
+      text-white rounded-xl lg:rounded-2xl 
+      shadow-lg lg:shadow-2xl 
+      p-3.5 lg:p-6 
       min-h-fit lg:min-h-[calc(100vh-8rem)]
       flex flex-col
       relative
     ">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900 rounded-2xl -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-800/95 via-gray-850 to-gray-900/95 rounded-xl lg:rounded-2xl -z-10" />
       
-      <div className="relative mb-3 lg:mb-8 flex-shrink-0">
-        <div className="flex items-center lg:flex-col lg:items-center p-2 lg:p-4">
+      <div className="relative mb-4 lg:mb-8 flex-shrink-0">
+        <div className="flex items-center p-2 lg:flex-col lg:items-center lg:p-4">
           <div className="relative group">
             <div className="relative">
               <img
                 src={currentAvatar || '/images/default-avatar.png'}
                 alt="Profile"
-                className="w-14 h-14 lg:w-20 lg:h-20 rounded-full object-cover ring-2 ring-blue-500/80 ring-offset-2 ring-offset-gray-800 transition-all duration-300 group-hover:scale-105 shadow-xl"
+                className="
+                  w-14 h-14 lg:w-20 lg:h-20 
+                  rounded-full object-cover 
+                  ring-2 ring-blue-500/70 
+                  ring-offset-2 ring-offset-gray-800 
+                  transition-all duration-300 
+                  group-hover:scale-105 
+                  shadow-md
+                "
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = '/images/default-avatar.png';
                 }}
               />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full border-2 border-gray-800 shadow-lg">
+              <div className="absolute -bottom-1 -right-1 lg:-bottom-1 lg:-right-1 w-3.5 h-3.5 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-gray-800 shadow-sm">
                 <span className="absolute inset-0 rounded-full animate-ping bg-green-500 opacity-75"></span>
               </div>
             </div>
           </div>
           
-          <div className="ml-4 lg:ml-0 lg:text-center lg:mt-4">
-            <h2 className="font-semibold text-lg lg:text-xl tracking-wide">
+          <div className="ml-3.5 lg:ml-0 lg:text-center lg:mt-4">
+            <h2 className="font-semibold text-base lg:text-xl tracking-wide mb-1 lg:mb-1">
               {formData.username}
             </h2>
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <div className="flex items-center space-x-1.5 text-sm lg:text-sm text-gray-400/90">
               <svg 
                 className="w-4 h-4 hidden lg:block" 
                 fill="currentColor" 
@@ -112,25 +126,30 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <ul className="
-        space-y-1.5 lg:space-y-2.5 
+        space-y-2 lg:space-y-2.5 
         custom-scrollbar
         block
-        max-h-[min(60vh,400px)] lg:max-h-[calc(100vh-16rem)]
+        max-h-[calc(100vh-12rem)] lg:max-h-[calc(100vh-16rem)]
         overflow-y-auto
         flex-grow
         relative
         mb-2 lg:mb-4
+        px-1.5 lg:px-0
       ">
         {menuItems.map(({ tab, label, icon }, index) => (
           <li
             key={tab}
             className={`
-              p-2.5 lg:p-4 cursor-pointer rounded-xl 
+              p-3 lg:p-4 
+              cursor-pointer 
+              rounded-lg lg:rounded-xl 
               transition-all duration-300 
-              flex items-center space-x-3 lg:space-x-4 group
+              flex items-center 
+              space-x-3 lg:space-x-4 
+              group
               animate-slide-in
               ${activeTab === tab 
-                ? 'bg-blue-600/90 text-white shadow-lg shadow-blue-500/20' 
+                ? 'bg-blue-600/90 text-white shadow-md shadow-blue-500/20' 
                 : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
               }
             `}
@@ -145,12 +164,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                 activeTab === tab ? 'text-white' : 'text-gray-400 group-hover:text-white'
               }`} 
             />
-            <span className="font-medium text-sm lg:text-base">{label}</span>
+            <span className="font-medium text-base lg:text-base">{label}</span>
           </li>
         ))}
       </ul>
 
-      <div className="h-4 flex-shrink-0" />
+      <div className="h-2 lg:h-4 flex-shrink-0" />
     </div>
   );
 };
