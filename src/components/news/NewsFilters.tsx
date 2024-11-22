@@ -117,49 +117,48 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
 
   return (
     <div className="flex flex-row flex-wrap items-center gap-4 w-full mb-6">
-      <div className="flex flex-wrap items-center gap-4 sm:gap-2">
-        <div className="flex items-center min-w-[100px] pl-0">
-          <SwitchField
-            label={
-              <span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"} -ml-1`}>
-                一鍵總結
-              </span>
-            }
-            labelPosition="start"
-            isChecked={showSummaries}
-            onChange={handleSummariesToggle}
-            className="scale-[0.75]"
-          />
-        </div>
-
-        <div className="flex items-center">
-          <SwitchField
-            label={<span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}
-            labelPosition="start"
-            isChecked={showFavorites}
-            onChange={(e) => setShowFavorites(e.target.checked)}
-            className="scale-[0.75]"
-          />
-        </div>
-
-        <div className="flex items-center">
-          <SwitchField
-            label={<span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}
-            labelPosition="start"
-            isChecked={isDarkMode}
-            onChange={handleDarkModeToggle}
-            className="scale-[0.75]"
-          />
-        </div>
-
-        <div className="flex items-center">
-          <SwitchField
-            label={<span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}
-            labelPosition="start"
-            isChecked={gridView}
-            onChange={handleViewModeToggle}
-            className="scale-[0.75]"
-          />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center pl-0">
+            <SwitchField
+              label={
+                <span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"} -ml-1`}>
+                  一鍵總結
+                </span>
+              }
+              labelPosition="start"
+              isChecked={showSummaries}
+              onChange={handleSummariesToggle}
+              className="scale-[0.75]"
+            />
+          </div>
+          <div className="flex items-center">
+            <SwitchField
+              label={<span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}
+              labelPosition="start"
+              isChecked={showFavorites}
+              onChange={(e) => setShowFavorites(e.target.checked)}
+              className="scale-[0.75]"
+            />
+          </div>
+          <div className="flex items-center">
+            <SwitchField
+              label={<span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換主題</span>}
+              labelPosition="start"
+              isChecked={isDarkMode}
+              onChange={handleDarkModeToggle}
+              className="scale-[0.75]"
+            />
+          </div>
+          <div className="flex items-center">
+            <SwitchField
+              label={<span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>切換視圖</span>}
+              labelPosition="start"
+              isChecked={gridView}
+              onChange={handleViewModeToggle}
+              className="scale-[0.75]"
+            />
+          </div>
         </div>
       </div>
 

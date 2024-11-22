@@ -9,6 +9,9 @@ const config: Config = {
   darkMode: 'class',
   theme: {  
     extend: {  
+      screens: {
+        '3xl': '1400px',
+      },
       colors: {  
         awsOrange: '#FF9900',  
         awsGray: '#F8F9FA',  
