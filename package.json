@@ -19,6 +19,8 @@
     "@aws-sdk/client-translate": "^3.668.0",
     "@aws-sdk/lib-dynamodb": "^3.668.0",
     "@aws-sdk/s3-request-presigner": "^3.688.0",
+    "@cloudscape-design/components": "^3.0.839",
+    "@cloudscape-design/global-styles": "^1.0.32",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
