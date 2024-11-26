@@ -133,8 +133,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const activity = useProfileActivity({ user: currentUser });
   const password = useProfilePassword({ 
     user: currentUser, 
-    handleLogout: logoutUser,
-    addActivityLog: activity.addActivityLog 
+    handleLogout: logoutUser
   });
   const articles = useProfileArticles({ user: currentUser });
   const lineVerification = useLineVerification();
@@ -325,7 +324,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       
       logger.info('LINE 驗證已重置:', { userId: currentUser?.id });
 
-      // 5. 三秒��重整頁面
+      // 5. 三秒重整頁面
       setTimeout(() => {
         window.location.reload();
       }, 3000);
@@ -501,7 +500,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               onCopyLineId={() => {
                 if (settings.lineId) {
                   navigator.clipboard.writeText(settings.lineId);
-                  toast.success('已���製 LINE ID');
+                  toast.success('已製 LINE ID');
                 }
               }}
               userId={currentUser?.userId || ''}

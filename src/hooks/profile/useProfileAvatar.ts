@@ -4,6 +4,7 @@ import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
 import { useToastContext } from '@/context/ToastContext';
+import logActivity from '@/pages/api/profile/activity-log';
 
 interface UseProfileAvatarProps {
   user: User | null;
@@ -147,6 +148,9 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
       // 更新 DynamoDB
       await updateDynamoDB(user.sub, avatarUrl);
 
+      // 記錄變更活動
+      await logActivity(user.sub, '更新個人頭像');
+
       // 更新本地存儲和狀態
       localStorage.setItem('userAvatar', avatarUrl);
       setTempAvatar(avatarUrl);
@@ -161,6 +165,11 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
 
       window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: avatarUrl }));
       showToast('頭像已成功更新', 'success');
+
+      // 新增：3秒後重新載入頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
 
     } catch (error) {
       showToast(

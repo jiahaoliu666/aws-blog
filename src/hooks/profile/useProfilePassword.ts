@@ -4,11 +4,11 @@ import { User } from '@/types/userType';
 import { useToastContext } from '@/context/ToastContext';
 import { logger } from '@/utils/logger';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
+import logActivity from '@/pages/api/profile/activity-log';
 
 interface UseProfilePasswordProps {
   user: User | null;
   handleLogout: () => void;
-  addActivityLog: (action: string, details?: string) => Promise<void>;
 }
 
 interface PasswordRequirements {
@@ -20,7 +20,7 @@ interface PasswordRequirements {
   passwordsMatch: boolean;
 }
 
-export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UseProfilePasswordProps) => {
+export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps) => {
   const { showToast } = useToastContext();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -67,6 +67,11 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
   };
 
   const handleChangePassword = async () => {
+    if (!user?.sub) {
+      showToast('使用者資訊無效', 'error');
+      return;
+    }
+
     setIsLoading(true);
     showToast('正在更新密碼...', 'loading');
 
@@ -108,25 +113,18 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
 
       await cognitoClient.send(changePasswordCommand);
       
-      // 記錄活動，使用與 useProfileForm 相的格式
-      if (!user) {
-        throw new Error('使用者未登入');
-      }
+      // 修改活動記錄
+      await logActivity(user.sub, '變更密碼');
       
-      if (typeof addActivityLog !== 'function') {
-        throw new Error('addActivityLog 函數未正確初始化');
-      }
-      
-      await addActivityLog(user.sub, '變更密碼');
-      
-      // 重置表單
       resetPasswordFields();
       
       showToast('密碼變更成功！請重新登入', 'success');
       
-      setTimeout(() => {
+      // 修改登出活動記錄
+      setTimeout(async () => {
+        await logActivity(user.sub, '系統自動登出（密碼變更）');
         handleLogout();
-      }, 3300);
+      }, 3000);
 
     } catch (error: any) {
       const errorMessage = 
@@ -134,9 +132,19 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
           ? '密碼錯誤，請重新輸入'
           : error.message === 'Attempt limit exceeded, please try after some time.'
             ? '嘗試次數過多，請稍後再試'
-            : error.message || '更新失敗，請稍後再試';
+            : error.message === 'Access Token has expired'
+              ? '憑證已過期，請重新登入'
+              : error.message || '更新失敗，請稍後再試';
       
       showToast(errorMessage, 'error');
+      
+      // 如果是 token 過期，自動登出
+      if (error.message === 'Access Token has expired') {
+        setTimeout(() => {
+          handleLogout();
+        }, 2000);
+      }
+      
       logger.error('更新密碼失敗:', error);
     } finally {
       setIsLoading(false);
