@@ -49,21 +49,14 @@ export class DbService {
   }
 
   async deleteUserAccount(userId: string) {
-    try {
-      const transactItems = Object.values(DB_TABLES).map(tableName => ({
-        Delete: {
-          TableName: tableName,
-          Key: { userid: { S: userId } }
-        }
-      }));
+    const transactItems = Object.values(DB_TABLES).map(tableName => ({
+      Delete: {
+        TableName: tableName,
+        Key: { userid: { S: userId } }
+      }
+    }));
 
-      await this.client.send(new TransactWriteItemsCommand({ TransactItems: transactItems }));
-      logger.info('成功刪除用戶所有資料', { userId });
-      return true;
-    } catch (error) {
-      logger.error('刪除用戶資料失敗', { userId, error });
-      throw new Error('刪除用戶資料失敗');
-    }
+    await this.client.send(new TransactWriteItemsCommand({ TransactItems: transactItems }));
   }
 
   private async markAsDeleted(tableName: string, userId: string) {

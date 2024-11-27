@@ -23,7 +23,7 @@ import { SectionTitle } from '../common/SectionTitle';
 import { useRouter } from 'next/router';
 
 interface AccountSectionProps {
-  accountStatus: string;
+  accountStatus?: string;
   isLoading: boolean;
   error: string | null;
   handleAccountDeletion: (password: string) => Promise<void>;

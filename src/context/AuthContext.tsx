@@ -82,52 +82,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           PASSWORD: password,
         },
       });
+
       const response = await cognitoClient.send(command);
       const authResult = response.AuthenticationResult;
 
-      if (authResult && authResult.AccessToken && authResult.RefreshToken) {
-        const accessToken = authResult.AccessToken;
-        const refreshToken = authResult.RefreshToken;
-
-        const userCommand = new GetUserCommand({ AccessToken: accessToken });
-        const userResponse = await cognitoClient.send(userCommand);
-
-        const nameAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'name');
-        const userIdAttribute = userResponse.UserAttributes?.find(attr => attr.Name === 'sub');
-
-        const username = nameAttribute ? nameAttribute.Value || email : email;
-
-        if (!userIdAttribute || !userIdAttribute.Value) {
-          throw new Error("無法獲取用戶的 ID（sub）。");
-        }
-        const userId = userIdAttribute.Value;
-
-        const registrationDateAttribute = userResponse.UserAttributes?.find(
-          attr => attr.Name === 'custom:registrationDate'
-        );
-
-        const registrationDate = registrationDateAttribute?.Value;
-        console.log('Cognito registrationDate:', registrationDate); // 用於調試
-
-        const user: User = { 
-          accessToken, 
-          refreshToken, 
-          username, 
-          sub: userId, 
+      if (authResult?.AccessToken) {
+        const user: User = {
+          id: email,           // 使用 email 作為臨時 id
           email,
-          avatar: '',
-          userId: userId,
-          id: userId,
-          favorites: [],
-          registrationDate: registrationDate || new Date().toISOString().split('T')[0]
+          accessToken: authResult.AccessToken,
+          refreshToken: authResult.RefreshToken || '',
+          username: email,     // 使用 email 作為用戶名
+          userId: email,       // 使用 email 作為 userId
+          sub: email          // 使用 email 作為 sub
         };
+        
         setUser(user);
         if (typeof window !== 'undefined') {
-          window.localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("user", JSON.stringify(user));
         }
-
-        await logActivity(userId, '登入帳戶');
-
         return true;
       }
     } catch (err) {
@@ -185,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuthContext 必須在 AuthProvider 中使用');
+    throw new Error('useAuthContext 必須在 AuthProvider 使用');
   }
   return context;
 };

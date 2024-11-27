@@ -9,7 +9,7 @@ import { sendEmail } from '@/services/emailService';
 import RateLimiter from '@/utils/rateLimiter';
 import { generateAccountDeletionEmail } from '@/templates/deleteAccountEmail';
 
-const limiter = new RateLimiter(5, 15 * 60); // 15分鐘內最多5次請求
+const limiter = new RateLimiter(5, 15 * 60);
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,84 +19,99 @@ export default async function handler(
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const dbService = new DbService();
-  const authService = new AuthService();
-
   try {
-    // 添加請求日誌
-    console.log('收到刪除帳號請求:', {
-      method: req.method,
-      body: req.body,
-      headers: req.headers
-    });
+    const { password, email } = req.body;
+    logger.info('接收刪除帳戶請求:', { email });
 
-    // 應用速率限制
-    const isAllowed = await limiter.check(req, res);
-    if (!isAllowed) {
-      return res.status(429).json({ 
-        success: false,
-        message: '請求過於頻繁，請稍後再試' 
-      });
-    }
-
-    const session = await getSession({ req });
-    if (!session?.user) {
-      return res.status(401).json({ 
-        success: false,
-        message: '未授權的請求' 
-      });
-    }
-
-    const { password } = req.body;
-    const userId = session.user.email;
-    
-    if (!userId || !password) {
+    if (!password || !email) {
+      logger.warn('缺少必要參數');
       return res.status(400).json({ 
         success: false,
         message: '缺少必要參數' 
       });
     }
 
+    const authService = new AuthService();
+    const dbService = new DbService();
+
     // 驗證密碼
-    const isPasswordValid = await authService.validatePassword(userId, password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ 
+    logger.info('開始驗證用戶密碼:', { email });
+    const isValid = await authService.validateUserPassword(email, password);
+    if (!isValid) {
+      logger.warn('密碼驗證失敗:', { email });
+      return res.status(401).json({
         success: false,
-        message: '密碼錯誤' 
+        message: '請輸入正確的密碼'
       });
     }
 
-    // 從 Cognito 刪除用戶
-    await authService.deleteUserFromCognito(userId);
+    // 先刪除資料庫中的用戶資料
+    try {
+      logger.info('開始從資料庫刪除用戶資料:', { email });
+      await dbService.deleteUserAccount(email);
+      logger.info('資料庫用戶資料刪除成功:', { email });
+    } catch (dbError: any) {
+      logger.error('刪除資料庫資料時發生錯誤:', {
+        errorName: dbError.name,
+        errorMessage: dbError.message,
+        email
+      });
+      throw dbError;
+    }
 
-    // 從資料庫刪除用戶資料
-    await dbService.deleteUserAccount(userId);
+    // 然後刪除 Cognito 用戶
+    try {
+      logger.info('開始從 Cognito 刪除用戶:', { email });
+      await authService.deleteUserFromCognito(email);
+      logger.info('Cognito 用戶刪除成功:', { email });
+    } catch (cognitoError: any) {
+      logger.error('刪除 Cognito 用戶時發生錯誤:', {
+        errorName: cognitoError.name,
+        errorMessage: cognitoError.message,
+        email
+      });
+      throw cognitoError;
+    }
 
     // 發送確認郵件
     try {
+      logger.info('開始發送刪除確認郵件:', { email });
       await sendEmail({
-        to: userId,
+        to: email,
         subject: '帳號刪除確認',
-        content: '您的帳號已被永久刪除，所有相關資料已被清除。',
+        content: generateAccountDeletionEmail({
+          title: '帳號刪除確認',
+          content: '您的帳號已被永久刪除，所有相關資料已被清除。'
+        }),
         articleData: {
           title: '帳號刪除確認',
           content: '您的帳號已被永久刪除，所有相關資料已被清除。'
         }
       });
+      logger.info('刪除確認郵件發送成功:', { email });
     } catch (emailError) {
-      console.error('發送確認郵件失敗:', emailError);
-      // 不中斷流程，繼續執行
+      logger.error('發送確認郵件時發生錯誤:', { 
+        error: emailError,
+        email 
+      });
+      // 不中斷流程
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       success: true,
-      message: '帳號已永久刪除' 
+      message: '帳號已永久刪除'
     });
-  } catch (error) {
-    console.error('刪除帳號時發生錯誤:', error);
-    return res.status(500).json({ 
+
+  } catch (error: any) {
+    logger.error('刪除帳號時發生錯誤:', {
+      errorName: error.name,
+      errorMessage: error.message,
+      email: req.body.email
+    });
+
+    return res.status(500).json({
       success: false,
-      message: '刪除帳號時發生錯誤，請稍後重試' 
+      message: '刪除帳號時發生錯誤，請稍後重試'
     });
   }
 }

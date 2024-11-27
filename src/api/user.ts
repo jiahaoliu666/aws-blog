@@ -32,21 +32,64 @@ export const api = {
 
   deleteAccount: async (password: string) => {
     try {
-      console.log('發送刪除帳號請求', { hasPassword: !!password });
+      logger.info('開始刪除帳號流程');
+      
+      // 從 localStorage 獲取用戶資訊
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        logger.error('未找到用戶資訊');
+        throw new Error('未找到用戶資訊');
+      }
 
-      const response = await axios.delete(API_ENDPOINTS.DELETE_ACCOUNT, {
-        data: { password },
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const user = JSON.parse(userStr);
+      logger.info('用戶資訊檢查:', { 
+        hasEmail: !!user.email,
+        hasAccessToken: !!user.accessToken 
       });
 
-      console.log('刪除帳號響應:', response.data);
+      const response = await axios.delete(API_ENDPOINTS.DELETE_ACCOUNT, {
+        data: { 
+          password,
+          email: user.email
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.accessToken || ''}`
+        }
+      }).catch((error) => {
+        logger.error('API 請求失敗:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message
+        });
+        throw error;
+      });
 
+      logger.info('刪除帳號 API 響應:', { 
+        status: response.status,
+        success: response.data?.success 
+      });
+      
       return response.data;
-    } catch (error) {
-      logger.error('刪除帳號請求失敗', { error });
-      throw handleApiError(error as AxiosError);
+    } catch (error: any) {
+      logger.error('刪除帳號失敗:', {
+        errorMessage: error.message,
+        errorName: error.name,
+        status: error.response?.status,
+        responseData: error.response?.data
+      });
+
+      // 根據錯誤狀態返回適當的錯誤訊息
+      if (error.response?.status === 500) {
+        throw new Error('伺服器處理請求時發生錯誤，請稍後重試');
+      } else if (error.response?.status === 401) {
+        throw new Error('密碼錯誤或未授權，請確認後重試');
+      } else if (error.response?.status === 404) {
+        throw new Error('找不到指定的用戶');
+      }
+      
+      throw new Error(error.response?.data?.message || '刪除帳號時發生錯誤，請稍後重試');
     }
   },
 
