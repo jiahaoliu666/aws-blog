@@ -16,6 +16,7 @@ export function generateAccountDeletionEmail(articleData: ArticleData): string {
           <li>個人偏好設定</li>
           <li>個人資料</li>
           <li>最近閱讀文章記錄</li>
+          <li>所有上傳的檔案</li>
         </ul>
         <p>如有任何疑問，請聯繫我們的客戶支援。</p>
       </body>

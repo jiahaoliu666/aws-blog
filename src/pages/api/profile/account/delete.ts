@@ -36,13 +36,25 @@ export default async function handler(
 
     // 驗證密碼
     logger.info('開始驗證用戶密碼:', { email });
-    const isValid = await authService.validateUserPassword(email, password);
-    if (!isValid) {
+    const isValidPassword = await authService.validateUserPassword(email, password);
+    
+    if (!isValidPassword) {
       logger.warn('密碼驗證失敗:', { email });
       return res.status(401).json({
         success: false,
-        message: '請輸入正確的密碼'
+        message: '密碼錯誤'
       });
+    }
+
+    // 刪除用戶的 S3 檔案
+    try {
+      await dbService.deleteUserS3Files(email);
+    } catch (s3Error) {
+      logger.error('刪除用戶 S3 檔案時發生錯誤:', {
+        error: s3Error,
+        email
+      });
+      // 不中斷流程，繼續刪除其他資料
     }
 
     // 先刪除資料庫中的用戶資料
@@ -90,10 +102,7 @@ export default async function handler(
       });
       logger.info('刪除確認郵件發送成功:', { email });
     } catch (emailError) {
-      logger.error('發送確認郵件時發生錯誤:', { 
-        error: emailError,
-        email 
-      });
+      logger.error('發送確認郵件時發生錯誤:', { error: emailError, email });
       // 不中斷流程
     }
 
