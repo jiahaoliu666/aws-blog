@@ -26,11 +26,7 @@ interface AccountSectionProps {
   accountStatus: string;
   isLoading: boolean;
   error: string | null;
-  handleStatusChange: (status: 'active' | 'suspended' | 'deactivated') => Promise<void>;
-  handleAccountDeactivation: () => Promise<void>;
   handleAccountDeletion: (password: string) => Promise<void>;
-  toggleTwoFactor: () => Promise<void>;
-  isDeactivating: boolean;
   isDeleting: boolean;
   password: string;
   setPassword: React.Dispatch<React.SetStateAction<string>>;
@@ -55,6 +51,7 @@ const DeleteConfirmationDialog: React.FC<{
   isDeleting,
   passwordError
 }) => {
+  const { showToast } = useToastContext();
   const [showPassword, setShowPassword] = useState(false);
 
   // 當對話框關閉時重置 showPassword 狀態
@@ -71,6 +68,14 @@ const DeleteConfirmationDialog: React.FC<{
   const handleClose = () => {
     setShowPassword(false);  // 重置密碼顯示狀態
     onClose();
+  };
+
+  const handleConfirmClick = async () => {
+    if (!password.trim()) {
+      showToast('請輸入密碼以確認刪除', 'error');
+      return;
+    }
+    await onConfirm();
   };
 
   return (
@@ -143,7 +148,7 @@ const DeleteConfirmationDialog: React.FC<{
                 hover:bg-red-700
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
-              onClick={onConfirm}
+              onClick={handleConfirmClick}
               disabled={isDeleting || !password}
             >
               <FontAwesomeIcon icon={faTrash} className="text-sm" />
@@ -160,18 +165,13 @@ const AccountSection: React.FC<AccountSectionProps> = ({
   accountStatus,
   isLoading,
   error,
-  handleStatusChange,
-  handleAccountDeactivation,
   handleAccountDeletion,
-  toggleTwoFactor,
-  isDeactivating,
   isDeleting,
   password,
   setPassword,
   passwordError
 }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const { user } = useAuthContext();
   const { showToast } = useToastContext();
   const router = useRouter();
@@ -266,11 +266,6 @@ const AccountSection: React.FC<AccountSectionProps> = ({
     handleCloseModal();
   }, [handleAccountDeletion, password, handleCloseModal, showToast]);
 
-  const handleDeactivate = useCallback(async () => {
-    await handleAccountDeactivation();
-    setIsDeactivateModalOpen(false);
-  }, [handleAccountDeactivation]);
-
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -344,7 +339,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         </div>
       </Card>
 
-      {/* 將刪除確認對話框組件加入到現有的 JSX 中 */}
+      {/* 刪除確認對話框 */}
       <DeleteConfirmationDialog
         isOpen={isDeleteModalOpen}
         onClose={handleCloseModal}
@@ -354,42 +349,6 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         isDeleting={isDeleting}
         passwordError={passwordError}
       />
-
-      {/* 停用確認對話框 */}
-      <Dialog
-        open={isDeactivateModalOpen}
-        onClose={() => setIsDeactivateModalOpen(false)}
-        className="fixed inset-0 z-10 overflow-y-auto"
-      >
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="fixed inset-0 bg-black opacity-30" />
-
-          <Dialog.Panel className="relative bg-white rounded-lg max-w-md mx-auto p-6">
-            <Dialog.Title className="text-lg font-bold text-yellow-600 flex items-center">
-              <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
-              確認停用帳號？
-            </Dialog.Title>
-            <Dialog.Description className="mt-4">
-              停用後您將無法使用此帳號，但可以隨時重新啟用。
-            </Dialog.Description>
-
-            <div className="mt-6 flex justify-end space-x-4">
-              <button
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                onClick={() => setIsDeactivateModalOpen(false)}
-              >
-                取消
-              </button>
-              <button
-                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                onClick={handleDeactivate}
-              >
-                確認停用
-              </button>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
     </div>
   );
 };

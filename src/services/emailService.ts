@@ -1,6 +1,5 @@
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { sesClient } from "../config/aws";
-import { generateNewsNotificationEmail } from "@/templates/emailTemplates";
 import { EMAIL_CONFIG } from "../config/constants";
 import { logger } from "../utils/logger";
 import RateLimiter from "@/utils/rateLimiter";
@@ -13,9 +12,7 @@ export class EmailService {
     await rateLimiter.acquire();
 
     try {
-      const emailContent = generateNewsNotificationEmail(
-        notification.articleData
-      );
+      const emailContent = notification.content;
 
       const params = {
         Source: process.env.SES_SENDER_EMAIL,

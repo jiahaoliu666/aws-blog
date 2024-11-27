@@ -13,7 +13,7 @@ export class DbService {
 
   async getNotificationUsers() {
     const params = {
-      TableName: DB_TABLES.NOTIFICATION_SETTINGS,
+      TableName: DB_TABLES.USER_NOTIFICATION_SETTINGS,
       FilterExpression: "emailNotification = :true",
       ExpressionAttributeValues: {
         ":true": { BOOL: true },
@@ -50,39 +50,15 @@ export class DbService {
 
   async deleteUserAccount(userId: string) {
     try {
-      const timestamp = new Date().toISOString();
-      
-      // 使用 TransactWriteItems 確保資料一致性
-      const transactItems = [
-        {
-          Update: {
-            TableName: DB_TABLES.USERS,
-            Key: { userId: { S: userId } },
-            UpdateExpression: 'SET deleted = :deleted, deletedAt = :deletedAt, status = :status',
-            ExpressionAttributeValues: {
-              ':deleted': { BOOL: true },
-              ':deletedAt': { S: timestamp },
-              ':status': { S: 'DELETED' }
-            }
-          }
-        },
-        ...Object.values(DB_TABLES)
-          .filter(table => table !== DB_TABLES.USERS)
-          .map(table => ({
-            Update: {
-              TableName: table,
-              Key: { userId: { S: userId } },
-              UpdateExpression: 'SET deleted = :deleted, deletedAt = :deletedAt',
-              ExpressionAttributeValues: {
-                ':deleted': { BOOL: true },
-                ':deletedAt': { S: timestamp }
-              }
-            }
-          }))
-      ];
+      const transactItems = Object.values(DB_TABLES).map(tableName => ({
+        Delete: {
+          TableName: tableName,
+          Key: { userid: { S: userId } }
+        }
+      }));
 
       await this.client.send(new TransactWriteItemsCommand({ TransactItems: transactItems }));
-      logger.info('成功標記用戶資料為已刪除', { userId });
+      logger.info('成功刪除用戶所有資料', { userId });
       return true;
     } catch (error) {
       logger.error('刪除用戶資料失敗', { userId, error });

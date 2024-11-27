@@ -6,14 +6,17 @@ export const EMAIL_CONFIG = {
 };
 
 export const DB_TABLES = {
-  NEWS: 'AWS_Blog_News',
-  NOTIFICATION_SETTINGS: 'AWS_Blog_UserNotificationSettings',
-  USER_NOTIFICATIONS: 'AWS_Blog_UserNotifications',
-  USERS: 'AWS_Blog_Users',
-  USER_ACTIVITIES: 'AWS_Blog_UserActivities',
-  USER_PREFERENCES: 'AWS_Blog_UserPreferences',
+  LINE_VERIFICATIONS: 'AWS_Blog_LineVerifications',
+  USER_ACTIVITY_LOG: 'AWS_Blog_UserActivityLog',
   USER_FAVORITES: 'AWS_Blog_UserFavorites',
+  USER_NOTIFICATIONS: 'AWS_Blog_UserNotifications',
+  USER_NOTIFICATION_SETTINGS: 'AWS_Blog_UserNotificationSettings',
+  USER_PREFERENCES: 'AWS_Blog_UserPreferences',
+  USER_PROFILES: 'AWS_Blog_UserProfiles',
+  USER_RECENT_ARTICLES: 'AWS_Blog_UserRecentArticles',
 };
+
+export const NEWS_TABLE = 'AWS_Blog_News';
 
 export const API_ENDPOINTS = {
   SEND_EMAIL: '/api/notifications/sendEmail',

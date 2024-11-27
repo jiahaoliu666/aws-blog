@@ -32,9 +32,17 @@ export const api = {
 
   deleteAccount: async (password: string) => {
     try {
+      console.log('發送刪除帳號請求', { hasPassword: !!password });
+
       const response = await axios.delete(API_ENDPOINTS.DELETE_ACCOUNT, {
-        data: { password }
+        data: { password },
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+
+      console.log('刪除帳號響應:', response.data);
+
       return response.data;
     } catch (error) {
       logger.error('刪除帳號請求失敗', { error });
