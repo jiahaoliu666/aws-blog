@@ -184,7 +184,10 @@ export const useProfileFeedback = ({
                 ${attachmentUrls.length > 0 ? `
                   <p><strong>附件：</strong></p>
                   <ul>
-                    ${attachmentUrls.map(url => `<li><a href="${url}">查看附件</a></li>`).join('')}
+                    ${attachmentUrls.map((url, index) => {
+                      const fileName = submitData.attachments[index].name;
+                      return `<li><a href="${url}">${fileName}</a></li>`;
+                    }).join('')}
                   </ul>
                 ` : ''}
                 <hr>
@@ -204,6 +207,9 @@ export const useProfileFeedback = ({
       });
 
       await sesClient.send(command);
+      
+      // 記錄用戶活動
+      await logActivity(user.sub, '成功提交意見反饋');
       
       setFeedbackMessage('反饋已提交');
       showToast('意見已提交，感謝您的反饋！', 'success');
