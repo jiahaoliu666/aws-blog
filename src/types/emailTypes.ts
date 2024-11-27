@@ -1,13 +1,13 @@
+export interface ArticleData {
+  title: string;
+  content: string;
+}
+
 export interface EmailNotification {
   to: string;
   subject: string;
   content: string;
-  articleData: {
-    title: string;
-    link: string;
-    timestamp: string;
-    summary?: string;
-  };
+  articleData: ArticleData;
 }
 
 export interface NotificationSettings {

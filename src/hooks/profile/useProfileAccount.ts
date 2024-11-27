@@ -1,4 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useAuthContext } from '@/context/AuthContext';
+import { api } from '@/api/user'; // 假設這是你的 API 客戶端
+import { useToastContext } from '@/context/ToastContext';
 
 interface UseProfileAccountReturn {
   isLoading: boolean;
@@ -12,18 +16,26 @@ interface UseProfileAccountReturn {
   };
   handleStatusChange: (newStatus: 'active' | 'suspended' | 'deactivated') => Promise<void>;
   handleAccountDeactivation: () => Promise<void>;
-  handleAccountDeletion: () => Promise<void>;
+  handleAccountDeletion: (password: string) => Promise<void>;
   toggleTwoFactor: () => Promise<void>;
   isDeactivating: boolean;
   isDeleting: boolean;
+  password: string;
+  setPassword: React.Dispatch<React.SetStateAction<string>>;
+  passwordError: string | null;
 }
 
 export const useProfileAccount = (user: any): UseProfileAccountReturn => {
+  const router = useRouter();
+  const { logoutUser } = useAuthContext();
+  const { showToast } = useToastContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accountStatus, setAccountStatus] = useState<'active' | 'suspended' | 'deactivated'>('active');
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const accountInfo = {
     email: user?.email || '',
     username: user?.username || '',
@@ -56,13 +68,31 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
     }
   };
 
-  const handleAccountDeletion = async () => {
+  const handleAccountDeletion = async (password: string) => {
     try {
       setIsDeleting(true);
-      // 實作帳號刪除的 API 呼叫
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (err) {
-      setError('帳號刪除失敗');
+      setError(null);
+      setPasswordError(null);
+
+      if (!password) {
+        setPasswordError('請輸入密碼以確認刪除');
+        return;
+      }
+
+      await api.deleteAccount(password);
+      
+      showToast('帳號已成功刪除', 'success');
+      await logoutUser();
+      router.push('/');
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setPasswordError('密碼錯誤，請重試');
+      } else if (err.response?.status === 429) {
+        setError('請求過於頻繁，請稍後再試');
+      } else {
+        setError('帳號刪除失敗，請稍後重試');
+      }
+      console.error('刪除帳號失敗:', err);
     } finally {
       setIsDeleting(false);
     }
@@ -80,6 +110,14 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
     }
   };
 
+  const handlePasswordChange: React.Dispatch<React.SetStateAction<string>> = useCallback((value) => {
+    if (typeof value === 'function') {
+      setPassword(value);
+    } else {
+      setPassword(value);
+    }
+  }, []);
+
   return {
     isLoading,
     error,
@@ -90,6 +128,9 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
     handleAccountDeletion,
     toggleTwoFactor,
     isDeactivating,
-    isDeleting
+    isDeleting,
+    password,
+    setPassword: handlePasswordChange,
+    passwordError,
   };
 }; 
