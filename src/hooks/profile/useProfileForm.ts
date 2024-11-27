@@ -126,7 +126,7 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
       updateUser({ username: localUsername });
       setIsEditable(prev => ({ ...prev, username: false }));
 
-      await logActivity(user.sub, `變更用戶名稱為 ${localUsername}`);
+      await logActivity(user.sub, `變更用戶名稱為：${localUsername}`);
 
       showToast('用戶名稱更新成功！', 'success');
 
