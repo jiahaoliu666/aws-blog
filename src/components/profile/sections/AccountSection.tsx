@@ -173,15 +173,21 @@ const AccountSection: React.FC<AccountSectionProps> = ({
             onClick={() => setIsDeleteModalOpen(true)}
             className={`
               ${styles.button}
-              border-2 border-red-200 text-red-600
-              hover:bg-red-50 hover:border-red-300
-              focus:ring-4 focus:ring-red-100
-              disabled:opacity-50 disabled:cursor-not-allowed
               w-full sm:w-auto
+              inline-flex items-center justify-center gap-2
+              px-4 py-2.5 rounded-xl
+              bg-white text-red-600
+              border border-red-200
+              hover:bg-red-50 hover:border-red-300
+              active:bg-red-100
+              transition-colors duration-200
+              disabled:opacity-50 disabled:cursor-not-allowed
+              font-medium text-sm
+              focus:outline-none focus:ring-4 focus:ring-red-100
             `}
             disabled={isDeleting}
           >
-            <FontAwesomeIcon icon={faTrash} />
+            <FontAwesomeIcon icon={faTrash} className="text-sm" />
             <span>{isDeleting ? '刪除中...' : '永久刪除帳號'}</span>
           </button>
         </div>
