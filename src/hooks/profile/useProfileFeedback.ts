@@ -5,6 +5,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
 import { toast } from 'react-toastify';
+import logActivity from '@/pages/api/profile/activity-log';
+import { useToastContext } from '@/context/ToastContext';
 
 interface FeedbackData {
   title: string;
@@ -41,6 +43,7 @@ export const useProfileFeedback = ({
   user,
   initialAttachments = []
 }: UseProfileFeedbackProps): UseProfileFeedbackReturn => {
+  const { showToast } = useToastContext();
   const [feedback, setFeedback] = useState<FeedbackData>({
     title: '',
     content: '',
@@ -77,6 +80,11 @@ export const useProfileFeedback = ({
 
     if (!data.content.trim()) {
       toast.error('請輸入反饋內容');
+      return false;
+    }
+
+    if (data.content.length > 500) {
+      toast.error('反饋內容不能超過500個字');
       return false;
     }
 
@@ -145,26 +153,22 @@ export const useProfileFeedback = ({
     attachments: File[];
   }) => {
     if (!user?.sub) {
-      toast.error('請先登入');
+      showToast('請先登入', 'error');
       return;
     }
-
-    if (!validateFeedback(submitData)) return;
 
     try {
       setIsSubmitting(true);
       setFeedbackMessage('正在提交反饋...');
 
-      // 檢查是否有附件需要上傳
+      // 上傳附件
       let attachmentUrls: string[] = [];
-      if (submitData.attachments && submitData.attachments.length > 0) {
-        console.log('開始上傳附件:', submitData.attachments);
+      if (submitData.attachments?.length > 0) {
         attachmentUrls = await uploadAttachments(submitData.attachments);
-        console.log('附件上傳完成:', attachmentUrls);
       }
 
       // 發送郵件
-      const emailParams = {
+      const command = new SendEmailCommand({
         Destination: {
           ToAddresses: ['awsblogfeedback@gmail.com'],
         },
@@ -197,37 +201,43 @@ export const useProfileFeedback = ({
           }
         },
         Source: 'mail@awsblog365.com',
-      };
+      });
 
-      console.log('準備發送郵件:', emailParams);
-
-      try {
-        const command = new SendEmailCommand(emailParams);
-        const response = await sesClient.send(command);
-        console.log('郵件發送成功，回應:', response);
-      } catch (error) {
-        console.error('郵件發送失敗:', error);
-        throw error;
-      }
-
+      await sesClient.send(command);
+      
       setFeedbackMessage('反饋已提交');
-      toast.success('感謝您的反饋！');
+      showToast('意見已提交，感謝您的反饋！', 'success');
+      
+      // 重置表單
       resetFeedbackForm();
+
+      // 延遲 1.5 秒後重整頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
 
     } catch (error) {
       console.error('提交反饋失敗:', error);
       setFeedbackMessage('提交反饋失敗');
-      toast.error('提交反饋失敗，請稍後重試');
+      showToast('提交反饋失敗，請稍後重試', 'error');
       throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const MAX_ATTACHMENTS = 3; // 定義最大附件數量
+
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     
     const files = Array.from(e.target.files);
+    
+    // 檢查是否超過最大附件數量
+    if (attachments.length + files.length > MAX_ATTACHMENTS) {
+      showToast(`最多只能上傳 ${MAX_ATTACHMENTS} 個檔案`, 'error');
+      return;
+    }
     
     const validFiles = files.filter(file => {
       const isValid = file.type === 'image/jpeg' || file.type === 'image/png';
@@ -238,7 +248,9 @@ export const useProfileFeedback = ({
     });
 
     if (validFiles.length > 0) {
-      setAttachments(validFiles);
+      // 確保總數不超過限制
+      const newAttachments = [...attachments, ...validFiles].slice(0, MAX_ATTACHMENTS);
+      setAttachments(newAttachments);
       toast.success(`成功添加 ${validFiles.length} 個附件`);
     }
   };

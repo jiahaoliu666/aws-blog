@@ -107,14 +107,14 @@ export const useProfileAvatar = ({ user, updateUser, setFormData }: UseProfileAv
     if (!file || !user?.sub) return;
 
     try {
-      showToast('正在處理您的頭像...', 'loading');
+      showToast('上傳頭像中...', 'loading');
 
       if (!validateFile(file)) {
         return;
       }
 
       setIsUploading(true);
-      setUploadMessage('正在處理您的頭像...');
+      setUploadMessage('上傳頭像中...');
 
       // 生成臨時預覽
       const reader = new FileReader();

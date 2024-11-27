@@ -14,6 +14,7 @@ import { SectionContainer } from '../common/SectionContainer';
 import { Card } from '../common/Card';
 import { commonStyles as styles } from '../common/styles';
 import { SectionTitle } from '../common/SectionTitle';
+import { useToastContext } from '@/context/ToastContext';
 
 interface Feedback {
   category: string;
@@ -52,6 +53,7 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
   resetFeedbackForm,
 }) => {
   const categories = ['使用體驗', '系統錯誤', '內容相關', '其他'];
+  const { showToast } = useToastContext();
 
   useEffect(() => {
     // 組件卸載時清理表單
@@ -172,16 +174,26 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                 </div>
               </div>
               
-              <textarea
-                value={initialFeedback.content}
-                onChange={(e) => setParentFeedback((prev: Feedback) => ({ 
-                  ...prev, 
-                  content: e.target.value 
-                }))}
-                placeholder="請描述您的意見或建議..."
-                className="w-full h-40 p-4 bg-gray-50 border-2 border-gray-200 rounded-xl 
-                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-              />
+              <div className="relative">
+                <textarea
+                  value={initialFeedback.content}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) {
+                      setParentFeedback((prev: Feedback) => ({ 
+                        ...prev, 
+                        content: e.target.value 
+                      }));
+                    }
+                  }}
+                  placeholder="請描述您的意見或建議..."
+                  className="w-full h-40 p-4 bg-gray-50 border-2 border-gray-200 rounded-xl 
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  maxLength={500}
+                />
+                <div className="absolute bottom-2 right-2 text-sm text-gray-500">
+                  {initialFeedback.content.length}/500
+                </div>
+              </div>
             </div>
           </div>
 
@@ -195,28 +207,36 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">附件上傳</h3>
-                  <p className="text-sm text-gray-600">可上傳相關的截圖或文件</p>
+                  <p className="text-sm text-gray-600">可上傳相關的截圖或文件（最多3個）</p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <label className="flex justify-center items-center p-6
-                  border-2 border-dashed border-gray-300 rounded-xl
-                  hover:border-blue-500 hover:bg-blue-50
-                  transition-all duration-200 cursor-pointer">
-                  <input
-                    type="file"
-                    onChange={handleAttachmentChange}
-                    className="hidden"
-                    multiple
-                    accept="image/*,.pdf,.doc,.docx"
-                  />
-                  <div className="text-center">
-                    <FontAwesomeIcon icon={faUpload} className="text-2xl text-gray-400 mb-2" />
-                    <p className="text-gray-600">點擊或拖曳檔案至此處上傳</p>
-                    <p className="text-sm text-gray-500 mt-1">支援的格式：圖片、PDF、Word</p>
+                {attachments.length < 3 ? (
+                  <label className="flex justify-center items-center p-6
+                    border-2 border-dashed border-gray-300 rounded-xl
+                    hover:border-blue-500 hover:bg-blue-50
+                    transition-all duration-200 cursor-pointer">
+                    <input
+                      type="file"
+                      onChange={handleAttachmentChange}
+                      className="hidden"
+                      multiple
+                      accept="image/*"
+                    />
+                    <div className="text-center">
+                      <FontAwesomeIcon icon={faUpload} className="text-2xl text-gray-400 mb-2" />
+                      <p className="text-gray-600">點擊或拖曳檔案至此處上傳</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        支援的格式：JPEG、PNG（還可上傳 {3 - attachments.length} 個檔案）
+                      </p>
+                    </div>
+                  </label>
+                ) : (
+                  <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
+                    已達到最大上傳數量（3個檔案）
                   </div>
-                </label>
+                )}
 
                 {attachments.length > 0 && (
                   <div className="space-y-2">
@@ -244,7 +264,13 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
           <div className="mt-6 px-6 mr-2 pb-6 -mx-6 border-gray-100 ">
             <div className="flex justify-end">
               <button
-                onClick={onSubmit}
+                onClick={() => {
+                  if (!initialFeedback.category || !initialFeedback.content) {
+                    showToast('請填寫必要欄位', 'error');
+                    return;
+                  }
+                  onSubmit();
+                }}
                 disabled={initialIsSubmitting}
                 className={`
                   px-6 py-3

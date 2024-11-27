@@ -521,6 +521,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
           {core.activeTab === 'feedback' && (
             <FeedbackSection 
               feedback={core.feedback}
+              feedbackMessage={core.feedbackMessage}
               setFeedback={core.setFeedback}
               handleSubmitFeedback={core.handleSubmitFeedback}
               isSubmitting={core.isSubmitting}
@@ -529,7 +530,12 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               handleAttachmentChange={(e) => {
                 if (e.target.files) {
                   const files = Array.from(e.target.files);
-                  core.setAttachments(prev => [...prev, ...files]);
+                  const validFiles = files.filter(file => 
+                    file.type === 'image/jpeg' || file.type === 'image/png'
+                  );
+                  if (validFiles.length > 0) {
+                    core.setAttachments(prev => [...prev, ...validFiles].slice(0, 3));
+                  }
                 }
               }}
               removeAttachment={(index) => {

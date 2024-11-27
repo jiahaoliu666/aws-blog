@@ -40,6 +40,7 @@ export type UseProfileCoreReturn = {
   handleResetVerification: () => Promise<void>;
   addActivityLog: (action: string, details?: string) => Promise<void>;
   resetFeedbackForm: () => void;
+  feedbackMessage: string;
 };
 
 export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UseProfileCoreReturn => {
@@ -155,8 +156,8 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
       return;
     }
 
-    setIsSubmitting(true);
     try {
+      setIsSubmitting(true);
       await feedbackHook.handleSubmitFeedback({
         title: feedback.title,
         content: feedback.content,
@@ -164,18 +165,11 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
         attachments: attachments
       });
       
-      setFeedback({
-        category: '',
-        content: '',
-        title: ''
-      });
-      setAttachments([]);
+      resetFeedbackForm();
       
-      showToast('反饋提交成功', 'success');
     } catch (error) {
-      // 只在實際操作時顯示錯誤 toast
       console.error('Feedback submission error:', error);
-      showToast('提交反饋時發生錯誤', 'error');
+      showToast('提交反饋失敗，請稍後重試', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -324,5 +318,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
     handleResetVerification,
     addActivityLog,
     resetFeedbackForm,
+    feedbackMessage: '',
   };
 }; 
