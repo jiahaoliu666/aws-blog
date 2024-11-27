@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPaperPlane,
@@ -54,6 +54,23 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
 }) => {
   const categories = ['使用體驗', '系統錯誤', '內容相關', '其他'];
   const { showToast } = useToastContext();
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    const hasAnyChanges = 
+      initialFeedback.title !== '' ||
+      initialFeedback.category !== '' ||
+      initialFeedback.content !== '' ||
+      attachments.length > 0;
+
+    setHasChanges(hasAnyChanges);
+  }, [initialFeedback, attachments]);
+
+  const handleCancel = () => {
+    resetFeedbackForm();
+    setHasChanges(false);
+    showToast('已重置表單', 'info');
+  };
 
   useEffect(() => {
     // 組件卸載時清理表單
@@ -261,8 +278,21 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
           </div>
 
           {/* 提交按鈕容器 */}
-          <div className="mt-6 px-6 mr-2 pb-6 -mx-6 border-gray-100 ">
-            <div className="flex justify-end">
+          <div className="mt-6 px-6 mr-2 pb-6 -mx-6 border-gray-100">
+            <div className="flex justify-end gap-3">
+              {hasChanges && (
+                <button
+                  onClick={handleCancel}
+                  className="px-6 py-3 rounded-xl text-gray-700 border border-gray-200
+                    hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300
+                    transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={initialIsSubmitting}
+                >
+                  取消
+                </button>
+              )}
+              
               <button
                 onClick={() => {
                   if (!initialFeedback.category || !initialFeedback.content) {
