@@ -258,14 +258,18 @@ const AccountSection: React.FC<AccountSectionProps> = ({
   }, [setPassword]);
 
   const handleConfirmDelete = useCallback(async () => {
-    try {
-      await handleAccountDeletion(password);
-      handleCloseModal();
-    } catch (error) {
-      console.error('刪除帳號失敗:', error);
-      showToast('刪除帳號失敗，請稍後重試', 'error');
+    if (!password.trim()) {
+      showToast('請輸入密碼以確認刪除', 'error');
+      return;
     }
-  }, [handleAccountDeletion, password, showToast, handleCloseModal]);
+    await handleAccountDeletion(password);
+    handleCloseModal();
+  }, [handleAccountDeletion, password, handleCloseModal, showToast]);
+
+  const handleDeactivate = useCallback(async () => {
+    await handleAccountDeactivation();
+    setIsDeactivateModalOpen(false);
+  }, [handleAccountDeactivation]);
 
   return (
     <div className="w-full">
@@ -378,10 +382,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
               </button>
               <button
                 className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                onClick={() => {
-                  handleAccountDeactivation();
-                  setIsDeactivateModalOpen(false);
-                }}
+                onClick={handleDeactivate}
               >
                 確認停用
               </button>
@@ -389,12 +390,6 @@ const AccountSection: React.FC<AccountSectionProps> = ({
           </Dialog.Panel>
         </div>
       </Dialog>
-
-      {error && (
-        <div className="mt-4 p-4 bg-red-100 text-red-600 rounded-lg">
-          {error}
-        </div>
-      )}
     </div>
   );
 };

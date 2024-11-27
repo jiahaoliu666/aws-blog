@@ -48,8 +48,9 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
       setIsLoading(true);
       // 實作狀態變更的 API 呼叫
       setAccountStatus(newStatus);
+      showToast('狀態更新成功', 'success');
     } catch (err) {
-      setError('狀態更新失敗');
+      showToast('狀態更新失敗', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -61,8 +62,9 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
       // 實作帳號停用的 API 呼叫
       await new Promise(resolve => setTimeout(resolve, 1000));
       setAccountStatus('deactivated');
+      showToast('帳號已成功停用', 'success');
     } catch (err) {
-      setError('帳號停用失敗');
+      showToast('帳號停用失敗', 'error');
     } finally {
       setIsDeactivating(false);
     }
@@ -75,22 +77,27 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
       setPasswordError(null);
 
       if (!password) {
-        setPasswordError('請輸入密碼以確認刪除');
+        showToast('請輸入密碼以確認刪除', 'error');
         return;
       }
 
       await api.deleteAccount(password);
-      
       showToast('帳號已成功刪除', 'success');
       await logoutUser();
       router.push('/');
     } catch (err: any) {
       if (err.response?.status === 401) {
-        setPasswordError('密碼錯誤，請重試');
+        showToast('密碼錯誤，請確認後重試', 'error');
       } else if (err.response?.status === 429) {
-        setError('請求過於頻繁，請稍後再試');
+        showToast('操作過於頻繁，請等待 5 分鐘後再試', 'error');
+      } else if (err.response?.status === 403) {
+        showToast('您沒有權限執行此操作，請聯繫管理員', 'error');
+      } else if (err.response?.status === 400) {
+        showToast('請求格式錯誤，請確認輸入資料是否正確', 'error');
+      } else if (err.response?.status >= 500) {
+        showToast('系統發生錯誤，請稍後再試或聯繫客服人員', 'error');
       } else {
-        setError('帳號刪除失敗，請稍後重試');
+        showToast('無法刪除帳號，請確認網路連線後重試', 'error');
       }
       console.error('刪除帳號失敗:', err);
     } finally {
@@ -103,8 +110,9 @@ export const useProfileAccount = (user: any): UseProfileAccountReturn => {
       setIsLoading(true);
       // 實作雙重認證開關的 API 呼叫
       accountInfo.twoFactorEnabled = !accountInfo.twoFactorEnabled;
+      showToast('雙重認證設定已更新', 'success');
     } catch (err) {
-      setError('雙重認證設定失敗');
+      showToast('雙重認證設定失敗', 'error');
     } finally {
       setIsLoading(false);
     }
