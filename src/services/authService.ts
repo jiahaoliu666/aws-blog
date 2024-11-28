@@ -33,16 +33,9 @@ export class AuthService {
     });
   }
 
-  async validateUserPassword(email: string, password: string): Promise<boolean> {
+  async verifyPassword(email: string, password: string): Promise<void> {
     try {
-      logger.info('開始驗證用戶密碼:', { email });
-
-      if (!this.userPoolId || !this.clientId) {
-        logger.error('缺少必要的 Cognito 配置');
-        throw new Error('系統配置錯誤');
-      }
-
-      const params = {
+      const command = new AdminInitiateAuthCommand({
         UserPoolId: this.userPoolId,
         ClientId: this.clientId,
         AuthFlow: AuthFlowType.ADMIN_USER_PASSWORD_AUTH,
@@ -50,71 +43,30 @@ export class AuthService {
           USERNAME: email,
           PASSWORD: password
         }
-      };
-
-      logger.info('發送 Cognito 驗證請求');
-      const command = new AdminInitiateAuthCommand(params);
-      const response = await this.client.send(command);
-      
-      const isValid = !!response.AuthenticationResult?.AccessToken;
-      logger.info('密碼驗證結果:', { isValid });
-      return isValid;
-
-    } catch (error: any) {
-      logger.error('密碼驗證失敗:', {
-        errorName: error.name,
-        errorMessage: error.message,
-        email
       });
 
+      await this.client.send(command);
+    } catch (error) {
       if (error instanceof NotAuthorizedException) {
-        return false;
+        throw new Error('密碼錯誤，請重新輸入');
       }
       throw error;
     }
   }
 
-  async deleteUserFromCognito(email: string): Promise<void> {
+  async deleteUserFromCognito(userId: string): Promise<void> {
     try {
-      logger.info('開始從 Cognito 刪除用戶:', { email });
-
-      if (!this.userPoolId) {
-        logger.error('缺少 UserPoolId 配置');
-        throw new Error('系統配置錯誤');
-      }
-
-      // 先檢查用戶是否存在
-      const getUserCommand = new AdminGetUserCommand({
+      logger.info('開始從 Cognito 刪除用戶:', { userId });
+      
+      const command = new AdminDeleteUserCommand({
         UserPoolId: this.userPoolId,
-        Username: email
+        Username: userId
       });
 
-      try {
-        await this.client.send(getUserCommand);
-      } catch (error) {
-        if (error instanceof UserNotFoundException) {
-          logger.error('用戶不存在:', { email });
-          throw new Error('找不到指定的用戶');
-        }
-        throw error;
-      }
-
-      // 執行刪除操作
-      const deleteCommand = new AdminDeleteUserCommand({
-        UserPoolId: this.userPoolId,
-        Username: email
-      });
-
-      await this.client.send(deleteCommand);
-      logger.info('用戶成功從 Cognito 刪除:', { email });
-
-    } catch (error: any) {
-      logger.error('從 Cognito 刪除用戶失敗:', {
-        errorName: error.name,
-        errorMessage: error.message,
-        email,
-        stack: error.stack
-      });
+      await this.client.send(command);
+      logger.info('用戶從 Cognito 刪除成功:', { userId });
+    } catch (error) {
+      logger.error('從 Cognito 刪除用戶失敗:', { userId, error });
       throw error;
     }
   }

@@ -93,77 +93,98 @@ export class DbService {
     }
   }
 
-  async deleteUserWithTransaction(userId: string): Promise<void> {
-    try {
-      logger.info('開始刪除用戶事務:', { userId });
-
-      // 準備事務項目
-      const transactItems = [
-        {
-          Delete: {
-            TableName: DB_TABLES.USER_PROFILES,
-            Key: { userId: { S: userId } }
-          }
-        },
-        {
-          Delete: {
-            TableName: DB_TABLES.USER_NOTIFICATION_SETTINGS,
-            Key: { userId: { S: userId } }
-          }
-        },
-        // ... 其他需要刪除的表
-      ];
-
-      const command = new TransactWriteItemsCommand({
-        TransactItems: transactItems
-      });
-
-      await this.client.send(command);
-      logger.info('用戶資料事務刪除成功:', { userId });
-
-    } catch (error) {
-      logger.error('用戶資料事務刪除失敗:', { userId, error });
-      throw error;
-    }
-  }
-
   async deleteUserS3Files(userId: string): Promise<void> {
     try {
       logger.info('開始刪除用戶 S3 檔案:', { userId });
 
       for (const { bucket, prefix } of this.bucketsToCheck) {
         let continuationToken: string | undefined;
+        let deletedCount = 0;
         
         do {
-          // 使用分頁處理列出物件
           const listCommand = new ListObjectsV2Command({
             Bucket: bucket,
-            Prefix: prefix,
-            MaxKeys: 1000, // 每頁最大項目數
+            Prefix: `${prefix}${userId}/`,
+            MaxKeys: 1000,
             ContinuationToken: continuationToken
           });
 
           const response = await this.s3Client.send(listCommand);
           
           if (response.Contents && response.Contents.length > 0) {
-            // 批次處理刪除
             const deleteCommand = new DeleteObjectsCommand({
               Bucket: bucket,
               Delete: {
-                Objects: response.Contents.map(obj => ({ Key: obj.Key }))
+                Objects: response.Contents.map(obj => ({ Key: obj.Key! }))
               }
             });
-
+            
             await this.s3Client.send(deleteCommand);
-            logger.info(`已刪除 ${response.Contents.length} 個檔案`, { bucket });
+            deletedCount += response.Contents.length;
+            logger.info(`已刪除 ${deletedCount} 個檔案`, { bucket, userId });
           }
 
           continuationToken = response.NextContinuationToken;
         } while (continuationToken);
       }
 
+      logger.info('用戶 S3 檔案刪除完成:', { userId });
     } catch (error) {
       logger.error('刪除用戶 S3 檔案失敗:', { userId, error });
+      throw error;
+    }
+  }
+
+  async deleteUserWithTransaction(userId: string): Promise<void> {
+    try {
+      logger.info('開始刪除用戶資料:', { userId });
+
+      const transactItems = Object.values(DB_TABLES)
+        .filter(table => table !== DB_TABLES.USER_PROFILES) // 排除用戶資料表
+        .map(tableName => ({
+          Delete: {
+            TableName: tableName,
+            Key: { userId: { S: userId } }
+          }
+        }));
+
+      // 最後刪除用戶資料表
+      transactItems.push({
+        Delete: {
+          TableName: DB_TABLES.USER_PROFILES,
+          Key: { userId: { S: userId } }
+        }
+      });
+
+      const command = new TransactWriteItemsCommand({
+        TransactItems: transactItems
+      });
+
+      await this.client.send(command);
+      logger.info('用戶資料刪除完成:', { userId });
+    } catch (error) {
+      logger.error('刪除用戶資料失敗:', { userId, error });
+      throw error;
+    }
+  }
+
+  private async markUserAsDeleted(userId: string): Promise<void> {
+    const params = {
+      TableName: DB_TABLES.USER_PROFILES,
+      Key: {
+        userId: { S: userId }
+      },
+      UpdateExpression: 'SET deleted = :deleted, deletedAt = :deletedAt',
+      ExpressionAttributeValues: {
+        ':deleted': { BOOL: true },
+        ':deletedAt': { S: new Date().toISOString() }
+      }
+    };
+
+    try {
+      await this.client.send(new UpdateItemCommand(params));
+    } catch (error) {
+      logger.error('標記用戶為已刪除狀態失敗:', { userId, error });
       throw error;
     }
   }

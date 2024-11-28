@@ -137,7 +137,15 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   });
   const articles = useProfileArticles({ user: currentUser });
   const lineVerification = useLineVerification();
-  const account = useProfileAccount({ user: currentUser });
+  const account = useProfileAccount({ 
+    user: currentUser ? {
+      email: currentUser.email,
+      username: currentUser.username
+    } : {
+      email: '',
+      username: ''
+    }
+  });
   const { preferences, updatePreferences, isLoading: preferencesLoading } = useProfilePreferences();
 
   const { 

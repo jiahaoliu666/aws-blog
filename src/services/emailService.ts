@@ -9,11 +9,10 @@ const rateLimiter = new RateLimiter(EMAIL_CONFIG.RATE_LIMIT);
 
 export class EmailService {
   async sendEmail(notification: EmailNotification) {
-    await rateLimiter.acquire();
-
     try {
-      const emailContent = notification.content;
+      await rateLimiter.acquire();
 
+      const emailContent = notification.content;
       const params = {
         Source: process.env.SES_SENDER_EMAIL,
         Destination: {
@@ -28,24 +27,22 @@ export class EmailService {
             Html: {
               Data: emailContent,
               Charset: "UTF-8",
-            },
-          },
-        },
+            }
+          }
+        }
       };
 
-      const result = await sesClient.send(new SendEmailCommand(params));
-      logger.info(`郵件成功發送至 ${notification.to}`);
-      return {
-        success: true,
-        messageId: result.MessageId,
-      };
+      await sesClient.send(new SendEmailCommand(params));
+      logger.info('成功發送郵件至:', { recipient: notification.to });
+      return { success: true };
+      
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-      logger.error(`發送郵件時發生錯誤: ${errorMessage}`);
-      return {
-        success: false,
-        error: errorMessage,
-      };
+      logger.error('發送郵件失敗:', { 
+        error,
+        recipient: notification.to,
+        subject: notification.subject 
+      });
+      return { success: false, error: error instanceof Error ? error.message : '發送失敗' };
     }
   }
 

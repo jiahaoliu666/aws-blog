@@ -262,9 +262,15 @@ const AccountSection: React.FC<AccountSectionProps> = ({
       showToast('請輸入密碼以確認刪除', 'error');
       return;
     }
-    await handleAccountDeletion(password);
-    handleCloseModal();
-  }, [handleAccountDeletion, password, handleCloseModal, showToast]);
+
+    try {
+      await handleAccountDeletion(password);
+      handleCloseModal();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '刪除帳號失敗';
+      showToast(errorMessage, 'error');
+    }
+  }, [password, handleAccountDeletion, handleCloseModal, showToast]);
 
   return (
     <div className="w-full">
