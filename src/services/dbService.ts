@@ -7,6 +7,10 @@ export class DbService {
   private client: DynamoDBClient;
   private s3Client: S3Client;
   private readonly userBucket: string;
+  private readonly bucketsToCheck: { bucket: string; prefix: string }[] = [
+    { bucket: process.env.USER_UPLOADS_BUCKET || '', prefix: 'users/' }
+    // 如需要檢查其他 bucket，可以在這裡添加
+  ];
 
   constructor() {
     this.client = new DynamoDBClient({
@@ -89,59 +93,102 @@ export class DbService {
     }
   }
 
+  async deleteUserWithTransaction(userId: string): Promise<void> {
+    try {
+      logger.info('開始刪除用戶事務:', { userId });
+
+      // 準備事務項目
+      const transactItems = [
+        {
+          Delete: {
+            TableName: DB_TABLES.USER_PROFILES,
+            Key: { userId: { S: userId } }
+          }
+        },
+        {
+          Delete: {
+            TableName: DB_TABLES.USER_NOTIFICATION_SETTINGS,
+            Key: { userId: { S: userId } }
+          }
+        },
+        // ... 其他需要刪除的表
+      ];
+
+      const command = new TransactWriteItemsCommand({
+        TransactItems: transactItems
+      });
+
+      await this.client.send(command);
+      logger.info('用戶資料事務刪除成功:', { userId });
+
+    } catch (error) {
+      logger.error('用戶資料事務刪除失敗:', { userId, error });
+      throw error;
+    }
+  }
+
   async deleteUserS3Files(userId: string): Promise<void> {
     try {
       logger.info('開始刪除用戶 S3 檔案:', { userId });
 
-      // 需要檢查的所有儲存桶和路徑
-      const bucketsToCheck = [
-        {
-          bucket: 'aws-blog-avatar',
-          prefix: `avatars/${userId}/`
-        },
-        {
-          bucket: 'aws-blog-feedback',
-          prefix: `feedback-attachments/${userId}/`
-        }
-      ];
-
-      // 對每個儲存桶進行檔案刪除
-      for (const { bucket, prefix } of bucketsToCheck) {
-        // 列出該儲存桶中的用戶檔案
-        const listParams = {
-          Bucket: bucket,
-          Prefix: prefix
-        };
-
-        const objects = await this.s3Client.send(new ListObjectsV2Command(listParams));
-
-        if (objects.Contents && objects.Contents.length > 0) {
-          // 準備刪除指令
-          const deleteParams = {
+      for (const { bucket, prefix } of this.bucketsToCheck) {
+        let continuationToken: string | undefined;
+        
+        do {
+          // 使用分頁處理列出物件
+          const listCommand = new ListObjectsV2Command({
             Bucket: bucket,
-            Delete: {
-              Objects: objects.Contents.map(obj => ({
-                Key: obj.Key
-              }))
-            }
-          };
-
-          await this.s3Client.send(new DeleteObjectsCommand(deleteParams));
-          logger.info(`成功從 ${bucket} 刪除用戶檔案:`, {
-            userId,
-            filesCount: objects.Contents.length
+            Prefix: prefix,
+            MaxKeys: 1000, // 每頁最大項目數
+            ContinuationToken: continuationToken
           });
-        } else {
-          logger.info(`在 ${bucket} 中未找到用戶檔案:`, { userId });
-        }
+
+          const response = await this.s3Client.send(listCommand);
+          
+          if (response.Contents && response.Contents.length > 0) {
+            // 批次處理刪除
+            const deleteCommand = new DeleteObjectsCommand({
+              Bucket: bucket,
+              Delete: {
+                Objects: response.Contents.map(obj => ({ Key: obj.Key }))
+              }
+            });
+
+            await this.s3Client.send(deleteCommand);
+            logger.info(`已刪除 ${response.Contents.length} 個檔案`, { bucket });
+          }
+
+          continuationToken = response.NextContinuationToken;
+        } while (continuationToken);
       }
 
     } catch (error) {
-      logger.error('刪除用戶 S3 檔案失敗:', {
-        userId,
-        error,
-        stack: error instanceof Error ? error.stack : undefined
-      });
+      logger.error('刪除用戶 S3 檔案失敗:', { userId, error });
+      throw error;
+    }
+  }
+
+  // 補償機制
+  async rollbackUserDeletion(userId: string): Promise<void> {
+    try {
+      logger.info('開始回滾用戶刪除操作:', { userId });
+
+      const updateParams = {
+        TableName: DB_TABLES.USER_PROFILES,
+        Key: {
+          userId: { S: userId }
+        },
+        UpdateExpression: 'SET deleted = :deleted REMOVE deletedAt',
+        ExpressionAttributeValues: {
+          ':deleted': { BOOL: false }
+        }
+      };
+
+      await this.client.send(new UpdateItemCommand(updateParams));
+      logger.info('用戶刪除回滾成功:', { userId });
+
+    } catch (error) {
+      logger.error('用戶刪除回滾失敗:', { userId, error });
       throw error;
     }
   }
