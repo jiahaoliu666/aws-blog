@@ -52,7 +52,7 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
   removeAttachment,
   resetFeedbackForm,
 }) => {
-  const categories = ['使用體驗', '系統錯誤', '內容相關', '其他'];
+  const categories = ['使用體驗', '系統錯誤', '功能建議', '其他'];
   const { showToast } = useToastContext();
   const [hasChanges, setHasChanges] = useState(false);
 
