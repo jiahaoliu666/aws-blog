@@ -16,32 +16,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userEmail = req.headers['x-user-email'] as string;
 
   if (!password || !userId || !userSub || !userEmail) {
-    return res.status(400).json({ 
-      message: '缺少必要參數',
-      details: {
-        password: !password,
-        userId: !userId,
-        userSub: !userSub,
-        userEmail: !userEmail
-      }
-    });
+    return res.status(400).json({ message: '缺少必要參數' });
   }
 
-  const authService = new AuthService();
-  const dbService = new DbService();
-  const emailService = new EmailService();
-
   try {
-    // 1. 開始事務
-    await dbService.beginTransaction();
+    const authService = new AuthService();
+    const dbService = new DbService();
+    const emailService = new EmailService();
 
-    // 2. 驗證密碼並刪除 Cognito 用戶
-    await authService.validatePasswordAndDeleteUser(userSub, password);
+    // 1. 先驗證並刪除 Cognito 用戶
+    await authService.deleteUser(userSub, password);
 
-    // 3. 刪除用戶資料
+    // 2. 刪除資料庫和 S3 檔案
     await dbService.deleteUserCompletely(userId);
 
-    // 4. 發送確認郵件
+    // 3. 發送確認郵件
     const emailContent = generateAccountDeletionEmail({
       title: '帳號刪除確認',
       content: '您的帳號已成功刪除。感謝您使用我們的服務。'
@@ -57,28 +46,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // 5. 提交事務
-    await dbService.commitTransaction();
-
-    logger.info('用戶帳號刪除成功:', { userId, userSub });
     return res.status(200).json({ message: '帳號已成功刪除' });
-
   } catch (error) {
-    // 發生錯誤時回滾事務
-    await dbService.rollbackTransaction();
+    logger.error('刪除帳號失敗:', error);
     
-    logger.error('刪除帳號失敗:', { userId, error });
+    const errorMessage = error instanceof Error ? error.message : '未知錯誤';
     
-    if (error instanceof Error) {
-      switch(error.message) {
-        case '密碼錯誤':
-          return res.status(401).json({ message: '密碼錯誤' });
-        case '用戶不存在':
-          return res.status(404).json({ message: '用戶不存在' });
-        default:
-          return res.status(500).json({ message: error.message });
-      }
+    switch (errorMessage) {
+      case '密碼錯誤':
+        return res.status(401).json({ message: '密碼錯誤' });
+      case '用戶不存在':
+        return res.status(404).json({ message: '用戶不存在' });
+      case '超過速率限制':
+        return res.status(429).json({ message: '請求過於頻繁，請稍後再試' });
+      default:
+        return res.status(500).json({ 
+          message: '刪除帳號時發生錯誤',
+          error: errorMessage
+        });
     }
-    return res.status(500).json({ message: '刪除帳號時發生未知錯誤' });
   }
 }

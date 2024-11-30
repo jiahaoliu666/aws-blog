@@ -83,7 +83,10 @@ export class AuthService {
       if (error instanceof NotAuthorizedException) {
         throw new Error('密碼錯誤');
       }
-      throw error;
+      if (error instanceof UserNotFoundException) {
+        throw new Error('用戶不存在');
+      }
+      throw new Error(`刪除用戶失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
     }
   }
 
@@ -111,6 +114,31 @@ export class AuthService {
       await this.client.send(command);
     } catch (error) {
       logger.error('密碼驗證失敗:', { userSub, error });
+      if (error instanceof NotAuthorizedException) {
+        throw new Error('密碼錯誤');
+      }
+      if (error instanceof UserNotFoundException) {
+        throw new Error('用戶不存在');
+      }
+      throw error;
+    }
+  }
+
+  async deleteUser(userSub: string, password: string): Promise<void> {
+    try {
+      // 1. 先驗證密碼
+      await this.validatePassword(userSub, password);
+      
+      // 2. 密碼驗證成功後刪除用戶
+      const deleteCommand = new AdminDeleteUserCommand({
+        UserPoolId: this.userPoolId,
+        Username: userSub
+      });
+
+      await this.client.send(deleteCommand);
+      logger.info('已從 Cognito 刪除用戶:', { userSub });
+    } catch (error) {
+      logger.error('刪除用戶失敗:', { userSub, error });
       if (error instanceof NotAuthorizedException) {
         throw new Error('密碼錯誤');
       }

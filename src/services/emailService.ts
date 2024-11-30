@@ -34,15 +34,13 @@ export class EmailService {
 
       await sesClient.send(new SendEmailCommand(params));
       logger.info('成功發送郵件至:', { recipient: notification.to });
-      return { success: true };
+      return { success: true, error: null };
       
     } catch (error) {
-      logger.error('發送郵件失敗:', { 
-        error,
-        recipient: notification.to,
-        subject: notification.subject 
-      });
-      return { success: false, error: error instanceof Error ? error.message : '發送失敗' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : '發送郵件失敗' 
+      };
     }
   }
 
@@ -55,7 +53,7 @@ export class EmailService {
         batch.map(async (notification) => {
           try {
             const result = await this.sendEmail(notification);
-            if (!result.success) {
+            if (!result.success && result.error) {
               throw new Error(result.error);
             }
             return result;

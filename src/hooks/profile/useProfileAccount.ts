@@ -24,12 +24,17 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
   const router = useRouter();
   const { showToast } = useToastContext();
 
-  const handleAccountDeletion = async () => {
+  const handleAccountDeletion = async (password: string) => {
+    if (!user?.sub || !user?.userId || !user?.email) {
+      setError('用戶資訊不完整');
+      return;
+    }
+
     try {
       setIsDeleting(true);
-      showToast('正在處理帳號刪除請求...', 'loading');
+      setError(null);
 
-      await userApi.deleteAccount({
+      const response = await userApi.deleteAccount({
         password,
         user: {
           sub: user.sub,
@@ -38,33 +43,32 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
         }
       });
       
-      showToast('帳號已成功刪除', 'success');
-      
-      // 延遲 2 秒後重導向到登入頁面
-      setTimeout(() => {
+      if (response.status === 200) {
+        showToast('帳號已成功刪除', 'success');
         router.push('/auth/login');
-      }, 2000);
-
+      }
     } catch (error) {
       setIsDeleting(false);
-      
       if (error instanceof Error) {
         switch (error.message) {
-          case '密碼錯誤':
+          case '密碼錯誤，請重新輸入':
+            setError('密碼錯誤，請重新輸入');
             showToast('密碼錯誤，請重新輸入', 'error');
-            setPasswordError('密碼錯誤');
             break;
-          case '用戶不存在':
+          case '找不到用戶資料':
+            setError('找不到用戶資料');
             showToast('找不到用戶資料', 'error');
             break;
+          case '請求過於頻繁，請稍後再試':
+            setError('請求過於頻繁，請稍後再試');
+            showToast('請求過於頻繁，請稍後再試', 'warning');
+            break;
           default:
+            setError('刪除帳號失敗，請稍後重試');
             showToast('刪除帳號失敗，請稍後重試', 'error');
         }
-      } else {
-        showToast('發生未知錯誤，請稍後重試', 'error');
       }
-      
-      setError(error instanceof Error ? error.message : '刪除帳號失敗，請稍後重試');
+      throw error;
     }
   };
 

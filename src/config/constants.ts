@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
 
 export const ERROR_CODES = {
   UNAUTHORIZED: 401,
+  NOT_FOUND: 404,
   RATE_LIMIT: 429,
   SERVER_ERROR: 500
 } as const;
