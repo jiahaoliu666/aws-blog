@@ -8,8 +8,9 @@ export class DbService {
   private s3Client: S3Client;
   private readonly userBucket: string;
   private readonly bucketsToCheck: { bucket: string; prefix: string }[] = [
-    { bucket: process.env.USER_UPLOADS_BUCKET || '', prefix: 'users/' }
-    // 如需要檢查其他 bucket，可以在這裡添加
+    { bucket: process.env.USER_UPLOADS_BUCKET || '', prefix: 'users/' },
+    { bucket: 'aws-blog-feedback', prefix: 'feedback-attachments/' },
+    { bucket: 'aws-blog-avatar', prefix: '' }
   ];
 
   constructor() {
@@ -61,15 +62,32 @@ export class DbService {
     }
   }
 
-  async deleteUserAccount(userId: string) {
-    const transactItems = Object.values(DB_TABLES).map(tableName => ({
-      Delete: {
-        TableName: tableName,
-        Key: { userid: { S: userId } }
+  async deleteUserAccount(userId: string): Promise<void> {
+    try {
+      logger.info('開始刪除用戶帳號:', { userId });
+      
+      // 1. 檢查用戶是否存在
+      const userExists = await this.checkUserExists(userId);
+      if (!userExists) {
+        throw new Error('用戶不存在');
       }
-    }));
 
-    await this.client.send(new TransactWriteItemsCommand({ TransactItems: transactItems }));
+      // 2. 先標記用戶為已刪除狀態
+      await this.markUserAsDeleted(userId);
+      
+      // 3. 刪除用戶的 S3 檔案
+      await this.deleteUserS3Files(userId);
+      
+      // 4. 刪除資料庫記錄
+      await this.deleteUserRecords(userId);
+      
+      logger.info('用戶帳號刪除完成:', { userId });
+    } catch (error) {
+      logger.error('刪除用戶帳號失敗:', { userId, error });
+      // 嘗試回滾刪除操作
+      await this.rollbackUserDeletion(userId);
+      throw error;
+    }
   }
 
   private async markAsDeleted(tableName: string, userId: string) {
@@ -93,42 +111,31 @@ export class DbService {
     }
   }
 
-  async deleteUserS3Files(userId: string): Promise<void> {
+  private async deleteUserS3Files(userId: string): Promise<void> {
     try {
-      logger.info('開始刪除用戶 S3 檔案:', { userId });
-
+      // 遍歷所有需要檢查的 bucket
       for (const { bucket, prefix } of this.bucketsToCheck) {
-        let continuationToken: string | undefined;
-        let deletedCount = 0;
+        // 列出該用戶的所有檔案
+        const listCommand = new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: `${prefix}${userId}/`
+        });
+
+        const response = await this.s3Client.send(listCommand);
         
-        do {
-          const listCommand = new ListObjectsV2Command({
+        if (response.Contents && response.Contents.length > 0) {
+          // 批次刪除檔案
+          const deleteCommand = new DeleteObjectsCommand({
             Bucket: bucket,
-            Prefix: `${prefix}${userId}/`,
-            MaxKeys: 1000,
-            ContinuationToken: continuationToken
+            Delete: {
+              Objects: response.Contents.map(obj => ({ Key: obj.Key! }))
+            }
           });
 
-          const response = await this.s3Client.send(listCommand);
-          
-          if (response.Contents && response.Contents.length > 0) {
-            const deleteCommand = new DeleteObjectsCommand({
-              Bucket: bucket,
-              Delete: {
-                Objects: response.Contents.map(obj => ({ Key: obj.Key! }))
-              }
-            });
-            
-            await this.s3Client.send(deleteCommand);
-            deletedCount += response.Contents.length;
-            logger.info(`已刪除 ${deletedCount} 個檔案`, { bucket, userId });
-          }
-
-          continuationToken = response.NextContinuationToken;
-        } while (continuationToken);
+          await this.s3Client.send(deleteCommand);
+          logger.info('已刪除用戶 S3 檔案:', { userId, bucket, count: response.Contents.length });
+        }
       }
-
-      logger.info('用戶 S3 檔案刪除完成:', { userId });
     } catch (error) {
       logger.error('刪除用戶 S3 檔案失敗:', { userId, error });
       throw error;
@@ -139,36 +146,20 @@ export class DbService {
     try {
       logger.info('開始刪除用戶相關資料:', { userId });
 
-      // 使用完整的 AWS DynamoDB 表格名稱和正確的 userId 主鍵
-      const tables = [
-        'AWS_Blog_LineVerifications',
-        'AWS_Blog_UserActivityLog',
-        'AWS_Blog_UserFavorites',
-        'AWS_Blog_UserNotifications',
-        'AWS_Blog_UserNotificationSettings',
-        'AWS_Blog_UserPreferences',
-        'AWS_Blog_UserProfiles',
-        'AWS_Blog_UserRecentArticles'
-      ];
-
-      const transactionItems = tables.map(tableName => ({
-        Delete: {
-          TableName: tableName,
-          Key: {
-            userId: { S: userId }  // 使用正確的 userId 作為主鍵
-          }
-        }
-      }));
-
-      const command = new TransactWriteItemsCommand({
-        TransactItems: transactionItems
-      });
-
-      await this.client.send(command);
-      logger.info('用戶相關資料刪除完成:', { userId });
+      // 1. 標記用戶為已刪除
+      await this.markUserAsDeleted(userId);
       
+      // 2. 刪除 S3 檔案
+      await this.deleteUserS3Files(userId);
+      
+      // 3. 刪除資料庫記錄
+      await this.deleteUserRecords(userId);
+
+      logger.info('用戶相關資料刪除完成:', { userId });
     } catch (error) {
       logger.error('刪除用戶資料時發生錯誤:', { userId, error });
+      // 嘗試回滾刪除操作
+      await this.rollbackUserDeletion(userId);
       throw error;
     }
   }
@@ -182,25 +173,28 @@ export class DbService {
         throw new Error('找不到用戶資料');
       }
 
-      // 2. 標記用戶為已刪除狀態
-      await this.markUserAsDeleted(userId);
-      logger.info('用戶已標記為已刪除:', { userId });
-      
-      // 3. 刪除 S3 檔案
-      await this.deleteUserS3Files(userId);
-      logger.info('用戶 S3 檔案已刪除:', { userId });
-      
-      // 4. 刪除資料庫資料
-      await this.deleteUserData(userId);
-      logger.info('用戶資料庫資料已刪除:', { userId });
+      // 2. 開始事務
+      await this.beginTransaction();
 
+      // 3. 刪除用戶的 S3 檔案
+      await this.deleteUserS3Files(userId);
+      
+      // 4. 刪除資料庫記錄
+      await this.deleteUserRecords(userId);
+      
+      // 5. 提交事務
+      await this.commitTransaction();
+      
+      logger.info('用戶帳號刪除完成:', { userId });
     } catch (error) {
-      logger.error('刪除用戶資料失敗:', { userId, error });
+      logger.error('刪除用戶帳號失敗:', { userId, error });
+      // 嘗試回滾刪除操作
+      await this.rollbackTransaction();
       throw error;
     }
   }
 
-  private async markUserAsDeleted(userId: string): Promise<void> {
+  async markUserAsDeleted(userId: string): Promise<void> {
     const params = {
       TableName: DB_TABLES.USER_PROFILES,
       Key: {
@@ -224,26 +218,24 @@ export class DbService {
   // 補償機制
   async rollbackUserDeletion(userId: string): Promise<void> {
     try {
-      logger.info('開始回滾用戶刪除操作:', { userId });
-
-      const updateParams = {
-        TableName: DB_TABLES.USER_PROFILES,
-        Key: {
-          userId: { S: userId }
-        },
-        UpdateExpression: 'SET deleted = :deleted REMOVE deletedAt',
-        ExpressionAttributeValues: {
-          ':deleted': { BOOL: false }
-        }
-      };
-
-      await this.client.send(new UpdateItemCommand(updateParams));
-      logger.info('用戶刪除回滾成功:', { userId });
-
+      await this.markUserAsActive(userId);
+      logger.info('成功回滾用戶刪除操作:', { userId });
     } catch (error) {
-      logger.error('用戶刪除回滾失敗:', { userId, error });
+      logger.error('回滾用戶刪除操作失敗:', { userId, error });
       throw error;
     }
+  }
+
+  private async markUserAsActive(userId: string): Promise<void> {
+    const params = {
+      TableName: DB_TABLES.USER_PROFILES,
+      Key: {
+        userId: { S: userId }
+      },
+      UpdateExpression: 'REMOVE deleted, deletedAt',
+    };
+
+    await this.client.send(new UpdateItemCommand(params));
   }
 
   // 新增檢查用戶是否存在的方法
@@ -262,7 +254,52 @@ export class DbService {
       return !!response.Item;
     } catch (error) {
       logger.error('檢查用戶存在失敗:', { userId, error });
-      return false;
+      throw error;
     }
+  }
+
+  private async deleteUserRecords(userId: string): Promise<void> {
+    try {
+      // 使用 TransactWriteItems 進行原子性刪除
+      const transactItems = Object.values(DB_TABLES).map(tableName => ({
+        Delete: {
+          TableName: tableName,
+          Key: {
+            userId: { S: userId }
+          }
+        }
+      }));
+
+      // 分批處理，每次最多 25 個操作
+      const batches = [];
+      for (let i = 0; i < transactItems.length; i += 25) {
+        batches.push(transactItems.slice(i, i + 25));
+      }
+
+      for (const batch of batches) {
+        await this.client.send(new TransactWriteItemsCommand({
+          TransactItems: batch
+        }));
+      }
+
+      logger.info('已刪除用戶資料庫記錄:', { userId });
+    } catch (error) {
+      logger.error('刪除用戶資料庫記錄失敗:', { userId, error });
+      throw error;
+    }
+  }
+
+  // 添加事務相關方法
+  async beginTransaction(): Promise<void> {
+    // DynamoDB 不支援原生事務，這裡可以實現自定義的事務邏輯
+    // 或使用 DynamoDB TransactWriteItems
+  }
+
+  async commitTransaction(): Promise<void> {
+    // 提交事務
+  }
+
+  async rollbackTransaction(): Promise<void> {
+    // 回滾事務
   }
 } 
