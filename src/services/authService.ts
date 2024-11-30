@@ -2,6 +2,7 @@ import {
   CognitoIdentityProviderClient, 
   AdminInitiateAuthCommand,
   AdminDeleteUserCommand,
+  InitiateAuthCommand,
   AuthFlowType,
   AdminGetUserCommand,
   NotAuthorizedException,
@@ -54,30 +55,18 @@ export class AuthService {
     }
   }
 
-  async deleteUserFromCognito(userId: string): Promise<void> {
+  async validateAndDeleteUser(userSub: string, password: string): Promise<void> {
     try {
-      logger.info('開始從 Cognito 刪除用戶:', { userId });
+      logger.info('開始驗證密碼和刪除用戶:', { userSub });
       
-      const command = new AdminDeleteUserCommand({
-        UserPoolId: this.userPoolId,
-        Username: userId
-      });
-
-      await this.client.send(command);
-      logger.info('用戶從 Cognito 刪除成功:', { userId });
-    } catch (error) {
-      logger.error('從 Cognito 刪除用戶失敗:', { userId, error });
-      throw error;
-    }
-  }
-
-  async validatePasswordAndDeleteUser(userSub: string, password: string): Promise<void> {
-    try {
-      // 先驗證密碼
-      await this.validatePassword(userSub, password);
+      // 1. 驗證密碼
+      await this.verifyPassword(userSub, password);
+      logger.info('密碼驗證成功');
       
-      // 密碼驗證成功後刪除用戶
+      // 2. 刪除 Cognito 用戶
       await this.deleteUserFromCognito(userSub);
+      logger.info('Cognito 用戶刪除成功');
+      
     } catch (error) {
       logger.error('驗證密碼或刪除用戶失敗:', { userSub, error });
       if (error instanceof NotAuthorizedException) {
@@ -86,65 +75,44 @@ export class AuthService {
       if (error instanceof UserNotFoundException) {
         throw new Error('用戶不存在');
       }
-      throw new Error(`刪除用戶失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
+      throw error;
     }
   }
 
-  private async validatePassword(userSub: string, password: string): Promise<void> {
+  async verifyPassword(userSub: string, password: string): Promise<void> {
     try {
-      // 先檢查用戶是否存在
-      const userCommand = new AdminGetUserCommand({
-        UserPoolId: this.userPoolId,
-        Username: userSub
-      });
-      
-      await this.client.send(userCommand);
-      
-      // 驗證密碼
       const command = new AdminInitiateAuthCommand({
         UserPoolId: this.userPoolId,
         ClientId: this.clientId,
         AuthFlow: AuthFlowType.ADMIN_USER_PASSWORD_AUTH,
         AuthParameters: {
           USERNAME: userSub,
-          PASSWORD: password,
-        },
+          PASSWORD: password
+        }
       });
-
+      
       await this.client.send(command);
+      logger.info('密碼驗證成功');
     } catch (error) {
-      logger.error('密碼驗證失敗:', { userSub, error });
+      logger.error('密碼驗證失敗:', error);
       if (error instanceof NotAuthorizedException) {
         throw new Error('密碼錯誤');
-      }
-      if (error instanceof UserNotFoundException) {
-        throw new Error('用戶不存在');
       }
       throw error;
     }
   }
 
-  async deleteUser(userSub: string, password: string): Promise<void> {
+  async deleteUserFromCognito(userSub: string): Promise<void> {
     try {
-      // 1. 先驗證密碼
-      await this.validatePassword(userSub, password);
-      
-      // 2. 密碼驗證成功後刪除用戶
-      const deleteCommand = new AdminDeleteUserCommand({
+      const command = new AdminDeleteUserCommand({
         UserPoolId: this.userPoolId,
         Username: userSub
       });
-
-      await this.client.send(deleteCommand);
-      logger.info('已從 Cognito 刪除用戶:', { userSub });
+      
+      await this.client.send(command);
+      logger.info('Cognito 用戶刪除成功:', { userSub });
     } catch (error) {
-      logger.error('刪除用戶失敗:', { userSub, error });
-      if (error instanceof NotAuthorizedException) {
-        throw new Error('密碼錯誤');
-      }
-      if (error instanceof UserNotFoundException) {
-        throw new Error('用戶不存在');
-      }
+      logger.error('刪除 Cognito 用戶失敗:', error);
       throw error;
     }
   }

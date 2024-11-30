@@ -18,57 +18,31 @@ interface UseProfileAccountProps {
 export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
   const [password, setPassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const router = useRouter();
   const { showToast } = useToastContext();
+  const router = useRouter();
 
-  const handleAccountDeletion = async (password: string) => {
-    if (!user?.sub || !user?.userId || !user?.email) {
-      setError('用戶資訊不完整');
+  const handleAccountDeletion = async () => {
+    if (!password.trim()) {
+      showToast('請輸入密碼以確認刪除', 'error');
       return;
     }
 
     try {
       setIsDeleting(true);
-      setError(null);
+      showToast('正在處理您的請求...', 'loading');
 
-      const response = await userApi.deleteAccount({
-        password,
-        user: {
-          sub: user.sub,
-          userId: user.userId,
-          email: user.email
-        }
-      });
-      
-      if (response.status === 200) {
-        showToast('帳號已成功刪除', 'success');
+      await userApi.deleteAccount(password);
+      showToast('帳號已成功刪除', 'success');
+      setTimeout(() => {
         router.push('/auth/login');
-      }
+      }, 2000);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      showToast(errorMessage, 'error');
+      setError(errorMessage);
+    } finally {
       setIsDeleting(false);
-      if (error instanceof Error) {
-        switch (error.message) {
-          case '密碼錯誤，請重新輸入':
-            setError('密碼錯誤，請重新輸入');
-            showToast('密碼錯誤，請重新輸入', 'error');
-            break;
-          case '找不到用戶資料':
-            setError('找不到用戶資料');
-            showToast('找不到用戶資料', 'error');
-            break;
-          case '請求過於頻繁，請稍後再試':
-            setError('請求過於頻繁，請稍後再試');
-            showToast('請求過於頻繁，請稍後再試', 'warning');
-            break;
-          default:
-            setError('刪除帳號失敗，請稍後重試');
-            showToast('刪除帳號失敗，請稍後重試', 'error');
-        }
-      }
-      throw error;
     }
   };
 
@@ -76,9 +50,7 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
     password,
     setPassword,
     isDeleting,
-    isLoading,
     error,
-    handleAccountDeletion,
-    passwordError,
+    handleAccountDeletion
   };
 }; 

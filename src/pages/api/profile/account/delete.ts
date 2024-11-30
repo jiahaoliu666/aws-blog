@@ -4,6 +4,7 @@ import { DbService } from '@/services/dbService';
 import { logger } from '@/utils/logger';
 import { EmailService } from '@/services/emailService';
 import { generateAccountDeletionEmail } from '@/templates/deleteAccountEmail';
+import { DB_TABLES } from '@/config/constants';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -16,40 +17,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userEmail = req.headers['x-user-email'] as string;
 
   if (!password || !userId || !userSub || !userEmail) {
+    logger.error('缺少必要參數');
     return res.status(400).json({ message: '缺少必要參數' });
   }
 
+  const authService = new AuthService();
+  const dbService = new DbService();
+  const emailService = new EmailService();
+
   try {
-    const authService = new AuthService();
-    const dbService = new DbService();
-    const emailService = new EmailService();
+    logger.info('開始帳號刪除流程:', { userId, userSub });
+    
+    // 驗證密碼
+    await authService.verifyPassword(userSub, password);
+    logger.info('密碼驗證成功:', { userSub });
 
-    // 1. 先驗證並刪除 Cognito 用戶
-    await authService.deleteUser(userSub, password);
+    // 開始刪除流程
+    await dbService.deleteUserCompletely(userId, userSub);
+    logger.info('用戶資料刪除成功:', { userId });
 
-    // 2. 刪除資料庫和 S3 檔案
-    await dbService.deleteUserCompletely(userId);
-
-    // 3. 發送確認郵件
-    const emailContent = generateAccountDeletionEmail({
-      title: '帳號刪除確認',
-      content: '您的帳號已成功刪除。感謝您使用我們的服務。'
-    });
-
+    // 發送刪除確認郵件
+    const emailContent = generateAccountDeletionEmail({ title: '帳號刪除確認', content: '您的帳號已成功刪除。' });
     await emailService.sendEmail({
       to: userEmail,
       subject: '帳號刪除確認',
       content: emailContent,
       articleData: {
         title: '帳號刪除確認',
-        content: emailContent
+        content: '您的帳號已成功刪除'
       }
     });
+    logger.info('刪除確認郵件發送成功:', { userEmail });
 
     return res.status(200).json({ message: '帳號已成功刪除' });
+    
   } catch (error) {
     logger.error('刪除帳號失敗:', error);
-    
     const errorMessage = error instanceof Error ? error.message : '未知錯誤';
     
     switch (errorMessage) {

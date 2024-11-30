@@ -21,16 +21,14 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useToastContext } from '@/context/ToastContext';
 import { SectionTitle } from '../common/SectionTitle';
 import { useRouter } from 'next/router';
+import { logger } from '@/utils/logger';
 
 interface AccountSectionProps {
-  accountStatus?: string;
-  isLoading: boolean;
-  error: string | null;
-  handleAccountDeletion: (password: string) => Promise<void>;
-  isDeleting: boolean;
   password: string;
   setPassword: React.Dispatch<React.SetStateAction<string>>;
-  passwordError: string | null;
+  isDeleting: boolean;
+  error: string | null;
+  handleAccountDeletion: () => Promise<void>;
 }
 
 // 將 DeleteConfirmationDialog 提取為獨立組件
@@ -51,38 +49,22 @@ const DeleteConfirmationDialog: React.FC<{
   isDeleting,
   passwordError
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
   const { showToast } = useToastContext();
   const { user } = useAuthContext();
-  const [showPassword, setShowPassword] = useState(false);
 
-  // 當對話框關閉時重置 showPassword 狀態
-  useEffect(() => {
-    if (!isOpen) {
-      setShowPassword(false);
-    }
-  }, [isOpen]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onPasswordChange(e.target.value);
-  };
-
-  const handleClose = () => {
-    setShowPassword(false);  // 重置密碼顯示狀態
-    onClose();
-  };
-
-  const handleConfirmClick = async () => {
+  const handleConfirmClick = () => {
     if (!password.trim()) {
       showToast('請輸入密碼以確認刪除', 'error');
       return;
     }
-    await onConfirm();
+    onConfirm();
   };
 
   return (
     <Dialog
       open={isOpen}
-      onClose={handleClose}
+      onClose={onClose}
       className="relative z-50"
     >
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -113,34 +95,35 @@ const DeleteConfirmationDialog: React.FC<{
             </div>
 
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              請輸入密碼確認
+              請輸入密碼以確認刪除
             </label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={handleInputChange}
+                onChange={(e) => onPasswordChange(e.target.value)}
                 className={`
-                  w-full px-4 py-2 pr-12 rounded-xl border
-                  ${passwordError ? 'border-red-300' : 'border-gray-300'}
-                  focus:outline-none focus:ring-2 focus:ring-blue-500
+                  w-full px-4 py-2 border rounded-xl
+                  ${passwordError ? 'border-red-500' : 'border-gray-300'}
                 `}
-                placeholder="輸入您的密碼"
-                autoComplete="current-password"
+                placeholder="輸入密碼"
+                disabled={isDeleting}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
               >
                 <FontAwesomeIcon 
-                  icon={showPassword ? faEyeSlash : faEye} 
-                  className="text-sm"
+                  icon={showPassword ? faEyeSlash : faEye}
+                  className="text-gray-500"
                 />
               </button>
             </div>
             {passwordError && (
-              <p className="mt-2 text-sm text-red-600">{passwordError}</p>
+              <p className="mt-2 text-sm text-red-600">
+                {passwordError}
+              </p>
             )}
           </div>
 
@@ -148,7 +131,7 @@ const DeleteConfirmationDialog: React.FC<{
             <button
               type="button"
               className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl"
-              onClick={handleClose}
+              onClick={onClose}
             >
               取消
             </button>
@@ -175,14 +158,11 @@ const DeleteConfirmationDialog: React.FC<{
 });
 
 const AccountSection: React.FC<AccountSectionProps> = ({
-  accountStatus,
-  isLoading,
-  error,
-  handleAccountDeletion,
-  isDeleting,
   password,
   setPassword,
-  passwordError
+  isDeleting,
+  error,
+  handleAccountDeletion
 }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { user } = useAuthContext();
@@ -277,12 +257,28 @@ const AccountSection: React.FC<AccountSectionProps> = ({
     }
 
     try {
-      await handleAccountDeletion(password);
-      handleCloseModal();
+      await handleAccountDeletion();
+      showToast('帳號已成功刪除', 'success');
+      router.push('/auth/login');
     } catch (error) {
-      console.error('刪除帳號時發生錯誤:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      
+      switch (errorMessage) {
+        case '密碼錯誤':
+          showToast('密碼錯誤，請重輸入', 'error');
+          break;
+        case '用戶不存在':
+          showToast('用戶不存在', 'error');
+          break;
+        case '超過速率限制':
+          showToast('請求過於頻繁，請稍後再試', 'error');
+          break;
+        default:
+          showToast('刪除帳號時發生錯誤，請稍後重試', 'error');
+          logger.error('刪除帳號失敗:', error);
+      }
     }
-  }, [password, handleAccountDeletion, handleCloseModal]);
+  }, [password, handleAccountDeletion, showToast, router]);
 
   return (
     <div className="w-full">
@@ -365,7 +361,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         password={password}
         onPasswordChange={setPassword}
         isDeleting={isDeleting}
-        passwordError={passwordError}
+        passwordError={error}
       />
     </div>
   );

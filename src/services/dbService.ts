@@ -2,10 +2,12 @@ import { DynamoDBClient, QueryCommand, PutItemCommand, ScanCommand, DeleteItemCo
 import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import { DB_TABLES } from '../config/constants';
 import { logger } from '@/utils/logger';
+import { AuthService } from '@/services/authService';
 
 export class DbService {
   private client: DynamoDBClient;
   private s3Client: S3Client;
+  private authService: AuthService;
   private readonly userBucket: string;
   private readonly bucketsToCheck: { bucket: string; prefix: string }[] = [
     { bucket: process.env.USER_UPLOADS_BUCKET || '', prefix: 'users/' },
@@ -23,6 +25,7 @@ export class DbService {
     });
     
     this.userBucket = process.env.USER_UPLOADS_BUCKET || '';
+    this.authService = new AuthService();
   }
 
   async getNotificationUsers() {
@@ -90,9 +93,9 @@ export class DbService {
     }
   }
 
-  private async markAsDeleted(tableName: string, userId: string) {
+  async markAsDeleted(table: string, userId: string): Promise<void> {
     const params = {
-      TableName: tableName,
+      TableName: table,
       Key: {
         userId: { S: userId }
       },
@@ -106,36 +109,37 @@ export class DbService {
     try {
       await this.client.send(new UpdateItemCommand(params));
     } catch (error) {
-      logger.error(`標記 ${tableName} 資料為已刪除失敗`, { userId, error });
+      logger.error(`標記 ${table} 資料為已刪除失敗`, { userId, error });
       throw error;
     }
   }
 
-  private async deleteUserS3Files(userId: string): Promise<void> {
+  async deleteUserS3Files(userId: string): Promise<void> {
     try {
-      // 檢查並刪除所有相關 bucket 中的檔案
+      logger.info('開始刪除用戶 S3 檔案:', { userId });
+      
       for (const { bucket, prefix } of this.bucketsToCheck) {
-        const listCommand = new ListObjectsV2Command({
+        const command = new ListObjectsV2Command({
           Bucket: bucket,
           Prefix: `${prefix}${userId}/`
         });
-
-        const objects = await this.s3Client.send(listCommand);
         
-        if (objects.Contents && objects.Contents.length > 0) {
-          const deleteCommand = new DeleteObjectsCommand({
+        const response = await this.s3Client.send(command);
+        
+        if (response.Contents && response.Contents.length > 0) {
+          const deleteParams = {
             Bucket: bucket,
             Delete: {
-              Objects: objects.Contents.map(obj => ({ Key: obj.Key! }))
+              Objects: response.Contents.map(obj => ({ Key: obj.Key! }))
             }
-          });
+          };
           
-          await this.s3Client.send(deleteCommand);
-          logger.info(`已從 ${bucket} 刪除用戶檔案:`, { userId });
+          await this.s3Client.send(new DeleteObjectsCommand(deleteParams));
+          logger.info(`已從 ${bucket} 刪除 ${response.Contents.length} 個檔案`);
         }
       }
     } catch (error) {
-      logger.error('刪除用戶 S3 檔案失敗:', { userId, error });
+      logger.error('刪除 S3 檔案失敗:', error);
       throw error;
     }
   }
@@ -162,23 +166,33 @@ export class DbService {
     }
   }
 
-  async deleteUserCompletely(userId: string): Promise<void> {
+  async deleteUserCompletely(userId: string, userSub: string): Promise<void> {
     try {
+      logger.info('開始完整刪除用戶資料:', { userId, userSub });
+      
       // 1. 檢查用戶是否存在
       const userExists = await this.checkUserExists(userId);
       if (!userExists) {
+        logger.error('用戶不存在:', { userId });
         throw new Error('用戶不存在');
       }
-
+      
       // 2. 先標記為已刪除
       await this.markAsDeleted(DB_TABLES.USER_PROFILES, userId);
+      logger.info('用戶標記為已刪除');
       
       // 3. 刪除 S3 檔案
       await this.deleteUserS3Files(userId);
+      logger.info('用戶 S3 檔案刪除成功');
       
-      // 4. 最後刪除資料庫記錄
+      // 4. 刪除資料庫記錄
       await this.deleteUserRecords(userId);
-
+      logger.info('用戶資料庫記錄刪除成功');
+      
+      // 5. 刪除 Cognito 用戶
+      await this.authService.deleteUserFromCognito(userSub);
+      logger.info('Cognito 用戶刪除成功');
+      
       logger.info('用戶帳號刪除完成:', { userId });
     } catch (error) {
       logger.error('刪除用戶帳號失敗:', { userId, error });
@@ -212,11 +226,11 @@ export class DbService {
   // 補償機制
   async rollbackUserDeletion(userId: string): Promise<void> {
     try {
+      logger.info('開始回滾刪除操作:', { userId });
       await this.markUserAsActive(userId);
-      logger.info('成功回滾用戶刪除操作:', { userId });
+      logger.info('回滾完成');
     } catch (error) {
-      logger.error('回滾用戶刪除操作失敗:', { userId, error });
-      throw error;
+      logger.error('回滾操作失敗:', error);
     }
   }
 
@@ -254,30 +268,32 @@ export class DbService {
 
   private async deleteUserRecords(userId: string): Promise<void> {
     try {
-      const tables = Object.values(DB_TABLES);
+      logger.info('開始刪除用戶資料庫記錄:', { userId });
       
-      // 使用 TransactWriteItems 進行事務性刪除
-      const transactItems = tables.map(tableName => ({
-        Delete: {
-          TableName: tableName,
+      const tables = [
+        DB_TABLES.LINE_VERIFICATIONS,
+        DB_TABLES.USER_ACTIVITY_LOG,
+        DB_TABLES.USER_FAVORITES,
+        DB_TABLES.USER_NOTIFICATIONS,
+        DB_TABLES.USER_NOTIFICATION_SETTINGS,
+        DB_TABLES.USER_PREFERENCES,
+        DB_TABLES.USER_PROFILES,
+        DB_TABLES.USER_RECENT_ARTICLES
+      ];
+
+      for (const table of tables) {
+        const params = {
+          TableName: table,
           Key: {
             userId: { S: userId }
           }
-        }
-      }));
-
-      // DynamoDB 單次事務最多支援 25 個操作
-      const batchSize = 25;
-      for (let i = 0; i < transactItems.length; i += batchSize) {
-        const batch = transactItems.slice(i, i + batchSize);
-        await this.client.send(new TransactWriteItemsCommand({
-          TransactItems: batch
-        }));
+        };
+        
+        await this.client.send(new DeleteItemCommand(params));
+        logger.info(`已從 ${table} 刪除用戶記錄`);
       }
-      
-      logger.info('已刪除用戶資料庫記錄:', { userId });
     } catch (error) {
-      logger.error('刪除用戶資料庫記錄失敗:', { userId, error });
+      logger.error('刪除資料庫記錄失敗:', error);
       throw error;
     }
   }
