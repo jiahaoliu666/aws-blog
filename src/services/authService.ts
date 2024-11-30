@@ -33,22 +33,22 @@ export class AuthService {
     });
   }
 
-  async verifyPassword(email: string, password: string): Promise<void> {
+  async verifyUserPassword(userId: string, password: string): Promise<void> {
     try {
       const command = new AdminInitiateAuthCommand({
         UserPoolId: this.userPoolId,
         ClientId: this.clientId,
-        AuthFlow: AuthFlowType.ADMIN_USER_PASSWORD_AUTH,
+        AuthFlow: "ADMIN_USER_PASSWORD_AUTH",
         AuthParameters: {
-          USERNAME: email,
-          PASSWORD: password
-        }
+          USERNAME: userId,
+          PASSWORD: password,
+        },
       });
 
       await this.client.send(command);
     } catch (error) {
       if (error instanceof NotAuthorizedException) {
-        throw new Error('密碼錯誤，請重新輸入');
+        throw new Error('密碼錯誤');
       }
       throw error;
     }

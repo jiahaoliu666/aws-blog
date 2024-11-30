@@ -139,95 +139,63 @@ export class DbService {
     try {
       logger.info('開始刪除用戶相關資料:', { userId });
 
-      // 定義要刪除的表格和對應的鍵值
+      // 使用完整的 AWS DynamoDB 表格名稱和正確的 userId 主鍵
       const tables = [
-        { name: DB_TABLES.USER_PROFILES, key: 'userId' },
-        { name: DB_TABLES.USER_PREFERENCES, key: 'userId' },
-        { name: DB_TABLES.USER_NOTIFICATION_SETTINGS, key: 'userId' },
-        { name: DB_TABLES.USER_FAVORITES, key: 'userId' },
-        { name: DB_TABLES.USER_ACTIVITY_LOG, key: 'userId' },
-        { name: DB_TABLES.USER_RECENT_ARTICLES, key: 'userId' }
+        'AWS_Blog_LineVerifications',
+        'AWS_Blog_UserActivityLog',
+        'AWS_Blog_UserFavorites',
+        'AWS_Blog_UserNotifications',
+        'AWS_Blog_UserNotificationSettings',
+        'AWS_Blog_UserPreferences',
+        'AWS_Blog_UserProfiles',
+        'AWS_Blog_UserRecentArticles'
       ];
 
-      // 並行刪除所有表格中的用戶資料
-      await Promise.all(tables.map(async (table) => {
-        try {
-          const command = new DeleteItemCommand({
-            TableName: table.name,
-            Key: {
-              [table.key]: { S: userId }
-            }
-          });
-
-          await this.client.send(command);
-          logger.info(`成功從 ${table.name} 刪除用戶資料`, { userId });
-        } catch (error) {
-          // 記錄錯誤但不中斷流程
-          logger.error(`從 ${table.name} 刪除用戶資料失敗:`, {
-            userId,
-            error: error instanceof Error ? error.message : '未知錯誤'
-          });
+      const transactionItems = tables.map(tableName => ({
+        Delete: {
+          TableName: tableName,
+          Key: {
+            userId: { S: userId }  // 使用正確的 userId 作為主鍵
+          }
         }
       }));
 
-      logger.info('用戶資料刪除完成', { userId });
-    } catch (error) {
-      logger.error('刪除用戶資料時發生錯誤:', {
-        userId,
-        error: error instanceof Error ? error.message : '未知錯誤'
+      const command = new TransactWriteItemsCommand({
+        TransactItems: transactionItems
       });
+
+      await this.client.send(command);
+      logger.info('用戶相關資料刪除完成:', { userId });
+      
+    } catch (error) {
+      logger.error('刪除用戶資料時發生錯誤:', { userId, error });
       throw error;
     }
   }
 
-  async deleteUserWithTransaction(userId: string): Promise<void> {
+  async deleteUserCompletely(userId: string): Promise<void> {
     try {
-      logger.info('開始刪除用戶資料:', { userId });
-      
-      // 1. 先檢查用戶是否存在
+      // 1. 檢查用戶是否存在
       const userExists = await this.checkUserExists(userId);
       if (!userExists) {
-        logger.error('找不到用戶資料:', { userId });
+        logger.warn('刪除用戶時找不到用戶資料:', { userId });
         throw new Error('找不到用戶資料');
       }
 
       // 2. 標記用戶為已刪除狀態
       await this.markUserAsDeleted(userId);
+      logger.info('用戶已標記為已刪除:', { userId });
       
-      try {
-        // 3. 刪除用戶 S3 檔案
-        await this.deleteUserS3Files(userId);
-        
-        // 4. 刪除相關資料表中的用戶資料
-        const transactItems = Object.values(DB_TABLES)
-          .map(tableName => ({
-            Update: {
-              TableName: tableName,
-              Key: { userId: { S: userId } },
-              UpdateExpression: 'SET deleted = :deleted, deletedAt = :deletedAt',
-              ExpressionAttributeValues: {
-                ':deleted': { BOOL: true },
-                ':deletedAt': { S: new Date().toISOString() }
-              },
-              ConditionExpression: 'attribute_exists(userId)'
-            }
-          }));
+      // 3. 刪除 S3 檔案
+      await this.deleteUserS3Files(userId);
+      logger.info('用戶 S3 檔案已刪除:', { userId });
+      
+      // 4. 刪除資料庫資料
+      await this.deleteUserData(userId);
+      logger.info('用戶資料庫資料已刪除:', { userId });
 
-        const command = new TransactWriteItemsCommand({
-          TransactItems: transactItems
-        });
-
-        await this.client.send(command);
-        logger.info('用戶資料已標記為已刪除:', { userId });
-
-      } catch (error) {
-        logger.error('刪除用戶資料失敗:', { userId, error });
-        // 嘗試回滾操作
-        await this.rollbackUserDeletion(userId);
-        throw error;
-      }
     } catch (error) {
-      logger.error('刪除用戶時發生錯誤:', { userId, error });
+      logger.error('刪除用戶資料失敗:', { userId, error });
       throw error;
     }
   }

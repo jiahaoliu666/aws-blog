@@ -9,6 +9,7 @@ import cognitoClient from "../utils/cognitoClient";
 import { ExtendedNews } from "@/types/newsType";
 import logActivity from '../pages/api/profile/activity-log'; // 引入 logActivity 函數
 import { User } from '../types/userType';
+import { logger } from '@/utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -87,27 +88,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authResult = response.AuthenticationResult;
 
       if (authResult?.AccessToken) {
+        // 解析 JWT token 以獲取 sub
+        const payload = JSON.parse(Buffer.from(authResult.IdToken!.split('.')[1], 'base64').toString());
+        
         const user: User = {
-          id: email,           // 使用 email 作為臨時 id
+          id: payload.sub,           // 使用 Cognito 的 sub
           email,
           accessToken: authResult.AccessToken,
           refreshToken: authResult.RefreshToken || '',
-          username: email,     // 使用 email 作為用戶名
-          userId: email,       // 使用 email 作為 userId
-          sub: email          // 使用 email 作為 sub
+          username: payload['cognito:username'] || email.split('@')[0],
+          userId: payload.sub,       // 使用 Cognito 的 sub
+          sub: payload.sub          // 使用 Cognito 的 sub
         };
         
+        logger.info('用戶登入成功:', {
+          hasId: !!user.id,
+          hasUserId: !!user.userId,
+          hasSub: !!user.sub,
+          email: user.email
+        });
+
         setUser(user);
         if (typeof window !== 'undefined') {
           localStorage.setItem("user", JSON.stringify(user));
         }
         return true;
       }
+      return false;
     } catch (err) {
       setError(`登入失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);
       return false;
     }
-    return false;
   };
 
   const logoutUser = async (): Promise<boolean> => {
@@ -128,14 +139,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
-  const updateUser = (updatedUser: Partial<User>) => {
-    if (user) {
-      const newUser = { ...user, ...updatedUser };
-      setUser(newUser);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem("user", JSON.stringify(newUser));
-      }
-    }
+  const updateUser = (userData: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        ...userData,
+        sub: userData.sub || prev.sub  // 確保保留 sub
+      };
+      return updated;
+    });
   };
 
   const clearError = () => {

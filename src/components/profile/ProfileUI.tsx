@@ -139,6 +139,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const lineVerification = useLineVerification();
   const account = useProfileAccount({ 
     user: currentUser ? {
+      sub: currentUser.sub,
+      userId: currentUser.userId,
       email: currentUser.email,
       username: currentUser.username
     } : {
@@ -317,7 +319,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       });
 
       if (!response.ok) {
-        throw new Error('重置驗證失敗');
+        throw new Error('重���驗證失敗');
       }
 
       // 3. 更新本地設定狀態

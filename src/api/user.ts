@@ -19,31 +19,45 @@ const handleApiError = (error: AxiosError) => {
   throw new Error('網路連線錯誤，請檢查網路狀態');
 };
 
+interface DeleteAccountParams {
+  password: string;
+  user: {
+    sub?: string;
+    userId?: string;
+    email?: string;
+    username?: string;
+  };
+}
+
 export const userApi = {
   updateUser: async (data: any) => {
     try {
       const response = await axios.put(API_ENDPOINTS.UPDATE_USER, data);
       return response.data;
     } catch (error) {
-      logger.error('更新用戶資料失敗', { error });
+      logger.error('更新用戶資料敗', { error });
       throw handleApiError(error as AxiosError);
     }
   },
 
-  deleteAccount: async (password: string) => {
+  deleteAccount: async ({ user, password }: DeleteAccountParams) => {
     try {
-      const response = await axios.delete(API_ENDPOINTS.DELETE_ACCOUNT, {
-        data: { password },
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await axios.post(API_ENDPOINTS.DELETE_ACCOUNT, 
+        { password },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.userId || '',
+            'x-user-sub': user.sub,
+            'x-user-email': user.email
+          }
         }
-      });
-      return response;
+      );
+
+      return response.data;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        handleApiError(error);
-      }
-      throw error;
+      logger.error('刪除帳號請求失敗:', error);
+      throw handleApiError(error as AxiosError);
     }
   },
 

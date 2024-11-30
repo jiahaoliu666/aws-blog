@@ -52,6 +52,7 @@ const DeleteConfirmationDialog: React.FC<{
   passwordError
 }) => {
   const { showToast } = useToastContext();
+  const { user } = useAuthContext();
   const [showPassword, setShowPassword] = useState(false);
 
   // 當對話框關閉時重置 showPassword 狀態
@@ -99,6 +100,18 @@ const DeleteConfirmationDialog: React.FC<{
           </div>
 
           <div className="mt-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                用戶 ID
+              </label>
+              <input
+                type="text"
+                value={user?.sub || ''}
+                readOnly
+                className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-gray-50 text-gray-500 font-mono"
+              />
+            </div>
+
             <label className="block text-sm font-medium text-gray-700 mb-2">
               請輸入密碼確認
             </label>
@@ -259,7 +272,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
 
   const handleConfirmDelete = useCallback(async () => {
     if (!password.trim()) {
-      showToast('請輸入密碼以確��刪除', 'error');
+      showToast('請輸入密碼以確認刪除', 'error');
       return;
     }
 

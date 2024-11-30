@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useToastContext } from '@/context/ToastContext';
 import { API_ENDPOINTS } from '@/config/constants';
 import { logger } from '@/utils/logger';
+import { userApi } from '@/api/user';
 
 interface UseProfileAccountProps {
   user: {
@@ -24,45 +25,30 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
   const { showToast } = useToastContext();
 
   const handleAccountDeletion = async (password: string) => {
-    if (!user?.userId) {
-      showToast('找不到用戶資料', 'error');
-      return;
-    }
-
     try {
       setIsDeleting(true);
-      logger.info('開始刪除帳號流程:', { 
-        userId: user.sub,
-        email: user.email 
-      });
+      setError(null);
 
-      const response = await fetch(API_ENDPOINTS.DELETE_ACCOUNT, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user.sub || '',
-          'x-user-email': user.email || ''
-        },
-        body: JSON.stringify({ password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        logger.error('刪除帳號請求失敗:', {
-          status: response.status,
-          message: data.message,
-          userId: user.sub
-        });
-        throw new Error(data.message || '刪除帳號失敗');
+      if (!user?.sub) {
+        throw new Error('找不到用戶識別碼');
       }
+
+      await userApi.deleteAccount({
+        user: {
+          sub: user.sub,
+          userId: user.userId || user.id,
+          email: user.email,
+        },
+        password
+      });
 
       showToast('帳號已成功刪除', 'success');
       router.push('/auth/login');
+      
     } catch (error) {
-      logger.error('刪除帳號失敗:', error);
-      const errorMessage = error instanceof Error ? error.message : '刪除帳號失敗，請稍後重試';
+      const errorMessage = error instanceof Error ? error.message : '刪除帳號失敗';
       showToast(errorMessage, 'error');
+      setError(errorMessage);
       throw error;
     } finally {
       setIsDeleting(false);
