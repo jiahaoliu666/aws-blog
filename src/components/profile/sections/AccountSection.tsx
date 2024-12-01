@@ -258,27 +258,10 @@ const AccountSection: React.FC<AccountSectionProps> = ({
 
     try {
       await handleAccountDeletion();
-      showToast('帳號已成功刪除', 'success');
-      router.push('/auth/login');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-      
-      switch (errorMessage) {
-        case '密碼錯誤':
-          showToast('密碼錯誤，請重輸入', 'error');
-          break;
-        case '用戶不存在':
-          showToast('用戶不存在', 'error');
-          break;
-        case '超過速率限制':
-          showToast('請求過於頻繁，請稍後再試', 'error');
-          break;
-        default:
-          showToast('刪除帳號時發生錯誤，請稍後重試', 'error');
-          logger.error('刪除帳號失敗:', error);
-      }
+      setIsDeleteModalOpen(false);
     }
-  }, [password, handleAccountDeletion, showToast, router]);
+  }, [password, handleAccountDeletion, showToast]);
 
   return (
     <div className="w-full">

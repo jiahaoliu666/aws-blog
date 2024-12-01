@@ -23,25 +23,24 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
   const router = useRouter();
 
   const handleAccountDeletion = async () => {
-    if (!password.trim()) {
-      showToast('請輸入密碼以確認刪除', 'error');
+    if (!password) {
+      setError('請輸入密碼');
       return;
     }
 
     try {
       setIsDeleting(true);
-      showToast('正在處理您的請求...', 'loading');
+      setError(null);
 
       await userApi.deleteAccount(password);
+      
       showToast('帳號已成功刪除', 'success');
-      setTimeout(() => {
-        router.push('/auth/login');
-      }, 2000);
+      await router.push('/auth/login');
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-      showToast(errorMessage, 'error');
       setError(errorMessage);
-    } finally {
+      showToast(errorMessage, 'error');
       setIsDeleting(false);
     }
   };

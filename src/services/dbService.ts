@@ -65,30 +65,48 @@ export class DbService {
     }
   }
 
-  async deleteUserAccount(userId: string): Promise<void> {
+  async deleteUserAccount(userId: string, userSub: string, password: string): Promise<void> {
     try {
       logger.info('開始刪除用戶帳號:', { userId });
       
-      // 1. 檢查用戶是否存在
+      // 1. 先檢查用戶是否存在
       const userExists = await this.checkUserExists(userId);
       if (!userExists) {
         throw new Error('用戶不存在');
       }
 
-      // 2. 先標記用戶為已刪除狀態
-      await this.markUserAsDeleted(userId);
+      // 2. 驗證密碼，如果驗證失敗會直接拋出錯誤並中止流程
+      const isPasswordValid = await this.authService.verifyPassword(userSub, password);
+      if (!isPasswordValid) {
+        throw new Error('密碼錯誤');
+      }
       
-      // 3. 刪除用戶的 S3 檔案
-      await this.deleteUserS3Files(userId);
+      logger.info('密碼驗證成功，開始執行刪除流程');
       
-      // 4. 刪除資料庫記錄
-      await this.deleteUserRecords(userId);
+      // 3. 開始事務操作
+      await this.beginTransaction();
       
-      logger.info('用戶帳號刪除完成:', { userId });
+      try {
+        // 4. 刪除 S3 檔案
+        await this.deleteUserS3Files(userId);
+        
+        // 5. 刪除資料庫記錄
+        await this.deleteUserRecords(userId);
+        
+        // 6. 刪除 Cognito 用戶
+        await this.authService.deleteUserWithoutPassword(userSub);
+        
+        // 7. 提交事務
+        await this.commitTransaction();
+        
+        logger.info('用戶相關資料刪除完成:', { userId });
+      } catch (error) {
+        // 8. 如果過程中出錯，回滾事務
+        await this.rollbackTransaction();
+        throw error;
+      }
     } catch (error) {
-      logger.error('刪除用戶帳號失敗:', { userId, error });
-      // 嘗試回滾刪除操作
-      await this.rollbackUserDeletion(userId);
+      logger.error('刪除用戶資料時發生錯誤:', { userId, error });
       throw error;
     }
   }
@@ -168,36 +186,42 @@ export class DbService {
 
   async deleteUserCompletely(userId: string, userSub: string): Promise<void> {
     try {
-      logger.info('開始完整刪除用戶資料:', { userId, userSub });
+      logger.info('開始刪除用戶資料:', { userId });
       
-      // 1. 檢查用戶是否存在
-      const userExists = await this.checkUserExists(userId);
-      if (!userExists) {
-        logger.error('用戶不存在:', { userId });
-        throw new Error('用戶不存在');
-      }
+      // 刪除所有相關資料表中的記錄
+      const tables = [
+        DB_TABLES.LINE_VERIFICATIONS,
+        DB_TABLES.USER_ACTIVITY_LOG,
+        DB_TABLES.USER_FAVORITES,
+        DB_TABLES.USER_NOTIFICATIONS,
+        DB_TABLES.USER_NOTIFICATION_SETTINGS,
+        DB_TABLES.USER_PREFERENCES,
+        DB_TABLES.USER_PROFILES,
+        DB_TABLES.USER_RECENT_ARTICLES
+      ];
+
+      // 使用 Promise.all 並行刪除所有表格中的數據
+      await Promise.all(tables.map(async (table) => {
+        try {
+          const params = {
+            TableName: table,
+            Key: {
+              userId: { S: userId }
+            }
+          };
+          
+          await this.client.send(new DeleteItemCommand(params));
+          logger.info(`成功從 ${table} 刪除用戶記錄`);
+        } catch (error) {
+          logger.error(`從 ${table} 刪除記錄失敗:`, error);
+          throw error;
+        }
+      }));
+
+      logger.info('所有用戶資料刪除完成');
       
-      // 2. 先標記為已刪除
-      await this.markAsDeleted(DB_TABLES.USER_PROFILES, userId);
-      logger.info('用戶標記為已刪除');
-      
-      // 3. 刪除 S3 檔案
-      await this.deleteUserS3Files(userId);
-      logger.info('用戶 S3 檔案刪除成功');
-      
-      // 4. 刪除資料庫記錄
-      await this.deleteUserRecords(userId);
-      logger.info('用戶資料庫記錄刪除成功');
-      
-      // 5. 刪除 Cognito 用戶
-      await this.authService.deleteUserFromCognito(userSub);
-      logger.info('Cognito 用戶刪除成功');
-      
-      logger.info('用戶帳號刪除完成:', { userId });
     } catch (error) {
-      logger.error('刪除用戶帳號失敗:', { userId, error });
-      // 嘗試回滾刪除操作
-      await this.rollbackUserDeletion(userId);
+      logger.error('刪除用戶資料失敗:', error);
       throw error;
     }
   }
