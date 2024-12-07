@@ -52,7 +52,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 }) => {
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
   const { showToast } = useToastContext();
-  const { user } = useAuthContext();
+  const { user, updateUser } = useAuthContext();
 
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
@@ -80,6 +80,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   const handleSave = async () => {
     try {
       await handleSaveProfileChanges(localUsername);
+      updateUser({ username: localUsername });
     } catch (error) {
       showToast('儲存失敗', 'error');
     }

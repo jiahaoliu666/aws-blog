@@ -88,17 +88,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authResult = response.AuthenticationResult;
 
       if (authResult?.AccessToken) {
-        // 解析 JWT token 以獲取 sub
         const payload = JSON.parse(Buffer.from(authResult.IdToken!.split('.')[1], 'base64').toString());
         
         const user: User = {
-          id: payload.sub,           // 使用 Cognito 的 sub
+          id: payload.sub,
           email,
           accessToken: authResult.AccessToken,
           refreshToken: authResult.RefreshToken || '',
-          username: payload['cognito:username'] || email.split('@')[0],
-          userId: payload.sub,       // 使用 Cognito 的 sub
-          sub: payload.sub          // 使用 Cognito 的 sub
+          username: payload.name || email.split('@')[0],
+          userId: payload.sub,
+          sub: payload.sub
         };
         
         logger.info('用戶登入成功:', {
@@ -145,8 +144,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updated = {
         ...prev,
         ...userData,
-        sub: userData.sub || prev.sub  // 確保保留 sub
+        sub: userData.sub || prev.sub
       };
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("user", JSON.stringify(updated));
+      }
+      
       return updated;
     });
   };

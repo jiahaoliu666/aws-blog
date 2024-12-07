@@ -1,0 +1,32 @@
+
+
+
+74
+Administrator
+l?*iCqF$XZy0AaMOm8p6q8=f6-hLq2zA
+
+141
+TCB&z;P*IX(g5cHni&;uv$3Jy!iJg;GI
+
+在aws環境中
+09-AWSTSACCEVOICE01 = 10.39.250.74 登入驗證網站
+03-AWSTSACCEVOICE01 = 10.39.250.71 網站1
+04-AWSTSACCEVOICE02 = 10.39.250.141 網站2
+
+
+---
+
+09-AWSTSACCEVOICE01 = 10.39.250.74 登入驗證網站
+03-AWSTSACCEVOICE01 = 10.39.250.71 網站1
+04-AWSTSACCEVOICE02 = 10.39.250.141 網站2
+
+74輸入密碼後訪問71會延遲，但74訪問72是正常的 為什麼
+如何查詢彼此之間機器的延遲
+
+
+------
+使用 nslookup 檢查 DNS 解析
+nslookup internal-evoice.china-airlines.com
+
+
+curl -v https://internal-evoice.china-airlines.com:8888/eVoice/pages/loginnew.jsp
