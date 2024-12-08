@@ -23,24 +23,40 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
   const router = useRouter();
 
   const handleAccountDeletion = async () => {
-    if (!password) {
-      setError('請輸入密碼');
-      return;
-    }
-
     try {
       setIsDeleting(true);
-      setError(null);
-
-      await userApi.deleteAccount(password);
       
-      showToast('帳號已成功刪除', 'success');
-      await router.push('/auth/login');
+      // 確保有所有必要參數
+      if (!user?.userId || !user?.sub || !password) {
+        throw new Error('缺少必要參數：請確保已提供用戶ID、sub和密碼');
+      }
 
+      const response = await fetch('/api/profile/account/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          password,
+          userId: user.userId,
+          userSub: user.sub
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.message || '刪除帳號時發生錯誤');
+      }
+
+      showToast('帳號已成功刪除', 'success');
+      router.push('/auth/login');
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       setError(errorMessage);
       showToast(errorMessage, 'error');
+    } finally {
       setIsDeleting(false);
     }
   };

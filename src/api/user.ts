@@ -43,40 +43,13 @@ export const userApi = {
   },
 
   deleteAccount: async (password: string) => {
-    try {
-      const response = await axios.post(API_ENDPOINTS.DELETE_ACCOUNT, 
-        { password },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': localStorage.getItem('userId'),
-            'x-user-sub': localStorage.getItem('userSub'),
-            'x-user-email': localStorage.getItem('userEmail')
-          }
-        }
-      );
-      
-      logger.info('刪除帳號請求成功');
-      return response.data;
-      
-    } catch (error) {
-      logger.error('刪除帳號請求失敗:', error);
-      
-      if (axios.isAxiosError(error)) {
-        switch (error.response?.status) {
-          case ERROR_CODES.UNAUTHORIZED:
-            throw new Error('密碼錯誤，請重新輸入');
-          case ERROR_CODES.NOT_FOUND:
-            throw new Error('找不到用戶資料');
-          case ERROR_CODES.RATE_LIMIT:
-            throw new Error('請求過於頻繁，請稍後再試');
-          default:
-            throw new Error('刪除帳號時發生錯誤');
-        }
-      }
-      
-      throw error;
-    }
+    return fetch(API_ENDPOINTS.DELETE_ACCOUNT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ password }),
+    });
   },
 
   updateAccountStatus: async (status: string) => {

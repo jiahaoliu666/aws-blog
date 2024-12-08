@@ -53,12 +53,18 @@ const DeleteConfirmationDialog: React.FC<{
   const { showToast } = useToastContext();
   const { user } = useAuthContext();
 
-  const handleConfirmClick = () => {
+  const handleConfirmClick = async () => {
     if (!password.trim()) {
       showToast('請輸入密碼以確認刪除', 'error');
       return;
     }
-    onConfirm();
+    
+    if (!user?.userId || !user?.sub) {
+      showToast('無法取得用戶資訊，請重新登入', 'error');
+      return;
+    }
+    
+    await onConfirm();
   };
 
   return (
@@ -99,32 +105,22 @@ const DeleteConfirmationDialog: React.FC<{
             </label>
             <div className="relative">
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => onPasswordChange(e.target.value)}
                 className={`
-                  w-full px-4 py-2 border rounded-xl
-                  ${passwordError ? 'border-red-500' : 'border-gray-300'}
+                  w-full px-4 py-2 rounded-xl 
+                  border ${passwordError ? 'border-red-500' : 'border-gray-300'}
+                  focus:outline-none focus:ring-2 focus:ring-blue-500
                 `}
-                placeholder="輸入密碼"
-                disabled={isDeleting}
+                placeholder="輸入密碼以確認"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              >
-                <FontAwesomeIcon 
-                  icon={showPassword ? faEyeSlash : faEye}
-                  className="text-gray-500"
-                />
-              </button>
+              {passwordError && (
+                <p className="mt-2 text-sm text-red-600">
+                  {passwordError}
+                </p>
+              )}
             </div>
-            {passwordError && (
-              <p className="mt-2 text-sm text-red-600">
-                {passwordError}
-              </p>
-            )}
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
@@ -258,8 +254,10 @@ const AccountSection: React.FC<AccountSectionProps> = ({
 
     try {
       await handleAccountDeletion();
-    } catch (error) {
       setIsDeleteModalOpen(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '刪除帳號時發生錯誤';
+      showToast(errorMessage, 'error');
     }
   }, [password, handleAccountDeletion, showToast]);
 
