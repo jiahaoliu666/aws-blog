@@ -28,6 +28,7 @@ interface AccountSectionProps {
   setPassword: React.Dispatch<React.SetStateAction<string>>;
   isDeleting: boolean;
   error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
   handleAccountDeletion: () => Promise<void>;
 }
 
@@ -53,6 +54,13 @@ const DeleteConfirmationDialog: React.FC<{
   const { showToast } = useToastContext();
   const { user } = useAuthContext();
 
+  // 當對話框關閉時重置密碼顯示狀態
+  useEffect(() => {
+    if (!isOpen) {
+      setShowPassword(false);
+    }
+  }, [isOpen]);
+
   const handleConfirmClick = async () => {
     if (!password.trim()) {
       showToast('請輸入密碼以確認刪除', 'error');
@@ -75,8 +83,8 @@ const DeleteConfirmationDialog: React.FC<{
     >
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-          <Dialog.Title className="text-lg font-bold text-red-600 flex items-center gap-2">
+        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <Dialog.Title as="h3" className="text-lg font-bold text-red-600 flex items-center gap-2">
             <FontAwesomeIcon icon={faExclamationTriangle} />
             確認永久刪除帳號？
           </Dialog.Title>
@@ -109,12 +117,19 @@ const DeleteConfirmationDialog: React.FC<{
                 value={password}
                 onChange={(e) => onPasswordChange(e.target.value)}
                 className={`
-                  w-full px-4 py-2 rounded-xl 
+                  w-full px-4 py-2 pr-10 rounded-xl 
                   border ${passwordError ? 'border-red-500' : 'border-gray-300'}
                   focus:outline-none focus:ring-2 focus:ring-blue-500
                 `}
                 placeholder="輸入密碼以確認"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              </button>
               {passwordError && (
                 <p className="mt-2 text-sm text-red-600">
                   {passwordError}
@@ -147,7 +162,7 @@ const DeleteConfirmationDialog: React.FC<{
               {isDeleting ? '刪除中...' : '確認刪除'}
             </button>
           </div>
-        </Dialog.Panel>
+        </div>
       </div>
     </Dialog>
   );
@@ -158,6 +173,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
   setPassword,
   isDeleting,
   error,
+  setError,
   handleAccountDeletion
 }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -244,7 +260,8 @@ const AccountSection: React.FC<AccountSectionProps> = ({
   const handleCloseModal = useCallback(() => {
     setIsDeleteModalOpen(false);
     setPassword('');
-  }, [setPassword]);
+    setError(null);
+  }, [setPassword, setError]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!password.trim()) {
@@ -255,11 +272,13 @@ const AccountSection: React.FC<AccountSectionProps> = ({
     try {
       await handleAccountDeletion();
       setIsDeleteModalOpen(false);
+      setPassword('');
+      setError(null);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '刪除帳號時發生錯誤';
       showToast(errorMessage, 'error');
     }
-  }, [password, handleAccountDeletion, showToast]);
+  }, [password, handleAccountDeletion, showToast, setPassword, setError]);
 
   return (
     <div className="w-full">

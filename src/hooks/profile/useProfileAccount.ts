@@ -61,11 +61,18 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
     }
   };
 
+  const resetAccountDeletionState = () => {
+    setPassword('');
+    setError(null);
+  };
+
   return {
     password,
     setPassword,
     isDeleting,
     error,
-    handleAccountDeletion
+    setError,
+    handleAccountDeletion,
+    resetAccountDeletionState
   };
 }; 

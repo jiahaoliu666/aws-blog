@@ -85,12 +85,9 @@ export class AuthService {
 
   async verifyPassword(userSub: string, password: string): Promise<boolean> {
     try {
-      logger.info('開始驗證密碼');
-      
-      const command = new AdminInitiateAuthCommand({
-        UserPoolId: this.userPoolId,
+      const command = new InitiateAuthCommand({
         ClientId: this.clientId,
-        AuthFlow: AuthFlowType.ADMIN_USER_PASSWORD_AUTH,
+        AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
         AuthParameters: {
           USERNAME: userSub,
           PASSWORD: password
@@ -100,12 +97,9 @@ export class AuthService {
       await this.client.send(command);
       return true;
     } catch (error) {
-      logger.error('驗證密碼失敗:', { userSub, error });
+      logger.error('密碼驗證失敗:', error);
       if (error instanceof NotAuthorizedException) {
-        throw new Error('密碼驗證失敗，請確認密碼是否正確');
-      }
-      if (error instanceof UserNotFoundException) {
-        throw new Error('用戶不存在');
+        return false;
       }
       throw error;
     }
