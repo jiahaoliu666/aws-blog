@@ -29,14 +29,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   formData,
   tempAvatar
 }) => {
-  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(
+    'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'
+  );
 
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
       setCurrentAvatar(savedAvatar);
     } else {
-      setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
+      setCurrentAvatar(tempAvatar ?? formData.avatar ?? 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png');
     }
   }, [tempAvatar, formData.avatar]);
 
@@ -95,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="relative group">
             <div className="relative">
               <img
-                src={currentAvatar || '/images/default-avatar.png'}
+                src={currentAvatar || 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'}
                 alt="Profile"
                 className="
                   w-14 h-14 lg:w-20 lg:h-20 
@@ -108,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 "
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/images/default-avatar.png';
+                  target.src = 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png';
                 }}
               />
               <div className="absolute -bottom-1 -right-1 lg:-bottom-1 lg:-right-1 w-3.5 h-3.5 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-gray-800 shadow-sm">

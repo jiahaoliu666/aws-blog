@@ -12,6 +12,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { Loader } from '@aws-amplify/ui-react';
+import { userApi } from '@/api/user';
 
 
 const RegisterPage: React.FC = () => {  
@@ -73,13 +74,29 @@ const RegisterPage: React.FC = () => {
           }
         ]
       });
-      await cognitoClient.send(command);
-      setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
-      setError(null);  
-      setIsVerificationNeeded(true);  
+
+      // 註冊 Cognito 用戶
+      const signUpResponse = await cognitoClient.send(command);
+      
+      // 如果註冊成功，取得 sub 並創建用戶資料
+      if (signUpResponse.UserSub) {
+        try {
+          await userApi.handlePostRegistration(signUpResponse.UserSub);
+          setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
+          setError(null);  
+          setIsVerificationNeeded(true);
+        } catch (err) {
+          console.error('創建用戶資料失敗:', err);
+          // 即使創建用戶資料失敗，仍然允許用戶繼續驗證流程
+          setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。但用戶資料初始化失敗，請稍後在個人資料頁面更新。');  
+          setError(null);  
+          setIsVerificationNeeded(true);
+        }
+      }
+
     } catch (err: any) {  
-      console.log('進入 catch 區塊'); // 確認是否進入 catch 區塊
-      console.error('註冊失敗:', err); // 確保這行被執行
+      console.log('進入 catch 區塊');
+      console.error('註冊失敗:', err);
       if (err.name === 'UsernameExistsException') {
         setError(`電子郵件 ${email} 已被註冊，請使用其他電子郵件。`);
         const userConfirmed = await checkUserConfirmationStatus(email);
@@ -90,7 +107,7 @@ const RegisterPage: React.FC = () => {
           }, 3000);
         } else {
           setError(`電子郵件 ${email} 已被註冊但未驗證。請點擊重新發送驗證碼按鈕進行驗證。`);
-          setIsVerificationNeeded(true); // 啟用驗證碼輸入
+          setIsVerificationNeeded(true);
         }
       } else if (err.name === 'InvalidPasswordException') {
         setError('密碼不符合要求，請選擇更強的密碼。');
@@ -238,7 +255,7 @@ const RegisterPage: React.FC = () => {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                   >
-                    {showConfirmPassword ? "隱藏" : "顯示"}
+                    {showConfirmPassword ? "隱藏" : "顯��"}
                   </button>
                 </div>
               </>

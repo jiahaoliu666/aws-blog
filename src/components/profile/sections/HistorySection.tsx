@@ -82,6 +82,8 @@ const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
               {recentArticles.map((article, index) => (
                 <article key={index} className="group">
                   <a href={article.link} 
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="block p-4 sm:p-5 bg-white rounded-xl border border-gray-100 
                       shadow-sm hover:shadow-md transition-all duration-200"
                   >

@@ -66,24 +66,25 @@ export class DbService {
   }
 
   async handleAccountDeletion(userId: string, userSub: string, password: string): Promise<void> {
+    if (!userId || !userSub || !password) {
+      throw new Error('缺少必要參數');
+    }
+    
     try {
-      logger.info('開始刪除帳號流程:', { userId });
+      logger.info('開始帳號刪除流程', { userId, userSub });
       
       // 1. 檢查用戶是否存在
       const userExists = await this.checkUserExists(userId);
       if (!userExists) {
         throw new Error('用戶不存在');
       }
-
-      // 2. 驗證密碼
-      const authService = new AuthService();
-      const isPasswordValid = await authService.verifyPassword(userSub, password);
-      if (!isPasswordValid) {
-        throw new Error('密碼驗證失敗，請確認密碼是否正確');
-      }
-
-      // 3. 先標記用戶為已刪除狀態
+      
+      // 2. 先標記用戶為已刪除狀態
       await this.markUserAsDeleted(userId);
+      
+      // 3. 驗證密碼並刪除 Cognito 用戶
+      const authService = new AuthService();
+      await authService.deleteUser(userSub, password);
       
       // 4. 刪除 S3 檔案
       await this.deleteUserS3Files(userId);
@@ -91,12 +92,11 @@ export class DbService {
       // 5. 刪除資料庫記錄
       await this.deleteUserRecords(userId);
       
-      // 6. 刪除 Cognito 用戶
-      await authService.deleteCognitoUser(userSub);
-      
       logger.info('用戶完全刪除成功:', { userId });
     } catch (error) {
       logger.error('刪除用戶失敗:', { userId, error });
+      // 嘗試回滾刪除操作
+      await this.rollbackUserDeletion(userId);
       throw error;
     }
   }
@@ -124,7 +124,7 @@ export class DbService {
 
   private async deleteUserS3Files(userId: string): Promise<void> {
     try {
-      logger.info('開始刪除用戶 S3 檔案', { userId });
+      logger.info('開始刪除 S3 檔案', { userId });
       
       for (const { bucket, prefix } of this.bucketsToCheck) {
         const listCommand = new ListObjectsV2Command({
@@ -154,8 +154,6 @@ export class DbService {
 
   async deleteUserData(userId: string): Promise<void> {
     try {
-      logger.info('開始刪除用戶相關資料:', { userId });
-
       // 1. 標記用戶為已刪除
       await this.markUserAsDeleted(userId);
       
@@ -164,11 +162,10 @@ export class DbService {
       
       // 3. 刪除資料庫記錄
       await this.deleteUserRecords(userId);
-
-      logger.info('用戶相關資料刪除完成:', { userId });
+      
+      logger.info('用戶相關資料刪除完成', { userId });
     } catch (error) {
-      logger.error('刪除用戶資料時發生錯誤:', { userId, error });
-      // 嘗試回滾刪除操作
+      logger.error('刪除用戶資料失敗', { userId, error });
       await this.rollbackUserDeletion(userId);
       throw error;
     }
@@ -273,7 +270,7 @@ export class DbService {
 
   private async deleteUserRecords(userId: string): Promise<void> {
     try {
-      logger.info('開始刪除用戶資料庫記錄', { userId });
+      logger.info('開始刪除資料庫記錄', { userId });
       
       const tables = [
         DB_TABLES.LINE_VERIFICATIONS,
@@ -285,17 +282,17 @@ export class DbService {
         DB_TABLES.USER_PROFILES,
         DB_TABLES.USER_RECENT_ARTICLES
       ];
-
-      for (const table of tables) {
+      
+      for (const tableName of tables) {
         const command = new DeleteItemCommand({
-          TableName: table,
+          TableName: tableName,
           Key: {
             userId: { S: userId }
           }
         });
         
         await this.client.send(command);
-        logger.info(`已刪除 ${table} 表中的記錄`);
+        logger.info(`已刪除 ${tableName} 中的記錄`);
       }
     } catch (error) {
       logger.error('刪除資料庫記錄失敗:', error);
@@ -306,7 +303,7 @@ export class DbService {
   // 添加事務相關方法
   async beginTransaction(): Promise<void> {
     // DynamoDB 不支援原生事務，這裡可以實現自定義的事務邏輯
-    // 或使用 DynamoDB TransactWriteItems
+    // 或用 DynamoDB TransactWriteItems
   }
 
   async commitTransaction(): Promise<void> {

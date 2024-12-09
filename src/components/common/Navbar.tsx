@@ -55,7 +55,8 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
         try {
           const command = new QueryCommand(queryParams);
           const response = await dynamoClient.send(command);
-          let fetchedAvatarUrl = '/images/default-avatar.png'; // 修改默認頭像路徑
+          
+          let fetchedAvatarUrl = 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png';
 
           if (response.Items && response.Items.length > 0) {
             const avatarFromDB = response.Items[0].avatarUrl?.S;
@@ -68,6 +69,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
           setAvatarUrl(fetchedAvatarUrl);
         } catch (error) {
           console.error('Error fetching avatar from DynamoDB:', error);
+          setAvatarUrl('https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png');
         }
       }
     };

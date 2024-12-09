@@ -6,7 +6,8 @@ import {
   AuthFlowType,
   AdminGetUserCommand,
   NotAuthorizedException,
-  UserNotFoundException
+  UserNotFoundException,
+  InvalidParameterException
 } from "@aws-sdk/client-cognito-identity-provider";
 import { logger } from '@/utils/logger';
 
@@ -28,7 +29,11 @@ export class AuthService {
     }
 
     this.client = new CognitoIdentityProviderClient({
-      region: process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-1'
+      region: process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
+      }
     });
 
     logger.info('AuthService 初始化成功:', {
@@ -85,6 +90,11 @@ export class AuthService {
 
   async verifyPassword(userSub: string, password: string): Promise<boolean> {
     try {
+      logger.info('開始密碼驗證流程', { 
+        userSub,
+        timestamp: new Date().toISOString()
+      });
+
       const command = new InitiateAuthCommand({
         ClientId: this.clientId,
         AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
@@ -95,11 +105,18 @@ export class AuthService {
       });
 
       await this.client.send(command);
+      logger.info('密碼驗證成功');
       return true;
+
     } catch (error) {
-      logger.error('密碼驗證失敗:', error);
+      logger.error('密碼驗證失敗:', {
+        userSub,
+        error: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       if (error instanceof NotAuthorizedException) {
-        return false;
+        throw new Error('密碼錯誤');
       }
       throw error;
     }
@@ -130,15 +147,24 @@ export class AuthService {
   
   private async deleteUserFromCognito(userSub: string): Promise<void> {
     try {
+      logger.info('開始刪除 Cognito 用戶', { 
+        userSub,
+        timestamp: new Date().toISOString()
+      });
+
       const command = new AdminDeleteUserCommand({
         UserPoolId: this.userPoolId,
         Username: userSub
       });
-      
+
       await this.client.send(command);
-      logger.info('Cognito 用戶刪除成功');
+      logger.info('Cognito 用戶刪除成功', { userSub });
     } catch (error) {
-      logger.error('刪除 Cognito 用戶失敗:', error);
+      logger.error('刪除 Cognito 用戶失敗', {
+        userSub,
+        error: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   }
@@ -147,11 +173,14 @@ export class AuthService {
     try {
       logger.info('開始驗證密碼');
       
-      // 1. 先驗證密碼
-      await this.verifyPassword(userSub, password);
-      logger.info('密碼驗證成功');
+      // 1. 驗證密碼
+      const isPasswordValid = await this.verifyPassword(userSub, password);
+      if (!isPasswordValid) {
+        logger.error('密碼驗證失敗');
+        throw new Error('密碼錯誤');
+      }
       
-      // 2. 密碼驗證成功後，再刪除 Cognito 用戶
+      // 2. 刪除 Cognito 用戶
       await this.deleteUserFromCognito(userSub);
       logger.info('Cognito 用戶刪除成功');
       
@@ -181,23 +210,17 @@ export class AuthService {
     }
   }
 
-  async deleteUserWithPassword(userSub: string, password: string): Promise<void> {
-    try {
-      logger.info('開始刪除用戶流程', { userSub });
-      
-      // 1. 先驗證密碼
-      const isPasswordValid = await this.verifyPassword(userSub, password);
-      if (!isPasswordValid) {
-        throw new Error('密碼錯誤');
-      }
-      
-      // 2. 密碼驗證成功後，再刪除用戶
-      await this.deleteUserFromCognito(userSub);
-      logger.info('Cognito 用戶刪除成功');
-      
-    } catch (error) {
-      logger.error('刪除用戶失敗:', { userSub, error });
-      throw error;
+  private handleAuthError(error: unknown): never {
+    if (error instanceof NotAuthorizedException) {
+      throw new Error('密碼錯誤');
     }
+    if (error instanceof InvalidParameterException) {
+      logger.error('認證流程設定錯誤:', error);
+      throw new Error('系統認證設定錯誤，請聯繫管理員');
+    }
+    if (error instanceof Error) {
+      throw new Error(`認證失敗: ${error.message}`);
+    }
+    throw new Error('認證過程發生未知錯誤');
   }
 }

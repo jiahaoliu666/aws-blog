@@ -19,43 +19,45 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
   const [password, setPassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { showToast } = useToastContext();
   const router = useRouter();
+  const { showToast } = useToastContext();
 
   const handleAccountDeletion = async () => {
+    if (!user?.sub || !user?.userId) {
+      showToast('缺少必要的用戶資訊', 'error');
+      return;
+    }
+
     try {
       setIsDeleting(true);
-      
-      // 確保有所有必要參數
-      if (!user?.userId || !user?.sub || !password) {
-        throw new Error('缺少必要參數：請確保已提供用戶ID、sub和密碼');
-      }
+      setError(null);
 
-      const response = await fetch('/api/profile/account/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          password,
-          userId: user.userId,
-          userSub: user.sub
-        })
+      const response = await userApi.deleteAccount({
+        password,
+        userId: user.userId,
+        userSub: user.sub
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || data.message || '刪除帳號時發生錯誤');
+      if (response.status === 200) {
+        showToast('帳號已成功刪除', 'success');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 1500);
       }
-
-      showToast('帳號已成功刪除', 'success');
-      router.push('/auth/login');
-      
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      let errorMessage = '刪除帳號時發生錯誤';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('密碼錯誤') || error.message.includes('密碼驗證失敗')) {
+          errorMessage = '密碼錯誤，請重新輸入';
+        } else if (error.message.includes('用戶不存在')) {
+          errorMessage = '找不到用戶資料';
+        }
+      }
+      
       setError(errorMessage);
       showToast(errorMessage, 'error');
+      logger.error('刪除帳號失敗:', { error });
     } finally {
       setIsDeleting(false);
     }

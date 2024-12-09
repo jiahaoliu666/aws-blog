@@ -41,6 +41,8 @@ const DeleteConfirmationDialog: React.FC<{
   onPasswordChange: (value: string) => void;
   isDeleting: boolean;
   passwordError: string | null;
+  confirmDeleteValue: string;
+  onConfirmDeleteValueChange: (value: string) => void;
 }> = React.memo(({
   isOpen,
   onClose,
@@ -48,7 +50,9 @@ const DeleteConfirmationDialog: React.FC<{
   password,
   onPasswordChange,
   isDeleting,
-  passwordError
+  passwordError,
+  confirmDeleteValue,
+  onConfirmDeleteValueChange
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const { showToast } = useToastContext();
@@ -138,6 +142,18 @@ const DeleteConfirmationDialog: React.FC<{
             </div>
           </div>
 
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              請輸入 "確認刪除" 以繼續
+            </label>
+            <input
+              type="text"
+              value={confirmDeleteValue}
+              onChange={(e) => onConfirmDeleteValueChange(e.target.value)}
+              className="w-full px-4 py-2 rounded-xl border border-gray-300"
+            />
+          </div>
+
           <div className="mt-6 flex justify-end gap-3">
             <button
               type="button"
@@ -177,6 +193,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
   handleAccountDeletion
 }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmDeleteValue, setConfirmDeleteValue] = useState('');
   const { user } = useAuthContext();
   const { showToast } = useToastContext();
   const router = useRouter();
@@ -261,6 +278,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
     setIsDeleteModalOpen(false);
     setPassword('');
     setError(null);
+    setConfirmDeleteValue('');
   }, [setPassword, setError]);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -269,16 +287,21 @@ const AccountSection: React.FC<AccountSectionProps> = ({
       return;
     }
 
+    if (confirmDeleteValue !== '確認刪除') {
+      showToast('請輸入正確的確認刪除值', 'error');
+      return;
+    }
+
     try {
       await handleAccountDeletion();
       setIsDeleteModalOpen(false);
       setPassword('');
       setError(null);
+      setConfirmDeleteValue('');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '刪除帳號時發生錯誤';
-      showToast(errorMessage, 'error');
+      setError(error instanceof Error ? error.message : '刪除失敗');
     }
-  }, [password, handleAccountDeletion, showToast, setPassword, setError]);
+  }, [password, confirmDeleteValue, handleAccountDeletion, showToast, setPassword, setError]);
 
   return (
     <div className="w-full">
@@ -362,6 +385,8 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         onPasswordChange={setPassword}
         isDeleting={isDeleting}
         passwordError={error}
+        confirmDeleteValue={confirmDeleteValue}
+        onConfirmDeleteValueChange={setConfirmDeleteValue}
       />
     </div>
   );

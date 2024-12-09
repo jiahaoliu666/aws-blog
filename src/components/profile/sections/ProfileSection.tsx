@@ -50,7 +50,9 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   tempAvatar,
   handleEditClick
 }) => {
-  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(
+    'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'
+  );
   const { showToast } = useToastContext();
   const { user, updateUser } = useAuthContext();
 
@@ -59,7 +61,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     if (savedAvatar) {
       setCurrentAvatar(savedAvatar);
     } else {
-      setCurrentAvatar(tempAvatar ?? formData.avatar ?? null);
+      setCurrentAvatar(tempAvatar ?? formData.avatar ?? 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png');
     }
   }, [tempAvatar, formData.avatar]);
 
@@ -132,9 +134,13 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
             <div className="relative group">
               <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-gray-50">
                 <img
-                  src={currentAvatar || '/images/default-avatar.png'}
+                  src={currentAvatar || 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'}
                   alt="個人頭像"
                   className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png';
+                  }}
                 />
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 
                   transition-all duration-300 flex items-center justify-center">

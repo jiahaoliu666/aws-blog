@@ -1,6 +1,63 @@
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import axios, { AxiosError } from 'axios';
 import { API_ENDPOINTS, ERROR_CODES, RETRY_CONFIG } from '@/config/constants';
 import { logger } from '@/utils/logger';
+
+// 新增 DynamoDB 客戶端配置
+const dynamoClient = new DynamoDBClient({
+  region: 'ap-northeast-1',
+  credentials: {
+    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+// 新增創建用戶資料函數
+const createUserProfile = async (userId: string) => {
+  try {
+    // 取得當前日期並格式化為 YYYY-MM-DD
+    const registrationDate = new Date().toISOString().split('T')[0];
+
+    const params = {
+      TableName: 'AWS_Blog_UserProfiles',
+      Item: {
+        userId: { S: userId },
+        avatarUrl: { S: 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png' },
+        createdAt: { S: new Date().toISOString() },
+        registrationDate: { S: registrationDate }  // 新增註冊日期欄位
+      }
+    };
+
+    await dynamoClient.send(new PutItemCommand(params));
+    logger.info('成功建立用戶資料', { userId, registrationDate });
+  } catch (error) {
+    logger.error('建立用戶資料失敗', { error, userId });
+    throw new Error('建立用戶資料失敗');
+  }
+};
+
+// 新增創建用戶偏好設定函數
+const createUserPreferences = async (userId: string) => {
+  try {
+    const params = {
+      TableName: 'AWS_Blog_UserPreferences',
+      Item: {
+        userId: { S: userId },
+        theme: { S: 'light' },
+        language: { S: 'zh-TW' },
+        viewMode: { S: 'list' },
+        autoSummarize: { BOOL: false },
+        createdAt: { S: new Date().toISOString() }
+      }
+    };
+
+    await dynamoClient.send(new PutItemCommand(params));
+    logger.info('成功建立用戶偏好設定', { userId });
+  } catch (error) {
+    logger.error('建立用戶偏好設定失敗', { error, userId });
+    throw new Error('建立用戶偏好設定失敗');
+  }
+};
 
 // 錯誤處理函數
 const handleApiError = (error: AxiosError) => {
@@ -34,6 +91,11 @@ interface DeleteAccountParams {
 export const userApi = {
   updateUser: async (data: any) => {
     try {
+      // 如果是新用戶註冊，先建立 DynamoDB 資料
+      if (data.isNewUser) {
+        await createUserProfile(data.userId);
+      }
+
       const response = await axios.put(API_ENDPOINTS.UPDATE_USER, data);
       return response.data;
     } catch (error) {
@@ -42,14 +104,34 @@ export const userApi = {
     }
   },
 
-  deleteAccount: async (password: string) => {
-    return fetch(API_ENDPOINTS.DELETE_ACCOUNT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ password }),
-    });
+  deleteAccount: async ({ password, userId, userSub }: { 
+    password: string;
+    userId: string;
+    userSub: string;
+  }) => {
+    try {
+      const response = await axios.post(API_ENDPOINTS.DELETE_ACCOUNT, {
+        password,
+        userId,
+        userSub
+      });
+      
+      return response;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        logger.error('刪除帳號失敗:', { error });
+        if (error.response?.status === 401) {
+          throw new Error('密碼錯誤，請重新輸入');
+        }
+        if (error.response?.status === 404) {
+          throw new Error('找不到用戶資料');
+        }
+        if (error.response?.status === 500) {
+          throw new Error('伺服器錯誤，請稍後重試');
+        }
+      }
+      throw new Error('刪除帳號時發生錯誤，請稍後重試');
+    }
   },
 
   updateAccountStatus: async (status: string) => {
@@ -59,6 +141,22 @@ export const userApi = {
     } catch (error) {
       logger.error('更新帳號狀態失敗', { error });
       throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // 新增註冊成功後的處��方法
+  handlePostRegistration: async (cognitoSub: string) => {
+    try {
+      // 建立用戶基本資料
+      await createUserProfile(cognitoSub);
+      
+      // 建立用戶偏好設定
+      await createUserPreferences(cognitoSub);
+      
+      logger.info('註冊後處理完成', { cognitoSub });
+    } catch (error) {
+      logger.error('註冊後處理失敗', { error, cognitoSub });
+      throw error;
     }
   }
 };
