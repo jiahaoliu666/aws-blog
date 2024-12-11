@@ -1,4 +1,4 @@
-import { DynamoDBClient, QueryCommand, PutItemCommand, ScanCommand, DeleteItemCommand, UpdateItemCommand, TransactWriteItemsCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand, PutItemCommand, ScanCommand, DeleteItemCommand, UpdateItemCommand, TransactWriteItemsCommand, GetItemCommand, TransactionCanceledException, ResourceNotFoundException } from "@aws-sdk/client-dynamodb";
 import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import { DB_TABLES } from '../config/constants';
 import { logger } from '@/utils/logger';
@@ -73,28 +73,19 @@ export class DbService {
     try {
       logger.info('開始帳號刪除流程', { userId, userSub });
       
-      // 1. 檢查用戶是否存在
-      const userExists = await this.checkUserExists(userId);
-      if (!userExists) {
-        throw new Error('用戶不存在');
-      }
-      
-      // 2. 先標記用戶為已刪除狀態
+      // 1. 先標記用戶為已刪除狀態
       await this.markUserAsDeleted(userId);
       
-      // 3. 驗證密碼並刪除 Cognito 用戶
-      const authService = new AuthService();
-      await authService.deleteUser(userSub, password);
-      
-      // 4. 刪除 S3 檔案
+      // 2. 刪除 S3 檔案
       await this.deleteUserS3Files(userId);
       
-      // 5. 刪除資料庫記錄
-      await this.deleteUserRecords(userId);
+      // 3. 刪除所有相關資料表中的記錄
+      await this.deleteAllUserRecords(userId);
       
-      logger.info('用戶完全刪除成功:', { userId });
+      logger.info('用戶資料刪除成功:', { userId });
+      
     } catch (error) {
-      logger.error('刪除用戶失敗:', { userId, error });
+      logger.error('刪除用戶資料失敗:', { userId, error });
       // 嘗試回滾刪除操作
       await this.rollbackUserDeletion(userId);
       throw error;
@@ -117,7 +108,7 @@ export class DbService {
     try {
       await this.client.send(new UpdateItemCommand(params));
     } catch (error) {
-      logger.error(`標記 ${table} 資料為已刪除失敗`, { userId, error });
+      logger.error(`標記 ${table} 料為已刪除失敗`, { userId, error });
       throw error;
     }
   }
@@ -163,7 +154,7 @@ export class DbService {
       // 3. 刪除資料庫記錄
       await this.deleteUserRecords(userId);
       
-      logger.info('用戶相關資料刪除完成', { userId });
+      logger.info('用戶相資料刪除完成', { userId });
     } catch (error) {
       logger.error('刪除用戶資料失敗', { userId, error });
       await this.rollbackUserDeletion(userId);
@@ -172,33 +163,27 @@ export class DbService {
   }
 
   async deleteUserCompletely(userId: string, userSub: string, password: string): Promise<void> {
-    const authService = new AuthService();
-    
     try {
-      logger.info('開始完整刪除用戶流程', { userId, userSub });
-      
-      // 1. 驗證密碼
-      const isPasswordValid = await authService.verifyPassword(userSub, password);
-      if (!isPasswordValid) {
-        throw new Error('密碼錯誤');
+      // 1. 驗證用戶存在性
+      const isValid = await this.validateUserKeys(userId);
+      if (!isValid) {
+        throw new Error('用戶資料不完整或不存在');
       }
-      
-      // 2. 標記用戶為已刪除
-      await this.markUserAsDeleted(userId);
-      
-      // 3. 刪除 S3 檔案
+
+      // 2. 處理有排序索引鍵的表
+      await this.deleteUserRecordsWithSortKey(userId, DB_TABLES.USER_ACTIVITY_LOG, 'timestamp');
+      await this.deleteUserRecordsWithSortKey(userId, DB_TABLES.USER_RECENT_ARTICLES, 'timestamp');
+      await this.deleteUserRecordsWithSortKey(userId, DB_TABLES.USER_FAVORITES, 'article_id');
+
+      // 3. 處理其他表的刪除
+      await this.deleteAllUserRecords(userId);
+
+      // 4. 刪除 S3 檔案
       await this.deleteUserS3Files(userId);
-      
-      // 4. 刪除資料庫記錄
-      await this.deleteUserRecords(userId);
-      
-      // 5. 刪除 Cognito 用戶
-      await authService.deleteCognitoUser(userSub);
-      
-      logger.info('用戶完全刪除成功:', { userId });
+
+      logger.info('用戶資料完全刪除成功:', { userId });
     } catch (error) {
-      logger.error('刪除用戶失敗:', { userId, error });
-      // 嘗試回滾刪除操作
+      logger.error('刪除用戶資料失敗:', { userId, error });
       await this.rollbackUserDeletion(userId);
       throw error;
     }
@@ -227,12 +212,32 @@ export class DbService {
 
   // 補償機制
   async rollbackUserDeletion(userId: string): Promise<void> {
+    const deletedData = this.deletedUserData.get(userId);
+    if (!deletedData) {
+      logger.warn('找不到要回滾的資料:', { userId });
+      return;
+    }
+
     try {
       logger.info('開始回滾刪除操作:', { userId });
-      await this.markUserAsActive(userId);
-      logger.info('回滾完成');
+      
+      for (const data of deletedData) {
+        if (data.oldData) {
+          const command = new PutItemCommand({
+            TableName: data.table,
+            Item: data.oldData
+          });
+          await this.client.send(command);
+          logger.info(`已回滾表 ${data.table} 的資料`);
+        }
+      }
+      
+      this.deletedUserData.delete(userId);
+      logger.info('回滾操作完成:', { userId });
+      
     } catch (error) {
-      logger.error('回滾操作失敗:', error);
+      logger.error('回滾操作失敗:', { userId, error });
+      throw new Error('回滾刪除操作失敗');
     }
   }
 
@@ -255,16 +260,24 @@ export class DbService {
         TableName: DB_TABLES.USER_PROFILES,
         Key: {
           userId: { S: userId }
-        }
+        },
+        ProjectionExpression: 'userId'
       };
       
       const command = new GetItemCommand(params);
       const response = await this.client.send(command);
       
-      return !!response.Item;
+      const exists = !!response.Item;
+      logger.info('DynamoDB 用戶檢查結果:', { userId, exists });
+      
+      return exists;
     } catch (error) {
-      logger.error('檢查用戶存在失敗:', { userId, error });
-      throw error;
+      logger.error('檢查 DynamoDB 用戶存在失敗:', { 
+        userId,
+        error: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw new Error('檢查 DynamoDB 用戶存在失敗');
     }
   }
 
@@ -283,24 +296,62 @@ export class DbService {
         DB_TABLES.USER_RECENT_ARTICLES
       ];
       
-      for (const tableName of tables) {
-        const command = new DeleteItemCommand({
-          TableName: tableName,
-          Key: {
-            userId: { S: userId }
+      // 使用 Promise.allSettled 來處理所有刪除操作
+      const deletePromises = tables.map(async (tableName) => {
+        try {
+          const command = new DeleteItemCommand({
+            TableName: tableName,
+            Key: {
+              userId: { S: userId }
+            },
+            // 移除 ConditionExpression，這樣即使記錄不存在也不會拋出錯誤
+          });
+
+          await this.client.send(command);
+          return {
+            table: tableName,
+            success: true
+          };
+        } catch (error) {
+          // 只記錄錯誤，但不中斷流程
+          logger.warn(`刪除表 ${tableName} 的記錄時發生錯誤:`, {
+            userId,
+            error: error instanceof Error ? error.message : '未知錯誤'
+          });
+          return {
+            table: tableName,
+            success: false,
+            error
+          };
+        }
+      });
+
+      const results = await Promise.allSettled(deletePromises);
+      
+      // 記錄刪除結果，但不因為個別表格刪除失敗而中斷整個流程
+      results.forEach(result => {
+        if (result.status === 'fulfilled') {
+          const { table, success, error } = result.value;
+          if (error) {
+            logger.warn(`表 ${table} 刪除時發生錯誤:`, error);
+          } else {
+            logger.info(`表 ${table} 刪除完成`);
           }
-        });
-        
-        await this.client.send(command);
-        logger.info(`已刪除 ${tableName} 中的記錄`);
-      }
+        }
+      });
+
+      logger.info('資料庫記錄刪除完成', { userId });
     } catch (error) {
-      logger.error('刪除資料庫記錄失敗:', error);
+      logger.error('刪除資料庫記錄時發生錯誤:', {
+        userId,
+        error: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   }
 
-  // 添加事務相關方法
+  // 加事務相關方法
   async beginTransaction(): Promise<void> {
     // DynamoDB 不支援原生事務，這裡可以實現自定義的事務邏輯
     // 或用 DynamoDB TransactWriteItems
@@ -312,5 +363,112 @@ export class DbService {
 
   async rollbackTransaction(): Promise<void> {
     // 回滾事務
+  }
+
+  private async deleteAllUserRecords(userId: string): Promise<void> {
+    try {
+      // 1. 處理有排序鍵的表
+      await Promise.all([
+        this.deleteUserRecordsWithSortKey(userId, DB_TABLES.USER_ACTIVITY_LOG, 'timestamp'),
+        this.deleteUserRecordsWithSortKey(userId, DB_TABLES.USER_RECENT_ARTICLES, 'timestamp'),
+        this.deleteUserRecordsWithSortKey(userId, DB_TABLES.USER_FAVORITES, 'article_id'),
+        this.deleteUserRecordsWithSortKey(userId, DB_TABLES.USER_NOTIFICATIONS, 'article_id')
+      ]);
+
+      // 2. 處理只有分區鍵的表
+      const simpleKeyTables = [
+        DB_TABLES.LINE_VERIFICATIONS,
+        DB_TABLES.USER_NOTIFICATION_SETTINGS,
+        DB_TABLES.USER_PREFERENCES,
+        DB_TABLES.USER_PROFILES
+      ];
+
+      await Promise.all(simpleKeyTables.map(async (table) => {
+        const deleteParams = {
+          TableName: table,
+          Key: {
+            userId: { S: userId }
+          }
+        };
+
+        try {
+          await this.client.send(new DeleteItemCommand(deleteParams));
+          logger.info(`成功從表 ${table} 刪除記錄`, { userId });
+        } catch (error) {
+          if (error instanceof ResourceNotFoundException) {
+            logger.warn(`表 ${table} 中找不到記錄`, { userId });
+            return;
+          }
+          throw error;
+        }
+      }));
+
+    } catch (error) {
+      logger.error('刪除用戶記錄失敗:', { userId, error });
+      throw error;
+    }
+  }
+
+  private deletedUserData = new Map<string, any[]>();
+
+  private async validateUserKeys(userId: string): Promise<boolean> {
+    const tables = [
+      DB_TABLES.USER_PROFILES,
+      DB_TABLES.USER_NOTIFICATION_SETTINGS,
+      DB_TABLES.USER_PREFERENCES
+    ];
+
+    try {
+      const results = await Promise.all(tables.map(async (table) => {
+        const command = new GetItemCommand({
+          TableName: table,
+          Key: {
+            userId: { S: userId }
+          },
+          ProjectionExpression: 'userId'
+        });
+        
+        const response = await this.client.send(command);
+        return !!response.Item;
+      }));
+
+      return results.every(exists => exists);
+    } catch (error) {
+      logger.error('驗證用戶索引鍵失敗:', { userId, error });
+      return false;
+    }
+  }
+
+  private async deleteUserRecordsWithSortKey(userId: string, table: string, sortKey: string): Promise<void> {
+    try {
+      const params = {
+        TableName: table,
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': { S: userId }
+        }
+      };
+
+      const response = await this.client.send(new QueryCommand(params));
+
+      if (response.Items && response.Items.length > 0) {
+        const deletePromises = response.Items.map(item => {
+          const deleteParams = {
+            TableName: table,
+            Key: {
+              userId: { S: userId },
+              [sortKey]: item[sortKey]
+            }
+          };
+          return this.client.send(new DeleteItemCommand(deleteParams));
+        });
+
+        await Promise.allSettled(deletePromises);
+        logger.info(`成功從表 ${table} 刪除所有記錄`, { userId });
+      }
+    } catch (error) {
+      logger.error('刪除排序索引鍵記錄失敗:', { userId, table, error });
+      throw error;
+    }
   }
 } 

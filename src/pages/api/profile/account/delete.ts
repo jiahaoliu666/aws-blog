@@ -6,6 +6,24 @@ import { EmailService } from '@/services/emailService';
 import { generateAccountDeletionEmail } from '@/templates/deleteAccountEmail';
 import { DB_TABLES } from '@/config/constants';
 
+const deleteWithRetry = async (dbService: DbService, userId: string, userSub: string, password: string) => {
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await dbService.handleAccountDeletion(userId, userSub, password);
+      return;
+    } catch (error) {
+      lastError = error as Error;
+      if (i === maxRetries - 1) break;
+      // 指數退避
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+    }
+  }
+  throw lastError;
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: '方法不允許' });
@@ -40,29 +58,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 2. 執行帳號刪除流程
-    await dbService.handleAccountDeletion(userId, userSub, password);
+    await deleteWithRetry(dbService, userId, userSub, password);
     
     return res.status(200).json({ message: '帳號刪除成功' });
 
   } catch (error) {
-    logger.error('刪除帳號失敗:', {
+    logger.error('刪除帳號時發生錯誤:', {
       userId,
-      error: error instanceof Error ? error.message : '未知錯誤',
-      stack: error instanceof Error ? error.stack : undefined
+      userSub,
+      error: error instanceof Error ? error.message : '未知錯誤'
     });
 
-    // 更詳細的錯誤處理
     if (error instanceof Error) {
+      if (error.message.includes('Cognito 用戶不存在')) {
+        return res.status(404).json({ 
+          message: 'Cognito 用戶不存在',
+          code: 'COGNITO_USER_NOT_FOUND'
+        });
+      }
+      if (error.message.includes('DynamoDB 用戶資料不存在')) {
+        return res.status(404).json({ 
+          message: 'DynamoDB 用戶資料不存在',
+          code: 'DYNAMODB_USER_NOT_FOUND'
+        });
+      }
       if (error.message.includes('密碼錯誤')) {
         return res.status(401).json({ 
           message: '密碼驗證失敗',
           code: 'INVALID_PASSWORD'
-        });
-      }
-      if (error.message.includes('用戶不存在')) {
-        return res.status(404).json({ 
-          message: '用戶不存在',
-          code: 'USER_NOT_FOUND'
         });
       }
     }

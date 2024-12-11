@@ -76,7 +76,21 @@ const DeleteConfirmationDialog: React.FC<{
       return;
     }
     
-    await onConfirm();
+    try {
+      await onConfirm();
+    } catch (error) {
+      let errorMessage = '刪除帳號失敗';
+      if (error instanceof Error) {
+        if (error.message.includes('Cognito 用戶不存在')) {
+          errorMessage = 'Cognito 身份驗證用戶不存在';
+        } else if (error.message.includes('DynamoDB 用戶資料不存在')) {
+          errorMessage = '用戶資料不存在於資料庫';
+        } else if (error.message.includes('密碼錯誤')) {
+          errorMessage = '密碼驗證失敗';
+        }
+      }
+      showToast(errorMessage, 'error');
+    }
   };
 
   return (
@@ -283,7 +297,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
 
   const handleConfirmDelete = useCallback(async () => {
     if (!password.trim()) {
-      showToast('請輸入密碼以確認刪除', 'error');
+      showToast('請輸入��碼以確認刪除', 'error');
       return;
     }
 

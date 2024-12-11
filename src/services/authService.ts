@@ -115,6 +115,9 @@ export class AuthService {
         stack: error instanceof Error ? error.stack : undefined
       });
       
+      if (error instanceof UserNotFoundException) {
+        throw new Error('Cognito 用戶不存在');
+      }
       if (error instanceof NotAuthorizedException) {
         throw new Error('密碼錯誤');
       }
@@ -165,7 +168,10 @@ export class AuthService {
         error: error instanceof Error ? error.message : '未知錯誤',
         stack: error instanceof Error ? error.stack : undefined
       });
-      throw error;
+      if (error instanceof UserNotFoundException) {
+        throw new Error('Cognito 用戶不存在');
+      }
+      throw new Error('刪除 Cognito 用戶失敗');
     }
   }
 
