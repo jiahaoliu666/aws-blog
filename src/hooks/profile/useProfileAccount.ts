@@ -23,36 +23,50 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
   const { showToast } = useToastContext();
 
   const handleAccountDeletion = async () => {
-    if (!user?.sub || !password) {
-      setError('缺少必要的用戶資訊或密碼');
-      return;
-    }
-
     try {
       setIsDeleting(true);
-      
+      setError(null);
+
+      if (!user?.sub || !user?.userId) {
+        throw new Error('缺少必要的用戶資訊');
+      }
+
       const response = await fetch(API_ENDPOINTS.DELETE_ACCOUNT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userSub: user.sub,
+          password,
           userId: user.userId,
-          password
+          userSub: user.sub
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || '刪除帳號失敗');
+        if (response.status === 401) {
+          setError('密碼錯誤，請重新輸入');
+        } else {
+          setError(data.message || '刪除帳號失敗');
+        }
+        return;
       }
 
+      // 顯示成功訊息
       showToast('帳號已成功刪除', 'success');
-      router.push('/auth/login');
+
+      // 清除本地儲存
+      localStorage.clear();
       
+      // 等待 toast 顯示完成後再重導向
+      setTimeout(() => {
+        router.push('/auth/login');
+      }, 1500);
+
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '刪除帳號失敗';
+      const errorMessage = error instanceof Error ? error.message : '刪除帳號時發生錯誤';
       setError(errorMessage);
       showToast(errorMessage, 'error');
       logger.error('刪除帳號失敗:', { error });
