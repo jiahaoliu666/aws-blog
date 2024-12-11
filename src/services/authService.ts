@@ -168,30 +168,29 @@ export class AuthService {
         error: error instanceof Error ? error.message : '未知錯誤',
         stack: error instanceof Error ? error.stack : undefined
       });
-      if (error instanceof UserNotFoundException) {
-        throw new Error('Cognito 用戶不存在');
-      }
-      throw new Error('刪除 Cognito 用戶失敗');
+      throw error;
     }
   }
 
   async deleteUser(userSub: string, password: string): Promise<void> {
     try {
-      logger.info('開始驗證密碼');
+      logger.info('開始刪除用戶流程', { userSub });
       
-      // 1. 驗證密碼
-      const isPasswordValid = await this.verifyPassword(userSub, password);
-      if (!isPasswordValid) {
-        logger.error('密碼驗證失敗');
-        throw new Error('密碼錯誤');
-      }
+      // 1. 先驗證密碼
+      await this.verifyPassword(userSub, password);
+      logger.info('密碼驗證成功');
       
       // 2. 刪除 Cognito 用戶
-      await this.deleteUserFromCognito(userSub);
-      logger.info('Cognito 用戶刪除成功');
+      const command = new AdminDeleteUserCommand({
+        UserPoolId: this.userPoolId,
+        Username: userSub
+      });
+
+      await this.client.send(command);
+      logger.info('Cognito 用戶刪除成功', { userSub });
       
     } catch (error) {
-      logger.error('驗證密碼或刪除用戶失敗:', { userSub, error });
+      logger.error('刪除用戶失敗:', { userSub, error });
       if (error instanceof NotAuthorizedException) {
         throw new Error('密碼錯誤');
       }
