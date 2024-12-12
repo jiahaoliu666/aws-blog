@@ -51,16 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
-      const registrationDate = new Date().toISOString().split('T')[0];
-      
       const command = new SignUpCommand({
         ClientId: clientId,
         Username: email,
         Password: password,
         UserAttributes: [
-          { Name: "email", Value: email },
-          { Name: "name", Value: name },
-          { Name: "custom:registrationDate", Value: registrationDate }
+          { 
+            Name: "email", 
+            Value: email 
+          },
+          { 
+            Name: "name", 
+            Value: name 
+          }
         ],
       });
 

@@ -71,6 +71,10 @@ const RegisterPage: React.FC = () => {
           {
             Name: "email",
             Value: email
+          },
+          {
+            Name: "name",
+            Value: username
           }
         ]
       });
@@ -87,7 +91,6 @@ const RegisterPage: React.FC = () => {
           setIsVerificationNeeded(true);
         } catch (err) {
           console.error('創建用戶資料失敗:', err);
-          // 即使創建用戶資料失敗，仍然允許用戶繼續驗證流程
           setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。但用戶資料初始化失敗，請稍後在個人資料頁面更新。');  
           setError(null);  
           setIsVerificationNeeded(true);

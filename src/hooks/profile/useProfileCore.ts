@@ -261,7 +261,6 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
   useEffect(() => {
     if (currentUser && !currentUser.registrationDate) {
       console.warn('用戶缺少註冊日期，嘗試從 Cognito 獲取');
-      // 這裡可以添加從 Cognito 獲取 custom:registrationDate 的邏輯
       const defaultDate = new Date().toISOString().split('T')[0];
       updateUser({ registrationDate: defaultDate });
     }

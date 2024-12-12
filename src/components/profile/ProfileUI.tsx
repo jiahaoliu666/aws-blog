@@ -93,7 +93,7 @@ const defaultSettings: LocalSettings = {
   theme: 'light',
   language: 'zh-TW',
   autoSummarize: false,
-  viewMode: 'grid',
+  viewMode: 'list',
   notifications: true,
   notificationPreferences: defaultNotificationPreferences,
   privacy: 'private'
@@ -319,7 +319,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
       });
 
       if (!response.ok) {
-        throw new Error('重���驗證失敗');
+        throw new Error('重置驗證失敗');
       }
 
       // 3. 更新本地設定狀態
