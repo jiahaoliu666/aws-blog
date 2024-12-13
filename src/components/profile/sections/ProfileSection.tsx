@@ -174,13 +174,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   />
                 </label>
               </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-500">
-                  支援 JPG、PNG 格式
-                  <br />
-                  建議尺寸 500x500 像素
-                </div>
-              </div>
+              
             </div>
 
             {/* 右側個人資料表單 */}
