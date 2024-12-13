@@ -101,6 +101,11 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
       return;
     }
 
+    if (localUsername.length > 10) {
+      showToast('用戶名稱不能超過10個字', 'error');
+      return;
+    }
+
     setIsLoading(true);
     showToast('正在儲存...', 'loading');
 

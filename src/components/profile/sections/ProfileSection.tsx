@@ -119,105 +119,125 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-4xl mx-auto">
       <div className="mb-8">
         <SectionTitle 
           title="個人資訊"
-          description="管理您的個人資訊"
+          description="在此查看您的個人資料"
         />
       </div>
 
       <Card>
-        {/* 頭像區塊 */}
         <div className="p-8">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="relative group">
-              <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-gray-50">
-                <img
-                  src={currentAvatar || 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'}
-                  alt="個人頭像"
-                  className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png';
-                  }}
-                />
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 
-                  transition-all duration-300 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 
-                    transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                    更換頭像
-                  </span>
+          {/* 頭像與基本資料區塊 */}
+          <div className="flex flex-col lg:flex-row gap-12">
+            {/* 左側頭像區塊 */}
+            <div className="flex flex-col items-center space-y-6">
+              <div className="relative group">
+                <div className="relative w-48 h-48 rounded-full overflow-hidden ring-4 ring-gray-50 shadow-lg">
+                  <img
+                    src={currentAvatar || 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'}
+                    alt="個人頭像"
+                    className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 
+                    transition-all duration-300 flex items-center justify-center">
+                    <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 
+                      transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                      更換頭像
+                    </span>
+                  </div>
+                </div>
+                
+                <label className="absolute bottom-2 right-2 flex items-center justify-center w-12 h-12 
+                  bg-white/95 backdrop-blur-sm rounded-full shadow-lg cursor-pointer
+                  hover:bg-blue-50 hover:scale-105 active:scale-95
+                  ring-2 ring-white/50 hover:ring-blue-200
+                  transform transition-all duration-200 ease-out
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  group">
+                  <FontAwesomeIcon 
+                    icon={isLoading ? faSpinner : faCamera} 
+                    className={`text-blue-600 text-xl group-hover:text-blue-700
+                      ${isLoading ? 'animate-spin' : 'group-hover:rotate-12 transition-transform duration-200'}`}
+                  />
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/jpeg, image/png" 
+                    onChange={handleAvatarChange}
+                    disabled={isLoading}
+                  />
+                </label>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-gray-500">
+                  支援 JPG、PNG 格式
+                  <br />
+                  建議尺寸 500x500 像素
                 </div>
               </div>
-              
-              <label className="absolute bottom-2 right-2 flex items-center justify-center w-10 h-10 
-                bg-white/90 backdrop-blur-sm rounded-full shadow-lg cursor-pointer
-                hover:bg-blue-50 hover:scale-110 active:scale-95
-                ring-2 ring-white/50 hover:ring-blue-200
-                transform transition-all duration-200 ease-out
-                disabled:opacity-50 disabled:cursor-not-allowed
-                group">
-                <FontAwesomeIcon 
-                  icon={isLoading ? faSpinner : faCamera} 
-                  className={`text-blue-600 text-lg group-hover:text-blue-700
-                    ${isLoading ? 'animate-spin' : 'group-hover:rotate-12 transition-transform duration-200'}`}
-                />
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/jpeg, image/png" 
-                  onChange={handleAvatarChange}
-                  disabled={isLoading}
-                />
-              </label>
             </div>
-            
-            {/* 個人資料表單 */}
-            <div className="flex-1">
+
+            {/* 右側個人資料表單 */}
+            <div className="flex-1 space-y-8">
               <div className="space-y-6">
                 {/* 用戶名稱 */}
-                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <div className="grid grid-cols-[80px_1fr] items-center">
                   <label className="text-sm font-medium text-gray-700">用戶名稱：</label>
                   {isEditable.username ? (
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        value={localUsername}
-                        onChange={(e) => setLocalUsername(e.target.value)}
-                        className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
-                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                          transition duration-150"
-                        disabled={isLoading}
-                      />
-                      <button
-                        onClick={handleSave}
-                        disabled={isLoading || !localUsername.trim()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg 
-                          hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                          transition duration-150 flex items-center gap-2"
-                      >
-                        <FontAwesomeIcon icon={isLoading ? faSpinner : faCheck} 
-                          className={isLoading ? 'animate-spin' : ''} />
-                        {isLoading ? '儲存中' : '儲存'}
-                      </button>
-                      <button
-                        onClick={handleCancelChanges}
-                        disabled={isLoading}
-                        className="px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
-                          hover:bg-gray-50 transition duration-150 flex items-center gap-2"
-                      >
-                        <FontAwesomeIcon icon={faTimes} />
-                        取消
-                      </button>
+                    <div className="flex-1">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-3">
+                          <input
+                            type="text"
+                            value={localUsername}
+                            onChange={(e) => setLocalUsername(e.target.value)}
+                            maxLength={10}
+                            className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
+                              focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                              transition duration-150"
+                            disabled={isLoading}
+                            placeholder="請輸入用戶名稱"
+                          />
+                          <button
+                            onClick={handleSave}
+                            disabled={isLoading || !localUsername.trim() || localUsername.length > 10}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg 
+                              hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                              transition duration-150 flex items-center gap-2 whitespace-nowrap"
+                          >
+                            <FontAwesomeIcon icon={isLoading ? faSpinner : faCheck} 
+                              className={isLoading ? 'animate-spin' : ''} />
+                            {isLoading ? '儲存中' : '儲存'}
+                          </button>
+                          <button
+                            onClick={handleCancelChanges}
+                            disabled={isLoading}
+                            className="px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
+                              hover:bg-gray-50 transition duration-150 flex items-center gap-2 whitespace-nowrap"
+                          >
+                            <FontAwesomeIcon icon={faTimes} />
+                            取消
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">{`${localUsername.length}/10 個字`}</span>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 pl-2">
                       <span className="text-gray-900">{formData.username}</span>
                       <button
                         onClick={() => handleEditClick('username')}
-                        className="p-2 text-gray-400 hover:text-blue-600 rounded-full
+                        className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full
                           hover:bg-blue-50 transition duration-150"
+                        aria-label="編輯用戶名稱"
                       >
                         <FontAwesomeIcon icon={faEdit} />
                       </button>
@@ -226,13 +246,12 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 </div>
 
                 {/* 電子郵件 */}
-                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <div className="grid grid-cols-[80px_1fr] items-center">
                   <label className="text-sm font-medium text-gray-700">電子郵件：</label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 pl-2">
                     <span className="text-gray-900">{formData.email}</span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 
-                      text-green-700 text-xs font-medium rounded-full border border-green-200
-                      shadow-sm shadow-green-100/50">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 
+                      text-green-700 text-xs font-medium rounded-full border border-green-200">
                       <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                       已驗證
                     </span>
@@ -240,17 +259,17 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 </div>
 
                 {/* 註冊日期 */}
-                <div className="flex flex-col md:flex-row md:items-center gap-2">
+              <div className="grid grid-cols-[80px_1fr] items-center">
                   <label className="text-sm font-medium text-gray-700">註冊日期：</label>
-                  <span className="text-gray-900">
+                  <span className="text-gray-900 pl-2">
                     {formatDate(user?.registrationDate || formData.registrationDate)}
                   </span>
                 </div>
 
                 {/* 用戶 ID */}
-                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <div className="grid grid-cols-[80px_1fr] items-center">
                   <label className="text-sm font-medium text-gray-700">用戶 ID：</label>
-                  <span className="text-gray-600 font-mono">
+                  <span className="text-gray-600 font-mono text-sm pl-2">
                     {user?.sub || '未知'}
                   </span>
                 </div>
