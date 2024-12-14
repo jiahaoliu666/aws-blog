@@ -188,7 +188,7 @@ const RegisterPage: React.FC = () => {
           <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={isVerificationNeeded ? handleVerifyCode : handleRegister} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
             <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">註冊</h2>  
 
-            <div className="mb-4 relative">
+            <div className="mb-2 relative">
               <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/3 text-gray-500" />
               <input
                 id="username"
