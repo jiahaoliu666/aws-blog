@@ -185,43 +185,43 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   <label className="text-sm font-medium text-gray-700">用戶名稱：</label>
                   {isEditable.username ? (
                     <div className="flex-1">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-3">
+                      <div className="flex gap-3">
+                        <div className="flex-1 relative">
                           <input
                             type="text"
                             value={localUsername}
                             onChange={(e) => setLocalUsername(e.target.value)}
                             maxLength={10}
-                            className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg
                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
                               transition duration-150"
                             disabled={isLoading}
                             placeholder="請輸入用戶名稱"
                           />
-                          <button
-                            onClick={handleSave}
-                            disabled={isLoading || !localUsername.trim() || localUsername.length > 10}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg 
-                              hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                              transition duration-150 flex items-center gap-2 whitespace-nowrap"
-                          >
-                            <FontAwesomeIcon icon={isLoading ? faSpinner : faCheck} 
-                              className={isLoading ? 'animate-spin' : ''} />
-                            {isLoading ? '儲存中' : '儲存'}
-                          </button>
-                          <button
-                            onClick={handleCancelChanges}
-                            disabled={isLoading}
-                            className="px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
-                              hover:bg-gray-50 transition duration-150 flex items-center gap-2 whitespace-nowrap"
-                          >
-                            <FontAwesomeIcon icon={faTimes} />
-                            取消
-                          </button>
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                            {`${localUsername.length}/10`}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">{`${localUsername.length}/10 個字`}</span>
-                        </div>
+                        <button
+                          onClick={handleSave}
+                          disabled={isLoading || !localUsername.trim() || localUsername.length > 10}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg 
+                            hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                            transition duration-150 flex items-center gap-2 whitespace-nowrap"
+                        >
+                          <FontAwesomeIcon icon={isLoading ? faSpinner : faCheck} 
+                            className={isLoading ? 'animate-spin' : ''} />
+                          {isLoading ? '儲存中' : '儲存'}
+                        </button>
+                        <button
+                          onClick={handleCancelChanges}
+                          disabled={isLoading}
+                          className="px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
+                            hover:bg-gray-50 transition duration-150 flex items-center gap-2 whitespace-nowrap"
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                          取消
+                        </button>
                       </div>
                     </div>
                   ) : (
