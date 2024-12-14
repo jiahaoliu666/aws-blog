@@ -79,6 +79,14 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
     };
   }, [resetFeedbackForm]);
 
+  const isSubmitDisabled = () => {
+    const isTitleEmpty = !initialFeedback.title.trim();
+    const isCategoryEmpty = !initialFeedback.category.trim();
+    const isContentEmpty = !initialFeedback.content.trim();
+    
+    return isTitleEmpty || isCategoryEmpty || isContentEmpty || initialIsSubmitting;
+  };
+
   return (
     <div className="w-full">
       <div className="mb-8">
@@ -243,7 +251,7 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                     />
                     <div className="text-center">
                       <FontAwesomeIcon icon={faUpload} className="text-2xl text-gray-400 mb-2" />
-                      <p className="text-gray-600">點擊或拖曳檔案至此處上傳</p>
+                      <p className="text-gray-600">至此處點擊上傳</p>
                       <p className="text-sm text-gray-500 mt-1">
                         支援的格式：JPEG、PNG（還可上傳 {3 - attachments.length} 個檔案）
                       </p>
@@ -295,19 +303,19 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
               
               <button
                 onClick={() => {
-                  if (!initialFeedback.category || !initialFeedback.content) {
-                    showToast('請填寫必要欄位', 'error');
+                  if (isSubmitDisabled()) {
+                    showToast('請填寫所有必要欄位', 'error');
                     return;
                   }
                   onSubmit();
                 }}
-                disabled={initialIsSubmitting}
+                disabled={isSubmitDisabled()}
                 className={`
                   px-6 py-3
                   rounded-xl
                   flex items-center gap-2
                   transition-all duration-200
-                  ${initialIsSubmitting
+                  ${isSubmitDisabled()
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
                   }

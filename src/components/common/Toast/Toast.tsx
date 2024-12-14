@@ -95,27 +95,17 @@ const Toast: React.FC<ToastProps> = ({
     }
   };
 
-  const CloseButton = () => (
-    <button
-      onClick={onClose}
-      className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/10"
-    >
-      <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
-    </button>
-  );
-
   if (!isVisible) return null;
 
   return (
     <div className={getToastStyles()}>
       {getIcon()}
-      <div className="flex-1 pr-8">
+      <div className="flex-1">
         <h4 className="font-semibold text-base leading-snug tracking-wide">{message}</h4>
         {description && (
           <p className="text-sm mt-1.5 opacity-90 leading-relaxed font-normal">{description}</p>
         )}
       </div>
-      <CloseButton />
       {showProgress && (
         <div className="absolute bottom-0 left-0 h-1 bg-black/5 dark:bg-white/10 w-full overflow-hidden rounded-b-2xl">
           <div 
