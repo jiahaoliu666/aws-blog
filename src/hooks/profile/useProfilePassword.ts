@@ -129,11 +129,11 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     } catch (error: any) {
       const errorMessage = 
         error.message === 'Incorrect username or password.' 
-          ? '密碼錯誤，請重新輸入'
+          ? '當前密碼錯誤，請重新輸入'
           : error.message === 'Attempt limit exceeded, please try after some time.'
             ? '嘗試次數過多，請稍後再試'
             : error.message === 'Access Token has expired'
-              ? '憑證已過期，請重新登入'
+              ? '憑證已過期，請重新登入後再次嘗試'
               : error.message || '更新失敗，請稍後再試';
       
       showToast(errorMessage, 'error');
@@ -232,6 +232,14 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     };
   };
 
+  // 首先新增一個函數來檢查是否可以提交
+  const canSubmit = () => {
+    return oldPassword.trim() !== '' && 
+           newPassword.trim() !== '' && 
+           confirmPassword.trim() !== '' &&
+           !isLoading;
+  };
+
   return {
     user,
     oldPassword,
@@ -261,6 +269,7 @@ export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordPro
     handleChange,
     areAllPasswordFieldsEmpty,
     checkPasswordRequirements,
+    canSubmit,
   };
 };
 

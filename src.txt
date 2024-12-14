@@ -12,7 +12,7 @@ src/
 │   ├── ToastContext.tsx            // Toast 通知上下文
 │   ├── AuthContext.tsx             // 用戶認證相關的上下文
 │   ├── AppContext.tsx              // 應用程式邏輯相關的上下文
-│   └── LanguageContext.tsx         // 語言設定相關的上下文
+│   ├── LanguageContext.tsx         // 語言設定相關的上下文
 │   └── ThemeContext.tsx            // 主題設定相關的上下文
 ├── config
 │   ├── email.ts                    // 集中管理郵件相關配置
@@ -53,16 +53,16 @@ src/
 │   │   │   ├── ProfileSection.tsx     // 個人資訊區塊
 │   │   │   ├── PasswordSection.tsx    // 修改密碼區塊
 │   │   │   ├── NotificationSection.tsx   // 訂閱通知區塊
-│   │   │   └── PreferencesSection.tsx    // 偏好設定區塊
+│   │   │   ├── PreferencesSection.tsx    // 偏好設定區塊
 │   │   │   ├── HistorySection.tsx  // 觀看紀錄區塊
 │   │   │   ├── ActivityLogSection.tsx  // 活動日誌區塊
 │   │   │   ├── FeedbackSection.tsx    // 意見反饋區塊
-│   │   │   ├── AccountSection.tsx     // 帳號管理區塊
+│   │   │   └── AccountSection.tsx     // 帳號管理區塊
 │   │   ├── common
-│   │   │   └── SectionTitle.tsx     // 區塊標題組件    
-│   │   │   └── SectionContainer.tsx  // 區塊容器組件
-│   │   │   └── Sidebar.tsx         // 側邊欄導航組件
-│   │   │   └── Card.tsx            // 卡片組件
+│   │   │   ├── SectionTitle.tsx     // 區塊標題組件    
+│   │   │   ├── SectionContainer.tsx  // 區塊容器組件
+│   │   │   ├── Sidebar.tsx         // 側邊欄導航組件
+│   │   │   ├── Card.tsx            // 卡片組件
 │   │   │   └── styles.ts           // 卡片樣式
 │   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
 │   └── news
@@ -95,13 +95,13 @@ src/
 │   │   └── index.ts                // 匯出 LINE 驗證相關的 Hook 和型別定義
 │   ├── useAppLogic.ts              // 應用程式邏輯 Hook
 │   ├── notifications
-│   │   ├── useEmailNotifications.ts // 電子郵件通知 Hook
+│   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
 ├── lambda
 │   ├── fetchNews.ts                // 獲取新聞 Lambda
 │   ├── fetchAnnouncement.ts        // 獲取公告 Lambda
 │   └── updateNews.ts               // 更新新聞 Lambda
 ├── api
-│   ├── user.ts                     // 用戶 API
+│   └── user.ts                     // 用戶 API
 ├── templates
 │   ├── lineTemplates.ts            // LINE 訊息模板
 │   └── deleteAccountEmail.ts       // 帳號刪除確認郵件模板

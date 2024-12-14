@@ -50,9 +50,14 @@ const LoginPage: React.FC = () => {
       const loginSucceeded = await loginUser(email, password);  
       if (loginSucceeded) {  
         setSuccess('登入成功！');  
-        if (user) { // 檢查 user 是否為 null
-          await logActivity(user.sub, '登入帳戶'); // 使用 id 記錄登入活動
+        
+        // 從 localStorage 取得最新的用戶資訊
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          await logActivity(userData.sub, '登入帳戶');
         }
+        
         setTimeout(() => {  
           router.push('/news');  
         }, 2500);  

@@ -244,10 +244,10 @@ const PasswordSection: React.FC<UseProfilePasswordReturn> = ({
               )}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !oldPassword || !newPassword || !confirmPassword}
                 className={`
                   px-6 py-2.5 rounded-lg flex items-center gap-2
-                  ${isLoading 
+                  ${(isLoading || !oldPassword || !newPassword || !confirmPassword)
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }
