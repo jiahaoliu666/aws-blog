@@ -46,8 +46,64 @@ const RegisterPage: React.FC = () => {
     checkIfLoadingIsNeeded();
   }, []);
 
+  // 檢查是否有輸入值的函數
+  const hasInputValues = () => {
+    return username !== '' || email !== '' || password !== '' || confirmPassword !== '';
+  };
+
+  // 處理路由變更
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      if (hasInputValues() && !isVerificationNeeded) {
+        const confirm = window.confirm('您尚未完成的註冊流程，確定要離開此頁面嗎？');
+        if (!confirm) {
+          router.events.emit('routeChangeError');
+          throw 'Route change aborted';
+        }
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [username, email, password, confirmPassword, isVerificationNeeded]);
+
+  // 處理瀏覽器關閉/刷新
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasInputValues() && !isVerificationNeeded) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [username, email, password, confirmPassword, isVerificationNeeded]);
+
   const handleRegister = async (e: React.FormEvent) => {  
     e.preventDefault();  
+
+    // 檢查用戶名長度
+    if (username.length > 10) {
+      setError('用戶名不可超過10個字');
+      setSuccess(null);
+      return;
+    }
+
+    // 移除 @metaage.com.tw 的驗證
+    // 如果需要基本的電子郵件格式驗證，可以使用以下正則表達式
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setError('請輸入有效的電子郵件地址');
+      setSuccess(null);
+      return;
+    }
 
     const invalidCharactersPattern = /[^a-zA-Z0-9\u4e00-\u9fff]/;  
     if (invalidCharactersPattern.test(username)) {  
@@ -91,7 +147,7 @@ const RegisterPage: React.FC = () => {
           setIsVerificationNeeded(true);
         } catch (err) {
           console.error('創建用戶資料失敗:', err);
-          setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。但用戶資料初始化失敗，請稍後在個人資料頁面更新。');  
+          setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。但用戶資料初始化失敗，請稍後在個人資料頁面重新註冊。');  
           setError(null);  
           setIsVerificationNeeded(true);
         }
@@ -104,7 +160,7 @@ const RegisterPage: React.FC = () => {
         setError(`電子郵件 ${email} 已被註冊，請使用其他電子郵件。`);
         const userConfirmed = await checkUserConfirmationStatus(email);
         if (userConfirmed) {
-          setError(`電子郵件 ${email} 已被註冊且已驗證，導向到登入頁面...`);
+          setError(`電子郵件 ${email} 已被註冊且已驗證，請直接登入...`);
           setTimeout(() => {
             router.push('/auth/login');
           }, 3000);
@@ -113,7 +169,25 @@ const RegisterPage: React.FC = () => {
           setIsVerificationNeeded(true);
         }
       } else if (err.name === 'InvalidPasswordException') {
-        setError('密碼不符合要求，請選擇更強的密碼。');
+        const missingRequirements = [];
+        
+        if (password.length < 8) {
+          missingRequirements.push('• 密碼長度至少需要8個字符');
+        }
+        if (!/[A-Z]/.test(password)) {
+          missingRequirements.push('• 需要至少1個大寫字母');
+        }
+        if (!/[a-z]/.test(password)) {
+          missingRequirements.push('• 需要至少1個小寫字母');
+        }
+        if (!/[0-9]/.test(password)) {
+          missingRequirements.push('• 需要至少1個數字');
+        }
+        if (!/[!@#$%^&*]/.test(password)) {
+          missingRequirements.push('• 需要至少1個特殊符號');
+        }
+
+        setError(`密碼格式不符合要求，缺少：\n${missingRequirements.join('\n')}`);
       } else if (err.name === 'InvalidParameterException') {
         setError('提供的參數無效，請檢查您的輸入。');
       } else {
@@ -162,7 +236,7 @@ const RegisterPage: React.FC = () => {
     }  
   };  
 
-  // 新增檢查用戶確認狀態的函數
+  // 新增檢查用戶確認狀的函數
   const checkUserConfirmationStatus = async (email: string) => {
     try {
       const command = new AdminGetUserCommand({
@@ -198,10 +272,16 @@ const RegisterPage: React.FC = () => {
                 value={username}
                 onChange={(e) => setLocalUsername(e.target.value)}
                 required
-                className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                maxLength={10}
+                className="border border-gray-300 p-3 pl-10 pr-16 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
                 disabled={isVerificationNeeded}
                 style={{ marginTop: '8px' }}
               />
+              {username.length > 0 && (
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/3 text-gray-500 text-sm">
+                  {username.length}/10
+                </span>
+              )}
             </div>  
 
             <div className="mb-4 relative">
@@ -209,7 +289,7 @@ const RegisterPage: React.FC = () => {
               <input
                 id="email"
                 name="email"
-                type="email"
+                type="text"
                 placeholder="@metaage.com.tw"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -291,7 +371,7 @@ const RegisterPage: React.FC = () => {
             )}  
 
             {error && (
-              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-red-100 text-red-800">
+              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-red-100 text-red-800" style={{ whiteSpace: 'pre-line' }}>
                 {error}
               </div>
             )}

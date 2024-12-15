@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
   const errorMessage = (error: string): string => {  
     console.log("Processing error:", error);  
     if (error.includes("User is not confirmed")) {  
-      return "您的帳戶尚未確認，請點擊忘記密碼重新驗證。";  
+      return "您的帳戶尚未確認，請點擊註冊重新驗證。";  
     }  
     if (error.includes("Incorrect username or password")) {  
       return "請確認您的電子郵件和密碼是否正確。";  
