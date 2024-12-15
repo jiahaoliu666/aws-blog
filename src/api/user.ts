@@ -2,6 +2,8 @@ import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import axios, { AxiosError } from 'axios';
 import { API_ENDPOINTS, ERROR_CODES, RETRY_CONFIG } from '@/config/constants';
 import { logger } from '@/utils/logger';
+import { AdminDeleteUserCommand } from '@aws-sdk/client-cognito-identity-provider';
+import cognitoClient from '@/utils/cognitoClient';
 
 // 新增 DynamoDB 客戶端配置
 const dynamoClient = new DynamoDBClient({
@@ -155,6 +157,23 @@ export const userApi = {
       return true;
     } catch (error) {
       logger.error('註冊後處理失敗', { error, cognitoSub });
+      throw error;
+    }
+  },
+
+  cleanupUnverifiedUser: async (email: string) => {
+    try {
+      const params = {
+        UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
+        Username: email
+      };
+      
+      // 刪除 Cognito 用戶
+      await cognitoClient.send(new AdminDeleteUserCommand(params));
+      
+      logger.info('成功清理未驗證用戶', { email });
+    } catch (error) {
+      logger.error('清理未驗證用戶失敗', { error, email });
       throw error;
     }
   }

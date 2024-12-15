@@ -13,6 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { Loader } from '@aws-amplify/ui-react';
 import { userApi } from '@/api/user';
+import axios from 'axios';
 
 const logger = {
   info: (message: string, data?: any) => console.info(message, data),
@@ -82,7 +83,7 @@ const RegisterPage: React.FC = () => {
       if (isRegistrationInProcess && !isHandlingRoute) {
         isHandlingRoute = true;  // 設置標記
         
-        const userConfirmed = window.confirm('您尚未完成註冊流程，確定要離開此頁面嗎？');
+        const userConfirmed = window.confirm('註冊流程進行中，確定要離開此頁面嗎？');
         
         if (!userConfirmed) {
           router.events.emit('routeChangeError');
@@ -238,10 +239,10 @@ const RegisterPage: React.FC = () => {
       console.log('進入 catch 區塊');
       console.error('註冊失敗:', err);
       if (err.name === 'UsernameExistsException') {
-        setError(`電子郵 ${email} 已被註冊，請使用其他電子郵件。`);
+        setError(`電子郵件 ${email} 已被註冊，請使用其他電子郵件。`);
         const userConfirmed = await checkUserConfirmationStatus(email);
         if (userConfirmed) {
-          setError(`電子郵件 ${email} 已註冊且已驗證，請直接登入...`);
+          setError(`此 ${email} 郵件地址已註冊，請直接登入...`);
           setTimeout(() => {
             router.push('/auth/login');
           }, 3000);
@@ -345,6 +346,16 @@ const RegisterPage: React.FC = () => {
     } catch (err) {
       console.error('檢查用戶確認狀態失敗:', err);
       return false;
+    }
+  };
+
+  const cleanupUnverifiedUser = async (email: string) => {
+    try {
+      // 調用後端 API 刪除未驗證的用戶
+      await axios.post('/api/auth/cleanup', { email });
+      logger.info('成功清理未驗證用戶', { email });
+    } catch (error) {
+      logger.error('清理未驗證用戶失敗', { error, email });
     }
   };
 

@@ -56,18 +56,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         Username: email,
         Password: password,
         UserAttributes: [
-          { 
-            Name: "email", 
-            Value: email 
-          },
-          { 
-            Name: "name", 
-            Value: name 
-          }
+          { Name: "email", Value: email },
+          { Name: "name", Value: name }
         ],
       });
 
-      await cognitoClient.send(command);
+      const response = await cognitoClient.send(command);
+      
+      if (response.UserSub) {
+        localStorage.setItem('tempRegistration', JSON.stringify({
+          email,
+          userSub: response.UserSub,
+          timestamp: Date.now()
+        }));
+      }
+      
       setError(null);
       return true;
     } catch (err) {
