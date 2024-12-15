@@ -55,7 +55,7 @@ const RegisterPage: React.FC = () => {
   useEffect(() => {
     const handleRouteChange = (url: string) => {
       if (hasInputValues() && !isVerificationNeeded) {
-        const confirm = window.confirm('您尚未完成的註冊流程，確定要離開此頁面嗎？');
+        const confirm = window.confirm('您尚未完成註冊流程，確��要離開此頁面嗎？');
         if (!confirm) {
           router.events.emit('routeChangeError');
           throw 'Route change aborted';
@@ -120,7 +120,7 @@ const RegisterPage: React.FC = () => {
 
     try {  
       const command = new SignUpCommand({
-        ClientId: "5ua9kmb59lmqks0echkc261dgh",
+        ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,
         Username: email,
         Password: password,
         UserAttributes: [
@@ -201,7 +201,7 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();  
     try {  
       const command = new ConfirmSignUpCommand({  
-        ClientId: "5ua9kmb59lmqks0echkc261dgh",  
+        ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,  
         Username: email,  
         ConfirmationCode: verificationCode,  
       });  
@@ -224,7 +224,7 @@ const RegisterPage: React.FC = () => {
   const handleResendCode = async () => {  
     try {  
       const command = new ResendConfirmationCodeCommand({  
-        ClientId: "5ua9kmb59lmqks0echkc261dgh",  
+        ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,  
         Username: email  
       });  
       await cognitoClient.send(command);  
@@ -240,7 +240,7 @@ const RegisterPage: React.FC = () => {
   const checkUserConfirmationStatus = async (email: string) => {
     try {
       const command = new AdminGetUserCommand({
-        UserPoolId: "ap-northeast-1_SDMioGwSr", // 確保這裡的 UserPoolId 是正確的
+        UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
         Username: email
       });
       const response = await cognitoClient.send(command);
