@@ -144,16 +144,15 @@ export const userApi = {
     }
   },
 
-  // 新增註冊成功後的處��方法
+  // 新增註冊成功後的處理方法
   handlePostRegistration: async (cognitoSub: string) => {
     try {
       // 建立用戶基本資料
       await createUserProfile(cognitoSub);
-      
       // 建立用戶偏好設定
       await createUserPreferences(cognitoSub);
-      
       logger.info('註冊後處理完成', { cognitoSub });
+      return true;
     } catch (error) {
       logger.error('註冊後處理失敗', { error, cognitoSub });
       throw error;

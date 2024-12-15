@@ -14,6 +14,10 @@ import { faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { Loader } from '@aws-amplify/ui-react';
 import { userApi } from '@/api/user';
 
+const logger = {
+  info: (message: string, data?: any) => console.info(message, data),
+  error: (message: string, data?: any) => console.error(message, data),
+};
 
 const RegisterPage: React.FC = () => {  
   const router = useRouter();  
@@ -30,13 +34,23 @@ const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(true); // 初始設為 true
+  const [timeLeft, setTimeLeft] = useState<number>(300); // 5分鐘 = 300秒
+  const [timerActive, setTimerActive] = useState<boolean>(false);
+  const [registrationData, setRegistrationData] = useState<{
+    email: string;
+    password: string;
+    username: string;
+    tempUserSub?: string;
+  } | null>(null);
+  const [registrationInProgress, setRegistrationInProgress] = useState(false);
+  const [isRegistrationInProcess, setIsRegistrationInProcess] = useState(false);
 
   useEffect(() => {
     const checkIfLoadingIsNeeded = async () => {
       // 定義 someLoadingCondition 函數
       const someLoadingCondition = async () => {
-        // 這裡可以放置你的邏輯，例如檢查某個 API 狀態
-        return false; // 假設不需要載入
+        // 這裡可以放置的邏輯，例如檢查某個 API 狀態
+        return false; // 假設不需
       };
 
       const needsLoading = await someLoadingCondition();
@@ -48,18 +62,40 @@ const RegisterPage: React.FC = () => {
 
   // 檢查是否有輸入值的函數
   const hasInputValues = () => {
+    if (isVerificationNeeded) {
+      return verificationCode !== '';
+    }
     return username !== '' || email !== '' || password !== '' || confirmPassword !== '';
   };
 
-  // 處理路由變更
+  // 監聽輸入值變化
   useEffect(() => {
-    const handleRouteChange = (url: string) => {
-      if (hasInputValues() && !isVerificationNeeded) {
-        const confirm = window.confirm('您尚未完成註冊流程，確��要離開此頁面嗎？');
-        if (!confirm) {
+    // 當有任何輸入值時，設置註冊流程狀態為 true
+    setIsRegistrationInProcess(hasInputValues());
+  }, [username, email, password, confirmPassword, verificationCode]);
+
+  // 修改路由變更處理
+  useEffect(() => {
+    let isHandlingRoute = false;  // 添加標記來追蹤是否正在處理路由變更
+
+    const handleRouteChange = async (url: string) => {
+      if (isRegistrationInProcess && !isHandlingRoute) {
+        isHandlingRoute = true;  // 設置標記
+        
+        const userConfirmed = window.confirm('您尚未完成註冊流程，確定要離開此頁面嗎？');
+        
+        if (!userConfirmed) {
           router.events.emit('routeChangeError');
+          // 使用 setTimeout 來確保路由完全重置
+          setTimeout(() => {
+            router.replace(router.asPath).then(() => {
+              isHandlingRoute = false;  // 重置標記
+            });
+          }, 0);
           throw 'Route change aborted';
         }
+        
+        isHandlingRoute = false;  // 重置標記
       }
     };
 
@@ -68,12 +104,18 @@ const RegisterPage: React.FC = () => {
     return () => {
       router.events.off('routeChangeStart', handleRouteChange);
     };
-  }, [username, email, password, confirmPassword, isVerificationNeeded]);
+  }, [isRegistrationInProcess]);
 
   // 處理瀏覽器關閉/刷新
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasInputValues() && !isVerificationNeeded) {
+      if (hasInputValues()) {
+        if (isVerificationNeeded && registrationData?.tempUserSub) {
+          // 在這裡我們無法執行異步操作，但可以標記註冊流程已中斷
+          setRegistrationInProgress(false);
+          setIsVerificationNeeded(false);
+          setRegistrationData(null);
+        }
         e.preventDefault();
         e.returnValue = '';
       }
@@ -84,10 +126,51 @@ const RegisterPage: React.FC = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [username, email, password, confirmPassword, isVerificationNeeded]);
+  }, [username, email, password, confirmPassword, verificationCode, isVerificationNeeded, registrationData]);
+
+  // 修改計時器效果
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (timerActive && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            // 當計時器到達 0 時
+            setTimerActive(false);
+            setIsVerificationNeeded(false);
+            setRegistrationData(null);
+            setRegistrationInProgress(false); // 確保註冊流程被中斷
+            setError("驗證碼已過期，請重新註冊");
+            setSuccess(null);
+            
+            // 清除驗證碼輸入
+            setVerificationCode('');
+            
+            // 清除所有表單數據並返回註冊狀態
+            setLocalUsername('');
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+            
+            // 3秒後清除錯誤訊息並重置表單狀態
+            setTimeout(() => {
+              setError(null);
+              // 這裡不需要再次設置 setIsVerificationNeeded(false)
+              // 因為上面已經設置過了，這確保了用戶會看到註冊表單
+            }, 3000);
+            
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [timerActive, timeLeft]);
 
   const handleRegister = async (e: React.FormEvent) => {  
     e.preventDefault();  
+    setRegistrationInProgress(true);
 
     // 檢查用戶名長度
     if (username.length > 10) {
@@ -97,10 +180,10 @@ const RegisterPage: React.FC = () => {
     }
 
     // 移除 @metaage.com.tw 的驗證
-    // 如果需要基本的電子郵件格式驗證，可以使用以下正則表達式
+    // 如果���要基本的電子郵件格式驗證，可以使用以下正則表達式
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
-      setError('請輸入有效的電子郵件地址');
+      setError('請��入有效的電子郵件地址');
       setSuccess(null);
       return;
     }
@@ -135,32 +218,30 @@ const RegisterPage: React.FC = () => {
         ]
       });
 
-      // 註冊 Cognito 用戶
       const signUpResponse = await cognitoClient.send(command);
       
-      // 如果註冊成功，取得 sub 並創建用戶資料
       if (signUpResponse.UserSub) {
-        try {
-          await userApi.handlePostRegistration(signUpResponse.UserSub);
-          setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。');  
-          setError(null);  
-          setIsVerificationNeeded(true);
-        } catch (err) {
-          console.error('創建用戶資料失敗:', err);
-          setSuccess('註冊成功！請檢查您的電子郵件以驗證您的帳戶。但用戶資料初始化失敗，請稍後在個人資料頁面重新註冊。');  
-          setError(null);  
-          setIsVerificationNeeded(true);
-        }
+        setRegistrationData({
+          email,
+          password,
+          username,
+          tempUserSub: signUpResponse.UserSub
+        });
+        setIsVerificationNeeded(true);
+        setTimeLeft(300);
+        setTimerActive(true);
+        setSuccess('已發送驗證碼，請在5分鐘內完成驗證');
+        setError(null);
       }
 
     } catch (err: any) {  
       console.log('進入 catch 區塊');
       console.error('註冊失敗:', err);
       if (err.name === 'UsernameExistsException') {
-        setError(`電子郵件 ${email} 已被註冊，請使用其他電子郵件。`);
+        setError(`電子郵 ${email} 已被註冊，請使用其他電子郵件。`);
         const userConfirmed = await checkUserConfirmationStatus(email);
         if (userConfirmed) {
-          setError(`電子郵件 ${email} 已被註冊且已驗證，請直接登入...`);
+          setError(`電子郵件 ${email} 已註冊且已驗證，請直接登入...`);
           setTimeout(() => {
             router.push('/auth/login');
           }, 3000);
@@ -194,31 +275,46 @@ const RegisterPage: React.FC = () => {
         setError(err.message || '註冊失敗，請稍後再試。');
       }
       setSuccess(null);  
-    }  
+    }     
   };  
 
   const handleVerifyCode = async (e: React.FormEvent) => {  
     e.preventDefault();  
+    
+    // 檢查是否已過期或註冊流程已中斷
+    if (!registrationData || !registrationInProgress || timeLeft <= 0) {
+      setError('驗證碼已過期或註冊流程已中斷，請重新註冊');
+      setIsVerificationNeeded(false);
+      return;
+    }
+
     try {  
       const command = new ConfirmSignUpCommand({  
         ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,  
-        Username: email,  
+        Username: registrationData.email,  
         ConfirmationCode: verificationCode,  
       });  
       await cognitoClient.send(command);  
-      setSuccess('驗證成功，請重新登入！');  
-      setError(null);  
-      setTimeout(() => {  
-        router.push('/auth/login');  
-      }, 3000);  
+      
+      // 驗證成功後才創建用戶資料
+      if (registrationData.tempUserSub && registrationInProgress) {
+        await userApi.handlePostRegistration(registrationData.tempUserSub);
+        setTimerActive(false);
+        setSuccess('註冊成功！請重新登入！');  
+        setError(null);  
+        setTimeout(() => {  
+          router.push('/auth/login');  
+        }, 3000);  
+      }
     } catch (err: any) {  
       if (err.message.includes('Invalid verification code provided')) {  
-        setError('提供的驗證碼無效，請再試一次。');  
+        setError('提供的驗證碼無效，請再一次。');  
       } else {  
         setError(err.message || '驗證失敗');  
       }  
       setSuccess(null);  
     }  
+    setRegistrationInProgress(false);
   };  
 
   const handleResendCode = async () => {  
@@ -394,6 +490,17 @@ const RegisterPage: React.FC = () => {
                 <span className="text-blue-500 hover:underline">登入</span>  
               </Link>  
             </div>  
+
+            {isVerificationNeeded && (
+              <div className="text-center mt-6 mb-4">
+                <p className="bg-blue-50 text-blue-700 p-3 rounded-lg shadow-sm border border-blue-200 font-medium">
+                  驗證碼有效時間：
+                  <span className="ml-2 text-lg font-bold">
+                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                  </span>
+                </p>
+              </div>
+            )}
           </form>  
         )}
       </div>  
