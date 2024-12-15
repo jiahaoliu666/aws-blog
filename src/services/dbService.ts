@@ -265,7 +265,7 @@ export class DbService {
     await this.client.send(new UpdateItemCommand(params));
   }
 
-  // 新增��查用戶是否存在的方法
+  // 新增查詢用戶是否存在的方法
   private async checkUserExists(userId: string): Promise<boolean> {
     try {
       const params = {

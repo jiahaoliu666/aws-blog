@@ -135,7 +135,7 @@ const ForgotPasswordPage: React.FC = () => {
       });  
       const response = await cognitoClient.send(command);  
       console.log("ConfirmForgotPasswordCommand response:", response);  
-      setSuccess('密碼���置成功，您的帳戶已驗證。請用新密碼登入。');  
+      setSuccess('密碼重置成功，您的帳戶已驗證。請用新密碼登入。');  
       setError(null);
 
       // 增重定向邏輯

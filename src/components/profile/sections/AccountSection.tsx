@@ -297,7 +297,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
 
   const handleConfirmDelete = useCallback(async () => {
     if (!password.trim()) {
-      showToast('請輸入��碼以確認刪除', 'error');
+      showToast('請輸入密碼以確認刪除', 'error');
       return;
     }
 

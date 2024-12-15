@@ -120,6 +120,8 @@ src/
 │   ├── news
 │   │   └── index.tsx               // 新聞頁面
 │   ├── api
+│   │   ├── auth
+│   │   │   └── cleanup.ts          // 清理未驗證用戶 API
 │   │   ├── profile
 │   │   │   ├── recent-log.ts       // 最近活動 API
 │   │   │   ├── notification-settings
