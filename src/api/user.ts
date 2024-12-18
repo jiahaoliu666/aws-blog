@@ -1,4 +1,4 @@
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, PutItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import axios, { AxiosError } from 'axios';
 import { API_ENDPOINTS, ERROR_CODES, RETRY_CONFIG } from '@/config/constants';
 import { logger } from '@/utils/logger';
@@ -31,7 +31,7 @@ const createUserProfile = async (userId: string) => {
     };
 
     await dynamoClient.send(new PutItemCommand(params));
-    logger.info('成功建立用戶資料', { userId, registrationDate });
+    logger.info('成功建立用���資料', { userId, registrationDate });
   } catch (error) {
     logger.error('建立用戶資料失敗', { error, userId });
     throw new Error('建立用戶資料失敗');
@@ -174,6 +174,32 @@ export const userApi = {
       logger.info('成功清理未驗證用戶', { email });
     } catch (error) {
       logger.error('清理未驗證用戶失敗', { error, email });
+      throw error;
+    }
+  },
+
+  // 新增取得用戶資料的方法
+  getUserProfile: async (userId: string) => {
+    try {
+      const params = {
+        TableName: 'AWS_Blog_UserProfiles',
+        Key: {
+          userId: { S: userId }
+        }
+      };
+
+      const response = await dynamoClient.send(new GetItemCommand(params));
+      
+      if (!response.Item) {
+        throw new Error('找不到用戶資料');
+      }
+
+      return {
+        registrationDate: response.Item.registrationDate.S,
+        // ... 其他需要的欄位
+      };
+    } catch (error) {
+      logger.error('取得用戶資料失敗', { error, userId });
       throw error;
     }
   }

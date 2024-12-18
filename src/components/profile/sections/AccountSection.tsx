@@ -22,6 +22,7 @@ import { useToastContext } from '@/context/ToastContext';
 import { SectionTitle } from '../common/SectionTitle';
 import { useRouter } from 'next/router';
 import { logger } from '@/utils/logger';
+import { userApi } from '@/api/user';
 
 interface AccountSectionProps {
   password: string;
@@ -139,7 +140,7 @@ const DeleteConfirmationDialog: React.FC<{
                   border ${passwordError ? 'border-red-500' : 'border-gray-300'}
                   focus:outline-none focus:ring-2 focus:ring-blue-500
                 `}
-                placeholder="輸入密碼以確認"
+                placeholder="輸入密碼���確認"
               />
               <button
                 type="button"
@@ -211,11 +212,27 @@ const AccountSection: React.FC<AccountSectionProps> = ({
   const { user } = useAuthContext();
   const { showToast } = useToastContext();
   const router = useRouter();
+  const [profileData, setProfileData] = useState<{ registrationDate?: string }>({});
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user?.sub) {
+        try {
+          const data = await userApi.getUserProfile(user.sub);
+          setProfileData(data);
+        } catch (error) {
+          console.error('取得用戶資料失敗:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user?.sub]);
 
   const accountInfo = {
     email: user?.email || '',
     username: user?.username || '',
-    joinDate: user?.registrationDate || '',
+    joinDate: profileData.registrationDate || '',
     userId: user?.sub || ''
   };
 
@@ -313,7 +330,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
       setError(null);
       setConfirmDeleteValue('');
     } catch (error) {
-      setError(error instanceof Error ? error.message : '刪除失敗');
+      setError(error instanceof Error ? error.message : '刪���失敗');
     }
   }, [password, confirmDeleteValue, handleAccountDeletion, showToast, setPassword, setError]);
 
@@ -390,7 +407,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         </div>
       </Card>
 
-      {/* 刪除確認對話框 */}
+      {/* 刪除確認對話��� */}
       <DeleteConfirmationDialog
         isOpen={isDeleteModalOpen}
         onClose={handleCloseModal}

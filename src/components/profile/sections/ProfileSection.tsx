@@ -14,6 +14,7 @@ import { useToastContext } from '@/context/ToastContext';
 import { useAuthContext } from '@/context/AuthContext';
 import { SectionTitle } from '../common/SectionTitle';
 import { Card } from '../common/Card';
+import { userApi } from '@/api/user';
 
 interface ProfileSectionProps {
   formData: FormData;
@@ -55,6 +56,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   );
   const { showToast } = useToastContext();
   const { user, updateUser } = useAuthContext();
+  const [profileData, setProfileData] = useState<{ registrationDate?: string }>({});
 
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
@@ -78,6 +80,21 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
       window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
     };
   }, []);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user?.sub) {
+        try {
+          const data = await userApi.getUserProfile(user.sub);
+          setProfileData(data);
+        } catch (error) {
+          console.error('取得用戶資料失敗:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user?.sub]);
 
   const handleSave = async () => {
     try {
@@ -253,10 +270,10 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 </div>
 
                 {/* 註冊日期 */}
-              <div className="grid grid-cols-[80px_1fr] items-center">
+                <div className="grid grid-cols-[80px_1fr] items-center">
                   <label className="text-sm font-medium text-gray-700">註冊日期：</label>
                   <span className="text-gray-900 pl-2">
-                    {formatDate(user?.registrationDate || formData.registrationDate)}
+                    {formatDate(profileData.registrationDate)}
                   </span>
                 </div>
 
