@@ -89,20 +89,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (error.message.includes('密碼錯誤')) {
         return res.status(401).json({ 
           message: '密碼驗證失敗',
-          code: 'INVALID_PASSWORD'
+          code: 'INVALID_PASSWORD',
+          details: '請確認您輸入的密碼是否正確'
         });
       }
       if (error.message.includes('DynamoDB 用戶資料不存在')) {
         return res.status(404).json({ 
           message: 'DynamoDB 用戶資料不存在',
-          code: 'DYNAMODB_USER_NOT_FOUND'
+          code: 'DYNAMODB_USER_NOT_FOUND',
+          details: '找不到對應的用戶資料'
         });
       }
     }
     
     return res.status(500).json({ 
       message: '刪除帳號時發生錯誤',
-      error: error instanceof Error ? error.message : '未知錯誤'
+      error: error instanceof Error ? error.message : '未知錯誤',
+      code: 'INTERNAL_SERVER_ERROR'
     });
   }
 }

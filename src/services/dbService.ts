@@ -67,35 +67,35 @@ export class DbService {
 
   async handleAccountDeletion(userId: string, userSub: string, password: string): Promise<void> {
     try {
-      // 1. 驗證用戶存在性
+      // 1. 先驗證密碼
+      await this.authService.verifyPassword(userSub, password);
+      
+      // 2. 再驗證用戶存在性
       const isValid = await this.validateUserKeys(userId);
       if (!isValid) {
-        logger.warn('用戶資料不存在，跳過資料庫刪除操作', { userId });
-        // 直接進行 Cognito 用戶刪除
-        await this.authService.deleteUser(userSub, password);
-        return;
+        throw new Error('DynamoDB 用戶資料不存在');
       }
-
-      // 2. 標記用戶為已刪除狀態
-      await this.markUserAsDeleted(userId);
       
-      // 3. 刪除 S3 檔案
-      await this.deleteUserS3Files(userId);
-      
-      // 4. 刪除所有相關資料表中的記錄
-      await this.deleteAllUserRecords(userId);
-      
-      // 5. 刪除 Cognito 用戶
-      await this.authService.deleteUser(userSub, password);
-      
-      logger.info('用戶資料刪除成功:', { userId, userSub });
+      // 3. 開始刪除操作
+      await this.beginDeletion(userId, userSub);
       
     } catch (error) {
-      logger.error('刪除用戶資料失敗:', { userId, userSub, error });
-      // 嘗試回滾刪除操作
+      // 如果是密碼錯誤，直接拋出錯誤，不需要回滾
+      if (error instanceof Error && error.message.includes('密碼錯誤')) {
+        throw error;
+      }
+      // 其他錯誤才需要回滾
       await this.rollbackUserDeletion(userId);
       throw error;
     }
+  }
+
+  private async beginDeletion(userId: string, userSub: string): Promise<void> {
+    // 執行實際的刪除操作
+    await this.markUserAsDeleted(userId);
+    await this.deleteUserS3Files(userId);
+    await this.deleteAllUserRecords(userId);
+    await this.authService.deleteUserWithoutPassword(userSub);
   }
 
   async markAsDeleted(table: string, userId: string): Promise<void> {

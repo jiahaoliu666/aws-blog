@@ -49,10 +49,19 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
 
       if (!response.ok) {
         if (response.status === 401) {
+          showToast('密碼驗證失敗，請確認密碼是否正確', 'error');
           setError('密碼錯誤，請重新輸入');
-        } else {
-          setError(data.message || '刪除帳號失敗');
+          return;
+        } 
+        
+        if (response.status === 404) {
+          showToast('找不到用戶資料，請聯繫客服支援', 'error');
+          setError(data.details || '用戶資料不存在');
+          return;
         }
+        
+        showToast(data.message || '刪除帳號失敗', 'error');
+        setError(data.details || '刪除帳號失敗');
         return;
       }
 
