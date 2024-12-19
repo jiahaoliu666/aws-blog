@@ -14,6 +14,7 @@ import { faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { Loader } from '@aws-amplify/ui-react';
 import { userApi } from '@/api/user';
 import axios from 'axios';
+import Alert from '@/components/common/Alert';
 
 const logger = {
   info: (message: string, data?: any) => console.info(message, data),
@@ -204,7 +205,7 @@ const RegisterPage: React.FC = () => {
     }  
 
     if (password !== confirmPassword) {  
-      setError('密碼���匹配，請重新輸入');  
+      setError('密碼不匹配，請重新輸入');  
       setSuccess(null);  
       return;  
     }  
@@ -296,7 +297,7 @@ const RegisterPage: React.FC = () => {
     
     // 首先檢查驗證碼是否過期
     if (timeLeft <= 0) {
-      setError('驗證碼已過期，��重新註冊');
+      setError('驗證碼已過期，請重新註冊');
       setIsVerificationNeeded(false);
       return;
     }
@@ -327,7 +328,7 @@ const RegisterPage: React.FC = () => {
         }, 3000);  
       }
     } catch (err: any) {  
-      // 驗證碼錯誤的���理
+      // 驗證碼錯誤的處理
       if (err.message.includes('Invalid verification code provided')) {  
         const newAttempts = verificationAttempts + 1;
         setVerificationAttempts(newAttempts);
@@ -515,16 +516,8 @@ const RegisterPage: React.FC = () => {
               </>
             )}  
 
-            {error && (
-              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-red-100 text-red-800" style={{ whiteSpace: 'pre-line' }}>
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-green-100 text-green-800">
-                {success}
-              </div>
-            )}
+            {error && <Alert message={error} type="error" />}
+            {success && <Alert message={success} type="success" />}
 
             <button  
               type="submit"  

@@ -8,6 +8,7 @@ import Footer from '@/components/common/Footer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { Loader } from '@aws-amplify/ui-react';
+import Alert from '@/components/common/Alert';
 
 
 const ForgotPasswordPage: React.FC = () => {  
@@ -221,16 +222,8 @@ const ForgotPasswordPage: React.FC = () => {
               </>  
             )}  
 
-            {error && (
-              <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${error.includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-green-100 text-green-800">
-                {success}
-              </div>
-            )}
+            {error && <Alert message={error} type="error" />}
+            {success && <Alert message={success} type="success" />}
 
             <div className="mt-6">  
               <button  

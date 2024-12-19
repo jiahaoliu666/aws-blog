@@ -4,13 +4,13 @@ import '@aws-amplify/ui-react/styles.css';
 import Link from 'next/link';  
 import { useRouter } from 'next/router';  
 import Navbar from '../../components/common/Navbar';  
-import ErrorMessage from '../../components/common/ErrorMessage';  
 import { useAuthContext } from '../../context/AuthContext';  
 import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 import logActivity from '../api/profile/activity-log'; // 引入 logActivity 函數
+import Alert from '../../components/common/Alert';
 
 const LoginPage: React.FC = () => {  
   const router = useRouter();  
@@ -75,8 +75,11 @@ const LoginPage: React.FC = () => {
     }  
     if (error.includes("Incorrect username or password")) {  
       return "請確認您的電子郵件和密碼是否正確。";  
-    }  
-    return "登入失敗，請重試。";  
+    }
+    if (error.includes("Password attempts exceeded")) {
+      return "密碼嘗試次數超過限制，請稍後再試。";
+    }
+    return "";  // 移除或返回空字串
   };  
 
   return (  
@@ -125,16 +128,8 @@ const LoginPage: React.FC = () => {
                 {showPassword ? "隱藏" : "顯示"}
               </button>
             </div>
-            {error && (
-              <div className={`mt-4 mb-6 p-4 rounded-lg shadow-md ${errorMessage(error).includes('成功') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                {errorMessage(error)}
-              </div>
-            )}
-            {success && (
-              <div className="mt-4 mb-6 p-4 rounded-lg shadow-md bg-green-100 text-green-800">
-                {success}
-              </div>
-            )}
+            {error && <Alert message={errorMessage(error)} type="error" />}
+            {success && <Alert message={success} type="success" />}
             <button  
               type="submit"  
               className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full w-full py-3 hover:from-blue-600 hover:to-blue-800 transition duration-200 ease-in-out mb-4 shadow-xl transform hover:scale-105"  

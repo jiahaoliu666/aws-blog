@@ -176,26 +176,49 @@ export const useProfileFeedback = ({
           Body: {
             Html: {
               Data: `
-                <h2>用戶反饋</h2>
-                <p><strong>標題：</strong> ${submitData.title}</p>
-                <p><strong>類別：</strong> ${submitData.category}</p>
-                <p><strong>內容：</strong></p>
-                <p>${submitData.content}</p>
-                ${attachmentUrls.length > 0 ? `
-                  <p><strong>附件：</strong></p>
-                  <ul>
-                    ${attachmentUrls.map((url, index) => {
-                      const fileName = submitData.attachments[index].name;
-                      return `<li><a href="${url}">${fileName}</a></li>`;
-                    }).join('')}
-                  </ul>
-                ` : ''}
-                <hr>
-                <p><strong>用戶資訊：</strong></p>
-                <p>用戶 ID：${user?.sub}</p>
-                <p>電子郵件：${user?.email}</p>
-                <p>用戶名稱：${user?.username}</p>
-                <p>提交時間：${new Date().toLocaleString()}</p>
+                <html>
+                  <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
+                      <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #232f3e; margin: 0;">AWS Blog 365 用戶反饋</h1>
+                      </div>
+                      
+                      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                        <h2 style="color: #232f3e; margin-top: 0;">反饋內容</h2>
+                        <p style="line-height: 1.6;"><strong>標題：</strong> ${submitData.title}</p>
+                        <p style="line-height: 1.6;"><strong>類別：</strong> ${submitData.category}</p>
+                        <p style="line-height: 1.6;"><strong>內容：</strong></p>
+                        <p style="line-height: 1.6;">${submitData.content}</p>
+                        
+                        ${attachmentUrls.length > 0 ? `
+                          <div style="margin-top: 20px;">
+                            <p style="line-height: 1.6;"><strong>附件：</strong></p>
+                            <ul style="line-height: 1.6;">
+                              ${attachmentUrls.map((url, index) => {
+                                const fileName = submitData.attachments[index].name;
+                                return `<li><a href="${url}" style="color: #0066c0;">${fileName}</a></li>`;
+                              }).join('')}
+                            </ul>
+                          </div>
+                        ` : ''}
+                      </div>
+
+                      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px;">
+                        <h2 style="color: #232f3e; margin-top: 0;">用戶資訊</h2>
+                        <p style="line-height: 1.6;"><strong>用戶 ID：</strong>${user?.sub}</p>
+                        <p style="line-height: 1.6;"><strong>電子郵件：</strong>${user?.email}</p>
+                        <p style="line-height: 1.6;"><strong>用戶名稱：</strong>${user?.username}</p>
+                        <p style="line-height: 1.6;"><strong>提交時間：</strong>${new Date().toLocaleString()}</p>
+                      </div>
+
+                      <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
+                      <div style="text-align: center; color: #666; font-size: 14px;">
+                        <p>此為系統自動發送郵件，請勿直接回覆</p>
+                        <p style="margin-top: 10px;">AWS Blog 365 團隊敬上</p>
+                      </div>
+                    </div>
+                  </body>
+                </html>
               `
             }
           },
@@ -203,7 +226,7 @@ export const useProfileFeedback = ({
             Data: `[用戶反饋] ${submitData.category}: ${submitData.title}`
           }
         },
-        Source: 'mail@awsblog365.com',
+        Source: 'no-reply@awsblog365.com',
       });
 
       await sesClient.send(command);
