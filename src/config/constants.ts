@@ -3,7 +3,8 @@ export const EMAIL_CONFIG = {
   RETRY_DELAY: 2000,
   BATCH_SIZE: 50,
   RATE_LIMIT: 14,
-};
+  DEFAULT_SENDER: process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com'
+} as const;
 
 export const DB_TABLES = {
   LINE_VERIFICATIONS: 'AWS_Blog_LineVerifications',

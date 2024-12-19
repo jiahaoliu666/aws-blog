@@ -226,7 +226,7 @@ export const useProfileFeedback = ({
             Data: `[用戶反饋] ${submitData.category}: ${submitData.title}`
           }
         },
-        Source: 'no-reply@awsblog365.com',
+        Source: process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
       });
 
       await sesClient.send(command);

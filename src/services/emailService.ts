@@ -14,7 +14,7 @@ export class EmailService {
 
       const emailContent = notification.content;
       const params = {
-        Source: process.env.SES_SENDER_EMAIL,
+        Source: process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
         Destination: {
           ToAddresses: [notification.to],
         },

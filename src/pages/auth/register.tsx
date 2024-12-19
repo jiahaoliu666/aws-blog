@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';  
 import { ConfirmSignUpCommand, ResendConfirmationCodeCommand, SignUpCommand, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";  
 import cognitoClient from '@/utils/cognitoClient';  
-import { PasswordField, Input } from '@aws-amplify/ui-react';  
 import '@aws-amplify/ui-react/styles.css';  
 import Link from 'next/link';  
 import { useRouter } from 'next/router';  
@@ -282,9 +281,9 @@ const RegisterPage: React.FC = () => {
           missingRequirements.push('• 需要至少1個特殊符號');
         }
 
-        setError(`密碼格式不符合要求，缺少：\n${missingRequirements.join('\n')}`);
+        setError(`密碼格式不符合要求：\n${missingRequirements.join('\n')}`);
       } else if (err.name === 'InvalidParameterException') {
-        setError('提供的參數無效。');
+        setError('提供的密碼格式無效。');
       } else {
         setError(err.message || '註冊失敗，請稍後再試。');
       }
@@ -342,13 +341,53 @@ const RegisterPage: React.FC = () => {
             await cleanupUnverifiedUser(registrationData.email);
           }
           
-          // 重置各種狀態...
+          // 重置所有相關狀態
+          setTimerActive(false);
+          setIsVerificationNeeded(false);
+          setRegistrationData(null);
+          setRegistrationInProgress(false);
+          setVerificationCode('');
+          setLocalUsername('');
+          setEmail('');
+          setPassword('');
+          setConfirmPassword('');
+          setTimeLeft(300);
+          setVerificationAttempts(0);
+          
+          // 延遲 3 秒後重定向到註冊頁面
+          setTimeout(() => {
+            router.reload();
+          }, 3000);
         } else {
-          // 還有剩餘嘗試次數
           setError(`驗證碼錯誤，請重新輸入。剩餘 ${MAX_VERIFICATION_ATTEMPTS - newAttempts} 次機會`);
         }
       } else if (err.message.includes('Invalid code provided, please request a code again')) {
         setError('驗證碼無效，請重新獲取驗證碼');
+      } else if (err.message.includes('Attempt limit exceeded')) {
+        setError('已超過嘗試次數限制，請稍後再試');
+        
+        // 清理未驗證的用戶
+        if (registrationData?.email) {
+          await cleanupUnverifiedUser(registrationData.email);
+        }
+        
+        // 重置所有相關狀態
+        setTimerActive(false);
+        setIsVerificationNeeded(false);
+        setRegistrationData(null);
+        setRegistrationInProgress(false);
+        setVerificationCode('');
+        setLocalUsername('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setTimeLeft(300);
+        setVerificationAttempts(0);
+        
+        // 延遲 3 秒後重定向到註冊頁面
+        setTimeout(() => {
+          router.reload();
+        }, 3000);
       } else {  
         setError(err.message || '驗證失敗');  
       }  
@@ -366,6 +405,9 @@ const RegisterPage: React.FC = () => {
       setSuccess('驗證碼已重新發送至您的電子信箱。');  
       setError(null);  
       setVerificationAttempts(0); // 重置嘗試次數
+      // 重置計時器
+      setTimeLeft(300); // 重置為 5 分鐘
+      setTimerActive(true); // 確保計時器處於活動狀態
     } catch (err: any) {  
       setError(err.message || '重發驗證碼失敗');  
       setSuccess(null);  

@@ -32,24 +32,34 @@ const Alert: React.FC<AlertProps> = ({ message, type = 'info' }) => {
     }
   };
 
+  const messageLines = message.split('\n');
+
   return (
     <div 
       className={`
         mt-4 mb-6 px-6 py-4
         rounded-lg border 
         ${styles[type].wrapper}
-        text-center font-medium
+        text-left font-medium
         shadow-md backdrop-blur-sm
         transform transition-all duration-300
         animate-fadeIn
-        flex items-center justify-center gap-3
       `}
     >
-      <FontAwesomeIcon 
-        icon={styles[type].icon} 
-        className="text-lg"
-      />
-      <span className="text-sm">{message}</span>
+      <div className="flex items-start gap-3">
+        <FontAwesomeIcon 
+          icon={styles[type].icon} 
+          className="text-lg mt-1"
+        />
+        <div className="text-sm">
+          {messageLines.map((line, index) => (
+            <React.Fragment key={index}>
+              {line}
+              {index < messageLines.length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
