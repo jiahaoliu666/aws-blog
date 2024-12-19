@@ -280,7 +280,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 {/* 用戶 ID */}
                 <div className="grid grid-cols-[80px_1fr] items-center">
                   <label className="text-sm font-medium text-gray-700">用戶 ID：</label>
-                  <span className="text-gray-600 font-mono text-sm pl-2">
+                  <span className="text-gray-900  pl-2">
                     {user?.sub || '未知'}
                   </span>
                 </div>
