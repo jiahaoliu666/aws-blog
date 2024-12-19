@@ -11,6 +11,7 @@ import Head from 'next/head';
 import '@/styles/globals.css';
 import '@/styles/toast.css';
 import { ThemeProvider } from '@/context/ThemeContext';
+import '@aws-amplify/ui-react/styles.css';
 
 // 建立一個包裝組件來處理路由變化
 const RouteChangeHandler = ({ children }: { children: React.ReactNode }) => {
