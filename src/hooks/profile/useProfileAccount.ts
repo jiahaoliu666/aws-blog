@@ -27,7 +27,7 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
       setIsDeleting(true);
       setError(null);
 
-      if (!user?.sub || !user?.userId) {
+      if (!user?.sub || !user?.userId || !user?.email) {
         throw new Error('缺少必要的用戶資訊');
       }
 
@@ -39,7 +39,9 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
         body: JSON.stringify({
           password,
           userId: user.userId,
-          userSub: user.sub
+          userSub: user.sub,
+          email: user.email,
+          username: user.username
         }),
       });
 

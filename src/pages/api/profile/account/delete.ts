@@ -29,16 +29,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { password, userId, userSub } = req.body;
+  const { password, userId, userSub, email, username } = req.body;
   
-  if (!password || !userId || !userSub) {
-    logger.error('缺少必要參數:', { userId, userSub, hasPassword: !!password });
+  if (!password || !userId || !userSub || !email) {
+    logger.error('缺少必要參數:', { 
+      userId, 
+      userSub, 
+      hasPassword: !!password,
+      hasEmail: !!email 
+    });
     return res.status(400).json({ 
       message: '缺少必要參數',
       details: {
         hasUserId: !!userId,
         hasUserSub: !!userSub,
-        hasPassword: !!password
+        hasPassword: !!password,
+        hasEmail: !!email
       }
     });
   }
@@ -51,11 +57,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const emailService = new EmailService();
     const emailContent = generateAccountDeletionEmail({
       title: '帳號刪除確認',
-      content: '您的帳號已成功刪除。感謝您使用我們的服務。'
+      content: `
+        親愛的 ${username || '用戶'},
+        
+        您的帳號已成功刪除。以下是刪除的帳號資訊：
+        
+        - 電子郵件：${email}
+        - 用戶 ID：${userId}
+        - 刪除時間：${new Date().toLocaleString('zh-TW')}
+        
+        感謝您使用我們的服務。如有任何問題，請聯繫客服支援。
+      `
     });
     
     await emailService.sendEmail({
-      to: req.body.email,
+      to: email,
       subject: '帳號刪除確認',
       content: emailContent,
       articleData: {

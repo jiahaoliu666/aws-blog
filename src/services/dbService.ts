@@ -12,7 +12,7 @@ export class DbService {
   private readonly bucketsToCheck: { bucket: string; prefix: string }[] = [
     { bucket: process.env.USER_UPLOADS_BUCKET || '', prefix: 'users/' },
     { bucket: 'aws-blog-feedback', prefix: 'feedback-attachments/' },
-    { bucket: 'aws-blog-avatar', prefix: '' }
+    { bucket: 'aws-blog-avatar', prefix: 'avatars/' }
   ];
 
   constructor() {
