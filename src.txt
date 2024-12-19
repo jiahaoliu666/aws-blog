@@ -10,6 +10,7 @@ src/
 │   └── next-auth.d.ts              // NextAuth.js 的類型擴展
 ├── context
 │   ├── ToastContext.tsx            // Toast 通知上下文
+│   ├── LoadingContext.tsx           // Loading 上下文
 │   ├── AuthContext.tsx             // 用戶認證相關的上下文
 │   ├── AppContext.tsx              // 應用程式邏輯相關的上下文
 │   ├── LanguageContext.tsx         // 語言設定相關的上下文
