@@ -56,26 +56,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 發送帳號刪除確認郵件
     const emailService = new EmailService();
     const emailContent = generateAccountDeletionEmail({
-      title: '帳號刪除確認',
-      content: `
-        親愛的 ${username || '用戶'},
-        
-        您的帳號已成功刪除。以下是刪除的帳號資訊：
-        
-        - 電子郵件：${email}
-        - 用戶 ID：${userId}
-        - 刪除時間：${new Date().toLocaleString('zh-TW')}
-        
-        感謝您使用我們的服務。如有任何問題，請聯繫客服支援。
-      `
+      title: '【AWS Blog 365】帳號刪除通知',
+      content: '',
+      username: username || '用戶',
+      email: email,
+      userId: userId,
+      deletedAt: new Date().toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      })
     });
     
     await emailService.sendEmail({
       to: email,
-      subject: '帳號刪除確認',
+      subject: '【AWS Blog 365】帳號刪除通知',
       content: emailContent,
       articleData: {
-        title: '帳號刪除確認',
+        title: '【AWS Blog 365】帳號刪除通知',
         content: emailContent
       }
     });

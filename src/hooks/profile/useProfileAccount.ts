@@ -71,9 +71,11 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
       // 清除本地儲存
       localStorage.clear();
       
-      // 等待 toast 顯示完成後再重導向
+      // 等待 toast 顯示完成後再重導向並重整頁面
       setTimeout(() => {
-        router.push('/auth/login');
+        router.push('/auth/login').then(() => {
+          window.location.reload();
+        });
       }, 1500);
 
     } catch (error) {
