@@ -140,7 +140,7 @@ const DeleteConfirmationDialog: React.FC<{
                   border ${passwordError ? 'border-red-500' : 'border-gray-300'}
                   focus:outline-none focus:ring-2 focus:ring-blue-500
                 `}
-                placeholder="輸入密碼���確認"
+                placeholder="輸入密碼"
               />
               <button
                 type="button"
