@@ -13,9 +13,14 @@ interface NotificationProps {
 }
 
 interface Article {
+  article_id: string;
   translated_title: string;
   published_at: number;
   content: string;
+  description: string;
+  translated_description: string;
+  link: string;
+  summary: string;
   read?: boolean;
 }
 
@@ -40,7 +45,15 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           setNewNotifications(sortedArticles.map((article: Article) => ({
             title: article.translated_title,
             date: article.published_at ? new Date(article.published_at * 1000).toLocaleString() : '',
-            content: article.content,
+            content: `
+              <div>
+                <p>${article.translated_description}</p>
+                <p class="mt-2 text-sm text-gray-600">${article.summary}</p>
+                <a href="${article.link}" target="_blank" class="text-blue-600 hover:underline mt-2 inline-block">
+                  閱讀全文
+                </a>
+              </div>
+            `,
             read: article.read,
           })));
           setTotalCount(data.totalCount);

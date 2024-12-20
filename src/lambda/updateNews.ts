@@ -70,7 +70,7 @@ interface TranslatorResponse {
 dotenv.config({ path: ".env.local" });
 
 // 常量定義更新文章數量
-const NUMBER_OF_ARTICLES_TO_FETCH = 4;
+const NUMBER_OF_ARTICLES_TO_FETCH = 1;
 
 // 初始化客戶端
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
