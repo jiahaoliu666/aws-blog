@@ -11,6 +11,7 @@ ts-node --esm src/lambda/fetchNews.ts
 
 # 執行 updateNews.ts
 ts-node --esm src/lambda/updateNews.ts
+ts-node src/lambda/updateNews.ts
 ------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適

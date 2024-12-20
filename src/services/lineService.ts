@@ -8,7 +8,7 @@ import { LineFollowStatus, ArticleData, LineMessage, LineWebhookEvent, LineUserS
 import { createClient } from 'redis';
 import crypto from 'crypto';
 import axios from 'axios';
-import { withRetry } from '@/utils/retryUtils';
+import { withRetry } from '../utils/retryUtils';
 
 // 驗證 LINE 設定
 const validateLineMessagingConfig = () => {
@@ -126,10 +126,13 @@ export class LineService implements LineServiceInterface {
 
   constructor() {
     const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-    if (!token) {
+    
+    // 在開發環境中允許沒有 token
+    if (!token && process.env.NODE_ENV === 'production') {
       throw new Error('LINE Channel Access Token is not set');
     }
-    this.channelAccessToken = token;
+    
+    this.channelAccessToken = token || '';
   }
 
   async replyMessage(replyToken: string, messages: any[]): Promise<void> {

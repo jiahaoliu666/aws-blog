@@ -2,7 +2,7 @@ import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { sesClient } from "../config/aws";
 import { EMAIL_CONFIG } from "../config/constants";
 import { logger } from "../utils/logger";
-import RateLimiter from "@/utils/rateLimiter";
+import RateLimiter from "../utils/rateLimiter";
 import { EmailNotification } from "../types/emailTypes";
 
 const rateLimiter = new RateLimiter(EMAIL_CONFIG.RATE_LIMIT);
@@ -81,5 +81,4 @@ export const sendEmailNotification = async (notification: EmailNotification) => 
   const emailService = new EmailService();
   return await emailService.sendEmail(notification);
 };
-
 export const sendEmail = sendEmailNotification;  // 添加別名導出

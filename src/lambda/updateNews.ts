@@ -10,14 +10,15 @@ import { v4 as uuidv4 } from "uuid";
 import OpenAI from "openai";
 import axios, { AxiosResponse } from "axios";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import { sendEmailNotification } from "../services/emailService";
+import { sendEmailNotification } from "../services/emailService.js";
+import { EmailService } from "../services/emailService.js";
 import {
   sendEmailWithRetry,
   failedNotifications,
   processFailedNotifications,
-} from "@/utils/notificationUtils";
-import { logger } from "../utils/logger";
-import { lineService } from "../services/lineService";
+} from "../utils/notificationUtils.js";
+import { logger } from "../utils/logger.js";
+import { lineService } from "../services/lineService.js";
 
 // 介面定義
 interface Article {
@@ -69,7 +70,7 @@ interface TranslatorResponse {
 dotenv.config({ path: ".env.local" });
 
 // 常量定義
-const NUMBER_OF_ARTICLES_TO_FETCH = 10;
+const NUMBER_OF_ARTICLES_TO_FETCH = 4;
 
 // 初始化客戶端
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -86,7 +87,6 @@ const requiredEnvVars = [
   "NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY",
   "NEXT_PUBLIC_SES_SENDER_EMAIL",
   "OPENAI_API_KEY",
-  "MICROSOFT_TRANSLATOR_API_KEY",
 ] as const;
 
 requiredEnvVars.forEach((varName) => {
@@ -169,36 +169,29 @@ async function summarizeArticle(url: string, index: number): Promise<string> {
 }
 
 async function translateText(text: string): Promise<string> {
-  const endpoint = "https://api.cognitive.microsofttranslator.com";
-  const subscriptionKey = process.env.MICROSOFT_TRANSLATOR_API_KEY;
-  const location = process.env.MICROSOFT_TRANSLATOR_REGION;
-
+  console.log(`開始翻譯文本`);
+  
   try {
-    const response = await axios({
-      baseURL: endpoint,
-      url: "/translate",
-      method: "post",
-      headers: {
-        "Ocp-Apim-Subscription-Key": subscriptionKey,
-        "Ocp-Apim-Subscription-Region": location,
-        "Content-type": "application/json",
-        "X-ClientTraceId": uuidv4(),
-      },
-      params: {
-        "api-version": "3.0",
-        from: "en",
-        to: "zh-Hant",
-      },
-      data: [{ text }],
-      responseType: "json",
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一個專業的翻譯專家。請將英文準確地翻譯成繁體中文，特別注意保持AWS相關專業術語的準確性和一致性。翻譯時要考慮整體上下文，確保翻譯結果通順且專業。'
+        },
+        {
+          role: 'user',
+          content: `請將以下文本翻譯成繁體中文：\n${text}`
+        }
+      ],
+      temperature: 0.2,
     });
 
-    return response.data[0].translations[0].text;
+    const translatedText = response.choices[0]?.message?.content?.trim() || text;
+    console.log(`翻譯成功`);
+    return translatedText;
   } catch (error) {
-    console.error(
-      "翻譯時發生錯誤:",
-      error instanceof Error ? error.message : String(error)
-    );
+    console.error('翻譯時發生錯誤:', error);
     return text;
   }
 }
@@ -247,14 +240,20 @@ async function saveToDynamoDB(
       summary: finalSummary,
     };
 
-    const lineUsers = await getLineNotificationUsers();
-    if (lineUsers.length > 0) {
-      try {
-        await lineService.sendNewsNotification(articleData);
-        logger.info(`成功發送 LINE 通知給 ${lineUsers.length} 位用戶`);
-      } catch (error) {
-        logger.error("發送 LINE 通知失敗:", error);
+    try {
+      const lineUsers = await getLineNotificationUsers();
+      if (lineUsers.length > 0 && process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+        try {
+          await lineService.sendNewsNotification(articleData);
+          logger.info(`成功發送 LINE 通知給 ${lineUsers.length} 位用戶`);
+        } catch (error) {
+          logger.warn("LINE 通知發送失敗，繼續處理:", error);
+        }
+      } else {
+        logger.info('跳過 LINE 通知：沒有啟用的用戶或未配置 LINE');
       }
+    } catch (error) {
+      logger.warn("LINE 通知處理失敗，但不影響文章儲存:", error);
     }
 
     console.log(`✅ 成功儲存文章`);
@@ -286,7 +285,7 @@ async function gotoWithRetry(
 async function scrapeAWSBlog(): Promise<void> {
   let browser: Browser | null = null;
 
-  if (!process.env.OPENAI_API_KEY || !process.env.MICROSOFT_TRANSLATOR_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     logger.error("缺少必要的環境變數");
     throw new Error("缺少必要的環境變數");
   }

@@ -35,39 +35,15 @@ if (!lineConfig.channelAccessToken || !lineConfig.channelSecret) {
   });
 }
 
-// 簡化驗證函數
+// 修改 validateLineConfig 函數
 export const validateLineConfig = (): boolean => {
-  const envStatus = {
-    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-    channelSecret: process.env.LINE_CHANNEL_SECRET
-  };
-
-  // 記錄環境變數狀態
-  logger.info('LINE 配置狀態:', {
-    tokenExists: !!envStatus.channelAccessToken,
-    secretExists: !!envStatus.channelSecret,
-    nodeEnv: process.env.NODE_ENV
-  });
-
-  // 如果在開發環境，使用警告而不是錯誤
-  if (process.env.NODE_ENV === 'development') {
-    if (!envStatus.channelAccessToken || !envStatus.channelSecret) {
-      logger.warn('開發環境中缺少 LINE 配置，部分功能可能無法使用');
+  // 在開發環境中，如果缺少配置只發出警告
+  if (process.env.NODE_ENV !== 'production') {
+    if (!process.env.LINE_CHANNEL_ACCESS_TOKEN || !process.env.LINE_CHANNEL_SECRET) {
+      logger.warn('開發環境中缺少 LINE 配置，部分功能將被禁用');
       return false;
     }
-  } else {
-    // 在生產環境中強制要求配置
-    if (!envStatus.channelAccessToken || !envStatus.channelSecret) {
-      throw new Error(
-        '缺少必要的 LINE 環境變數: ' + 
-        [
-          !envStatus.channelAccessToken && 'LINE_CHANNEL_ACCESS_TOKEN',
-          !envStatus.channelSecret && 'LINE_CHANNEL_SECRET'
-        ].filter(Boolean).join(', ')
-      );
-    }
   }
-
   return true;
 };
 
