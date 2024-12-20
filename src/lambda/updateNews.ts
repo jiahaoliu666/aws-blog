@@ -42,6 +42,7 @@ interface EmailData {
     title: string;
     link: string;
     timestamp: string;
+    content: string;
   };
 }
 
@@ -50,6 +51,7 @@ interface DynamoDBArticle {
   translated_title: { S: string };
   link: { S: string };
   published_at: { N: string };
+  summary: { S: string };
 }
 
 interface NotificationUser {
@@ -429,6 +431,7 @@ async function sendNotifications(
           title: articleData.translated_title.S,
           link: articleData.link.S,
           timestamp: articleData.published_at.N,
+          content: articleData.summary.S
         }
       };
 

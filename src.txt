@@ -100,8 +100,8 @@ src/
 │   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
 ├── lambda
 │   ├── fetchNews.ts                // 獲取新聞 Lambda
-│   ├── fetchAnnouncement.ts        // 獲取公告 Lambda
 │   └── updateNews.ts               // 更新新聞 Lambda
+│   └── fetchAnnouncement.ts        // 獲取公告 Lambda
 ├── api
 │   └── user.ts                     // 用戶 API
 ├── templates
