@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { DynamoDBClient, QueryCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
 const dbClient = new DynamoDBClient({ region: "ap-northeast-1" });
 
@@ -58,6 +58,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (error) {
       console.error('獲取通知失敗:', error);
       res.status(500).json({ error: '獲取通知失敗' });
+    }
+  } else if (req.method === 'POST') {
+    // 從 updateNews.js 移植標記已讀功能
+    const { userId } = req.body;
+    
+    try {
+      const notificationsParams = {
+        TableName: "AWS_Blog_UserNotifications",
+        KeyConditionExpression: "userId = :userId",
+        ExpressionAttributeValues: {
+          ":userId": { S: userId }
+        }
+      };
+
+      const notificationsResult = await dbClient.send(new QueryCommand(notificationsParams));
+
+      // 更新所有通知為已讀
+      for (const item of notificationsResult.Items || []) {
+        if (!item.article_id.S) continue; // 跳過沒有 article_id 的項目
+        
+        const updateParams = {
+          TableName: "AWS_Blog_UserNotifications",
+          Key: {
+            userId: { S: userId },
+            article_id: { S: item.article_id.S }
+          },
+          UpdateExpression: "SET #read = :true",
+          ExpressionAttributeNames: {
+            "#read": "read"
+          },
+          ExpressionAttributeValues: {
+            ":true": { BOOL: true }
+          }
+        };
+
+        await dbClient.send(new UpdateItemCommand(updateParams));
+      }
+
+      return res.status(200).json({ message: "所有通知已標記為已讀" });
+    } catch (error) {
+      console.error("標記通知已讀時發生錯誤:", error);
+      return res.status(500).json({ error: "內部伺服器錯誤" });
     }
   } else {
     res.status(405).end();

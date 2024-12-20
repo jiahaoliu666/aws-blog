@@ -265,9 +265,6 @@ async function saveToDynamoDB(
       await addNotification(userId, articleId);
     }
 
-    // 新增：更新用戶的未讀計數
-    await updateUnreadCount(users);
-
     return true;
   } catch (error) {
     logger.error("儲存文章失敗:", error);
@@ -350,10 +347,12 @@ async function scrapeAWSBlog(): Promise<void> {
       }
     }
 
-    console.log(`\n📊 爬蟲統計:`);
-    console.log(`✅ 新文章: ${insertedCount} 篇`);
-    console.log(`⏭️ 已存在: ${skippedCount} 篇`);
-    console.log(`總計處理: ${insertedCount + skippedCount} 篇\n`);
+    console.log(`\n📊 爬蟲執行報告`);
+    console.log(`==================`);
+    console.log(`✅ 新增文章數量: ${insertedCount}`);
+    console.log(`⏭️ 已存在文章數: ${skippedCount}`);
+    console.log(`🔄 總處理文章數: ${insertedCount + skippedCount}`);
+    console.log(`==================\n`);
   } catch (error) {
     console.error("❌ 爬蟲失敗:", (error as Error)?.message || "未知錯誤");
     throw error;
@@ -503,28 +502,6 @@ async function broadcastNewArticle(articleData: any): Promise<void> {
     
   } catch (error) {
     logger.error("廣播新文章通知時發生錯誤:", error);
-  }
-}
-
-// 新增：更新用戶未讀計數的函數
-async function updateUnreadCount(userIds: string[]) {
-  for (const userId of userIds) {
-    const params = {
-      TableName: "AWS_Blog_UserNotifications",
-      Key: {
-        userId: { S: userId }
-      },
-      UpdateExpression: "ADD unreadCount :inc",
-      ExpressionAttributeValues: {
-        ":inc": { N: "1" }
-      }
-    };
-
-    try {
-      await dbClient.send(new UpdateItemCommand(params));
-    } catch (error) {
-      logger.error(`更新用戶 ${userId} 未讀計數失敗:`, error);
-    }
   }
 }
 

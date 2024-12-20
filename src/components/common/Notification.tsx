@@ -82,16 +82,8 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   }, [userId]);
 
   const markAllAsRead = async () => {
-    setNewNotifications((prevNotifications) =>
-      (prevNotifications || []).map((notification) => ({
-        ...notification,
-        read: true,
-      }))
-    );
-    setUnreadCount(0);
-
     try {
-      const response = await fetch('/api/news/updateNews', {
+      const response = await fetch('/api/news/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,10 +92,18 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       });
 
       if (!response.ok) {
-        console.error("標記所有通知為已讀時發生錯誤: 無法更新伺服器");
+        throw new Error('標記已讀失敗');
       }
+
+      setNewNotifications((prevNotifications) =>
+        (prevNotifications || []).map((notification) => ({
+          ...notification,
+          read: true,
+        }))
+      );
+      setUnreadCount(0);
     } catch (error) {
-      console.error("標記所有通知為已讀時發生錯誤:", error);
+      console.error("標記已讀失敗:", error);
     }
   };
 

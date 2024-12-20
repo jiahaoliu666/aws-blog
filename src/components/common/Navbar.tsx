@@ -81,11 +81,11 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
     const fetchUnreadCount = async () => {
       if (user) {
         try {
-          const response = await fetch(`/api/news/updateNews?userId=${user.sub}`);
-          const { unreadCount } = await response.json();
-          setUnreadCount(unreadCount);
+          const response = await fetch(`/api/news/notifications?userId=${user.sub}`);
+          const data = await response.json();
+          setUnreadCount(data.unreadCount || 0);
         } catch (error) {
-          console.error("獲取未讀通知數量時發生錯誤:", error);
+          console.error("獲取未讀數量失敗:", error);
         }
       }
     };
