@@ -109,7 +109,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           通知
           {unreadCount !== undefined && (
             <span className="text-sm lg:text-base text-red-500 whitespace-nowrap">
-              (共{totalCount}則，有{unreadCount}則未讀)
+              (共{totalCount || 0}則，有{unreadCount}則未讀)
             </span>
           )}
         </h2>
