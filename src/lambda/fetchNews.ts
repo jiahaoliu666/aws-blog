@@ -19,19 +19,7 @@ interface Article {
   link: string;
 }
 
-interface TranslationResponse {
-  translations: Array<{
-    text: string;
-  }>;
-}
-
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-if (!process.env.MICROSOFT_TRANSLATOR_API_KEY) {
-  throw new Error(
-    'Microsoft Translator API Key is missing or empty. Please check your .env.local file.'
-  );
-}
 
 const dbClient = new DynamoDBClient({
   region: 'ap-northeast-1',
@@ -110,38 +98,28 @@ async function summarizeArticle(url: string): Promise<string> {
 
 async function translateText(text: string): Promise<string> {
   console.log(`開始翻譯文本`);
-  const endpoint = 'https://api.cognitive.microsofttranslator.com';
-  const subscriptionKey = process.env.MICROSOFT_TRANSLATOR_API_KEY;
-  const location = process.env.MICROSOFT_TRANSLATOR_REGION;
-
+  
   try {
-    const response: AxiosResponse<TranslationResponse[]> = await axios({
-      baseURL: endpoint,
-      url: '/translate',
-      method: 'post',
-      headers: {
-        'Ocp-Apim-Subscription-Key': subscriptionKey,
-        'Ocp-Apim-Subscription-Region': location,
-        'Content-type': 'application/json',
-        'X-ClientTraceId': uuidv4().toString(),
-      },
-      params: {
-        'api-version': '3.0',
-        from: 'en',
-        to: 'zh-Hant',
-      },
-      data: [{ text }],
-      responseType: 'json',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一個專業的翻譯專家。請將英文準確地翻譯成繁體中文，特別注意保持AWS相關專業術語的準確性和一致性。翻譯時要考慮整體上下文，確保翻譯結果通順且專業。'
+        },
+        {
+          role: 'user',
+          content: `請將以下文本翻譯成繁體中文：\n${text}`
+        }
+      ],
+      temperature: 0.2,
     });
 
-    const translatedText = response.data[0].translations[0].text;
+    const translatedText = response.choices[0]?.message?.content?.trim() || text;
     console.log(`翻譯成功`);
     return translatedText;
   } catch (error) {
-    console.error(
-      '翻譯時發生錯誤:',
-      axios.isAxiosError(error) ? error.response?.data : error
-    );
+    console.error('翻譯時發生錯誤:', error);
     return text;
   }
 }

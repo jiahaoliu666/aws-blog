@@ -5,6 +5,12 @@ ngrok http 3000
 
 # 列出 src 目錄下的所有文件 
 find src > src1.txt
+
+# 執行 fetchNews.ts
+ts-node --esm src/lambda/fetchNews.ts
+
+# 執行 updateNews.ts
+ts-node --esm src/lambda/updateNews.ts
 ------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適
