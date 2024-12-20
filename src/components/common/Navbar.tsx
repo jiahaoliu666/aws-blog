@@ -8,6 +8,7 @@ import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'; // 正�
 import logActivity from '../../pages/api/profile/activity-log'; // 新增這行
 import NotificationComponent from './Notification';
 import { BellIcon } from '@heroicons/react/24/outline'; // 更新這行以符合 Heroicons v2
+import { notificationService } from '../../services/notificationService';
 
 interface NavbarProps {
   setCurrentSourcePage?: (sourcePage: string) => void; // 將其設為可選
@@ -77,21 +78,20 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
     fetchAvatar();
   }, [user]);
 
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      if (user) {
-        try {
-          const response = await fetch(`/api/news/notifications?userId=${user.sub}`);
-          const data = await response.json();
-          setUnreadCount(data.unreadCount || 0);
-        } catch (error) {
-          console.error("獲取未讀數量失敗:", error);
-        }
+  const fetchUnreadCount = async () => {
+    if (user) {
+      try {
+        const count = await notificationService.getUnreadCount(user.sub);
+        setUnreadCount(count);
+      } catch (error) {
+        console.error("獲取未讀數量失敗:", error);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     fetchUnreadCount();
-    const intervalId = setInterval(fetchUnreadCount, 60000);
+    const intervalId = setInterval(fetchUnreadCount, 30000);
 
     return () => clearInterval(intervalId);
   }, [user]);
