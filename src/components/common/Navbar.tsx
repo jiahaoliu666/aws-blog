@@ -217,7 +217,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
             <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('解決方案')}>解決方案</Link>
             <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('知識庫')}>知識庫</Link>  
             <Link href="/architecture-diagrams" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('架構圖')}>架構圖</Link>
-            <div className="relative" ref={resourcesDropdownRef}>  
+            {/* <div className="relative" ref={resourcesDropdownRef}>  
               <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
                 其他資源  
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
@@ -231,7 +231,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                   <Link href="https://status.aws.amazon.com/" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 服務狀態儀表板</Link>                      
                 </div>  
               )}  
-            </div>
+            </div> */}
 
             {user ? (  
               <div className="relative" ref={dropdownRef}>  
