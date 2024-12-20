@@ -69,7 +69,7 @@ interface TranslatorResponse {
 // 環境變數配置
 dotenv.config({ path: ".env.local" });
 
-// 常量定義
+// 常量定義更新文章數量
 const NUMBER_OF_ARTICLES_TO_FETCH = 4;
 
 // 初始化客戶端
