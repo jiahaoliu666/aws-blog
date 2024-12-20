@@ -9,6 +9,7 @@ import logActivity from '@/pages/api/profile/activity-log';
 interface UseProfilePasswordProps {
   user: User | null;
   handleLogout: () => void;
+  addActivityLog: (action: string) => void;
 }
 
 interface PasswordRequirements {
@@ -20,7 +21,7 @@ interface PasswordRequirements {
   passwordsMatch: boolean;
 }
 
-export const useProfilePassword = ({ user, handleLogout }: UseProfilePasswordProps) => {
+export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UseProfilePasswordProps) => {
   const { showToast } = useToastContext();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

@@ -3,7 +3,8 @@ import {
   DynamoDBClient,
   PutItemCommand,
   ScanCommand,
-  AttributeValue
+  AttributeValue,
+  UpdateItemCommand
 } from "@aws-sdk/client-dynamodb";
 import puppeteer, { Browser, Page } from "puppeteer";
 import { v4 as uuidv4 } from "uuid";
@@ -257,6 +258,16 @@ async function saveToDynamoDB(
     }
 
     console.log(`✅ 成功儲存文章`);
+
+    // 新增：為所有用戶建立通知
+    const users = await getAllUserIds();
+    for (const userId of users) {
+      await addNotification(userId, articleId);
+    }
+
+    // 新增：更新用戶的未讀計數
+    await updateUnreadCount(users);
+
     return true;
   } catch (error) {
     logger.error("儲存文章失敗:", error);
@@ -377,15 +388,16 @@ async function addNotification(userId: string, articleId: string): Promise<void>
       article_id: { S: articleId },
       read: { BOOL: false },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
-      notification_type: { S: "new_article" },
-    },
+      notification_type: { S: "new_article" }
+    }
   };
 
   try {
     await dbClient.send(new PutItemCommand(params));
-    console.log(`通知已新增: userId=${userId}, article_id=${articleId}`);
+    console.log(`成功新增通知: userId=${userId}, article_id=${articleId}`);
   } catch (error) {
-    console.error("新增通知時發生錯誤:", error);
+    console.error("新增通知失敗:", error);
+    throw error; // 拋出錯誤以便上層處理
   }
 }
 
@@ -475,6 +487,44 @@ async function getLineNotificationUsers(): Promise<NotificationUser[]> {
   } catch (error) {
     logger.error("獲取 Line 通知用戶時發生錯誤:", error);
     return [];
+  }
+}
+
+// 新增：廣播新文章的函數
+async function broadcastNewArticle(articleData: any): Promise<void> {
+  try {
+    // 1. 取得所有需要通知的用戶
+    const users = await getAllUserIds();
+    
+    // 2. 為每個用戶建立通知記錄
+    for (const userId of users) {
+      await addNotification(userId, articleData.article_id);
+    }
+    
+  } catch (error) {
+    logger.error("廣播新文章通知時發生錯誤:", error);
+  }
+}
+
+// 新增：更新用戶未讀計數的函數
+async function updateUnreadCount(userIds: string[]) {
+  for (const userId of userIds) {
+    const params = {
+      TableName: "AWS_Blog_UserNotifications",
+      Key: {
+        userId: { S: userId }
+      },
+      UpdateExpression: "ADD unreadCount :inc",
+      ExpressionAttributeValues: {
+        ":inc": { N: "1" }
+      }
+    };
+
+    try {
+      await dbClient.send(new UpdateItemCommand(params));
+    } catch (error) {
+      logger.error(`更新用戶 ${userId} 未讀計數失敗:`, error);
+    }
   }
 }
 

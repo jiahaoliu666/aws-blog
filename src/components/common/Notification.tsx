@@ -14,14 +14,20 @@ interface NotificationProps {
 
 interface Article {
   article_id: string;
+  title: string;
   translated_title: string;
   published_at: number;
-  content: string;
+  info: string;
   description: string;
   translated_description: string;
   link: string;
   summary: string;
   read?: boolean;
+  source?: string;
+}
+
+interface NotificationData {
+  articles: Article[];
 }
 
 const MAX_ARTICLES_DISPLAY = 50;
@@ -35,51 +41,47 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     const fetchNewArticles = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/news/updateNews?userId=${userId}`);
-        const data = await response.json();
+        const response = await fetch(
+          `/api/news/notifications?userId=${userId}`,
+          {
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('獲取通知失敗');
+        }
+
+        const data = await response.json() as NotificationData;
 
         if (data && Array.isArray(data.articles)) {
-          const sortedArticles = data.articles
-            .sort((a: Article, b: Article) => b.published_at - a.published_at)
-            .slice(0, MAX_ARTICLES_DISPLAY);
-          setNewNotifications(sortedArticles.map((article: Article) => ({
+          setNewNotifications(data.articles.map(article => ({
             title: article.translated_title,
-            date: article.published_at ? new Date(article.published_at * 1000).toLocaleString() : '',
-            content: `
-              <div>
-                <p>${article.translated_description}</p>
-                <p class="mt-2 text-sm text-gray-600">${article.summary}</p>
-                <a href="${article.link}" target="_blank" class="text-blue-600 hover:underline mt-2 inline-block">
-                  閱讀全文
-                </a>
-              </div>
-            `,
-            read: article.read,
+            date: new Date(article.published_at * 1000).toLocaleDateString('zh-TW'),
+            content: article.summary,
+            read: article.read || false
           })));
-          setTotalCount(data.totalCount);
-        } else {
-          setNewNotifications([]);
+
+          const unreadArticles = data.articles.filter(article => !article.read).length;
+          setUnreadCount(unreadArticles);
+          setTotalCount(data.articles.length);
         }
       } catch (error) {
         console.error("獲取新文章時發生錯誤:", error);
-        setNewNotifications([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchNewArticles();
-    const intervalId = setInterval(fetchNewArticles, 60000);
-
+    const intervalId = setInterval(fetchNewArticles, 30000);
     return () => clearInterval(intervalId);
   }, [userId]);
 
-  useEffect(() => {
-    setUnreadCount(newNotifications?.filter(notification => !notification.read).length || 0);
-  }, [newNotifications]);
-
   const markAllAsRead = async () => {
-    // 立即更新狀態以反映所有通知已讀
     setNewNotifications((prevNotifications) =>
       (prevNotifications || []).map((notification) => ({
         ...notification,
@@ -105,10 +107,8 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     }
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    // 使用 userId 進行操作
-    console.log(`User ID: ${userId}`);
-    // 其他邏輯
+  const handleClick = async () => {
+    await markAllAsRead();
   };
 
   return (
@@ -137,7 +137,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       </div>
       <div className="max-h-[60vh] lg:max-h-[32rem] overflow-y-auto">
         {loading ? (
-          <div className="p-4 text-center text-gray-500">加載中...</div>
+          <div className="p-4 text-center text-gray-500">載入中...</div>
         ) : newNotifications && newNotifications.length > 0 ? (
           newNotifications.map((notification, index) => (
             <div key={index} 
@@ -149,10 +149,9 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                   <span className="inline-block w-2 h-2 bg-blue-500 rounded-full my-auto"></span>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm lg:text-base font-bold text-gray-900 mb-1 
-                    break-words">{notification.title}</h3>
-                  <div className="text-sm lg:text-base text-gray-700 break-words" 
-                    dangerouslySetInnerHTML={{ __html: notification.content }}></div>
+                  <h3 className="text-sm lg:text-base text-gray-900 break-words">
+                    {notification.title}
+                  </h3>
                 </div>
               </div>
             </div>
