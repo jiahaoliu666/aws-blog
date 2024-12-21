@@ -97,7 +97,7 @@ export class NotificationService {
         article_id: { S: articleId },
         read: { BOOL: false },
         created_at: { N: String(Math.floor(Date.now() / 1000)) },
-        notification_type: { S: "new_article" }
+        category: { S: "news" }
       }
     };
 
@@ -146,7 +146,7 @@ export class NotificationService {
         }
       }
     } catch (error) {
-      logger.error("廣播新��章通知時發生錯誤:", error);
+      logger.error("廣播新文章通知時發生錯誤:", error);
       throw error;
     }
   }

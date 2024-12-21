@@ -387,7 +387,7 @@ async function addNotification(userId: string, articleId: string): Promise<void>
       article_id: { S: articleId },
       read: { BOOL: false },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
-      notification_type: { S: "new_article" }
+      category: { S: "news" }
     }
   };
 

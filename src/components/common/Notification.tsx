@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { CgSpinner } from 'react-icons/cg';
 
 interface NotificationProps {
   userId: string;
@@ -7,9 +8,11 @@ interface NotificationProps {
     date: string;
     content: string;
     read?: boolean;
+    source?: string;
   }>;
   unreadCount: number;
   setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
+  onNotificationClick?: (notification: any) => void;
 }
 
 interface Article {
@@ -32,7 +35,7 @@ interface NotificationData {
 
 const MAX_ARTICLES_DISPLAY = 50;
 
-const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount }) => {
+const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount, onNotificationClick }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -62,7 +65,8 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             title: article.translated_title,
             date: new Date(article.published_at * 1000).toLocaleDateString('zh-TW'),
             content: article.summary,
-            read: article.read || false
+            read: article.read || false,
+            source: article.source
           })));
 
           const unreadArticles = data.articles.filter(article => !article.read).length;
@@ -111,6 +115,36 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     await markAllAsRead();
   };
 
+  const handleNotificationClick = async (notification: any, index: number) => {
+    if (!notification.read) {
+      try {
+        const response = await fetch('/api/news/notification/read', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            userId,
+            notificationId: notification.id 
+          }),
+        });
+
+        if (response.ok) {
+          setNewNotifications(prev => 
+            prev?.map((item, i) => 
+              i === index ? { ...item, read: true } : item
+            )
+          );
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+      } catch (error) {
+        console.error('標記通知已讀失敗:', error);
+      }
+    }
+    
+    onNotificationClick?.(notification);
+  };
+
   return (
     <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[26rem] max-w-md 
       mx-auto lg:mx-0 bg-white shadow-lg rounded-xl z-50 border border-gray-300 
@@ -137,13 +171,19 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       </div>
       <div className="max-h-[60vh] lg:max-h-[32rem] overflow-y-auto">
         {loading ? (
-          <div className="p-4 text-center text-gray-500">載入中...</div>
+          <div className="p-8 text-center text-gray-500">
+            <CgSpinner className="animate-spin h-8 w-8 mx-auto mb-2" />
+            <p>正在載入通知...</p>
+          </div>
         ) : newNotifications && newNotifications.length > 0 ? (
           newNotifications.map((notification, index) => (
-            <div key={index} 
+            <div 
+              key={index} 
+              onClick={() => handleNotificationClick(notification, index)}
               className={`flex p-3 lg:p-4 border-b border-gray-300 
-                hover:bg-gray-100 transition duration-150 cursor-pointer
-                ${notification.read ? 'bg-gray-100' : ''}`}>
+                hover:bg-gray-100 transition-all duration-300 ease-in-out cursor-pointer
+                transform hover:scale-[1.01] hover:shadow-sm
+                ${notification.read ? 'bg-gray-50' : 'bg-white'}`}>
               <div className="flex items-center w-full gap-2">
                 {!notification.read && (
                   <span className="inline-block w-2 h-2 bg-blue-500 rounded-full my-auto"></span>
@@ -152,6 +192,14 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                   <h3 className="text-sm lg:text-base text-gray-900 break-words">
                     {notification.title}
                   </h3>
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs lg:text-sm text-gray-500">
+                      {notification.date}
+                    </p>
+                    <p className="text-xs lg:text-sm text-gray-500">
+                      {notification.source || '系統通知'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
