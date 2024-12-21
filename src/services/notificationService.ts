@@ -9,7 +9,13 @@ export class NotificationService {
   private emailService: EmailService;
 
   constructor() {
-    this.dbClient = new DynamoDBClient({ region: "ap-northeast-1" });
+    this.dbClient = new DynamoDBClient({
+      region: 'ap-northeast-1',
+      credentials: {
+        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || '',
+      }
+    });
     this.emailService = new EmailService();
   }
 
@@ -55,6 +61,11 @@ export class NotificationService {
 
   async getUnreadCount(userId: string): Promise<number> {
     try {
+      if (!process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || !process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY) {
+        logger.error('AWS credentials not found');
+        return 0;
+      }
+
       const params = {
         TableName: "AWS_Blog_UserNotifications",
         KeyConditionExpression: "userId = :userId",
@@ -69,7 +80,9 @@ export class NotificationService {
       };
 
       const result = await this.dbClient.send(new QueryCommand(params));
-      return result.Items?.length || 0;
+      const count = result.Items?.length || 0;
+      logger.info(`獲取未讀通知數量: userId=${userId}, count=${count}`);
+      return count;
     } catch (error) {
       logger.error("獲取未讀數量失敗:", error);
       return 0;
@@ -133,7 +146,7 @@ export class NotificationService {
         }
       }
     } catch (error) {
-      logger.error("廣播新文章通知時發生錯誤:", error);
+      logger.error("廣播新��章通知時發生錯誤:", error);
       throw error;
     }
   }

@@ -12,6 +12,9 @@ ts-node --esm src/lambda/fetchNews.ts
 # 執行 updateNews.ts
 ts-node --esm src/lambda/updateNews.ts
 
+執行 Gource
+gource --hide date
+
 ------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適
@@ -19,7 +22,6 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 --------
 進行中：
 1. 爬取文章 
-2. 解決當重整頁面鈴鐺圖示沒有顯示未讀的數量，要等到點擊圖示後才會顯示未讀數量的問題
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 

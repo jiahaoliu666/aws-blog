@@ -79,7 +79,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   }, [user]);
 
   const fetchUnreadCount = async () => {
-    if (user) {
+    if (user?.sub) {
       try {
         const count = await notificationService.getUnreadCount(user.sub);
         setUnreadCount(count);
@@ -90,11 +90,29 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   };
 
   useEffect(() => {
-    fetchUnreadCount();
-    const intervalId = setInterval(fetchUnreadCount, 30000);
+    if (user?.sub) {
+      fetchUnreadCount();
+      const intervalId = setInterval(fetchUnreadCount, 30000);
 
-    return () => clearInterval(intervalId);
-  }, [user]);
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          fetchUnreadCount();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      const handleLoad = () => {
+        setTimeout(fetchUnreadCount, 1000);
+      };
+      window.addEventListener('load', handleLoad);
+
+      return () => {
+        clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('load', handleLoad);
+      };
+    }
+  }, [user?.sub]);
 
   const handleLogout = async () => {  
     try {  
