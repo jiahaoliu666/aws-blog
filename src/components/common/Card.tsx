@@ -5,7 +5,7 @@ import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 
-interface NewsCardProps {
+interface CardProps {
     article: ExtendedNews;
     index: number;
     gridView: boolean;
@@ -16,7 +16,7 @@ interface NewsCardProps {
     sourcePage: string;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({
+const Card: React.FC<CardProps> = ({
     article,
     index,
     gridView,
@@ -113,4 +113,4 @@ const NewsCard: React.FC<NewsCardProps> = ({
     );
 };
 
-export default NewsCard;
+export default Card;

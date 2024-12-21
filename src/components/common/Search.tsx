@@ -1,4 +1,3 @@
-// src/components/news/NewsSearch.tsx  
 import React, { useState, useEffect } from 'react';  
 import { SearchField } from '@aws-amplify/ui-react';  
 import { ExtendedNews } from '@/types/newsType';  

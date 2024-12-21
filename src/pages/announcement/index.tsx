@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '../../components/common/Navbar';
 import { ExtendedAnnouncement } from '../../types/announcementType';
-import NewsCard from '../../components/news/NewsCard';
-import BlogSearch from '../../components/news/NewsSearch';
-import NewsFilters from '../../components/news/NewsFilters';
+import Card from '../../components/common/Card';
+import Search from '../../components/common/Search';
+import Filters from '../../components/common/Filters';
 import Pagination from '../../components/common/Pagination';
 import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react';
@@ -81,7 +81,7 @@ const AnnouncementPage: React.FC = () => {
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <h1 className="text-5xl font-bold text-center mb-5">最新公告</h1>
 
-                <NewsFilters
+                <Filters
                     gridView={gridView}
                     showFavorites={showFavorites}
                     setGridView={setGridView}
@@ -105,7 +105,7 @@ const AnnouncementPage: React.FC = () => {
                     setShowSummaries={setShowSummaries}
                 />
 
-                <BlogSearch
+                <Search
                     articles={announcements as any}
                     setFilteredArticles={setFilteredAnnouncements as any}
                     isDarkMode={isDarkMode}
@@ -116,7 +116,7 @@ const AnnouncementPage: React.FC = () => {
                         currentAnnouncements.map((announcement, index) => {
                             const isFavorited = favorites.some(fav => fav.article_id === announcement.article_id);
                             return (
-                                <NewsCard
+                                <Card
                                     key={announcement.article_id}
                                     article={announcement as any}
                                     index={index}

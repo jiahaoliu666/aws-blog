@@ -47,6 +47,9 @@ src/
 │   │   ├── Footer.tsx              // 頁腳組件
 │   │   ├── Notification.tsx        // 通知組件
 │   │   ├── Alert.tsx               // 警告訊息組件
+│   │   ├── Search.tsx              // 搜尋組件
+│   │   ├── Card.tsx                // 卡片組件
+│   │   └── Filters.tsx             // 過濾器組件
 │   │   └── Toast
 │   │       ├── index.ts            // 導出 Toast 組件和類型
 │   │       └── Toast.tsx           // Toast 組件
@@ -67,10 +70,6 @@ src/
 │   │   │   ├── Card.tsx            // 卡片組件
 │   │   │   └── styles.ts           // 卡片樣式
 │   │   └── ProfileUI.tsx           // 主要的個人資料頁面組件，整合所有子組件
-│   └── news
-│       ├── NewsSearch.tsx          // 新聞搜尋組件
-│       ├── NewsCard.tsx            // 新聞卡片組件
-│       └── NewsFilters.tsx         // 新聞過濾器組件
 ├── hooks
 │   ├── news
 │   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook

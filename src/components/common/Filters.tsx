@@ -1,4 +1,3 @@
-// src/components/news/NewsFilters.tsx
 import React, { useEffect, useState } from 'react';  
 import { SwitchField } from "@aws-amplify/ui-react";  
 import { News } from '@/types/newsType';  
@@ -7,7 +6,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { PreferenceSettings } from '@/types/profileTypes';
 
-interface NewsFiltersProps {  
+interface FiltersProps {  
   gridView: boolean;  
   showFavorites: boolean;  
   setShowFavorites: (value: boolean) => void;  
@@ -35,7 +34,7 @@ const DEFAULT_PREFERENCES = {
   language: 'zh-TW'      // 預設繁體中文
 };
 
-const NewsFilters: React.FC<NewsFiltersProps> = ({  
+const Filters: React.FC<FiltersProps> = ({  
   gridView,  
   showFavorites,  
   setShowFavorites,  
@@ -226,4 +225,4 @@ const NewsFilters: React.FC<NewsFiltersProps> = ({
   );
 };
 
-export default NewsFilters;
+export default Filters;

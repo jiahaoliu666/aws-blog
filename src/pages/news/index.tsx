@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '../../components/common/Navbar';
 import { ExtendedNews } from '../../types/newsType';
-import NewsCard from '../../components/news/NewsCard';
-import BlogSearch from '../../components/news/NewsSearch';
-import NewsFilters from '../../components/news/NewsFilters';
+import Card from '../../components/common/Card';
+import Search from '../../components/common/Search';
+import Filters from '../../components/common/Filters';
 import Pagination from '../../components/common/Pagination';
 import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';
 import Footer from '../../components/common/Footer';
@@ -122,7 +122,7 @@ const NewsPage: React.FC = () => {
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <h1 className="text-5xl font-bold text-center mb-5">AWS 最新新聞</h1>
                 
-                <NewsFilters
+                <Filters
                     gridView={gridView}
                     showFavorites={showFavorites}
                     setGridView={setGridView}
@@ -143,7 +143,7 @@ const NewsPage: React.FC = () => {
                     setShowSummaries={setShowSummaries}
                 />
 
-                <BlogSearch
+                <Search
                     articles={articles}
                     setFilteredArticles={setFilteredArticles}
                     isDarkMode={isDarkMode}
@@ -154,7 +154,7 @@ const NewsPage: React.FC = () => {
                         currentArticles.map((article: ExtendedNews, index: number) => {
                             const isFavorited = favorites.some((fav: ExtendedNews) => fav.article_id === article.article_id);
                             return (
-                                <NewsCard
+                                <Card
                                     key={article.article_id}
                                     article={article}
                                     index={index}
