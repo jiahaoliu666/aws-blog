@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
+import { formatTimeAgo } from '@/utils/dateUtils';
 
 interface NotificationProps {
   userId: string;
@@ -145,6 +146,19 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     onNotificationClick?.(notification);
   };
 
+  const getDisplayTime = (date: string) => {
+    try {
+      const parsedDate = new Date(date);
+      if (!(parsedDate instanceof Date) || isNaN(parsedDate.getTime())) {
+        return date;
+      }
+      return formatTimeAgo(parsedDate);
+    } catch (error) {
+      console.error('時間顯示錯誤:', error);
+      return date;
+    }
+  };
+
   return (
     <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[32rem] max-w-md 
       mx-auto lg:mx-0 bg-white/95 shadow-2xl rounded-xl z-50 border border-gray-100/80 
@@ -200,16 +214,17 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm text-gray-500 bg-gray-50/80 px-2.5 py-0.5 rounded-full
                       border border-gray-100/80">
-                      {notification.category === 'news' ? 'AWS 新聞' : '系統通知'}
+                      {notification.category === 'news' ? '最新新聞' : '系統通知'}
+                    </span>
+                    <span className="text-sm text-gray-500 bg-gray-50/80 px-2.5 py-0.5 rounded-full
+                      border border-gray-100/80">
+                      {getDisplayTime(notification.date)}
                     </span>
                   </div>
                   <h3 className="text-base text-gray-900 font-medium leading-snug
                     group-hover:text-gray-800">
                     {notification.title}
                   </h3>
-                  <p className="text-sm text-gray-500 flex-shrink-0">
-                    {notification.date}
-                  </p>
                 </div>
               </div>
             </div>
