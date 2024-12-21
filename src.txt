@@ -109,6 +109,12 @@ src/
 │   └── deleteAccountEmail.ts       // 帳號刪除確認郵件模板
 ├── pages
 │   ├── index.tsx                   // 首頁
+│   ├── announcement
+│   │   └── index.tsx               // 公告頁面
+│   ├── profile
+│   │   └── index.tsx               // 個人資料頁面
+│   ├── news
+│   │   └── index.tsx               // 新聞頁面
 │   ├── settings
 │   │   └── index.tsx               // 設定頁面
 │   ├── 404.tsx                     // 404 頁面

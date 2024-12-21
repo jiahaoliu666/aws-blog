@@ -10,3 +10,7 @@ export interface Announcement {
     createdAt?: string;               // 文章的創建時間  
     author?: string;                  // 文章的作者
   }
+
+export interface ExtendedAnnouncement extends Announcement {
+    // 如果需要額外的屬性，可以在這裡添加
+}
