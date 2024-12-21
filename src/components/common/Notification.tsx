@@ -10,6 +10,7 @@ interface NotificationProps {
     content: string;
     read?: boolean;
     category?: string;
+    link?: string;
   }>;
   unreadCount: number;
   setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
@@ -67,7 +68,8 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             date: new Date(article.published_at * 1000).toLocaleDateString('zh-TW'),
             content: article.summary,
             read: article.read || false,
-            category: article.category || 'news'
+            category: article.category || 'news',
+            link: article.link
           })));
 
           const unreadArticles = data.articles.filter(article => !article.read).length;
@@ -119,14 +121,14 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   const handleNotificationClick = async (notification: any, index: number) => {
     if (!notification.read) {
       try {
-        const response = await fetch('/api/news/notification/read', {
+        const response = await fetch('/api/news/notifications', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
             userId,
-            notificationId: notification.id 
+            articleId: notification.article_id
           }),
         });
 
@@ -227,7 +229,19 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                   </div>
                   <h3 className="text-sm text-gray-900 font-medium leading-relaxed
                     group-hover:text-black line-clamp-2">
-                    {notification.title}
+                    <a 
+                      href={notification.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="hover:text-blue-600 hover:underline decoration-blue-400/50 
+                        decoration-1 underline-offset-2 transition-colors duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNotificationClick(notification, index);
+                      }}
+                    >
+                      {notification.title}
+                    </a>
                   </h3>
                 </div>
               </div>

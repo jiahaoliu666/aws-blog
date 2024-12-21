@@ -60,29 +60,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ error: '獲取通知失敗' });
     }
   } else if (req.method === 'POST') {
-    // 從 updateNews.js 移植標記已讀功能
-    const { userId } = req.body;
+    const { userId, articleId } = req.body;
     
     try {
-      const notificationsParams = {
-        TableName: "AWS_Blog_UserNotifications",
-        KeyConditionExpression: "userId = :userId",
-        ExpressionAttributeValues: {
-          ":userId": { S: userId }
-        }
-      };
-
-      const notificationsResult = await dbClient.send(new QueryCommand(notificationsParams));
-
-      // 更新所有通知為已讀
-      for (const item of notificationsResult.Items || []) {
-        if (!item.article_id.S) continue; // 跳過沒有 article_id 的項目
-        
+      if (articleId) {
+        // 更新單一通知的已讀狀態
         const updateParams = {
           TableName: "AWS_Blog_UserNotifications",
           Key: {
             userId: { S: userId },
-            article_id: { S: item.article_id.S }
+            article_id: { S: articleId }
           },
           UpdateExpression: "SET #read = :true",
           ExpressionAttributeNames: {
@@ -94,9 +81,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
 
         await dbClient.send(new UpdateItemCommand(updateParams));
-      }
+        return res.status(200).json({ message: "通知已標記為已讀" });
+      } else {
+        // 原有的全部標記已讀邏輯
+        const notificationsParams = {
+          TableName: "AWS_Blog_UserNotifications",
+          KeyConditionExpression: "userId = :userId",
+          ExpressionAttributeValues: {
+            ":userId": { S: userId }
+          }
+        };
 
-      return res.status(200).json({ message: "所有通知已標記為已讀" });
+        const notificationsResult = await dbClient.send(new QueryCommand(notificationsParams));
+
+        // 更新所有通知為已讀
+        for (const item of notificationsResult.Items || []) {
+          if (!item.article_id.S) continue; // 跳過沒有 article_id 的項目
+          
+          const updateParams = {
+            TableName: "AWS_Blog_UserNotifications",
+            Key: {
+              userId: { S: userId },
+              article_id: { S: item.article_id.S }
+            },
+            UpdateExpression: "SET #read = :true",
+            ExpressionAttributeNames: {
+              "#read": "read"
+            },
+            ExpressionAttributeValues: {
+              ":true": { BOOL: true }
+            }
+          };
+
+          await dbClient.send(new UpdateItemCommand(updateParams));
+        }
+
+        return res.status(200).json({ message: "所有通知已標記為已讀" });
+      }
     } catch (error) {
       console.error("標記通知已讀時發生錯誤:", error);
       return res.status(500).json({ error: "內部伺服器錯誤" });
