@@ -37,6 +37,22 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
     window.scrollTo({ top: 0, behavior: 'smooth' });  
   };  
 
+  // 添加 state 來追踪是否顯示按鈕
+  const [showScrollButton, setShowScrollButton] = React.useState(false);
+
+  // 添加滾動監聽函數
+  const handleScroll = () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    setShowScrollButton(scrollTop > 300); // 當滾動超過 300px 時顯示按鈕
+  };
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (  
     <div className="flex flex-col items-center mt-6 py-4">  
       <div className="dark:text-white">
@@ -67,12 +83,14 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
         />  
       </div>
 
-      <button  
-        className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition duration-300 fixed right-4 bottom-6 flex items-center justify-center p-3"  
-        onClick={scrollToTop}  
-      >  
-        <ArrowUp size={28} className="text-white" />  
-      </button>  
+      {showScrollButton && (
+        <button  
+          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition duration-300 fixed right-4 bottom-6 flex items-center justify-center p-3"  
+          onClick={scrollToTop}  
+        >  
+          <ArrowUp size={28} className="text-white" />  
+        </button>
+      )}
     </div>  
   );  
 };  
