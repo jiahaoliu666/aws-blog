@@ -161,68 +161,72 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
 
   return (
     <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[32rem] max-w-md 
-      mx-auto lg:mx-0 bg-white/95 shadow-2xl rounded-xl z-50 border border-gray-100/80 
+      mx-auto lg:mx-0 bg-white shadow-xl rounded-xl z-50 border border-gray-200 
       transition-all duration-300 ease-in-out backdrop-blur-md
       left-1/2 lg:left-auto transform -translate-x-1/2 lg:translate-x-0">
       <div className="p-4 border-b border-gray-200 flex justify-between items-center 
-        bg-gray-100 rounded-t-xl flex-wrap gap-2">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2.5 flex-wrap">
-          <span className="flex items-center gap-1.5">
-            通知
+        bg-gradient-to-b from-gray-50 to-white rounded-t-xl flex-wrap gap-2
+        sticky top-0 backdrop-blur-sm z-10">
+        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <span className="flex items-center gap-2">
+            通知中心
             {unreadCount > 0 && (
               <span className="inline-flex items-center justify-center w-5 h-5 text-xs 
-                bg-red-500 text-white rounded-full">{unreadCount}</span>
+                bg-blue-600 text-white rounded-full font-medium">{unreadCount}</span>
             )}
           </span>
-          <span className="text-sm text-gray-500 font-normal">
-            共 {totalCount || 0} 則
+          <span className="text-sm font-normal text-gray-500">
+            · 共 {totalCount || 0} 則
           </span>
         </h2>
         <button 
           onClick={handleClick} 
-          className="text-sm text-blue-600 hover:text-blue-700 
-            transition-all duration-200 px-3.5 py-1.5 rounded-full
-            hover:bg-blue-50/80 border border-blue-200/80 active:scale-95"
+          className="text-sm text-gray-700 hover:text-gray-900 
+            transition-all duration-200 px-3.5 py-1.5 rounded-lg
+            hover:bg-gray-100 active:scale-95 font-medium"
         >
-          全部已讀
+          全部標為已讀
         </button>
       </div>
 
       <div className="max-h-[75vh] lg:max-h-[40rem] overflow-y-auto scrollbar-thin 
-        scrollbar-thumb-gray-300/80 scrollbar-track-gray-100/60">
+        scrollbar-thumb-gray-400 hover:scrollbar-thumb-gray-500 scrollbar-track-transparent
+        divide-y divide-gray-200">
         {loading ? (
-          <div className="p-16 text-center text-gray-500">
-            <CgSpinner className="animate-spin h-12 w-12 mx-auto mb-4" />
-            <p className="text-sm">載入中...</p>
+          <div className="p-16 text-center text-gray-500 bg-gray-50">
+            <CgSpinner className="animate-spin h-10 w-10 mx-auto mb-4 text-blue-600" />
+            <p className="text-sm font-medium">正在載入通知...</p>
           </div>
         ) : newNotifications && newNotifications.length > 0 ? (
           newNotifications.map((notification, index) => (
             <div 
               key={index} 
               onClick={() => handleNotificationClick(notification, index)}
-              className={`group flex p-4 border-b border-gray-100/75
-                hover:bg-gray-50/90 transition-all duration-200 cursor-pointer
+              className={`group relative flex px-4 py-4 
+                hover:bg-gray-50 transition-all duration-200 cursor-pointer
                 ${notification.read 
-                  ? 'bg-gray-50/40' 
-                  : 'bg-white/95 hover:shadow-sm relative'}`}>
+                  ? 'bg-transparent' 
+                  : 'bg-blue-50'}`}>
               <div className="flex items-start w-full gap-3">
                 {!notification.read && (
-                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 
+                  <span className="shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2 
                     group-hover:scale-110 transition-transform duration-200"></span>
                 )}
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm text-gray-500 bg-gray-50/80 px-2.5 py-0.5 rounded-full
-                      border border-gray-100/80">
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium
+                      transition-colors duration-200
+                      ${notification.category === 'news' 
+                        ? 'bg-blue-100 text-blue-800 group-hover:bg-blue-200' 
+                        : 'bg-purple-100 text-purple-800 group-hover:bg-purple-200'}`}>
                       {notification.category === 'news' ? '最新新聞' : '系統通知'}
                     </span>
-                    <span className="text-sm text-gray-500 bg-gray-50/80 px-2.5 py-0.5 rounded-full
-                      border border-gray-100/80">
+                    <span className="text-xs text-gray-500 group-hover:text-gray-600">
                       {getDisplayTime(notification.date)}
                     </span>
                   </div>
-                  <h3 className="text-base text-gray-900 font-medium leading-snug
-                    group-hover:text-gray-800">
+                  <h3 className="text-sm text-gray-900 font-medium leading-relaxed
+                    group-hover:text-black line-clamp-2">
                     {notification.title}
                   </h3>
                 </div>
@@ -230,11 +234,12 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             </div>
           ))
         ) : (
-          <div className="py-20 text-center text-gray-400">
+          <div className="py-20 text-center text-gray-500 bg-gray-50">
             <img src="/kuku.png" alt="暫無通知" 
-              className="w-32 h-32 mx-auto mb-4 opacity-75 
-                transition-opacity duration-200 hover:opacity-90" />
-            <p className="text-sm">目前沒有任何通知</p>
+              className="w-28 h-28 mx-auto mb-4 opacity-75 
+                transition-opacity duration-200 hover:opacity-90 select-none" />
+            <p className="text-sm font-medium">目前沒有任何通知</p>
+            <p className="text-xs text-gray-500 mt-1">有新通知時會立即顯示</p>
           </div>
         )}
       </div>
