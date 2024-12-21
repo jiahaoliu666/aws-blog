@@ -11,8 +11,7 @@ import { Loader } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
-
-type SortOrder = "newest" | "oldest";
+import useAnnouncementPageLogic from '../../hooks/announcement/useAnnouncementPageLogic';
 
 const AnnouncementPage: React.FC = () => {
     const router = useRouter();
@@ -21,53 +20,33 @@ const AnnouncementPage: React.FC = () => {
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
 
-    // 使用與 NewsPage 相似的狀態管理
-    const [currentPage, setCurrentPage] = useState(1);
-    const [gridView, setGridView] = useState(false);
-    const [showFavorites, setShowFavorites] = useState(false);
-    const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [showSummaries, setShowSummaries] = useState(false);
-    const [language, setLanguage] = useState('zh-TW');
-    const [announcements, setAnnouncements] = useState<ExtendedAnnouncement[]>([]);
-    const [filteredAnnouncements, setFilteredAnnouncements] = useState<ExtendedAnnouncement[]>([]);
-    const [favorites, setFavorites] = useState<ExtendedAnnouncement[]>([]);
-
-    // 計算分頁
-    const itemsPerPage = 10;
-    const totalPages = Math.ceil(filteredAnnouncements.length / itemsPerPage);
-    const currentAnnouncements = filteredAnnouncements.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
-
-    const handlePageChange = (page: number | undefined) => {
-        if (page) {
-            setCurrentPage(page);
-            window.scrollTo(0, 0);
-        }
-    };
-
-    const toggleFavorite = async (announcement: ExtendedAnnouncement) => {
-        // 實作收藏功能
-        try {
-            // 呼叫 API 處理收藏
-            toast.success('更新收藏成功');
-        } catch (error) {
-            toast.error('更新收藏失敗');
-        }
-    };
-
-    const resetFilters = () => {
-        setGridView(false);
-        setStartDate('');
-        setEndDate('');
-        setSortOrder('newest');
-        setLanguage('zh-TW');
-        setFilteredAnnouncements([]);
-        setShowSummaries(false);
-    };
+    const {
+        language,
+        setLanguage,
+        currentAnnouncements,
+        setFilteredAnnouncements,
+        currentPage,
+        totalPages,
+        gridView,
+        setGridView,
+        showFavorites,
+        setShowFavorites,
+        sortOrder,
+        setSortOrder,
+        startDate,
+        endDate,
+        setStartDate,
+        setEndDate,
+        showSummaries,
+        setShowSummaries,
+        toggleShowSummaries,
+        handlePageChange,
+        toggleFavorite,
+        filteredFavoritesCount,
+        filteredAnnouncements,
+        announcements,
+        favorites
+    } = useAnnouncementPageLogic();
 
     useEffect(() => {
         const loadData = async () => {
@@ -118,10 +97,10 @@ const AnnouncementPage: React.FC = () => {
                         setEndDate(end);
                     }}
                     filteredArticles={filteredAnnouncements as any}
-                    filteredFavoritesCount={favorites.length}
+                    filteredFavoritesCount={filteredFavoritesCount}
                     language={language}
                     setLanguage={setLanguage}
-                    toggleShowSummaries={() => setShowSummaries(!showSummaries)}
+                    toggleShowSummaries={toggleShowSummaries}
                     showSummaries={showSummaries}
                     setShowSummaries={setShowSummaries}
                 />
@@ -142,7 +121,7 @@ const AnnouncementPage: React.FC = () => {
                                     article={announcement as any}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={toggleFavorite}
+                                    toggleFavorite={toggleFavorite as any}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}

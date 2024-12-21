@@ -72,6 +72,12 @@ src/
 │       ├── NewsCard.tsx            // 新聞卡片組件
 │       └── NewsFilters.tsx         // 新聞過濾器組件
 ├── hooks
+│   ├── news
+│   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
+│   │   ├── useFetchNews.ts         // 新聞獲取 Hook
+│   │   └── useNewsPageLogic.ts     // 新聞頁面邏輯 Hook
+│   ├── announcement
+│   │   └── useAnnouncementPageLogic.ts // 公告頁面邏輯 Hook
 │   ├── toast
 │   │   └── useToast.ts             // Toast 通知 Hook
 │   ├── useAuth.ts                  // 用戶認證 Hook
@@ -88,10 +94,6 @@ src/
 │   │   ├── index.ts                // 匯出所有 profile hooks 和型別定義
 │   │   ├── useProfilePassword.ts   // 密碼變更和驗證
 │   │   └── useProfileAccount.ts    // 帳號管理
-│   ├── news
-│   │   ├── useNewsFavorites.ts     // 新聞收藏 Hook
-│   │   ├── useFetchNews.ts         // 新聞獲取 Hook
-│   │   └── useNewsPageLogic.ts     // 新聞頁面邏輯 Hook
 │   ├── line
 │   │   ├── useLineVerification.ts  // LINE 驗證 Hook
 │   │   └── index.ts                // 匯出 LINE 驗證相關的 Hook 和型別定義
