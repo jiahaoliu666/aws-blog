@@ -79,7 +79,7 @@ const AnnouncementPage: React.FC = () => {
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
             <Navbar setCurrentSourcePage={setCurrentSourcePage} />
             <div className="container mx-auto px-4 py-8 flex-grow">
-                <h1 className="text-5xl font-bold text-center mb-5">最新公告</h1>
+                <h1 className="text-5xl font-bold text-center mb-5">AWS 最新公告</h1>
 
                 <Filters
                     gridView={gridView}
