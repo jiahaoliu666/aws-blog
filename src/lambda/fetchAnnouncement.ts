@@ -101,6 +101,34 @@ async function summarizeArticle(url: string): Promise<string> {
   }
 }
 
+async function translateText(text: string): Promise<string> {
+  console.log(`開始翻譯文本`);
+  
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一個專業的翻譯專家。請將英文準確地翻譯成繁體中文，特別注意保持AWS相關專業術語的準確性和一致性。翻譯時要考慮整體上下文，確保翻譯結果通順且專業。'
+        },
+        {
+          role: 'user',
+          content: `請將以下文本翻譯成繁體中文：\n${text}`
+        }
+      ],
+      temperature: 0.2,
+    });
+
+    const translatedText = response.choices[0]?.message?.content?.trim() || text;
+    console.log(`翻譯成功`);
+    return translatedText;
+  } catch (error) {
+    console.error('翻譯時發生錯誤:', error);
+    return text;
+  }
+}
+
 async function saveToDynamoDB(article: Article): Promise<boolean> {
   console.log(`開始處理文章: ${article.title}`);
   const exists = await checkIfExists(article.title);
@@ -111,12 +139,14 @@ async function saveToDynamoDB(article: Article): Promise<boolean> {
   }
 
   const summary = await summarizeArticle(article.link);
+  const translatedTitle = await translateText(article.title);
 
   const params = {
     TableName: "AWS_Blog_Announcement",
     Item: {
       article_id: { S: uuidv4() },
       title: { S: article.title },
+      translated_title: { S: translatedTitle },
       published_at: { N: String(Math.floor(Date.now() / 1000)) },
       info: { S: article.info },
       link: { S: article.link },
@@ -165,7 +195,7 @@ async function scrapeAWSBlog(targetNumberOfArticles: number): Promise<void> {
     const page = await browser.newPage();
     await gotoWithRetry(
       page,
-      "https://aws.amazon.com/tw/about-aws/whats-new/2024/?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all&awsm.page-whats-new-content-all=1",
+      "https://aws.amazon.com/en/about-aws/whats-new/2024/?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all&awsm.page-whats-new-content-all=1",
       {
         waitUntil: "networkidle2",
         timeout: 60000,

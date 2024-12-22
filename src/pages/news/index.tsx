@@ -18,7 +18,7 @@ const NewsPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true); // 管理加載狀態
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新新聞'); // 設置默認值
     const { isDarkMode } = useTheme();
-    const toast = useToastContext(); // 現在應該可以正常工作
+    const toast = useToastContext(); 
 
     const {
         language,
