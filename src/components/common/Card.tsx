@@ -66,15 +66,36 @@ const Card: React.FC<CardProps> = ({
     const handleTitleClick = async () => {
         if (user) {
             console.log(`User ${user.username} clicked on article: ${article.article_id}`);
+            
+            const currentPath = window.location.pathname;
+            const actualSource = currentPath.includes('/announcement') 
+                ? '最新公告' 
+                : currentPath.includes('/news')
+                    ? '最新新聞'
+                    : sourcePage;
+
             await logRecentArticle(
                 article.article_id,
                 displayTitle,
                 article.link,
-                '最新新聞',
+                actualSource,
             );
         } else {
             console.log('User not logged in, cannot log activity.');
         }
+    };
+
+    const getArticleUrl = (originalUrl: string) => {
+        const url = new URL(originalUrl);
+        const currentPath = window.location.pathname;
+        const source = currentPath.includes('/announcement') 
+            ? '最新公告' 
+            : currentPath.includes('/news')
+                ? '最新新聞'
+                : sourcePage;
+        
+        url.searchParams.set('source', source);
+        return url.toString();
     };
 
     return (
@@ -87,7 +108,13 @@ const Card: React.FC<CardProps> = ({
             ${gridView ? 'shadow-md hover:shadow-lg' : 'mb-4'}
         `}>
             <h2 className="text-xl font-bold mb-2">
-                <a href={article.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-blue-500 transition-colors duration-300" onClick={handleTitleClick}>
+                <a 
+                    href={getArticleUrl(article.link)} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="hover:underline hover:text-blue-500 transition-colors duration-300" 
+                    onClick={handleTitleClick}
+                >
                     {displayTitle}
                 </a>
             </h2>

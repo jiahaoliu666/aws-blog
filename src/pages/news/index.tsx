@@ -74,7 +74,6 @@ const NewsPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // 在頁面加載時設置 currentSourcePage
         setCurrentSourcePage('最新新聞');
     }, []);
 

@@ -15,6 +15,7 @@ interface Article {
   timeAgo: string;
   sourcePage: string;
   category?: string;
+  announcementType?: string;
   readStatus?: 'unread' | 'reading' | 'completed';
 }
 
@@ -55,35 +56,45 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
       const command = new QueryCommand(params);
       const response = await dynamoClient.send(command);
       
-      // 首先獲取文章ID和基本信息
       const articleData = response.Items?.map(item => ({
         articleId: item.articleId?.S,
         timestamp: item.timestamp?.S,
         sourcePage: item.sourcePage?.S || '未知來源'
       })).filter(data => data.articleId && data.timestamp) || [];
 
-      // 然後獲取每篇文章的詳細信息
       const articles = await Promise.all(articleData.map(async ({ articleId, timestamp, sourcePage }) => {
-        const newsParams = {
-          TableName: 'AWS_Blog_News',
+        const validSourcePage = ['最新公告', '最新新聞'].includes(sourcePage) 
+            ? sourcePage 
+            : '最新新聞'; // 預設值
+        
+        const tableName = validSourcePage === '最新公告' 
+            ? 'AWS_Blog_Announcement' 
+            : 'AWS_Blog_News';
+        
+        const detailParams = {
+          TableName: tableName,
           KeyConditionExpression: 'article_id = :articleId',
           ExpressionAttributeValues: {
             ':articleId': { S: articleId! }
           }
         };
 
-        const newsCommand = new QueryCommand(newsParams);
-        const newsResponse = await dynamoClient.send(newsCommand);
+        const detailCommand = new QueryCommand(detailParams);
+        const detailResponse = await dynamoClient.send(detailCommand);
+        
+        const item = detailResponse.Items?.[0];
         
         return {
           id: articleId!,
           userId: user.sub,
-          title: newsResponse.Items?.[0]?.title?.S || '標題不可用',
-          translatedTitle: newsResponse.Items?.[0]?.translated_title?.S || '標題不可用',
-          link: newsResponse.Items?.[0]?.link?.S || '#',
+          title: item?.title?.S || '標題不可用',
+          translatedTitle: item?.translated_title?.S || '標題不可用',
+          link: item?.link?.S || '#',
           timestamp: timestamp!,
           timeAgo: formatTimeAgo(new Date(timestamp!)),
-          sourcePage
+          sourcePage,
+          category: tableName === 'AWS_Blog_News' ? item?.category?.S : undefined,
+          announcementType: tableName === 'AWS_Blog_Announcement' ? item?.type?.S : undefined
         };
       }));
 

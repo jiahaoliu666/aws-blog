@@ -12,6 +12,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).json({ error: 'Missing required fields in request body' });
     }
 
+    if (!['最新公告', '最新新聞'].includes(sourcePage)) {
+      return res.status(400).json({ error: 'Invalid sourcePage value' });
+    }
+
     const timestamp = new Date().toISOString();
 
     const params = {
