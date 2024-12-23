@@ -91,10 +91,12 @@ const Card: React.FC<CardProps> = ({
                     {displayTitle}
                 </a>
             </h2>
-            {sourcePage === '最新新聞' && (
-                <span className="text-sm text-gray-500 mb-1">{article.info}</span>
+            {article.info && (
+                <span className="text-sm text-gray-500 mb-2 block">{article.info}</span>
             )}
-            <p className="mt-2">{displayDescription}</p>
+            {sourcePage !== '最新公告' && (
+                <p className="mt-2">{displayDescription}</p>
+            )}
             <div className="flex justify-between items-center mt-4">
                 <div className="flex">
                     <button onClick={handleToggleFavorite} className={buttonClass}>
