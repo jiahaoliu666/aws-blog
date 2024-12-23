@@ -183,7 +183,7 @@ async function scrapeAWSBlog(targetNumberOfArticles: number): Promise<void> {
     const page = await browser.newPage();
     await gotoWithRetry(
       page,
-      "https://aws.amazon.com/en/about-aws/whats-new/2024/?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all&awsm.page-whats-new-content-all=1",
+      "https://aws.amazon.com/about-aws/whats-new/",
       {
         waitUntil: "networkidle2",
         timeout: 60000,
@@ -219,7 +219,7 @@ async function scrapeAWSBlog(targetNumberOfArticles: number): Promise<void> {
           await loadMoreButton.click();
           await new Promise((resolve) => setTimeout(resolve, 3000));
         } else {
-          console.log("沒有更多的文章可供加載");
+          console.log("���有更多的文章可供加載");
           break;
         }
       }

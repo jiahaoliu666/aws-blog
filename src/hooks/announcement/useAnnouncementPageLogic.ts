@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { ExtendedAnnouncement } from "../../types/announcementType";
+import { ExtendedAnnouncement, Announcement } from '@/types/announcementType';
 import useFetchAnnouncement from "./useFetchAnnouncement";
 import { extractDateFromInfo } from "../../utils/extractDateFromInfo";
 import { useAnnouncementFavorites } from "./useAnnouncementFavorites";
@@ -45,15 +45,18 @@ function useAnnouncementPageLogic() {
     const { favorites, toggleFavorite } = useAnnouncementFavorites();
 
     const announcements: ExtendedAnnouncement[] = useMemo(() => {
-        return fetchedAnnouncements.map(announcement => ({
+        console.log('Fetched announcements:', fetchedAnnouncements);
+        return fetchedAnnouncements.map((announcement: Announcement) => ({
             ...announcement,
             isFavorite: !!favorites.find(fav => fav.article_id === announcement.article_id),
-            translated_description: announcement.translated_description || '',
-            translated_title: announcement.translated_title || '',
+            translated_description: announcement.translated_description || announcement.description || '',
+            translated_title: announcement.translated_title || announcement.title || '',
         }));
     }, [fetchedAnnouncements, favorites, language]);
 
     useEffect(() => {
+        console.log('Current announcements:', currentAnnouncements);
+        console.log('Filtered announcements:', filteredAnnouncements);
         let updatedAnnouncements: ExtendedAnnouncement[] = showFavorites ? favorites : filteredAnnouncements;
 
         if (startDate || endDate) {

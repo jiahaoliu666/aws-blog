@@ -31,6 +31,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         });
 
+        // 確保環境變數中的表名正確
+        const TABLE_NAME = process.env.DYNAMODB_ANNOUNCEMENT_TABLE || 'AWS_Blog_Announcement';
+
         // 設置查詢參數
         const params = {
             TableName: process.env.DYNAMODB_ANNOUNCEMENT_TABLE,
@@ -50,11 +53,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(200).json([]);
         }
 
-        // 在應用層面進行語言過濾
-        const filteredItems = result.Items.filter(item => {
-            return item.title?.includes(`[${language}]`) || 
-                   item.info?.includes(`[${language}]`);
-        });
+        // 修改語言過濾邏輯
+        const filteredItems = result.Items;  // 先移除語言過濾，檢查是否有資料
+
+        // 如果確定要過濾，使用更寬鬆的條件
+        // const filteredItems = result.Items.filter(item => {
+        //     return language === 'zh-TW' ? true : 
+        //            (item.title?.includes(`[${language}]`) || 
+        //            item.info?.includes(`[${language}]`));
+        // });
 
         console.log(`成功過濾 ${language} 語言的公告，共 ${filteredItems.length} 筆`);
         res.status(200).json(filteredItems);
