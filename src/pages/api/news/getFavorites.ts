@@ -19,8 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const getFavoritesParams = {
             TableName: USER_FAVORITES_TABLE,
             KeyConditionExpression: 'userId = :userId',
+            FilterExpression: 'category = :category',
             ExpressionAttributeValues: {
                 ':userId': userId,
+                ':category': 'News'
             },
         };
 

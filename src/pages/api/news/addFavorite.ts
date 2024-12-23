@@ -51,6 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     userId,          // 儲存 userId
                     article_id: articleId, // 使用正確的鍵名
                     createdAt: new Date().toISOString(), // 可選的時間戳
+                    category: 'News'  // 添加新欄位，設置為 News
                 },
             };
 

@@ -18,7 +18,7 @@ interface FiltersProps<T> {
   sortOrder: "newest" | "oldest";  
   setSortOrder: (value: "newest" | "oldest") => void;  
   onDateFilterChange: (startDate: string, endDate: string) => void;  
-  filteredArticles: T[];  
+  filteredArticles?: T[];  
   filteredFavoritesCount: number;  
   language: string;  
   setLanguage: (value: string) => void;  

@@ -14,9 +14,6 @@ npx tsx src/lambda/fetchAnnouncement.ts
 # 執行 update
 ts-node --esm src/lambda/updateNews.ts
 
-執行 Gource
-gource --hide date
-
 ------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適
@@ -24,7 +21,8 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 --------
 進行中：
 1. 爬取最新公告文章 fetch＆update，並完成最新公告頁面
-2. 已經能讀到公告的資料表，但要爬取到英文版的公告，先了解fetchAnnouncement會爬哪些數據
+2. profile觀看紀錄要能讀到AWS 最新公告的標題會顯示標題不可用的問題
+3. 最新公告的收藏功能要能抓到AWS_Blog_UserFavorites的article_id，目前已經能收藏 但沒有抓到article_id
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 
@@ -33,7 +31,7 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 1. 全部改為響應式設計 
 2. 製作收藏文章頁面
 3. metaage郵箱 沒有收到 刪除帳號的通知
-4. 把Pagination 的滾動按鈕設定為：當滾動軸在最上方時隱藏圖示，否則顯示圖示
-5. Navbar 的排版、佈局調整一致
-6. 載入頁面loader要一致，修改全局的loader，改使用最新新聞的loader樣式
-7. 把env環境變數儲存在secure manager
+4. Navbar 的排版、佈局調整一致
+5. 載入頁面loader要一致，修改全局的loader，改使用最新新聞的loader樣式
+6. 把env環境變數儲存在secure manager
+7. 版本歷史的位置要放哪

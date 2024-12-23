@@ -44,6 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     userId,
                     article_id: articleId,
                     createdAt: new Date().toISOString(),
+                    category: 'Announcement'
                 },
             };
 
