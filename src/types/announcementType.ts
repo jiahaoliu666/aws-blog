@@ -4,12 +4,15 @@ export interface Announcement {
     title: string;  
     published_at: string;  
     info: string;  
+    description: string;  
     link: string;  
-    summary?: string;                 // 用於儲存摘要  
-    isFavorite?: boolean;             // 表示文章是否被標記為收藏  
-    createdAt?: string;               // 文章的創建時間  
-    author?: string;                  // 文章的作者
-  }
+    summary?: string;                 
+    isFavorite?: boolean;             
+    createdAt?: string;               
+    author?: string;
+    translated_title?: string;
+    translated_description?: string;
+}
 
 export type ExtendedAnnouncement = Omit<Announcement, 'isFavorite'> & {
     isFavorite: boolean;

@@ -129,29 +129,17 @@ async function translateText(text: string): Promise<string> {
   }
 }
 
-async function saveToDynamoDB(article: Article): Promise<boolean> {
-  console.log(`開始處理文章: ${article.title}`);
-  const exists = await checkIfExists(article.title);
-  if (exists) {
-    skippedCount++;
-    console.log(`文章已存在，跳過`);
-    return false;
-  }
-
-  const summary = await summarizeArticle(article.link);
-  const translatedTitle = await translateText(article.title);
-
+async function insertArticle(article: Article): Promise<boolean> {
   const params = {
     TableName: "AWS_Blog_Announcement",
     Item: {
       article_id: { S: uuidv4() },
       title: { S: article.title },
-      translated_title: { S: translatedTitle },
-      published_at: { N: String(Math.floor(Date.now() / 1000)) },
       info: { S: article.info },
       link: { S: article.link },
-      summary: { S: summary },
-    },
+      published_at: { S: new Date().toISOString() },
+      createdAt: { S: new Date().toISOString() }
+    }
   };
 
   try {
@@ -217,7 +205,7 @@ async function scrapeAWSBlog(targetNumberOfArticles: number): Promise<void> {
 
       for (const article of pageData) {
         if (totalArticlesInDatabase < targetNumberOfArticles) {
-          if (await saveToDynamoDB(article)) {
+          if (await insertArticle(article)) {
             totalArticlesInDatabase++;
           }
         } else {

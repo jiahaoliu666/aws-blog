@@ -6,7 +6,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { PreferenceSettings } from '@/types/profileTypes';
 
-interface FiltersProps {  
+interface FiltersProps<T> {  
   gridView: boolean;  
   showFavorites: boolean;  
   setShowFavorites: (value: boolean) => void;  
@@ -18,7 +18,7 @@ interface FiltersProps {
   sortOrder: "newest" | "oldest";  
   setSortOrder: (value: "newest" | "oldest") => void;  
   onDateFilterChange: (startDate: string, endDate: string) => void;  
-  filteredArticles: News[];  
+  filteredArticles: T[];  
   filteredFavoritesCount: number;  
   language: string;  
   setLanguage: (value: string) => void;  
@@ -34,7 +34,7 @@ const DEFAULT_PREFERENCES = {
   language: 'zh-TW'      // 預設繁體中文
 };
 
-const Filters: React.FC<FiltersProps> = ({  
+export const Filters = <T extends object>({  
   gridView,  
   showFavorites,  
   setShowFavorites,  
@@ -52,7 +52,7 @@ const Filters: React.FC<FiltersProps> = ({
   setLanguage,  
   showSummaries,  
   setShowSummaries  
-}) => {
+}: FiltersProps<T>) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const { preferences, updatePreferences } = useProfilePreferences();
   const { user } = useAuthContext();
@@ -224,5 +224,3 @@ const Filters: React.FC<FiltersProps> = ({
     </div>
   );
 };
-
-export default Filters;

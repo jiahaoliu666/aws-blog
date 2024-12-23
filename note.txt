@@ -6,12 +6,12 @@ ngrok http 3000
 # 列出 src 目錄下的所有文件 
 find src > src1.txt
 
-# 執行 fetchNews.ts
+# 執行 fetch
 ts-node --esm src/lambda/fetchNews.ts
 npx tsx src/lambda/fetchNews.ts
+npx tsx src/lambda/fetchAnnouncement.ts
 
-
-# 執行 updateNews.ts
+# 執行 update
 ts-node --esm src/lambda/updateNews.ts
 
 執行 Gource

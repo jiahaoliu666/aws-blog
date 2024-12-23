@@ -77,6 +77,8 @@ src/
 │   │   └── useNewsPageLogic.ts     // 新聞頁面邏輯 Hook
 │   ├── announcement
 │   │   └── useAnnouncementPageLogic.ts // 公告頁面邏輯 Hook
+│   │   └── useAnnouncementFavorites.ts // 公告收藏 Hook
+│   │   └── useFetchAnnouncement.ts // 公告獲取 Hook
 │   ├── toast
 │   │   └── useToast.ts             // Toast 通知 Hook
 │   ├── useAuth.ts                  // 用戶認證 Hook

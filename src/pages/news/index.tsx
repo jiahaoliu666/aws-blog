@@ -4,7 +4,7 @@ import Navbar from '../../components/common/Navbar';
 import { ExtendedNews } from '../../types/newsType';
 import Card from '../../components/common/Card';
 import Search from '../../components/common/Search';
-import Filters from '../../components/common/Filters';
+import { Filters } from '../../components/common/Filters';
 import Pagination from '../../components/common/Pagination';
 import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';
 import Footer from '../../components/common/Footer';

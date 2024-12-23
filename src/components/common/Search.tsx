@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';  
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';  
 import { SearchField } from '@aws-amplify/ui-react';  
 import { ExtendedNews } from '@/types/newsType';  
 
-interface BlogSearchProps {  
-  articles: ExtendedNews[];  
-  setFilteredArticles: React.Dispatch<React.SetStateAction<ExtendedNews[]>>;  
+interface SearchProps<T extends { title: string }> {  
+  articles: T[];  
+  setFilteredArticles: Dispatch<SetStateAction<T[]>>;  
   isDarkMode: boolean;   
 }  
 
-const BlogSearch: React.FC<BlogSearchProps> = ({ articles, setFilteredArticles, isDarkMode }) => {  
+export const Search = <T extends { title: string }>({ articles, setFilteredArticles, isDarkMode }: SearchProps<T>) => {  
   const [searchTerm, setSearchTerm] = useState('');  
   
   useEffect(() => {  
@@ -41,4 +41,4 @@ const BlogSearch: React.FC<BlogSearchProps> = ({ articles, setFilteredArticles, 
   );  
 };  
 
-export default BlogSearch;
+export default Search;

@@ -3,15 +3,15 @@ import { useRouter } from 'next/router';
 import Navbar from '../../components/common/Navbar';
 import { ExtendedAnnouncement } from '../../types/announcementType';
 import Card from '../../components/common/Card';
-import Search from '../../components/common/Search';
-import Filters from '../../components/common/Filters';
+import { Search } from '../../components/common/Search';
+import { Filters } from '../../components/common/Filters';
 import Pagination from '../../components/common/Pagination';
+import useAnnouncementPageLogic from '../../hooks/announcement/useAnnouncementPageLogic';
 import Footer from '../../components/common/Footer';
 import { Loader } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
-import useAnnouncementPageLogic from '../../hooks/announcement/useAnnouncementPageLogic';
 
 const AnnouncementPage: React.FC = () => {
     const router = useRouter();
@@ -19,6 +19,8 @@ const AnnouncementPage: React.FC = () => {
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新公告');
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     const {
         language,
@@ -33,35 +35,68 @@ const AnnouncementPage: React.FC = () => {
         setShowFavorites,
         sortOrder,
         setSortOrder,
-        startDate,
-        endDate,
-        setStartDate,
-        setEndDate,
         showSummaries,
         setShowSummaries,
-        toggleShowSummaries,
         handlePageChange,
         toggleFavorite,
         filteredFavoritesCount,
         filteredAnnouncements,
+        handleDateFilterChange,
+        favorites,
         announcements,
-        favorites
+        isLanguageChanging,
     } = useAnnouncementPageLogic();
 
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                // 這裡實作獲取公告資料的邏輯
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                setIsLoading(false);
-            } catch (error) {
-                toast.error('載入資料失敗');
-                setIsLoading(false);
+        const handleRouteChange = (url: string) => {
+            if (url === '/') {
+                resetFilters();
             }
+        };
+
+        router.events.on('routeChangeComplete', handleRouteChange);
+        return () => {
+            router.events.off('routeChangeComplete', handleRouteChange);
+        };
+    }, [router.events]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setIsLoading(false);
         };
 
         loadData();
     }, []);
+
+    useEffect(() => {
+        setCurrentSourcePage('最新公告');
+    }, []);
+
+    useEffect(() => {
+        resetFilters();
+    }, []);
+
+    useEffect(() => {
+        if (currentAnnouncements.length > 0) {
+            setIsLoading(false);
+        }
+    }, [currentAnnouncements]);
+
+    const resetFilters = () => {
+        setGridView(false);
+        setShowFavorites(false);
+        setStartDate('');
+        setEndDate('');
+        setSortOrder('newest');
+        setLanguage('zh-TW');
+        setFilteredAnnouncements([]);
+        setShowSummaries(false);
+    };
+
+    const toggleShowSummaries = () => {
+        setShowSummaries(!showSummaries);
+    };
 
     if (isLoading) {
         return (
@@ -80,7 +115,7 @@ const AnnouncementPage: React.FC = () => {
             <Navbar setCurrentSourcePage={setCurrentSourcePage} />
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <h1 className="text-5xl font-bold text-center mb-5">AWS 最新公告</h1>
-
+                
                 <Filters
                     gridView={gridView}
                     showFavorites={showFavorites}
@@ -92,11 +127,8 @@ const AnnouncementPage: React.FC = () => {
                     setEndDate={setEndDate}
                     sortOrder={sortOrder}
                     setSortOrder={setSortOrder}
-                    onDateFilterChange={(start, end) => {
-                        setStartDate(start);
-                        setEndDate(end);
-                    }}
-                    filteredArticles={filteredAnnouncements as any}
+                    onDateFilterChange={handleDateFilterChange}
+                    filteredArticles={filteredAnnouncements}
                     filteredFavoritesCount={filteredFavoritesCount}
                     language={language}
                     setLanguage={setLanguage}
@@ -106,22 +138,26 @@ const AnnouncementPage: React.FC = () => {
                 />
 
                 <Search
-                    articles={announcements as any}
-                    setFilteredArticles={setFilteredAnnouncements as any}
+                    articles={announcements}
+                    setFilteredArticles={setFilteredAnnouncements}
                     isDarkMode={isDarkMode}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
-                    {currentAnnouncements.length > 0 ? (
-                        currentAnnouncements.map((announcement, index) => {
-                            const isFavorited = favorites.some(fav => fav.article_id === announcement.article_id);
+                    {isLoading ? (
+                        <div className="text-center py-4">
+                            <p>載入中...</p>
+                        </div>
+                    ) : currentAnnouncements.length > 0 ? (
+                        currentAnnouncements.map((announcement: ExtendedAnnouncement, index: number) => {
+                            const isFavorited = favorites.some((fav: ExtendedAnnouncement) => fav.article_id === announcement.article_id);
                             return (
                                 <Card
                                     key={announcement.article_id}
-                                    article={announcement as any}
+                                    article={announcement}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={toggleFavorite as any}
+                                    toggleFavorite={toggleFavorite}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}

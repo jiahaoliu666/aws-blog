@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { ExtendedAnnouncement } from "../../types/announcementType";
+import useFetchAnnouncement from "./useFetchAnnouncement";
 import { extractDateFromInfo } from "../../utils/extractDateFromInfo";
+import { useAnnouncementFavorites } from "./useAnnouncementFavorites";
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import { useAuthContext } from '@/context/AuthContext';
 import { browserStorage } from '@/utils/browserStorage';
@@ -10,7 +12,6 @@ function useAnnouncementPageLogic() {
     const { preferences } = useProfilePreferences();
     const [isClient, setIsClient] = useState(false);
     
-    // 初始化狀態
     const [language, setLanguage] = useState<string>('zh-TW');
     const [gridView, setGridView] = useState<boolean>(preferences?.viewMode === 'grid');
     const [showSummaries, setShowSummaries] = useState<boolean>(preferences?.autoSummarize || false);
@@ -20,12 +21,10 @@ function useAnnouncementPageLogic() {
     const [endDate, setEndDate] = useState<string>("");
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(1);
-    const [announcements, setAnnouncements] = useState<ExtendedAnnouncement[]>([]);
     const [filteredAnnouncements, setFilteredAnnouncements] = useState<ExtendedAnnouncement[]>([]);
     const [currentAnnouncements, setCurrentAnnouncements] = useState<ExtendedAnnouncement[]>([]);
-    const [favorites, setFavorites] = useState<ExtendedAnnouncement[]>([]);
+    const [error, setError] = useState<Error | null>(null);
 
-    // 在客戶端初始化後讀取設定
     useEffect(() => {
         setIsClient(true);
         const savedLanguage = browserStorage.getItem('announcementLanguage');
@@ -34,11 +33,28 @@ function useAnnouncementPageLogic() {
         } else if (preferences?.language) {
             setLanguage(preferences.language);
         }
-    }, [preferences?.language]);
+    }, [preferences]);
 
-    // 處理分頁和篩選邏輯
     useEffect(() => {
-        let updatedAnnouncements = showFavorites ? favorites : filteredAnnouncements;
+        if (isClient) {
+            browserStorage.setItem('announcementLanguage', language);
+        }
+    }, [language, isClient]);
+
+    const fetchedAnnouncements = useFetchAnnouncement(language);
+    const { favorites, toggleFavorite } = useAnnouncementFavorites();
+
+    const announcements: ExtendedAnnouncement[] = useMemo(() => {
+        return fetchedAnnouncements.map(announcement => ({
+            ...announcement,
+            isFavorite: !!favorites.find(fav => fav.article_id === announcement.article_id),
+            translated_description: announcement.translated_description || '',
+            translated_title: announcement.translated_title || '',
+        }));
+    }, [fetchedAnnouncements, favorites, language]);
+
+    useEffect(() => {
+        let updatedAnnouncements: ExtendedAnnouncement[] = showFavorites ? favorites : filteredAnnouncements;
 
         if (startDate || endDate) {
             updatedAnnouncements = updatedAnnouncements.filter(announcement => {
@@ -67,29 +83,28 @@ function useAnnouncementPageLogic() {
         }
     }, [filteredAnnouncements, showFavorites, startDate, endDate, sortOrder, currentPage, favorites]);
 
-    const toggleFavorite = async (announcement: ExtendedAnnouncement): Promise<void> => {
+    const handlePageChange = useCallback((newPageIndex?: number) => {
+        if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {
+            setCurrentPage(newPageIndex);
+        }
+    }, [totalPages]);
+
+    const [isLanguageChanging, setIsLanguageChanging] = useState(false);
+
+    const handleLanguageChange = async (newLanguage: string) => {
+        setIsLanguageChanging(true);
         try {
-            // 實作收藏功能
-            const newFavorites = [...favorites];
-            const index = newFavorites.findIndex(fav => fav.article_id === announcement.article_id);
-            
-            if (index === -1) {
-                newFavorites.push(announcement);
-            } else {
-                newFavorites.splice(index, 1);
-            }
-            
-            setFavorites(newFavorites);
-            return;
-        } catch (error) {
-            console.error('更新收藏失敗:', error);
-            return;
+            setLanguage(newLanguage);
+            browserStorage.setItem('announcementLanguage', newLanguage);
+            await new Promise(resolve => setTimeout(resolve, 100));
+        } finally {
+            setIsLanguageChanging(false);
         }
     };
 
     return {
         language,
-        setLanguage,
+        setLanguage: handleLanguageChange,
         currentAnnouncements,
         setFilteredAnnouncements,
         currentPage,
@@ -102,19 +117,21 @@ function useAnnouncementPageLogic() {
         setSortOrder,
         startDate,
         endDate,
-        setStartDate,
         setEndDate,
         showSummaries,
         setShowSummaries,
         toggleShowSummaries: () => setShowSummaries(v => !v),
-        handlePageChange: (page: number | undefined) => {
-            if (page) setCurrentPage(page);
-        },
+        handlePageChange,
         toggleFavorite,
         filteredFavoritesCount: favorites.length,
         filteredAnnouncements,
+        handleDateFilterChange: (start: string, end: string) => {
+            setStartDate(start);
+            setEndDate(end);
+        },
+        favorites,
         announcements,
-        favorites
+        isLanguageChanging,
     };
 }
 
