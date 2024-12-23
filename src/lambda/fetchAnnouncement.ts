@@ -179,11 +179,30 @@ async function scrapeAWSBlog(targetNumberOfArticles: number): Promise<void> {
       return;
     }
 
-    browser = await puppeteer.launch({ headless: true });
+    browser = await puppeteer.launch({ 
+      headless: true,
+      args: ['--incognito']
+    });
     const page = await browser.newPage();
+    
+    // 設定瀏覽器語言為英文
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9'
+    });
+    
+    // 也可以通過 CDP 設定語言
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'language', {
+        get: function() { return 'en-US'; }
+      });
+      Object.defineProperty(navigator, 'languages', {
+        get: function() { return ['en-US', 'en']; }
+      });
+    });
+
     await gotoWithRetry(
       page,
-      "https://aws.amazon.com/about-aws/whats-new/",
+      "https://aws.amazon.com/about-aws/whats-new/?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all",
       {
         waitUntil: "networkidle2",
         timeout: 60000,
@@ -219,7 +238,7 @@ async function scrapeAWSBlog(targetNumberOfArticles: number): Promise<void> {
           await loadMoreButton.click();
           await new Promise((resolve) => setTimeout(resolve, 3000));
         } else {
-          console.log("���有更多的文章可供加載");
+          console.log("沒有更多的文章可供加載");
           break;
         }
       }
