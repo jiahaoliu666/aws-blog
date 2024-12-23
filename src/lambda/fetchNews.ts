@@ -105,7 +105,7 @@ async function translateText(text: string): Promise<string> {
       messages: [
         {
           role: 'system',
-          content: '你是一個專業的翻譯專家。請將英文準確地翻譯成繁體中文，特別注意保持AWS相關專業術語的準確性和一致性。翻譯時要考慮整體上下文，確保翻譯結果通順且專業。'
+          content: '你是一位專業的翻譯專家。請將英文翻譯成標準繁體中文，注意事項：\n1. 必須使用繁體中文，不可出現簡體字\n2. 保持 AWS 相關專業術語的準確性和一致性\n3. 遵循台灣地區的用語習慣\n4. 確保翻譯結果通順且專業\n5. 保留原文中的專有名詞，如 AWS 服務名稱'
         },
         {
           role: 'user',
