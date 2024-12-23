@@ -1,18 +1,18 @@
 src/
 ├── types
+│   ├── newsType.ts                 // 新聞文章相關類型
+│   ├── announcementType.ts         // 公告文章相關的類型
 │   ├── profileTypes.ts             // 個人資料類型定義
 │   ├── emailTypes.ts               // 電子郵件通知類型
 │   ├── amazon-dax-client.d.ts      // Amazon DAX 客戶端模組
-│   ├── newsType.ts                 // 新聞文章相關類型
-│   ├── announcementType.ts         // 公告文章相關的類型
 │   ├── lineTypes.ts                // LINE 相關類型
 │   ├── userType.ts                 // 定義用戶類型
 │   └── next-auth.d.ts              // NextAuth.js 的類型擴展
 ├── context
-│   ├── ToastContext.tsx            // Toast 通知上下文
-│   ├── LoadingContext.tsx           // Loading 上下文
 │   ├── AuthContext.tsx             // 用戶認證相關的上下文
 │   ├── AppContext.tsx              // 應用程式邏輯相關的上下文
+│   ├── ToastContext.tsx            // Toast 通知上下文
+│   ├── LoadingContext.tsx          // Loading 上下文
 │   ├── LanguageContext.tsx         // 語言設定相關的上下文
 │   └── ThemeContext.tsx            // 主題設定相關的上下文
 ├── config
@@ -129,6 +129,20 @@ src/
 │   ├── news
 │   │   └── index.tsx               // 新聞頁面
 │   ├── api
+│   │   ├── news
+│   │   │   ├── summary.ts          // 新聞摘要 API
+│   │   │   ├── addFavorite.ts      // 添加收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除收藏 API
+│   │   │   ├── updateNews.js       // 更新新聞 API (未使用)
+│   │   │   ├── index.ts            // 獲取新聞列表的 API
+│   │   │   └── getFavorites.ts     // 獲取收藏 API
+│   │   ├── announcement            
+│   │   │   ├── summary.ts          // 公告摘要 API
+│   │   │   ├── addFavorite.ts      // 添加公告收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除公告收藏 API
+│   │   │   ├── updateAnnouncement.ts // 更新公告 API (未使用)
+│   │   │   ├── index.ts            // 獲取公告列表的 API
+│   │   │   └── getFavorites.ts     // 獲取公告收藏 API
 │   │   ├── auth
 │   │   │   └── cleanup.ts          // 清理未驗證用戶 API
 │   │   ├── profile
@@ -138,13 +152,6 @@ src/
 │   │   │   ├── sendFeedback.ts     // 反饋 API
 │   │   │   ├── notification-settings.ts // 通知設定 API
 │   │   │   └── activity-log.ts     // 活動日誌 API
-│   │   ├── news
-│   │   │   ├── summary.ts          // 新聞摘要 API
-│   │   │   ├── addFavorite.ts      // 添加收藏 API
-│   │   │   ├── removeFavorite.ts   // 移除收藏 API
-│   │   │   ├── updateNews.js       // 更新新聞 API
-│   │   │   ├── index.ts            // 獲取新聞列表的 API
-│   │   │   └── getFavorites.ts     // 獲取收藏 API
 │   │   ├── line
 │   │   │   ├── verify-code.ts      // 驗證 LINE 驗證碼的 API
 │   │   │   ├── verification-status.ts // 獲取驗證狀態的 API
