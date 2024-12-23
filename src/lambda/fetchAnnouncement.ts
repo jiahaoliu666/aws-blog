@@ -78,8 +78,12 @@ async function countArticlesInDatabase(): Promise<number> {
 }
 
 async function summarizeArticle(url: string): Promise<string> {
-  const maxTokens = 300;
-  const prompt = `使用繁體中文總結這篇文章的內容：${url}`;
+  const maxTokens = 200;
+  const prompt = `請用繁體中文簡潔扼要地總結這篇 AWS 文章的主要內容（限 100 字以內）：${url}
+要求：
+1. 直接說明此更新的主要功能/服務
+2. 只提及關鍵改進或新功能
+3. 避免贅詞`;
 
   if (prompt.length > 2000) {
     console.warn("請求內容過長，請檢查 URL 或上下文。");
@@ -140,6 +144,12 @@ async function insertArticle(article: Article): Promise<boolean> {
     return false;
   }
 
+  // 格式化日期
+  const formatDate = (dateStr: string) => {
+    const [month, day, year] = dateStr.split('/');
+    return `${year}年${month}月${day}日`;
+  };
+
   // 獲取摘要和翻譯標題
   const summary = await summarizeArticle(article.link);
   const translatedTitle = await translateText(article.title);
@@ -150,7 +160,7 @@ async function insertArticle(article: Article): Promise<boolean> {
       article_id: { S: uuidv4() },
       title: { S: article.title },
       translated_title: { S: translatedTitle },
-      info: { S: article.info },
+      info: { S: formatDate(article.info) }, // 使用格式化後的日期
       link: { S: article.link },
       summary: { S: summary },
       published_at: { S: new Date().toISOString() },

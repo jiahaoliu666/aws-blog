@@ -73,8 +73,12 @@ async function countArticlesInDatabase(): Promise<number> {
 }
 
 async function summarizeArticle(url: string): Promise<string> {
-  const maxTokens = 300;
-  const prompt = `使用繁體中文總結這篇文章的內容：${url}`;
+  const maxTokens = 200;
+  const prompt = `請用繁體中文簡潔扼要地總結這篇 AWS 部落格文章的主要內容（限 100 字以內）：${url}
+要求：
+1. 直接說明文章主旨
+2. 只提及關鍵技術點或解決方案
+3. 避免贅詞`;
 
   if (prompt.length > 2000) {
     console.warn('請求內容過長，請檢查 URL 或上下文。');

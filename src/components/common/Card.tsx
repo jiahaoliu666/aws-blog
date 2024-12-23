@@ -91,7 +91,9 @@ const Card: React.FC<CardProps> = ({
                     {displayTitle}
                 </a>
             </h2>
-            <span className="text-sm text-gray-500 mb-1">{article.info}</span>
+            {sourcePage === '最新新聞' && (
+                <span className="text-sm text-gray-500 mb-1">{article.info}</span>
+            )}
             <p className="mt-2">{displayDescription}</p>
             <div className="flex justify-between items-center mt-4">
                 <div className="flex">
