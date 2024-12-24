@@ -135,14 +135,12 @@ src/
 │   │   │   ├── summary.ts          // 新聞摘要 API
 │   │   │   ├── addFavorite.ts      // 添加收藏 API
 │   │   │   ├── removeFavorite.ts   // 移除收藏 API
-│   │   │   ├── updateNews.js       // 更新新聞 API (未使用)
 │   │   │   ├── index.ts            // 獲取新聞列表的 API
 │   │   │   └── getFavorites.ts     // 獲取收藏 API
 │   │   ├── announcement            
 │   │   │   ├── summary.ts          // 公告摘要 API
 │   │   │   ├── addFavorite.ts      // 添加公告收藏 API
 │   │   │   ├── removeFavorite.ts   // 移除公告收藏 API
-│   │   │   ├── updateAnnouncement.ts // 更新公告 API (未使用)
 │   │   │   ├── index.ts            // 獲取公告列表的 API
 │   │   │   └── getFavorites.ts     // 獲取公告收藏 API
 │   │   ├── auth

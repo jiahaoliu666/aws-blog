@@ -5,6 +5,7 @@ import { formatTimeAgo } from '@/utils/dateUtils';
 interface NotificationProps {
   userId: string;
   notifications?: Array<{
+    article_id: string;
     title: string;
     date: string;
     content: string;
@@ -35,19 +36,33 @@ interface NotificationData {
   articles: Article[];
 }
 
+interface NotificationItem {
+  article_id: string;
+  title: string;
+  date: string;
+  content: string;
+  read: boolean;
+  category: string;
+  link: string;
+}
+
 const MAX_ARTICLES_DISPLAY = 50;
 
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount, onNotificationClick }) => {
-  const [newNotifications, setNewNotifications] = useState<NotificationProps['notifications']>([]);
+  const [newNotifications, setNewNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchNewArticles = async () => {
+      console.log('開始獲取通知數據...');
+      console.log('用戶ID:', userId);
       setLoading(true);
+      
       try {
+        console.log('發送請求到:', `/api/notifications?userId=${userId}`);
         const response = await fetch(
-          `/api/news/notifications?userId=${userId}`,
+          `/api/notifications?userId=${userId}`,
           {
             headers: {
               'Cache-Control': 'no-cache',
@@ -56,86 +71,65 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           }
         );
 
+        console.log('API響應狀態:', response.status);
         if (!response.ok) {
-          throw new Error('獲取通知失敗');
+          throw new Error(`獲取通知失敗: ${response.status}`);
         }
 
-        const data = await response.json() as NotificationData;
-
-        if (data && Array.isArray(data.articles)) {
-          setNewNotifications(data.articles.map(article => ({
-            title: article.translated_title,
-            date: new Date(article.published_at * 1000).toLocaleDateString('zh-TW'),
-            content: article.summary,
-            read: article.read || false,
-            category: article.category || 'news',
-            link: article.link
-          })));
-
-          const unreadArticles = data.articles.filter(article => !article.read).length;
-          setUnreadCount(unreadArticles);
-          setTotalCount(data.articles.length);
+        const data = await response.json();
+        console.log('獲取到的數據:', data);
+        
+        if (data && Array.isArray(data.notifications)) {
+          console.log('通知數量:', data.notifications.length);
+          setNewNotifications(data.notifications);
+          const unreadCount = data.notifications.filter(
+            (notification: NotificationItem) => !notification.read
+          ).length;
+          console.log('未讀通知數:', unreadCount);
+          setUnreadCount(unreadCount);
+          setTotalCount(data.notifications.length);
         }
       } catch (error) {
-        console.error("獲取新文章時發生錯誤:", error);
+        console.error("獲取通知時發生錯誤:", error);
+        console.error("錯誤詳情:", {
+          name: (error as Error).name,
+          message: (error as Error).message,
+          stack: (error as Error).stack
+        });
       } finally {
         setLoading(false);
       }
     };
 
+    console.log('初始化通知組件...');
     fetchNewArticles();
     const intervalId = setInterval(fetchNewArticles, 30000);
     return () => clearInterval(intervalId);
   }, [userId]);
 
-  const markAllAsRead = async () => {
-    try {
-      const response = await fetch('/api/news/notifications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        throw new Error('標記已讀失敗');
-      }
-
-      setNewNotifications((prevNotifications) =>
-        (prevNotifications || []).map((notification) => ({
-          ...notification,
-          read: true,
-        }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error("標記已讀失敗:", error);
-    }
-  };
-
-  const handleClick = async () => {
-    await markAllAsRead();
-  };
-
-  const handleNotificationClick = async (notification: any, index: number) => {
+  const handleNotificationClick = async (notification: NotificationItem) => {
     if (!notification.read) {
       try {
-        const response = await fetch('/api/news/notifications', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            userId,
-            articleId: notification.article_id
-          }),
-        });
+        const response = await fetch(
+          '/api/notifications/mark-read',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              userId,
+              articleId: notification.article_id
+            }),
+          }
+        );
 
         if (response.ok) {
           setNewNotifications(prev => 
-            prev?.map((item, i) => 
-              i === index ? { ...item, read: true } : item
+            prev.map(item => 
+              item.article_id === notification.article_id 
+                ? { ...item, read: true } 
+                : item
             )
           );
           setUnreadCount(prev => Math.max(0, prev - 1));
@@ -145,6 +139,9 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       }
     }
     
+    if (notification.link) {
+      window.open(notification.link, '_blank');
+    }
     onNotificationClick?.(notification);
   };
 
@@ -158,6 +155,28 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     } catch (error) {
       console.error('時間顯示錯誤:', error);
       return date;
+    }
+  };
+
+  const handleClick = async () => {
+    try {
+      const response = await fetch(
+        '/api/notifications/mark-read',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      if (response.ok) {
+        setNewNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error("標記全部已讀失敗:", error);
     }
   };
 
@@ -202,13 +221,12 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         ) : newNotifications && newNotifications.length > 0 ? (
           newNotifications.map((notification, index) => (
             <div 
-              key={index} 
-              onClick={() => handleNotificationClick(notification, index)}
+              key={notification.article_id} 
+              onClick={() => handleNotificationClick(notification)}
               className={`group relative flex px-4 py-4 
                 hover:bg-gray-50 transition-all duration-200 cursor-pointer
-                ${notification.read 
-                  ? 'bg-transparent' 
-                  : 'bg-blue-50'}`}>
+                ${notification.read ? 'bg-transparent' : 'bg-blue-50'}`}
+            >
               <div className="flex items-start w-full gap-3">
                 {!notification.read && (
                   <span className="shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2 
@@ -237,7 +255,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                         decoration-1 underline-offset-2 transition-colors duration-200"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleNotificationClick(notification, index);
+                        handleNotificationClick(notification);
                       }}
                     >
                       {notification.title}
