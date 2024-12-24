@@ -86,16 +86,25 @@ const Card: React.FC<CardProps> = ({
     };
 
     const getArticleUrl = (originalUrl: string) => {
-        const url = new URL(originalUrl);
-        const currentPath = window.location.pathname;
-        const source = currentPath.includes('/announcement') 
-            ? '最新公告' 
-            : currentPath.includes('/news')
-                ? '最新新聞'
-                : sourcePage;
-        
-        url.searchParams.set('source', source);
-        return url.toString();
+        try {
+            if (!originalUrl.startsWith('http://') && !originalUrl.startsWith('https://')) {
+                originalUrl = `https://${originalUrl}`;
+            }
+
+            const url = new URL(originalUrl);
+            const currentPath = window.location.pathname;
+            const source = currentPath.includes('/announcement') 
+                ? '最新公告' 
+                : currentPath.includes('/news')
+                    ? '最新新聞'
+                    : sourcePage;
+            
+            url.searchParams.set('source', source);
+            return url.toString();
+        } catch (error) {
+            console.error('Invalid URL:', originalUrl, error);
+            return originalUrl;
+        }
     };
 
     return (
@@ -109,7 +118,7 @@ const Card: React.FC<CardProps> = ({
         `}>
             <h2 className="text-xl font-bold mb-2">
                 <a 
-                    href={getArticleUrl(article.link)} 
+                    href={article.link ? getArticleUrl(article.link) : '#'} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="hover:underline hover:text-blue-500 transition-colors duration-300" 
