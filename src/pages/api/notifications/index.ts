@@ -72,10 +72,15 @@ export default async function handler(
           return null;
         }
 
+        // 確保使用 created_at 的時間戳
+        const createdAtTimestamp = notification.created_at?.N 
+          ? parseInt(notification.created_at.N) * 1000
+          : Date.now();
+
         return {
           article_id: articleId,
           title: article.translated_title?.S || article.title.S,
-          date: new Date(Number(notification.created_at?.N || Date.now())).toISOString(),
+          date: createdAtTimestamp,
           content: article.summary?.S || '',
           read: notification.read?.BOOL || false,
           category: category,

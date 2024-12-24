@@ -39,7 +39,7 @@ interface NotificationData {
 interface NotificationItem {
   article_id: string;
   title: string;
-  date: string;
+  date: number;
   content: string;
   read: boolean;
   category: string;
@@ -142,16 +142,23 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     onNotificationClick?.(notification);
   };
 
-  const getDisplayTime = (date: string) => {
+  const getDisplayTime = (timestamp: number | string) => {
     try {
-      const parsedDate = new Date(date);
-      if (!(parsedDate instanceof Date) || isNaN(parsedDate.getTime())) {
-        return date;
+      const numericTimestamp = typeof timestamp === 'string' 
+        ? parseInt(timestamp) 
+        : timestamp;
+
+      const date = new Date(numericTimestamp);
+
+      if (!(date instanceof Date) || isNaN(date.getTime())) {
+        console.warn('無效的日期格式:', timestamp);
+        return '未知時間';
       }
-      return formatTimeAgo(parsedDate);
+      
+      return formatTimeAgo(date);
     } catch (error) {
-      console.error('時間顯示錯誤:', error);
-      return date;
+      console.error('時間顯示錯誤:', error, '時間戳:', timestamp);
+      return '未知時間';
     }
   };
 
