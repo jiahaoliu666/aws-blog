@@ -35,7 +35,7 @@ interface NotificationUser {
 dotenv.config({ path: ".env.local" });
 
 // 常量定義
-const NUMBER_OF_ANNOUNCEMENTS_TO_FETCH = 1;
+const NUMBER_OF_ANNOUNCEMENTS_TO_FETCH = 2;
 
 // 初始化客戶端
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -202,7 +202,7 @@ async function scrapeAWSAnnouncements(): Promise<void> {
       { waitUntil: "networkidle2", timeout: 60000 }
     );
 
-    const announcements = await page.evaluate(() => {
+    const announcements = await page.evaluate((fetchCount) => {
       const titles = document.querySelectorAll(".m-card-title");
       const infos = document.querySelectorAll(".m-card-info");
       const links = document.querySelectorAll(".m-card-title a");
@@ -215,12 +215,12 @@ async function scrapeAWSAnnouncements(): Promise<void> {
         return `${year}年${month}月${day}日`;
       };
 
-      return Array.from(titles).slice(0, 1).map((titleElem, index) => ({
+      return Array.from(titles).slice(0, fetchCount).map((titleElem, index) => ({
         title: titleElem.textContent?.trim() || "沒有標題",
         info: formatDate(infos[index]?.textContent?.trim() || "沒有資訊"),
         link: (links[index] as HTMLAnchorElement)?.href || "沒有鏈接",
       }));
-    });
+    }, NUMBER_OF_ANNOUNCEMENTS_TO_FETCH);
 
     for (const announcement of announcements) {
       await saveToDynamoDB(announcement);

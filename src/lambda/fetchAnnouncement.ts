@@ -160,11 +160,10 @@ async function insertArticle(article: Article): Promise<boolean> {
       article_id: { S: uuidv4() },
       title: { S: article.title },
       translated_title: { S: translatedTitle },
-      info: { S: formatDate(article.info) }, // 使用格式化後的日期
+      info: { S: formatDate(article.info) },
       link: { S: article.link },
       summary: { S: summary },
-      published_at: { S: new Date().toISOString() },
-      createdAt: { S: new Date().toISOString() }
+      published_at: { N: String(Math.floor(Date.now() / 1000)) }
     }
   };
 
