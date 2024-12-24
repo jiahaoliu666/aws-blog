@@ -13,7 +13,7 @@ npx tsx src/lambda/fetchAnnouncement.ts
 
 # 執行 update
 ts-node --esm src/lambda/updateNews.ts
-
+ts-node src/lambda/updateAnnouncement.ts
 ------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適
@@ -33,3 +33,4 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 5. 載入頁面loader要一致，修改全局的loader，改使用最新新聞的loader樣式
 6. 把env環境變數儲存在secure manager
 7. 版本歷史的位置要放哪
+8. 當Navbar鈴鐺被點擊時 未讀數量會暫時消失

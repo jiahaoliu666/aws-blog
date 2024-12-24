@@ -120,9 +120,17 @@ interface LineServiceInterface {
   resetVerification(userId: string): Promise<void>;
 }
 
+interface AnnouncementData {
+  title: string;
+  link: string;
+  timestamp: string;
+  summary: string;
+}
+
 export class LineService implements LineServiceInterface {
   private readonly channelAccessToken: string;
   private readonly apiUrl: string = 'https://api.line.me/v2/bot';
+  private readonly client: any; // LINE SDK client
 
   constructor() {
     const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
@@ -133,6 +141,19 @@ export class LineService implements LineServiceInterface {
     }
     
     this.channelAccessToken = token || '';
+    this.client = {
+      broadcast: async (message: any) => {
+        const response = await fetch(`${this.apiUrl}/message/broadcast`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.channelAccessToken}`
+          },
+          body: JSON.stringify({ messages: [message] })
+        });
+        if (!response.ok) throw new Error('Broadcast failed');
+      }
+    };
   }
 
   async replyMessage(replyToken: string, messages: any[]): Promise<void> {
@@ -462,6 +483,53 @@ export class LineService implements LineServiceInterface {
     };
 
     await dynamoClient.send(new UpdateItemCommand(params));
+  }
+
+  async sendAnnouncementNotification(announcementData: AnnouncementData): Promise<void> {
+    const message = {
+      type: 'flex',
+      altText: `新 AWS 公告：${announcementData.title}`,
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: '🔔 新 AWS 公告',
+              weight: 'bold',
+              size: 'lg'
+            },
+            {
+              type: 'text',
+              text: announcementData.title,
+              wrap: true,
+              margin: 'md'
+            },
+            {
+              type: 'text',
+              text: announcementData.summary,
+              size: 'sm',
+              wrap: true,
+              margin: 'md'
+            },
+            {
+              type: 'button',
+              style: 'link',
+              action: {
+                type: 'uri',
+                label: '查看詳情',
+                uri: announcementData.link
+              },
+              margin: 'md'
+            }
+          ]
+        }
+      }
+    };
+
+    await this.client.broadcast(message);
   }
 }
 
