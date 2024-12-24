@@ -36,7 +36,7 @@ export default async function handler(
     }
 
     logger.info(`成功發送郵件至 ${email}`);
-    res.status(200).json({ success: true, messageId: result.messageId });
+    res.status(200).json({ success: true });
   } catch (error) {
     const errorResponse = errorHandler.handle(error);
     res.status(500).json(errorResponse);

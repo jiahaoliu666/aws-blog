@@ -131,7 +131,11 @@ src/
 │   ├── news
 │   │   └── index.tsx               // 新聞頁面
 │   ├── api
-│   │   ├── news
+│   │   └── notifications
+│   │       └── index.ts           // 通知 API
+│   │       └── mark-read.ts       // 標記已讀 API
+│   │       └── sendEmail.ts       // 發送郵件 API
+│   │   ├── news 
 │   │   │   ├── summary.ts          // 新聞摘要 API
 │   │   │   ├── addFavorite.ts      // 添加收藏 API
 │   │   │   ├── removeFavorite.ts   // 移除收藏 API

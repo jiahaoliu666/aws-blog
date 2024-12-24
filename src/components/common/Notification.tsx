@@ -139,9 +139,6 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       }
     }
     
-    if (notification.link) {
-      window.open(notification.link, '_blank');
-    }
     onNotificationClick?.(notification);
   };
 
@@ -224,7 +221,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
               key={notification.article_id} 
               onClick={() => handleNotificationClick(notification)}
               className={`group relative flex px-4 py-4 
-                hover:bg-gray-50 transition-all duration-200 cursor-pointer
+                hover:bg-gray-50 transition-all duration-200
                 ${notification.read ? 'bg-transparent' : 'bg-blue-50'}`}
             >
               <div className="flex items-start w-full gap-3">
@@ -239,7 +236,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                       ${notification.category === 'news' 
                         ? 'bg-blue-100 text-blue-800 group-hover:bg-blue-200' 
                         : 'bg-purple-100 text-purple-800 group-hover:bg-purple-200'}`}>
-                      {notification.category === 'news' ? '最新新聞' : '系統通知'}
+                      {notification.category === 'news' ? '最新新聞' : '最新公告'}
                     </span>
                     <span className="text-xs text-gray-500 group-hover:text-gray-600">
                       {getDisplayTime(notification.date)}

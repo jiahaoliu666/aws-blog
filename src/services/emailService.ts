@@ -7,6 +7,12 @@ import { EmailNotification } from "../types/emailTypes";
 
 const rateLimiter = new RateLimiter(EMAIL_CONFIG.RATE_LIMIT);
 
+interface EmailResult {
+  success: boolean;
+  error?: string | null;
+  messageId?: string;
+}
+
 export class EmailService {
   async sendEmail(notification: EmailNotification) {
     try {

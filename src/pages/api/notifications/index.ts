@@ -51,7 +51,7 @@ export default async function handler(
     // 處理每個通知，獲取對應的文章或公告詳情
     const notifications = await Promise.all(userNotifications.Items.map(async (notification) => {
       const articleId = notification.article_id.S!;
-      const category = notification.category.S || 'news';
+      const category = notification.category.S?.toLowerCase() || 'news';
       const tableName = category === 'news' ? 'AWS_Blog_News' : 'AWS_Blog_Announcement';
 
       // 查詢文章詳情
