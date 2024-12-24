@@ -26,6 +26,10 @@ const Card: React.FC<CardProps> = ({
     isFavorited,
     sourcePage,
 }) => {
+    if (!article || !article.title || !article.article_id) {
+        return null;
+    }
+
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
     const { user } = useAuthContext();
     const { logRecentArticle } = useProfileArticles({ user });

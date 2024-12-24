@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DynamoDBClient, QueryCommand, PutItemCommand, DeleteItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
@@ -35,6 +35,30 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
     },
   });
+
+  const fetchFavorites = async () => {
+    try {
+      const params = {
+        TableName: 'AWS_Blog_UserFavorites',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': { S: user?.sub || '' }
+        }
+      };
+
+      const command = new QueryCommand(params);
+      const response = await dynamoClient.send(command);
+      
+      return response.Items?.map(item => ({
+        article_id: item.article_id?.S,
+        title: item.title?.S,
+        description: item.description?.S
+      })) || [];
+    } catch (error) {
+      console.error('獲取收藏文章失敗:', error);
+      return [];
+    }
+  };
 
   const fetchRecentArticles = async () => {
     if (!user?.sub) return;
@@ -234,6 +258,25 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
       toast.error('無法移除文章');
     }
   };
+
+  const getFavoriteArticles = useCallback(async () => {
+    try {
+      const favorites = await fetchFavorites();
+      
+      // 過濾掉無效的收藏文章
+      const validFavorites = favorites.filter(favorite => 
+        favorite && 
+        favorite.article_id && 
+        favorite.title && 
+        favorite.description
+      );
+
+      return validFavorites;
+    } catch (error) {
+      console.error('獲取收藏文章失敗:', error);
+      return [];
+    }
+  }, []);
 
   useEffect(() => {
     if (user?.sub) {

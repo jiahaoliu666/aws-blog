@@ -111,6 +111,19 @@ function useNewsPageLogic() {
         }
     };
 
+    const processFavorites = useCallback((articles: ExtendedNews[], favorites: string[]) => {
+        // 過濾掉沒有完整資料的文章
+        const validArticles = articles.filter(article => 
+            article && article.title && article.article_id
+        );
+
+        // 只處理有效的文章
+        return validArticles.map(article => ({
+            ...article,
+            isFavorited: favorites.includes(article.article_id)
+        }));
+    }, []);
+
     return {  
         language,  
         setLanguage: handleLanguageChange,  
