@@ -27,8 +27,6 @@ src/
 │   ├── 404.tsx                     // 404 錯誤頁面
 │   ├── _document.tsx               // 自定義文檔
 │   ├── api  
-│   │   ├── favorites
-│   │   │   ├── [category].ts       // 獲取收藏的 API
 │   │   ├── announcement
 │   │   │   ├── summary.ts          // 獲取公告摘要的 API
 │   │   │   ├── addFavorite.ts      // 新增公告收藏的 API
@@ -124,20 +122,20 @@ src/
 │   │   └── Notification.tsx        // 通知組件
 │   └── profile
 │       ├── sections
-│       │   ├── HistorySection.tsx  // 歷史記錄部分
-│       │   ├── NotificationSection.tsx // 通知部分
-│       │   ├── PasswordSection.tsx // 密碼部分
-│       │   ├── AccountSection.tsx  // 帳戶部分
-│       │   ├── ActivityLogSection.tsx // 活動日誌部分
-│       │   ├── ProfileSection.tsx  // 個人資料部分
-│       │   ├── FeedbackSection.tsx // 反饋部分
-│       │   └── PreferencesSection.tsx // 偏好設置部分
+│       │   ├── ProfileSection.tsx  // 個人資訊
+│       │   ├── PasswordSection.tsx // 修改密碼
+│       │   ├── NotificationSection.tsx // 訂閱通知
+│       │   └── PreferencesSection.tsx // 偏好設定
+│       │   ├── HistorySection.tsx  // 觀看記錄
+│       │   ├── ActivityLogSection.tsx // 活動日誌
+│       │   ├── FeedbackSection.tsx // 意見反饋
+│       │   ├── AccountSection.tsx  // 帳戶管理
 │       ├── common
 │       │   ├── Card.tsx            // 卡片組件
 │       │   ├── styles.ts           // 樣式
-│       │   ├── SectionTitle.tsx    // 部分標題
+│       │   ├── SectionTitle.tsx    // 標題
 │       │   ├── Sidebar.tsx         // 側邊欄
-│       │   └── SectionContainer.tsx // 部分容器
+│       │   └── SectionContainer.tsx // 容器
 │       └── ProfileUI.tsx           // 個人資料界面
 ├── context
 │   ├── ToastContext.tsx            // Toast 通知上下文

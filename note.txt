@@ -22,9 +22,23 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 
 將這些檔案合併成一個通用的處理器
 --------
+修改模組：  
+Type // 類型
+pages/index // 頁面
+│   │       └── summary.ts          // api
+│   │       └── addFavorite.ts      
+│   │       └── removeFavorite.ts  
+│   │       └── index.ts           
+│   │       └── getFavorites.ts    
+│   │   └── useNewsPageLogic.ts     // Hook
+│   │   └── useFetchNews.ts         
+│   │   └── useNewsFavorites.ts     
+src/lambda/fetch
+src/lambda/update
+src/hooks/profile/useProfileArticles.ts // 觀看紀錄
+--------
 進行中：
 1. 爬取解決方案文章 fetch＆update，並完成最新公告頁面
-2. 正確獲取收藏數據
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 
@@ -38,3 +52,4 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 6. 把env環境變數儲存在secure manager
 7. 版本歷史的位置要放哪
 8. 當Navbar鈴鐺被點擊時 未讀數量會暫時消失
+9. 觀看紀錄的標籤顏色要和 Navbar 通知介面的標籤顏色一致

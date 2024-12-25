@@ -133,7 +133,8 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   const activity = useProfileActivity({ user: currentUser });
   const password = useProfilePassword({ 
     user: currentUser, 
-    handleLogout: logoutUser
+    handleLogout: logoutUser,
+    addActivityLog: activity.addActivityLog
   });
   const articles = useProfileArticles({ user: currentUser });
   const lineVerification = useLineVerification();
