@@ -26,7 +26,9 @@ src/
 │   │   └── forgot-password.tsx     // 忘記密碼頁面
 │   ├── 404.tsx                     // 404 錯誤頁面
 │   ├── _document.tsx               // 自定義文檔
-│   ├── api
+│   ├── api  
+│   │   ├── favorites
+│   │   │   ├── [category].ts       // 獲取收藏的 API
 │   │   ├── announcement
 │   │   │   ├── summary.ts          // 獲取公告摘要的 API
 │   │   │   ├── addFavorite.ts      // 新增公告收藏的 API
