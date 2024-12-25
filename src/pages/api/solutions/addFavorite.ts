@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: '請求參數不完整' });
         }
 
-        console.log('請求參數:', { userId, articleId, title });
+        console.log('收到收藏請求:', { userId, articleId, title });
 
         const getSolutionParams = {
             TableName: SOLUTIONS_TABLE,
@@ -30,7 +30,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
 
         try {
+            console.log('查詢解決方案:', getSolutionParams);
             const solutionResponse = await client.send(new GetCommand(getSolutionParams));
+            
+            console.log('查詢結果:', solutionResponse.Item);
+
             const solutionData = solutionResponse.Item;
 
             if (!solutionData) {
@@ -41,18 +45,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const params = {
                 TableName: USER_FAVORITES_TABLE,
                 Item: {
-                    userId,
+                    userId: userId,
                     article_id: articleId,
-                    createdAt: new Date().toISOString(),
-                    category: 'solutions'
+                    category: 'Solutions',
+                    createdAt: new Date().toISOString()
                 },
             };
 
+            console.log('準備添加收藏:', params);
             await client.send(new PutCommand(params));
-            console.log('收藏成功:', params.Item);
+            console.log('收藏成功');
 
-            return res.status(200).json({ message: '收藏成功', item: { userId, article_id: articleId } });
-        } catch (error: unknown) {
+            return res.status(200).json({ 
+                message: '收藏成功', 
+                item: {
+                    ...params.Item,
+                    title: title
+                }
+            });
+        } catch (error) {
+            console.error('收藏失敗:', {
+                error,
+                params: getSolutionParams,
+                userId,
+                articleId
+            });
             if (error instanceof Error) {
                 console.error('發生錯誤:', error);
                 return res.status(500).json({ message: '內部伺服器錯誤', error: error.message });

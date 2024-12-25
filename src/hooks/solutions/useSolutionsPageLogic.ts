@@ -4,14 +4,14 @@ import { extractDateFromInfo } from "@/utils/extractDateFromInfo";
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import { useAuthContext } from '@/context/AuthContext';
 import { browserStorage } from '@/utils/browserStorage';
-import { toast } from 'react-hot-toast';
+import useFetchSolutions from "./useFetchSolutions";
+import { useSolutionFavorites } from "./useSolutionFavorites";
 
 function useSolutionsPageLogic() {
     const { user } = useAuthContext();
     const { preferences } = useProfilePreferences();
     const [isClient, setIsClient] = useState(false);
     
-    // 初始化狀態
     const [language, setLanguage] = useState<string>('zh-TW');
     const [gridView, setGridView] = useState<boolean>(preferences?.viewMode === 'grid');
     const [showSummaries, setShowSummaries] = useState<boolean>(preferences?.autoSummarize || false);
@@ -23,11 +23,8 @@ function useSolutionsPageLogic() {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [filteredSolutions, setFilteredSolutions] = useState<ExtendedSolution[]>([]);
     const [currentSolutions, setCurrentSolutions] = useState<ExtendedSolution[]>([]);
-    const [solutions, setSolutions] = useState<ExtendedSolution[]>([]);
-    const [favorites, setFavorites] = useState<ExtendedSolution[]>([]);
     const [isLanguageChanging, setIsLanguageChanging] = useState(false);
 
-    // 語言設置邏輯
     useEffect(() => {
         setIsClient(true);
         const savedLanguage = browserStorage.getItem('solutionLanguage');
@@ -43,6 +40,16 @@ function useSolutionsPageLogic() {
             browserStorage.setItem('solutionLanguage', language);
         }
     }, [language, isClient]);
+
+    const fetchedSolutions = useFetchSolutions(language);
+    const { favorites, toggleFavorite } = useSolutionFavorites();
+
+    const solutions = useMemo(() => {
+        return fetchedSolutions.map(solution => ({
+            ...solution,
+            isFavorite: !!favorites.find(fav => fav.article_id === solution.article_id),
+        }));
+    }, [fetchedSolutions, favorites]);
 
     // 分頁和過濾邏輯
     useEffect(() => {
@@ -91,36 +98,6 @@ function useSolutionsPageLogic() {
             setIsLanguageChanging(false);
         }
     };
-
-    const toggleFavorite = useCallback(async (solution: ExtendedSolution) => {
-        // 實作收藏切換邏輯
-        return Promise.resolve();
-    }, []);
-
-    useEffect(() => {
-        const fetchSolutions = async () => {
-            try {
-                console.log('正在獲取解決方案數據...');
-                const response = await fetch(`/api/solutions?language=${language}`);
-                console.log('API 響應狀態:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('獲取到的解決方案數據:', data);
-                
-                setSolutions(data);
-                setFilteredSolutions(data);
-            } catch (error) {
-                console.error('獲取解決方案失敗:', error);
-                toast.error('獲取解決方案失敗');
-            }
-        };
-
-        fetchSolutions();
-    }, [language]);
 
     return {
         language,

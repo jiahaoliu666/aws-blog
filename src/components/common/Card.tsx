@@ -60,7 +60,12 @@ const Card: React.FC<CardProps> = ({
     }`;
 
     const handleToggleFavorite = async () => {
-        await toggleFavorite(article);
+        try {
+            await toggleFavorite(article);
+        } catch (error) {
+            console.error('收藏操作失敗:', error);
+            toast.error('收藏操作失敗，請稍後再試');
+        }
     };
 
     const handleSummaryClick = () => {

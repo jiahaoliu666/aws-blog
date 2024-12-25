@@ -76,6 +76,8 @@ src/
 │   │   └── useNewsFavorites.ts     // 使用新聞收藏的 Hook
 │   ├── solutions
 │   │   └── useSolutionsPageLogic.ts // 使用解決方案頁面邏輯的 Hook
+│   │   └── useFetchSolutions.ts // 使用獲取解決方案的 Hook
+│   │   └── useSolutionFavorites.ts // 使用解決方案收藏的 Hook
 │   ├── profile
 │   │   ├── useProfileAvatar.ts     // 使用個人資料頭像的 Hook
 │   │   ├── useProfileFeedback.ts   // 使用個人資料反饋的 Hook
