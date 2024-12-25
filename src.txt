@@ -106,6 +106,7 @@ src/
 │   ├── fetchSolutions.ts           // 獲取解決方案的 Lambda 函數
 │   ├── updateNews.ts               // 更新新聞的 Lambda 函數
 │   └── updateAnnouncement.ts       // 更新公告的 Lambda 函數
+│   └── updateSolutions.ts          // 更新解決方案的 Lambda 函數
 ├── components
 │   ├── common
 │   │   ├── Navbar.tsx              // 導航欄組件

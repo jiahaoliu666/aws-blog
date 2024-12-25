@@ -127,6 +127,13 @@ interface AnnouncementData {
   summary: string;
 }
 
+interface SolutionData {
+  title: string;
+  link: string;
+  timestamp: string;
+  summary: string;
+}
+
 export class LineService implements LineServiceInterface {
   private readonly channelAccessToken: string;
   private readonly apiUrl: string = 'https://api.line.me/v2/bot';
@@ -523,6 +530,64 @@ export class LineService implements LineServiceInterface {
                 uri: announcementData.link
               },
               margin: 'md'
+            }
+          ]
+        }
+      }
+    };
+
+    await this.client.broadcast(message);
+  }
+
+  async sendSolutionNotification(solutionData: SolutionData): Promise<void> {
+    const message = {
+      type: 'flex',
+      altText: `新的 AWS 解決方案：${solutionData.title}`,
+      contents: {
+        type: 'bubble',
+        header: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: '🔔 新的 AWS 解決方案',
+              weight: 'bold',
+              size: 'lg'
+            }
+          ]
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: solutionData.title,
+              wrap: true,
+              weight: 'bold'
+            },
+            {
+              type: 'text',
+              text: solutionData.summary,
+              wrap: true,
+              size: 'sm',
+              margin: 'md'
+            }
+          ]
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'button',
+              action: {
+                type: 'uri',
+                label: '查看詳情',
+                uri: solutionData.link
+              },
+              style: 'primary'
             }
           ]
         }
