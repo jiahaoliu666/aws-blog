@@ -1,12 +1,12 @@
 src/
 ├── types
+│   ├── announcementType.ts         // 公告文章相關的類型
+│   ├── newsType.ts                 // 新聞文章相關類型
 │   ├── profileTypes.ts             // 個人資料類型定義
 │   ├── next-auth.d.ts              // NextAuth.js 的類型定義
 │   ├── emailTypes.ts               // 電子郵件通知類型
 │   ├── amazon-dax-client.d.ts      // Amazon DAX 客戶端的類型定義
-│   ├── newsType.ts                 // 新聞文章相關類型
 │   ├── lineTypes.ts                // LINE 通知相關類型
-│   ├── announcementType.ts         // 公告文章相關的類型
 │   ├── userType.ts                 // 用戶相關的類型
 ├── context
 │   ├── ToastContext.tsx            // Toast 通知上下文
@@ -71,9 +71,14 @@ src/
 │       │   └── SectionContainer.tsx // 部分容器
 │       └── ProfileUI.tsx           // 個人資料界面
 ├── hooks
-│   ├── toast
-│   │   └── useToast.ts             // 使用 Toast 的 Hook
-│   ├── useAuth.ts                  // 使用認證的 Hook
+│   ├── announcement
+│   │   ├── useAnnouncementPageLogic.ts // 使用公告頁面邏輯的 Hook
+│   │   ├── useFetchAnnouncement.ts // 使用獲取公告的 Hook
+│   │   └── useAnnouncementFavorites.ts // 使用公告收藏的 Hook
+│   ├── news
+│   │   ├── useNewsFavorites.ts     // 使用新聞收藏的 Hook
+│   │   ├── useFetchNews.ts         // 使用獲取新聞的 Hook
+│   │   └── useNewsPageLogic.ts     // 使用新聞頁面邏輯的 Hook
 │   ├── profile
 │   │   ├── useProfileAvatar.ts     // 使用個人資料頭像的 Hook
 │   │   ├── useProfileFeedback.ts   // 使用個人資料反饋的 Hook
@@ -87,18 +92,13 @@ src/
 │   │   ├── index.ts                // 個人資料 Hook 入口
 │   │   ├── useProfilePassword.ts   // 使用個人資料密碼的 Hook
 │   │   └── useProfileAccount.ts    // 使用個人資料帳戶的 Hook
-│   ├── news
-│   │   ├── useNewsFavorites.ts     // 使用新聞收藏的 Hook
-│   │   ├── useFetchNews.ts         // 使用獲取新聞的 Hook
-│   │   └── useNewsPageLogic.ts     // 使用新聞頁面邏輯的 Hook
+│   ├── toast
+│   │   └── useToast.ts             // 使用 Toast 的 Hook
+│   ├── useAuth.ts                  // 使用認證的 Hook
 │   ├── line
 │   │   ├── useLineVerification.ts  // 使用 LINE 驗證的 Hook
 │   │   └── index.ts                // LINE Hook 入口
 │   ├── useAppLogic.ts              // 使用應用邏輯的 Hook
-│   ├── announcement
-│   │   ├── useAnnouncementPageLogic.ts // 使用公告頁面邏輯的 Hook
-│   │   ├── useFetchAnnouncement.ts // 使用獲取公告的 Hook
-│   │   └── useAnnouncementFavorites.ts // 使用公告收藏的 Hook
 │   └── notifications
 │       └── useEmailNotifications.ts // 使用電子郵件通知的 Hook
 ├── lambda
@@ -112,22 +112,33 @@ src/
 │   ├── lineTemplates.ts            // LINE 模板
 │   └── deleteAccountEmail.ts       // 刪除帳戶的電子郵件模板
 ├── pages
+│   ├── _app.tsx                    // 自定義應用程序入口
 │   ├── index.tsx                   // 首頁
-│   ├── settings
-│   │   └── index.tsx               // 設置頁面
-│   ├── 404.tsx                     // 404 錯誤頁面
+│   ├── announcement
+│   │   └── index.tsx               // 公告頁面
+│   ├── news
+│   │   └── index.tsx               // 新聞頁面
+│   ├── profile
+│   │   └── index.tsx               // 個人資料頁面
 │   ├── auth
 │   │   ├── login.tsx               // 登錄頁面
 │   │   ├── register.tsx            // 註冊頁面
 │   │   └── forgot-password.tsx     // 忘記密碼頁面
+│   ├── 404.tsx                     // 404 錯誤頁面
 │   ├── _document.tsx               // 自定義文檔
-│   ├── profile
-│   │   └── index.tsx               // 個人資料頁面
-│   ├── news
-│   │   └── index.tsx               // 新聞頁面
 │   ├── api
-│   │   ├── auth
-│   │   │   └── cleanup.ts          // 清理認證的 API
+│   │   ├── announcement
+│   │   │   ├── summary.ts          // 獲取公告摘要的 API
+│   │   │   ├── addFavorite.ts      // 新增公告收藏的 API
+│   │   │   ├── removeFavorite.ts   // 移除公告收藏的 API
+│   │   │   ├── index.ts            // 公告 API 主入口
+│   │   │   └── getFavorites.ts     // 獲取公告收藏的 API
+│   │   ├── news
+│   │   │   ├── summary.ts          // 獲取新聞摘要的 API
+│   │   │   ├── addFavorite.ts      // 新增新聞收藏的 API
+│   │   │   ├── removeFavorite.ts   // 移除新聞收藏的 API
+│   │   │   ├── index.ts            // 新聞 API 主入口
+│   │   │   └── getFavorites.ts     // 獲取新聞收藏的 API
 │   │   ├── profile
 │   │   │   ├── recent-log.ts       // 獲取最近日誌的 API
 │   │   │   ├── notification-settings
@@ -137,30 +148,17 @@ src/
 │   │   │   ├── account
 │   │   │   │   └── delete.ts       // 刪除帳戶的 API
 │   │   │   └── activity-log.ts     // 活動日誌的 API
-│   │   ├── news
-│   │   │   ├── summary.ts          // 獲取新聞摘要的 API
-│   │   │   ├── addFavorite.ts      // 新增新聞收藏的 API
-│   │   │   ├── removeFavorite.ts   // 移除新聞收藏的 API
-│   │   │   ├── index.ts            // 新聞 API 主入口
-│   │   │   └── getFavorites.ts     // 獲取新聞收藏的 API
+│   │   ├── auth
+│   │   │   └── cleanup.ts          // 清理認證的 API
 │   │   ├── line
 │   │   │   ├── verify-code.ts      // 驗證 LINE 代碼的 API
 │   │   │   ├── verification-status.ts // 獲取驗證狀態的 API
 │   │   │   ├── message.ts          // 發送 LINE 消息的 API
 │   │   │   └── webhook.ts          // LINE Webhook API
-│   │   ├── announcement
-│   │   │   ├── summary.ts          // 獲取公告摘要的 API
-│   │   │   ├── addFavorite.ts      // 新增公告收藏的 API
-│   │   │   ├── removeFavorite.ts   // 移除公告收藏的 API
-│   │   │   ├── index.ts            // 公告 API 主入口
-│   │   │   └── getFavorites.ts     // 獲取公告收藏的 API
 │   │   └── notifications
 │   │       ├── sendEmail.ts        // 發送電子郵件的 API
 │   │       ├── mark-read.ts        // 標記通知為已讀的 API
 │   │       └── index.ts            // 通知 API 主入口
-│   ├── announcement
-│   │   └── index.tsx               // 公告頁面
-│   └── _app.tsx                    // 自定義應用程序入口
 ├── services
 │   ├── notificationService.ts      // 通知服務
 │   ├── authService.ts              // 認證服務
