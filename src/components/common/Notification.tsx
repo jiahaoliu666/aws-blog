@@ -107,7 +107,13 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     return () => clearInterval(intervalId);
   }, [userId]);
 
-  const handleNotificationClick = async (notification: NotificationItem) => {
+  const handleItemClick = (notification: NotificationItem) => {
+    onNotificationClick?.(notification);
+  };
+
+  const handleLinkClick = async (e: React.MouseEvent, notification: NotificationItem) => {
+    e.stopPropagation();
+
     if (!notification.read) {
       try {
         const response = await fetch(
@@ -138,8 +144,6 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         console.error('標記通知已讀失敗:', error);
       }
     }
-    
-    onNotificationClick?.(notification);
   };
 
   const getDisplayTime = (timestamp: number | string) => {
@@ -226,7 +230,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
           newNotifications.map((notification, index) => (
             <div 
               key={notification.article_id} 
-              onClick={() => handleNotificationClick(notification)}
+              onClick={() => handleItemClick(notification)}
               className={`group relative flex px-4 py-4 
                 hover:bg-gray-50 transition-all duration-200
                 ${notification.read ? 'bg-transparent' : 'bg-blue-50'}`}
@@ -263,10 +267,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                       rel="noopener noreferrer"
                       className="hover:text-blue-600 hover:underline decoration-blue-400/50 
                         decoration-1 underline-offset-2 transition-colors duration-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleNotificationClick(notification);
-                      }}
+                      onClick={(e) => handleLinkClick(e, notification)}
                     >
                       {notification.title}
                     </a>

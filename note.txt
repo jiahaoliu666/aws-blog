@@ -40,6 +40,7 @@ src/hooks/profile/useProfileArticles.ts // 觀看紀錄
 --------
 進行中：
 1. 爬取解決方案文章 fetch＆update
+2. 更改通知介面根據時間進行排序
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 
