@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             FilterExpression: 'category = :category',
             ExpressionAttributeValues: {
                 ':userId': userId,
-                ':category': 'solutions'
+                ':category': 'Solutions'
             },
         };
 
