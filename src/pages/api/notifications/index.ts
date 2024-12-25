@@ -52,7 +52,22 @@ export default async function handler(
     const notifications = await Promise.all(userNotifications.Items.map(async (notification) => {
       const articleId = notification.article_id.S!;
       const category = notification.category.S?.toLowerCase() || 'news';
-      const tableName = category === 'news' ? 'AWS_Blog_News' : 'AWS_Blog_Announcement';
+      
+      // 根據不同類別選擇對應的表格
+      let tableName;
+      switch(category) {
+        case 'news':
+          tableName = 'AWS_Blog_News';
+          break;
+        case 'announcement':
+          tableName = 'AWS_Blog_Announcement';
+          break;
+        case 'solution':
+          tableName = 'AWS_Blog_Solutions';
+          break;
+        default:
+          tableName = 'AWS_Blog_News';
+      }
 
       // 查詢文章詳情
       const articleParams = {
@@ -77,11 +92,19 @@ export default async function handler(
           ? parseInt(notification.created_at.N) * 1000
           : Date.now();
 
+        // 根據不同類別處理內容
+        let content = '';
+        if (category === 'solution') {
+          content = article.summary?.S || article.description?.S || '';
+        } else {
+          content = article.summary?.S || '';
+        }
+
         return {
           article_id: articleId,
           title: article.translated_title?.S || article.title.S,
           date: createdAtTimestamp,
-          content: article.summary?.S || '',
+          content: content,
           read: notification.read?.BOOL || false,
           category: category,
           link: article.link?.S || ''
