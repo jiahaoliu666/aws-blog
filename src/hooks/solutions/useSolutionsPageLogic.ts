@@ -4,6 +4,7 @@ import { extractDateFromInfo } from "@/utils/extractDateFromInfo";
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import { useAuthContext } from '@/context/AuthContext';
 import { browserStorage } from '@/utils/browserStorage';
+import { toast } from 'react-hot-toast';
 
 function useSolutionsPageLogic() {
     const { user } = useAuthContext();
@@ -95,6 +96,31 @@ function useSolutionsPageLogic() {
         // 實作收藏切換邏輯
         return Promise.resolve();
     }, []);
+
+    useEffect(() => {
+        const fetchSolutions = async () => {
+            try {
+                console.log('正在獲取解決方案數據...');
+                const response = await fetch(`/api/solutions?language=${language}`);
+                console.log('API 響應狀態:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('獲取到的解決方案數據:', data);
+                
+                setSolutions(data);
+                setFilteredSolutions(data);
+            } catch (error) {
+                console.error('獲取解決方案失敗:', error);
+                toast.error('獲取解決方案失敗');
+            }
+        };
+
+        fetchSolutions();
+    }, [language]);
 
     return {
         language,

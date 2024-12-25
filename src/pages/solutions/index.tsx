@@ -50,11 +50,26 @@ const SolutionsPage: React.FC = () => {
 
     useEffect(() => {
         const loadData = async () => {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setIsLoading(false);
+            try {
+                console.log('開始加載解決方案數據...');
+                // 等待 useSolutionsPageLogic 中的數據加載
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log('當前解決方案數據:', currentSolutions);
+                setIsLoading(false);
+            } catch (error) {
+                console.error('加載數據時出錯:', error);
+                setIsLoading(false);
+            }
         };
+
         loadData();
-    }, []);
+    }, [currentSolutions]);
+
+    useEffect(() => {
+        console.log('solutions 數據更新:', solutions);
+        console.log('filteredSolutions 數據更新:', filteredSolutions);
+        console.log('currentSolutions 數據更新:', currentSolutions);
+    }, [solutions, filteredSolutions, currentSolutions]);
 
     const resetFilters = () => {
         setGridView(false);

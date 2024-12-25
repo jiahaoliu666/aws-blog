@@ -39,6 +39,12 @@ src/
 │   │   │   ├── removeFavorite.ts   // 移除新聞收藏的 API
 │   │   │   ├── index.ts            // 新聞 API 主入口
 │   │   │   └── getFavorites.ts     // 獲取新聞收藏的 API
+│   │   ├── solutions
+│   │   │   ├── summary.ts          // 獲取解決方案摘要的 API
+│   │   │   ├── addFavorite.ts      // 新增解決方案收藏的 API
+│   │   │   ├── removeFavorite.ts   // 移除解決方案收藏的 API
+│   │   │   ├── index.ts            // 解決方案 API 主入口
+│   │   │   └── getFavorites.ts     // 獲取解決方案收藏的 API
 │   │   ├── profile
 │   │   │   ├── recent-log.ts       // 獲取最近日誌的 API
 │   │   │   ├── notification-settings
