@@ -10,6 +10,7 @@ find src > src1.txt
 ts-node --esm src/lambda/fetchNews.ts
 npx tsx src/lambda/fetchNews.ts
 npx tsx src/lambda/fetchAnnouncement.ts
+ts-node src/lambda/fetchSolutions.ts
 
 # 執行 update
 ts-node --esm src/lambda/updateNews.ts

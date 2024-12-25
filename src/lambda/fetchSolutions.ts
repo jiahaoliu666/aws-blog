@@ -215,14 +215,25 @@ async function scrapeAWSSolutions(targetNumberOfSolutions: number): Promise<void
     );
 
     while (totalSolutionsInDatabase < targetNumberOfSolutions) {
-      const solutions = await page.evaluate(() => {
-        const items = document.querySelectorAll('.m-card-container');
-        return Array.from(items).map((item) => ({
-          title: item.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
-          description: item.querySelector('.m-desc')?.textContent?.trim() || '沒有描述',
-          link: (item.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
+      // 獲取所有卡片元素
+      const cards = await page.$$('.m-card-container');
+      const solutions = [];
+
+      // 逐個處理卡片
+      for (const card of cards) {
+        // 懸停在卡片上
+        await card.hover();
+        // 等待內容載入
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const solution = await card.evaluate((el) => ({
+          title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
+          description: el.querySelector('.m-desc')?.textContent?.trim() || '沒有描述',
+          link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
         }));
-      });
+
+        solutions.push(solution);
+      }
 
       for (const solution of solutions) {
         if (totalSolutionsInDatabase < targetNumberOfSolutions) {
