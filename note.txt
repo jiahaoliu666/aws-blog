@@ -37,6 +37,8 @@ pages/index // 頁面
 src/lambda/fetch
 src/lambda/update
 src/hooks/profile/useProfileArticles.ts // 觀看紀錄
+src/components/common/Notification.tsx // 通知介面
+src/pages/api/notifications/mark-read.ts // 標記已讀
 --------
 進行中：
 1. 爬取解決方案文章 fetch＆update
