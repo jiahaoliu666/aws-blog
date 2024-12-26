@@ -17,6 +17,7 @@ npx ts-node src/lambda/fetchArchitecture.ts
 ts-node --esm src/lambda/updateNews.ts
 ts-node src/lambda/updateAnnouncement.ts
 ts-node src/lambda/updateSolutions.ts
+npx ts-node src/lambda/updateArchitecture.ts
 ------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適
@@ -60,3 +61,5 @@ src/pages/api/notifications/mark-read.ts // 標記已讀
 7. 版本歷史的位置要放哪
 8. 當Navbar鈴鐺被點擊時 未讀數量會暫時消失
 9. 觀看紀錄的標籤顏色要和 Navbar 通知介面的標籤顏色一致
+10. 整合成只使用一個爬蟲檔案就好 
+11. 使用 crontab（Linux/Mac）定期執行爬蟲
