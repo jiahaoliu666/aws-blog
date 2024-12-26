@@ -12,6 +12,7 @@ npx tsx src/lambda/fetchNews.ts
 npx tsx src/lambda/fetchAnnouncement.ts
 ts-node src/lambda/fetchSolutions.ts
 npx ts-node src/lambda/fetchArchitecture.ts
+npx ts-node src/lambda/fetchKnowledge.ts
 
 # 執行 update
 ts-node --esm src/lambda/updateNews.ts

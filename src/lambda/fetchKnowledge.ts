@@ -209,7 +209,7 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
 
     await gotoWithRetry(
       page,
-      'https://repost.aws/knowledge-center',
+      'https://repost.aws/knowledge-center/all',
       {
         waitUntil: 'networkidle2',
         timeout: 60000,
@@ -249,7 +249,7 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
     console.log(`跳過了 ${skippedCount} 篇已存在的知識文章`);
 
     totalArticlesInDatabase = await countKnowledgeInDatabase();
-    console.log(`爬���後資料庫知識文章總數: ${totalArticlesInDatabase}`);
+    console.log(`爬取後資料庫知識文章總數: ${totalArticlesInDatabase}`);
   } catch (error) {
     console.error('爬取過程中發生錯誤:', error instanceof Error ? error.message : error);
   } finally {
