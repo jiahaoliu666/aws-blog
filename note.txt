@@ -39,14 +39,12 @@ pages/index // 頁面
 src/lambda/fetch
 src/lambda/update
 src/hooks/profile/useProfileArticles.ts // 觀看紀錄
+src/pages/api/notifications/index.ts // 通知介面
 src/components/common/Notification.tsx // 通知介面
-src/pages/api/notifications/mark-read.ts // 標記已讀
 --------
 進行中：
-1. 完成architecture架構圖文章 ＆ 爬文
-2. 最新公告search無法搜尋文章
-3. 架構圖爬取文章不要取得 HTML | PDF
-4. 解決方案爬取文章 不要取得Browse Popular Solutions的文章
+1. 完成architecture知識庫文章 ＆ 爬文
+
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 
@@ -63,3 +61,6 @@ src/pages/api/notifications/mark-read.ts // 標記已讀
 9. 觀看紀錄的標籤顏色要和 Navbar 通知介面的標籤顏色一致
 10. 整合成只使用一個爬蟲檔案就好 
 11. 使用 crontab（Linux/Mac）定期執行爬蟲
+12. 最新公告search無法搜尋文章
+13. 架構圖爬取文章不要取得 HTML | PDF
+14. 解決方案爬取文章 不要取得Browse Popular Solutions的文章
