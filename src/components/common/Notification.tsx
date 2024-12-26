@@ -81,13 +81,18 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         
         if (data && Array.isArray(data.notifications)) {
           console.log('通知數量:', data.notifications.length);
-          setNewNotifications(data.notifications);
-          const unreadCount = data.notifications.filter(
+          const sortedNotifications = data.notifications.sort((a: NotificationItem, b: NotificationItem) => {
+            const dateA = typeof a.date === 'string' ? parseInt(a.date) : a.date;
+            const dateB = typeof b.date === 'string' ? parseInt(b.date) : b.date;
+            return dateB - dateA;
+          });
+          setNewNotifications(sortedNotifications);
+          const unreadCount = sortedNotifications.filter(
             (notification: NotificationItem) => !notification.read
           ).length;
           console.log('未讀通知數:', unreadCount);
           setUnreadCount(unreadCount);
-          setTotalCount(data.notifications.length);
+          setTotalCount(sortedNotifications.length);
         }
       } catch (error) {
         console.error("獲取通知時發生錯誤:", error);
