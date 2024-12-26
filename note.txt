@@ -18,6 +18,10 @@ ts-node --esm src/lambda/updateNews.ts
 ts-node src/lambda/updateAnnouncement.ts
 ts-node src/lambda/updateSolutions.ts
 npx ts-node src/lambda/updateArchitecture.ts
+
+根據當前代碼的模式製作 
+knowledge 知識中心
+
 ------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適
@@ -66,3 +70,4 @@ src/components/common/Notification.tsx // 通知介面
 12. 最新公告search無法搜尋文章
 13. 架構圖爬取文章不要取得 HTML | PDF
 14. 解決方案爬取文章 不要取得Browse Popular Solutions的文章
+15. 把所有重複的佈局 樣式 統一 一致

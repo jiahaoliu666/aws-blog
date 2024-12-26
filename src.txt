@@ -4,6 +4,7 @@ src/
 │   ├── newsType.ts                 // 新聞文章相關類型
 │   ├── solutionType.ts             // 解決方案文章相關類型
 │   ├── architectureType.ts         // 架構文章相關類型
+│   ├── knowledgeType.ts            // 知識中心文章相關類型
 │   ├── profileTypes.ts             // 個人資料類型定義
 │   ├── next-auth.d.ts              // NextAuth.js 的類型定義
 │   ├── emailTypes.ts               // 電子郵件通知類型
@@ -21,6 +22,8 @@ src/
 │   │   └── index.tsx               // 解決方案頁面
 │   ├── architecture
 │   │   └── index.tsx               // 架構圖頁面
+│   ├── knowledge
+│   │   └── index.tsx               // 知識中心頁面
 │   ├── profile
 │   │   └── index.tsx               // 個人資料頁面
 │   ├── auth
@@ -54,6 +57,12 @@ src/
 │   │   │   ├── addFavorite.ts      // 新增架構圖收藏的 API
 │   │   │   ├── removeFavorite.ts   // 移除架構圖收藏的 API
 │   │   │   └── getFavorites.ts     // 獲取架構圖收藏的 API
+│   │   ├── knowledge
+│   │   │   ├── index.ts            // 知識中心 API 主入口
+│   │   │   ├── summary.ts          // 獲取知識中心摘要的 API
+│   │   │   ├── addFavorite.ts      // 新增知識中心收藏的 API
+│   │   │   ├── removeFavorite.ts   // 移除知識中心收藏的 API
+│   │   │   └── getFavorites.ts     // 獲取知識中心收藏的 API
 │   │   ├── profile
 │   │   │   ├── recent-log.ts       // 獲取最近日誌的 API
 │   │   │   ├── notification-settings
@@ -91,6 +100,10 @@ src/
 │   │   └── useArchitecturePageLogic.ts // 使用架構圖頁面邏輯的 Hook
 │   │   └── useFetchArchitecture.ts // 使用獲取架構圖的 Hook
 │   │   └── useArchitectureFavorites.ts // 使用架構圖收藏的 Hook
+│   ├── knowledge
+│   │   └── useKnowledgePageLogic.ts // 使用知識中心頁面邏輯的 Hook
+│   │   └── useFetchKnowledge.ts // 使用獲取知識中心的 Hook
+│   │   └── useKnowledgeFavorites.ts // 使用知識中心收藏的 Hook
 │   ├── profile
 │   │   ├── useProfileAvatar.ts     // 使用個人資料頭像的 Hook
 │   │   ├── useProfileFeedback.ts   // 使用個人資料反饋的 Hook
