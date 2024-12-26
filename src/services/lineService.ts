@@ -134,6 +134,13 @@ interface SolutionData {
   summary: string;
 }
 
+interface KnowledgeData {
+  title: string;
+  link: string;
+  timestamp: string;
+  summary: string;
+}
+
 export class LineService implements LineServiceInterface {
   private readonly channelAccessToken: string;
   private readonly apiUrl: string = 'https://api.line.me/v2/bot';
@@ -347,7 +354,7 @@ export class LineService implements LineServiceInterface {
           expiryTime,
           currentTime: Date.now()
         });
-        return { success: false, message: '驗證碼已過期' };
+        return { success: false, message: '驗證碼��過期' };
       }
 
       // 更新驗證狀態
@@ -594,6 +601,15 @@ export class LineService implements LineServiceInterface {
       }
     };
 
+    await this.client.broadcast(message);
+  }
+
+  async sendKnowledgeNotification(knowledgeData: KnowledgeData): Promise<void> {
+    const message = {
+      type: 'text',
+      text: `🔔 新知識文章通知\n\n標題：${knowledgeData.title}\n\n摘要：${knowledgeData.summary}\n\n📎 連結：${knowledgeData.link}`
+    };
+    
     await this.client.broadcast(message);
   }
 }
