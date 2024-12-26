@@ -1,14 +1,19 @@
 import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';  
 import { SearchField } from '@aws-amplify/ui-react';  
-import { ExtendedNews } from '@/types/newsType';  
+import { ExtendedNews } from '@/types/newsType';
+import { ExtendedArchitecture } from '@/types/architectureType';
 
-interface SearchProps<T extends { title: string }> {  
+interface SearchProps<T> {  
   articles: T[];  
   setFilteredArticles: Dispatch<SetStateAction<T[]>>;  
   isDarkMode: boolean;   
 }  
 
-export const Search = <T extends { title: string }>({ articles, setFilteredArticles, isDarkMode }: SearchProps<T>) => {  
+export const Search = <T extends { title: string }>({ 
+  articles, 
+  setFilteredArticles, 
+  isDarkMode 
+}: SearchProps<T>) => {  
   const [searchTerm, setSearchTerm] = useState('');  
   
   useEffect(() => {  

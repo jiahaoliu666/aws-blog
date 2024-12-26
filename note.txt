@@ -42,7 +42,7 @@ src/pages/api/notifications/mark-read.ts // 標記已讀
 --------
 進行中：
 1. 完成architecture架構圖文章 
-2. 
+2. 最新公告search無法搜尋文章
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 

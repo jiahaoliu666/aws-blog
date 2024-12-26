@@ -120,7 +120,7 @@ const ArchitecturePage: React.FC = () => {
                     setShowSummaries={setShowSummaries}
                 />
 
-                <Search
+                <Search<ExtendedArchitecture>
                     articles={architectures}
                     setFilteredArticles={setFilteredArchitectures}
                     isDarkMode={isDarkMode}
