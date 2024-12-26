@@ -117,6 +117,7 @@ src/
 │   ├── fetchNews.ts                // 獲取新聞的 Lambda 函數
 │   ├── fetchAnnouncement.ts        // 獲取公告的 Lambda 函數
 │   ├── fetchSolutions.ts           // 獲取解決方案的 Lambda 函數
+│   ├── fetchArchitecture.ts         // 獲取架構圖的 Lambda 函數
 │   ├── updateNews.ts               // 更新新聞的 Lambda 函數
 │   └── updateAnnouncement.ts       // 更新公告的 Lambda 函數
 │   └── updateSolutions.ts          // 更新解決方案的 Lambda 函數

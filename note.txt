@@ -11,6 +11,7 @@ ts-node --esm src/lambda/fetchNews.ts
 npx tsx src/lambda/fetchNews.ts
 npx tsx src/lambda/fetchAnnouncement.ts
 ts-node src/lambda/fetchSolutions.ts
+npx ts-node src/lambda/fetchArchitecture.ts
 
 # 執行 update
 ts-node --esm src/lambda/updateNews.ts
@@ -43,6 +44,8 @@ src/pages/api/notifications/mark-read.ts // 標記已讀
 進行中：
 1. 完成architecture架構圖文章 
 2. 最新公告search無法搜尋文章
+3. 架構圖爬取文章不要取得 HTML | PDF
+4. 解決方案爬取文章 不要取得Browse Popular Solutions的文章
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 
