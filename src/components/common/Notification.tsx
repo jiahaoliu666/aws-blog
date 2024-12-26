@@ -261,7 +261,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                         : notification.category === 'solution'
                           ? '解決方案'
                           : notification.category === 'architecture'
-                            ? '參考架構'
+                            ? '架構參考'
                             : '最新公告'}
                     </span>
                     <span className="text-xs text-gray-500 group-hover:text-gray-600">

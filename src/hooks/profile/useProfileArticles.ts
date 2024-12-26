@@ -89,14 +89,14 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
       })).filter(data => data.articleId && data.timestamp) || [];
 
       const articles = await Promise.all(articleData.map(async ({ articleId, timestamp, sourcePage }) => {
-        const validSourcePage = ['最新公告', '最新新聞', '解決方案', '參考架構'].includes(sourcePage) 
+        const validSourcePage = ['最新公告', '最新新聞', '解決方案', '架構參考'].includes(sourcePage) 
             ? sourcePage 
             : '最新新聞'; // 預設值
         
         const tableName = 
           validSourcePage === '最新公告' ? 'AWS_Blog_Announcement' :
           validSourcePage === '解決方案' ? 'AWS_Blog_Solutions' :
-          validSourcePage === '參考架構' ? 'AWS_Blog_Architecture' :
+          validSourcePage === '架構參考' ? 'AWS_Blog_Architecture' :
           'AWS_Blog_News';
         
         const detailParams = {

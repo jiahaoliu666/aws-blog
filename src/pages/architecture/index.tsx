@@ -16,7 +16,7 @@ import { useToastContext } from '@/context/ToastContext';
 const ArchitecturePage: React.FC = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
-    const [currentSourcePage, setCurrentSourcePage] = useState<string>('參考架構');
+    const [currentSourcePage, setCurrentSourcePage] = useState<string>('架構參考');
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
 
@@ -51,9 +51,9 @@ const ArchitecturePage: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                console.log('開始加載參考架構數據...');
+                console.log('開始加載架構參考數據...');
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log('當前參考架構數據:', currentArchitectures);
+                console.log('當前架構參考數據:', currentArchitectures);
                 setIsLoading(false);
             } catch (error) {
                 console.error('加載數據時出錯:', error);
@@ -97,7 +97,7 @@ const ArchitecturePage: React.FC = () => {
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
             <Navbar setCurrentSourcePage={setCurrentSourcePage} />
             <div className="container mx-auto px-4 py-8 flex-grow">
-                <h1 className="text-5xl font-bold text-center mb-5">AWS 參考架構</h1>
+                <h1 className="text-5xl font-bold text-center mb-5">AWS 架構參考</h1>
                 
                 <Filters
                     gridView={gridView}
@@ -145,7 +145,7 @@ const ArchitecturePage: React.FC = () => {
                             );
                         })
                     ) : (
-                        <p className="text-center text-gray-500 col-span-full">未找到符合條件的參考架構，請嘗試不同的搜尋條件！</p>
+                        <p className="text-center text-gray-500 col-span-full">未找到符合條件的架構參考，請嘗試不同的搜尋條件！</p>
                     )}
                 </div>
 
