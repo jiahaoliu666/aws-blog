@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import client from '@/libs/dynamodb';
 
-const TABLE_NAME = 'AWS_Blog_UserArchitectureFavorites';
+const TABLE_NAME = 'AWS_Blog_UserFavorites';
 
 interface RemoveFavoriteRequestBody {
   userId: string;
