@@ -35,7 +35,7 @@ interface NotificationUser {
 dotenv.config({ path: ".env.local" });
 
 // 常量定義
-const NUMBER_OF_ARCHITECTURES_TO_FETCH = 3;
+const NUMBER_OF_ARCHITECTURES_TO_FETCH = 2;
 
 // 初始化客戶端
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -215,7 +215,7 @@ async function scrapeAWSArchitectures(): Promise<void> {
 
     await gotoWithRetry(
       page,
-      'https://aws.amazon.com/architecture/',
+      'https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all',
       {
         waitUntil: 'networkidle2',
         timeout: 60000,

@@ -221,7 +221,7 @@ async function scrapeAWSArchitectures(targetNumberOfArchitectures: number): Prom
 
     await gotoWithRetry(
       page,
-      'https://aws.amazon.com/architecture/',
+      'https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all',
       {
         waitUntil: 'networkidle2',
         timeout: 60000,
