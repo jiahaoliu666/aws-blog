@@ -220,11 +220,18 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
       const articles = await page.evaluate(() => {
         const items = document.querySelectorAll('article');
         return Array.from(items).map(item => ({
-          title: item.querySelector('h2')?.textContent?.trim() || '沒有標題',
-          description: item.querySelector('p')?.textContent?.trim() || '沒有描述',
-          link: (item.querySelector('a') as HTMLAnchorElement)?.href || '沒有連結',
+          title: item.querySelector('.KCArticleCard_title__dhRk_ a')?.textContent?.trim() || '沒有標題',
+          description: item.querySelector('.KCArticleCard_cardLink__EVTdA')?.textContent?.trim() || '沒有描述',
+          link: item.querySelector('.KCArticleCard_cardLink__EVTdA')?.getAttribute('href') || '沒有連結'
         }));
       });
+
+      // 修改 link 以確保完整 URL
+      for (const article of articles) {
+        if (!article.link.startsWith('http')) {
+          article.link = `https://repost.aws${article.link}`;
+        }
+      }
 
       for (const article of articles) {
         if (totalArticlesInDatabase < targetNumberOfArticles) {
