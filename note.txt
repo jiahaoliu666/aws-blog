@@ -26,14 +26,14 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 修改模組：  
 Type // 類型
 pages/index // 頁面
-│   │       └── summary.ts          // api
-│   │       └── addFavorite.ts      
-│   │       └── removeFavorite.ts  
-│   │       └── index.ts           
-│   │       └── getFavorites.ts    
-│   │   └── useNewsPageLogic.ts     // Hook
-│   │   └── useFetchNews.ts         
-│   │   └── useNewsFavorites.ts     
+│   │ useNewsPageLogic.ts     // Hook
+│   │ useFetchNews.ts         
+│   │ useNewsFavorites.ts     
+│   │     summary.ts          // api
+│   │     addFavorite.ts      
+│   │     removeFavorite.ts  
+│   │     index.ts           
+│   │     getFavorites.ts    
 src/lambda/fetch
 src/lambda/update
 src/hooks/profile/useProfileArticles.ts // 觀看紀錄
@@ -41,8 +41,8 @@ src/components/common/Notification.tsx // 通知介面
 src/pages/api/notifications/mark-read.ts // 標記已讀
 --------
 進行中：
-1. 爬取解決方案文章 fetch＆update
-2. 更改通知介面根據時間進行排序
+1. 完成architecture架構圖文章 
+2. 
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 

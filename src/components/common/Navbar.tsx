@@ -25,7 +25,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);  
   const resourcesDropdownRef = useRef<HTMLDivElement>(null);  
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [newNotifications, setNewNotifications] = useState<{ title: string; date: string; content: string; }[]>([]);
+  const [newNotifications, setNewNotifications] = useState<{ article_id: string; title: string; date: string; content: string; read?: boolean; category?: string; link?: string; }[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   useEffect(() => {
@@ -234,7 +234,7 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
             <Link href="/news" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('最新新聞')}>最新新聞</Link>  
             <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('解決方案')}>解決方案</Link>
             <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('知識庫')}>知識庫</Link>  
-            <Link href="/architecture-diagrams" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('架構圖')}>架構圖</Link>
+            <Link href="/architecture" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('架構圖')}>架構圖</Link>
             {/* <div className="relative" ref={resourcesDropdownRef}>  
               <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
                 其他資源  

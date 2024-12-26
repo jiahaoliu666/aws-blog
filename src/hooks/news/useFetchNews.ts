@@ -1,4 +1,3 @@
-// src/hooks/news/useFetchNews.ts  
 import { useEffect, useState } from 'react';  
 import { News, ExtendedNews } from '@/types/newsType';  
 

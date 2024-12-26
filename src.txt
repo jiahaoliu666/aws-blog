@@ -2,7 +2,8 @@ src/
 ├── types
 │   ├── announcementType.ts         // 公告文章相關的類型
 │   ├── newsType.ts                 // 新聞文章相關類型
-│   ├── solutionType.ts            // 解決方案文章相關類型
+│   ├── solutionType.ts             // 解決方案文章相關類型
+│   ├── architectureType.ts         // 架構文章相關類型
 │   ├── profileTypes.ts             // 個人資料類型定義
 │   ├── next-auth.d.ts              // NextAuth.js 的類型定義
 │   ├── emailTypes.ts               // 電子郵件通知類型
@@ -18,6 +19,8 @@ src/
 │   │   └── index.tsx               // 新聞頁面
 │   ├── solutions
 │   │   └── index.tsx               // 解決方案頁面
+│   ├── architecture
+│   │   └── index.tsx               // 架構圖頁面
 │   ├── profile
 │   │   └── index.tsx               // 個人資料頁面
 │   ├── auth
@@ -28,23 +31,29 @@ src/
 │   ├── _document.tsx               // 自定義文檔
 │   ├── api  
 │   │   ├── announcement
+│   │   │   ├── index.ts            // 公告 API 主入口
 │   │   │   ├── summary.ts          // 獲取公告摘要的 API
 │   │   │   ├── addFavorite.ts      // 新增公告收藏的 API
 │   │   │   ├── removeFavorite.ts   // 移除公告收藏的 API
-│   │   │   ├── index.ts            // 公告 API 主入口
 │   │   │   └── getFavorites.ts     // 獲取公告收藏的 API
 │   │   ├── news
+│   │   │   ├── index.ts            // 新聞 API 主入口
 │   │   │   ├── summary.ts          // 獲取新聞摘要的 API
 │   │   │   ├── addFavorite.ts      // 新增新聞收藏的 API
 │   │   │   ├── removeFavorite.ts   // 移除新聞收藏的 API
-│   │   │   ├── index.ts            // 新聞 API 主入口
 │   │   │   └── getFavorites.ts     // 獲取新聞收藏的 API
 │   │   ├── solutions
+│   │   │   ├── index.ts            // 解決方案 API 主入口
 │   │   │   ├── summary.ts          // 獲取解決方案摘要的 API
 │   │   │   ├── addFavorite.ts      // 新增解決方案收藏的 API
 │   │   │   ├── removeFavorite.ts   // 移除解決方案收藏的 API
-│   │   │   ├── index.ts            // 解決方案 API 主入口
 │   │   │   └── getFavorites.ts     // 獲取解決方案收藏的 API
+│   │   ├── architecture
+│   │   │   ├── index.ts            // 架構圖 API 主入口
+│   │   │   ├── summary.ts          // 獲取架構圖摘要的 API
+│   │   │   ├── addFavorite.ts      // 新增架構圖收藏的 API
+│   │   │   ├── removeFavorite.ts   // 移除架構圖收藏的 API
+│   │   │   └── getFavorites.ts     // 獲取架構圖收藏的 API
 │   │   ├── profile
 │   │   │   ├── recent-log.ts       // 獲取最近日誌的 API
 │   │   │   ├── notification-settings
@@ -78,6 +87,10 @@ src/
 │   │   └── useSolutionsPageLogic.ts // 使用解決方案頁面邏輯的 Hook
 │   │   └── useFetchSolutions.ts // 使用獲取解決方案的 Hook
 │   │   └── useSolutionFavorites.ts // 使用解決方案收藏的 Hook
+│   ├── architecture
+│   │   └── useArchitecturePageLogic.ts // 使用架構圖頁面邏輯的 Hook
+│   │   └── useFetchArchitecture.ts // 使用獲取架構圖的 Hook
+│   │   └── useArchitectureFavorites.ts // 使用架構圖收藏的 Hook
 │   ├── profile
 │   │   ├── useProfileAvatar.ts     // 使用個人資料頭像的 Hook
 │   │   ├── useProfileFeedback.ts   // 使用個人資料反饋的 Hook
