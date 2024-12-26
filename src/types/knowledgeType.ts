@@ -15,6 +15,8 @@ export interface Knowledge {
     tags?: string[];
 }
 
-export type ExtendedKnowledge = Omit<Knowledge, 'isFavorite'> & {
+export interface ExtendedKnowledge extends Knowledge {
     isFavorite: boolean;
-}; 
+    translated_description?: string;
+    translated_title?: string;
+} 

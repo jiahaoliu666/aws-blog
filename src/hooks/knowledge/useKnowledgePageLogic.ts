@@ -4,8 +4,8 @@ import { extractDateFromInfo } from "@/utils/extractDateFromInfo";
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import { useAuthContext } from '@/context/AuthContext';
 import { browserStorage } from '@/utils/browserStorage';
-import useFetchKnowledge from "./useFetchKnowledge";
-import { useKnowledgeFavorites } from "./useKnowledgeFavorites";
+import useFetchKnowledge from "@/hooks/knowledge/useFetchKnowledge";
+import { useKnowledgeFavorites } from "@/hooks/knowledge/useKnowledgeFavorites";
 
 function useKnowledgePageLogic() {
     const { user } = useAuthContext();

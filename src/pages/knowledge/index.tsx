@@ -122,14 +122,14 @@ const KnowledgePage: React.FC = () => {
 
                 <Search
                     articles={knowledge}
-                    setFilteredArticles={setFilteredKnowledge}
+                    setFilteredArticles={setFilteredKnowledge as React.Dispatch<React.SetStateAction<any[]>>}
                     isDarkMode={isDarkMode}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
                     {currentKnowledge.length > 0 ? (
                         currentKnowledge.map((article: ExtendedKnowledge, index: number) => {
-                            const isFavorited = favorites.some(fav => fav.article_id === article.article_id);
+                            const isFavorited = favorites.some((fav: ExtendedKnowledge) => fav.article_id === article.article_id);
                             return (
                                 <Card
                                     key={article.article_id}
