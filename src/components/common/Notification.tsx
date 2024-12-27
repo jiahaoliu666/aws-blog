@@ -255,14 +255,18 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                           ? 'bg-green-100 text-green-800 group-hover:bg-green-200'
                           : notification.category === 'architecture'
                             ? 'bg-amber-100 text-amber-800 group-hover:bg-amber-200'
-                            : 'bg-purple-100 text-purple-800 group-hover:bg-purple-200'}`}>
+                            : notification.category === 'knowledge'
+                              ? 'bg-indigo-100 text-indigo-800 group-hover:bg-indigo-200'
+                              : 'bg-purple-100 text-purple-800 group-hover:bg-purple-200'}`}>
                       {notification.category === 'news' 
                         ? '最新新聞' 
                         : notification.category === 'solution'
                           ? '解決方案'
                           : notification.category === 'architecture'
                             ? '架構參考'
-                            : '最新公告'}
+                            : notification.category === 'knowledge'
+                              ? '知識中心'
+                              : '最新公告'}
                     </span>
                     <span className="text-xs text-gray-500 group-hover:text-gray-600">
                       {getDisplayTime(notification.date)}

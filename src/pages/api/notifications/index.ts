@@ -68,6 +68,9 @@ export default async function handler(
         case 'architecture':
           tableName = 'AWS_Blog_Architecture';
           break;
+        case 'knowledge':
+          tableName = 'AWS_Blog_Knowledge';
+          break;
         default:
           tableName = 'AWS_Blog_News';
       }
