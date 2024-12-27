@@ -72,23 +72,6 @@ src/components/common/Notification.tsx // 通知介面
 13. 架構圖爬取文章不要取得 HTML | PDF
 14. 解決方案爬取文章 不要取得Browse Popular Solutions的文章
 15. 把所有重複的佈局 樣式 統一 一致
+16. card 使用建立日期當作獲取日期 然後可以根據日期排序
+17. 添加 discord 通知功能
 
-
-----
-
-
-<div class="KCArticleCard_card__HW_gu KCArticleCard_grid__9g64H" data-test="card-kcArticle-AAQTf2XCnfQmePgCmxpT_xfw"><div class="KCArticleCard_headerContainer__Whduv KCArticleCard_grid__9g64H"><div class="KCArticleCard_titleContainer__oW2WP"><h3 class="ant-typography KCArticleCard_title__dhRk_"><a class="KCArticleCard_cardLink__EVTdA" href="/knowledge-center/ec2-macos-reset-password">How do I reset the password for my EC2 Mac instance?</a></h3></div><div class="AWSAvatar_avatarContainer__ZGVyl"><span class="ant-avatar ant-avatar-circle ant-avatar-image AWSAvatar_icon__vlFiT" style="width: 34px; height: 34px; line-height: 34px; font-size: 18px;"><img src="/static/images/aws.png" alt="AWS OFFICIAL"></span><div class="AWSAvatar_avatarMeta__hubWM" data-test="aws-avatar-meta"><span class="AWSAvatar_supportLabel__9dmxA">AWS OFFICIAL</span><span data-test="last-updated">Updated 4 days ago</span></div></div></div><div class="KCArticleCard_contentContainer__v_cv_ KCArticleCard_grid__9g64H"><div class="KCArticleCard_descriptionBody__hLZPL"><a class="KCArticleCard_cardLink__EVTdA" href="/knowledge-center/ec2-macos-reset-password">I don't know the password for my Amazon Elastic Compute Cloud (Amazon EC2) Mac instance, and I need to reset the password. Or, I need to reset the password for ec2-user.</a></div><div class="KCArticleCard_tagsContainer__ZhKvm"><div class="KCArticleCard_tagContainer__R6TUe"><div class="KCArticleCard_articleTag__kwF7j">KNOWLEDGE CENTER</div><a class="NavigableTag_link__LTvhE" href="/tags/TAO-wqN9fYRoyrpdULLa5y7g/amazon-ec2"><span class="ant-tag NavigableTag_tag__BmXT_ CustomTag_tag__kXm6J">Amazon EC2</span></a></div></div></div></div>
-
-
-------
-根據 @https://repost.aws/knowledge-center/all?view=all&sort=recent
-，以上我要爬取的網頁元素的內容，我要從中獲取以下資訊
-
-------
-title：How do I reset the password for my EC2 Mac instance?
-
-description：I don't know the password for my Amazon Elastic Compute Cloud (Amazon EC2) Mac instance, and I need to reset the password. Or, I need to reset the password for ec2-user.
-
-link：https://repost.aws/knowledge-center/ec2-macos-reset-password
-
-info：Updated 4 days ago

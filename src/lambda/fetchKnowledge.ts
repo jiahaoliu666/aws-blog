@@ -15,7 +15,6 @@ interface Knowledge {
   title: string;
   description: string;
   link: string;
-  info: string;
 }
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -151,7 +150,6 @@ async function saveToDynamoDB(knowledge: Knowledge): Promise<boolean> {
       description: { S: knowledge.description },
       translated_description: { S: translatedDescription },
       link: { S: knowledge.link },
-      info: { S: knowledge.info },
       summary: { S: summary },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
     },
@@ -236,14 +234,12 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
         return Array.from(items).map(item => {
           const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
           const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
-          const infoElement = item.querySelector('[data-test="last-updated"]');
           
           const title = titleElement?.textContent?.trim() || '沒有標題';
           const description = descriptionElement?.textContent?.trim() || '沒有描述';
           const link = titleElement?.getAttribute('href') || '沒有連結';
-          const info = infoElement?.textContent?.trim() || '沒有更新資訊';
           
-          return { title, description, link, info };
+          return { title, description, link };
         });
       });
 
