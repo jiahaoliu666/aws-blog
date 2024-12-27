@@ -166,6 +166,7 @@ const DeleteConfirmationDialog: React.FC<{
               value={confirmDeleteValue}
               onChange={(e) => onConfirmDeleteValueChange(e.target.value)}
               className="w-full px-4 py-2 rounded-xl border border-gray-300"
+              placeholder="確認刪除"
             />
           </div>
 
@@ -330,7 +331,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
       setError(null);
       setConfirmDeleteValue('');
     } catch (error) {
-      setError(error instanceof Error ? error.message : '刪���失敗');
+      setError(error instanceof Error ? error.message : '刪除失敗');
     }
   }, [password, confirmDeleteValue, handleAccountDeletion, showToast, setPassword, setError]);
 
@@ -407,7 +408,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
         </div>
       </Card>
 
-      {/* 刪除確認對話��� */}
+      {/* 刪除確認對話框 */}
       <DeleteConfirmationDialog
         isOpen={isDeleteModalOpen}
         onClose={handleCloseModal}
