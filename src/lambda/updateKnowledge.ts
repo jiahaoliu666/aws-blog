@@ -17,7 +17,6 @@ interface Knowledge {
   title: string;
   description: string;
   link: string;
-  category: string;
 }
 
 interface KnowledgeData {
@@ -36,7 +35,7 @@ interface NotificationUser {
 dotenv.config({ path: ".env.local" });
 
 // 常量定義
-const NUMBER_OF_KNOWLEDGE_TO_FETCH = 5;
+const NUMBER_OF_KNOWLEDGE_TO_FETCH = 2;
 
 // 初始化客戶端
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -47,7 +46,7 @@ const dbClient = new DynamoDBClient({
 let insertedCount = 0;
 let skippedCount = 0;
 
-// 主要功能數
+// 主要功能函數
 async function checkIfExists(title: string): Promise<boolean | string> {
   const scanParams = {
     TableName: process.env.DYNAMODB_KNOWLEDGE_TABLE || 'AWS_Blog_Knowledge',
@@ -77,8 +76,8 @@ async function summarizeKnowledge(url: string): Promise<string> {
   const maxTokens = 200;
   const prompt = `請用繁體中文簡潔扼要地總結這篇 AWS Knowledge Center 文章的主要內容（限 100 字以內）：${url}
 要求：
-1. 直接說明此知識文章解決什麼問題
-2. 只提及關鍵解決步驟或方法
+1. 直接說明此知識文章的主要問題和解決方案
+2. 只提及關鍵步驟或重要概念
 3. 避免贅詞`;
 
   if (prompt.length > 2000) {
@@ -152,7 +151,6 @@ async function saveToDynamoDB(knowledge: Knowledge): Promise<boolean> {
       description: { S: knowledge.description },
       translated_description: { S: translatedDescription },
       link: { S: knowledge.link },
-      category: { S: knowledge.category },
       summary: { S: summary },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
     },
@@ -203,39 +201,63 @@ async function gotoWithRetry(
 
 async function scrapeAWSKnowledge(): Promise<void> {
   let browser: puppeteer.Browser | null = null;
-
   try {
     browser = await puppeteer.launch({ 
       headless: true,
-      args: ['--incognito'] 
+      args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox'],
+      defaultViewport: { width: 1920, height: 1080 }
     });
     const page = await browser.newPage();
     
+    page.setDefaultTimeout(30000);
+    page.setDefaultNavigationTimeout(30000);
+
     await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9'
+      'Accept-Language': 'en-US,en;q=0.9',
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
     });
 
+    console.log('開始訪問網頁...');
     await gotoWithRetry(
       page,
-      'https://aws.amazon.com/premiumsupport/knowledge-center/',
+      'https://repost.aws/knowledge-center/all?view=all&sort=recent',
       {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle0',
         timeout: 60000,
       }
     );
 
-    const knowledgeArticles = await page.evaluate((numArticles) => {
-      const articles = document.querySelectorAll('.aws-kb-article');
-      return Array.from(articles).slice(0, numArticles).map(article => ({
-        title: article.querySelector('.aws-kb-article-title')?.textContent?.trim() || '沒有標題',
-        description: article.querySelector('.aws-kb-article-preview')?.textContent?.trim() || '沒有描述',
-        link: (article.querySelector('a') as HTMLAnchorElement)?.href || '沒有連結',
-        category: article.querySelector('.aws-kb-category')?.textContent?.trim() || '未分類'
-      }));
-    }, NUMBER_OF_KNOWLEDGE_TO_FETCH);
+    console.log('等待頁面載入...');
+    await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
+    console.log('頁面已載入');
 
-    for (const article of knowledgeArticles) {
-      await saveToDynamoDB(article);
+    const articles = await page.evaluate(() => {
+      const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
+      console.log(`找到 ${items.length} 篇文章`);
+      
+      return Array.from(items).map(item => {
+        const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
+        const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
+        
+        const title = titleElement?.textContent?.trim() || '沒有標題';
+        const description = descriptionElement?.textContent?.trim() || '沒有描述';
+        const link = titleElement?.getAttribute('href') || '沒有連結';
+        
+        return { title, description, link };
+      });
+    });
+
+    console.log(`本頁找到 ${articles.length} 篇文章`);
+
+    // 修改 link 以確保完整 URL
+    const knowledgeArticles = articles.slice(0, NUMBER_OF_KNOWLEDGE_TO_FETCH).map(article => ({
+      ...article,
+      link: !article.link.startsWith('http') ? `https://repost.aws${article.link}` : article.link
+    }));
+
+    for (const knowledge of knowledgeArticles) {
+      console.log('處理文章:', knowledge);
+      await saveToDynamoDB(knowledge);
     }
 
     console.log(`\n📊 更新執行報告`);
@@ -246,7 +268,7 @@ async function scrapeAWSKnowledge(): Promise<void> {
     console.log(`==================\n`);
 
   } catch (error) {
-    console.error("執行更新時發生錯誤:", error instanceof Error ? error.message : String(error));
+    logger.error("執行更新時發生錯誤:", error instanceof Error ? error.message : String(error));
     throw error;
   } finally {
     if (browser) {
@@ -260,7 +282,7 @@ async function sendLineNotifications(knowledgeData: KnowledgeData): Promise<void
   try {
     const lineUsers = await getLineNotificationUsers();
     if (lineUsers.length > 0 && process.env.LINE_CHANNEL_ACCESS_TOKEN) {
-      await lineService.sendNewsNotification(knowledgeData);
+      await lineService.sendKnowledgeNotification(knowledgeData);
       logger.info(`成功發送 LINE 通知給 ${lineUsers.length} 位用戶`);
     }
   } catch (error) {
@@ -346,4 +368,4 @@ async function broadcastNewKnowledge(knowledgeId: string): Promise<void> {
     logger.error("執行更新程序時發生錯誤:", error);
     process.exit(1);
   }
-})(); 
+})();

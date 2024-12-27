@@ -19,6 +19,7 @@ ts-node --esm src/lambda/updateNews.ts
 ts-node src/lambda/updateAnnouncement.ts
 ts-node src/lambda/updateSolutions.ts
 npx ts-node src/lambda/updateArchitecture.ts
+npx ts-node src/lambda/updateKnowledge.ts
 
 根據當前代碼的模式製作 
 knowledge 知識中心
@@ -74,4 +75,4 @@ src/components/common/Notification.tsx // 通知介面
 15. 把所有重複的佈局 樣式 統一 一致
 16. card 使用建立日期當作獲取日期 然後可以根據日期排序
 17. 添加 discord 通知功能
-
+18. 新聞文章 只留日期 去除 人名
