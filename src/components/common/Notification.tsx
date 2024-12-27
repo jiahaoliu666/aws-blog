@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
 import { formatTimeAgo } from '@/utils/dateUtils';
-import { FaNewspaper, FaBullhorn, FaLightbulb, FaCubes, FaBook, FaList } from 'react-icons/fa';
+import { FaNewspaper, FaBullhorn, FaLightbulb, FaCubes, FaBook, FaList, FaEllipsisV } from 'react-icons/fa';
 
 interface NotificationProps {
   userId: string;
@@ -50,12 +50,12 @@ interface NotificationItem {
 const MAX_ARTICLES_DISPLAY = 50;
 
 const categoryConfig = {
-  all: { icon: FaList, label: '全部' },
-  news: { icon: FaNewspaper, label: '新聞' },
-  announcement: { icon: FaBullhorn, label: '公告' },
+  all: { icon: FaList, label: '全部文章' },
+  announcement: { icon: FaBullhorn, label: '最新公告' },
+  news: { icon: FaNewspaper, label: '最新新聞' },
   solution: { icon: FaLightbulb, label: '解決方案' },
-  architecture: { icon: FaCubes, label: '架構' },
-  knowledge: { icon: FaBook, label: '知識' }
+  architecture: { icon: FaCubes, label: '架構參考' },
+  knowledge: { icon: FaBook, label: '知識中心' }
 };
 
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount, onNotificationClick }) => {
@@ -63,6 +63,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   const [loading, setLoading] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchNewArticles = async () => {
@@ -122,6 +123,18 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     const intervalId = setInterval(fetchNewArticles, 30000);
     return () => clearInterval(intervalId);
   }, [userId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showMenu && !target.closest('.relative')) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showMenu]);
 
   const handleItemClick = (notification: NotificationItem) => {
     onNotificationClick?.(notification);
@@ -229,34 +242,45 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             · 共 {totalCount || 0} 則
           </span>
         </h2>
-        <button 
-          onClick={handleClick} 
-          className="text-sm text-gray-700 hover:text-gray-900 
-            transition-all duration-200 px-3.5 py-1.5 rounded-lg
-            hover:bg-gray-100 active:scale-95 font-medium"
-        >
-          全部標為已讀
-        </button>
-      </div>
-
-      <div className="p-4 border-b border-gray-200 flex justify-between items-center 
-        bg-gradient-to-b from-gray-50 to-white rounded-t-xl flex-wrap gap-2
-        sticky top-0 backdrop-blur-sm z-10">
-        <div className="w-full flex gap-2 mt-2 overflow-x-auto pb-2">
-          {Object.entries(categoryConfig).map(([key, { icon: Icon, label }]) => (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handleClick} 
+            className="text-sm text-gray-700 hover:text-gray-900 
+              transition-all duration-200 px-3.5 py-1.5 rounded-lg
+              hover:bg-gray-100 active:scale-95 font-medium"
+          >
+            全部標為已讀
+          </button>
+          <div className="relative">
             <button
-              key={key}
-              onClick={() => setSelectedCategory(selectedCategory === key ? 'all' : key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm
-                transition-all duration-200 whitespace-nowrap
-                ${selectedCategory === key || (key === 'all' && !selectedCategory)
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 
+                hover:text-gray-900 transition-all duration-200"
             >
-              <Icon className="w-4 h-4" />
-              {label}
+              <FaEllipsisV className="w-4 h-4" />
             </button>
-          ))}
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg 
+                border border-gray-200 py-1 z-50">
+                {Object.entries(categoryConfig).map(([key, { icon: Icon, label }]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setSelectedCategory(key);
+                      setShowMenu(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm
+                      ${selectedCategory === key 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
