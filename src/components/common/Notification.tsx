@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
 import { formatTimeAgo } from '@/utils/dateUtils';
+import { FaNewspaper, FaBullhorn, FaLightbulb, FaCubes, FaBook, FaList } from 'react-icons/fa';
 
 interface NotificationProps {
   userId: string;
@@ -48,10 +49,20 @@ interface NotificationItem {
 
 const MAX_ARTICLES_DISPLAY = 50;
 
+const categoryConfig = {
+  all: { icon: FaList, label: '全部' },
+  news: { icon: FaNewspaper, label: '新聞' },
+  announcement: { icon: FaBullhorn, label: '公告' },
+  solution: { icon: FaLightbulb, label: '解決方案' },
+  architecture: { icon: FaCubes, label: '架構' },
+  knowledge: { icon: FaBook, label: '知識' }
+};
+
 const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnreadCount, onNotificationClick }) => {
   const [newNotifications, setNewNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchNewArticles = async () => {
@@ -193,6 +204,11 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
     }
   };
 
+  // 根據選擇的分類過濾通知
+  const filteredNotifications = newNotifications.filter(notification => 
+    selectedCategory === 'all' || !selectedCategory ? true : notification.category === selectedCategory
+  );
+
   return (
     <div className="fixed lg:absolute right-0 top-16 lg:top-auto lg:mt-2 w-[95vw] lg:w-[32rem] max-w-md 
       mx-auto lg:mx-0 bg-white shadow-xl rounded-xl z-50 border border-gray-200 
@@ -223,6 +239,27 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         </button>
       </div>
 
+      <div className="p-4 border-b border-gray-200 flex justify-between items-center 
+        bg-gradient-to-b from-gray-50 to-white rounded-t-xl flex-wrap gap-2
+        sticky top-0 backdrop-blur-sm z-10">
+        <div className="w-full flex gap-2 mt-2 overflow-x-auto pb-2">
+          {Object.entries(categoryConfig).map(([key, { icon: Icon, label }]) => (
+            <button
+              key={key}
+              onClick={() => setSelectedCategory(selectedCategory === key ? 'all' : key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm
+                transition-all duration-200 whitespace-nowrap
+                ${selectedCategory === key || (key === 'all' && !selectedCategory)
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="max-h-[75vh] lg:max-h-[40rem] overflow-y-auto scrollbar-thin 
         scrollbar-thumb-gray-400 hover:scrollbar-thumb-gray-500 scrollbar-track-transparent
         divide-y divide-gray-200">
@@ -231,8 +268,8 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             <CgSpinner className="animate-spin h-10 w-10 mx-auto mb-4 text-blue-600" />
             <p className="text-sm font-medium">正在載入通知...</p>
           </div>
-        ) : newNotifications && newNotifications.length > 0 ? (
-          newNotifications.map((notification, index) => (
+        ) : filteredNotifications.length > 0 ? (
+          filteredNotifications.map((notification, index) => (
             <div 
               key={notification.article_id} 
               onClick={() => handleItemClick(notification)}
@@ -294,8 +331,12 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             <img src="/kuku.png" alt="暫無通知" 
               className="w-28 h-28 mx-auto mb-4 opacity-75 
                 transition-opacity duration-200 hover:opacity-90 select-none" />
-            <p className="text-sm font-medium">目前沒有任何通知</p>
-            <p className="text-xs text-gray-500 mt-1">有新通知時會立即顯示</p>
+            <p className="text-sm font-medium">
+              {selectedCategory ? '該分類下暫無通知' : '目前沒有任何通知'}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {selectedCategory ? '請選擇其他分類查看' : '有新通知時會立即顯示'}
+            </p>
           </div>
         )}
       </div>

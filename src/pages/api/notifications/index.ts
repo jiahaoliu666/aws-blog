@@ -1,6 +1,15 @@
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+type QueryParams = {
+  TableName: string;
+  KeyConditionExpression: string;
+  FilterExpression?: string;
+  ExpressionAttributeValues: {
+    [key: string]: { S: string };
+  };
+};
+
 const dynamoClient = new DynamoDBClient({
   region: 'ap-northeast-1',
   credentials: {
@@ -22,8 +31,8 @@ export default async function handler(
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { userId } = req.query;
-  console.log('用戶ID:', userId);
+  const { userId, category } = req.query;
+  console.log('用戶ID:', userId, '分類:', category);
 
   if (!userId || typeof userId !== 'string') {
     return res.status(400).json({ message: '無效的用戶ID' });
@@ -31,14 +40,19 @@ export default async function handler(
 
   try {
     // 查詢用戶的通知記錄
-    const userNotificationsParams = {
+    const userNotificationsParams: QueryParams = {
       TableName: 'AWS_Blog_UserNotifications',
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: {
         ':userId': { S: userId }
-      },
-      ScanIndexForward: false // 降序排序，最新的在前
+      }
     };
+
+    // 如果有指定分類，添加過濾條件
+    if (category && typeof category === 'string') {
+      userNotificationsParams.FilterExpression = 'category = :category';
+      userNotificationsParams.ExpressionAttributeValues[':category'] = { S: category };
+    }
 
     console.log('查詢用戶通知參數:', JSON.stringify(userNotificationsParams, null, 2));
     const userNotifications = await dynamoClient.send(new QueryCommand(userNotificationsParams));
