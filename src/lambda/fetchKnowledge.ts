@@ -15,6 +15,7 @@ interface Knowledge {
   title: string;
   description: string;
   link: string;
+  info: string;
 }
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -150,6 +151,7 @@ async function saveToDynamoDB(knowledge: Knowledge): Promise<boolean> {
       description: { S: knowledge.description },
       translated_description: { S: translatedDescription },
       link: { S: knowledge.link },
+      info: { S: knowledge.info },
       summary: { S: summary },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
     },
@@ -209,7 +211,7 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
 
     await gotoWithRetry(
       page,
-      'https://repost.aws/knowledge-center/all',
+      'https://repost.aws/knowledge-center/all?view=all&sort=recent',
       {
         waitUntil: 'networkidle2',
         timeout: 60000,
@@ -218,12 +220,19 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
 
     while (totalArticlesInDatabase < targetNumberOfArticles) {
       const articles = await page.evaluate(() => {
-        const items = document.querySelectorAll('article');
-        return Array.from(items).map(item => ({
-          title: item.querySelector('.KCArticleCard_title__dhRk_ a')?.textContent?.trim() || '沒有標題',
-          description: item.querySelector('.KCArticleCard_cardLink__EVTdA')?.textContent?.trim() || '沒有描述',
-          link: item.querySelector('.KCArticleCard_cardLink__EVTdA')?.getAttribute('href') || '沒有連結'
-        }));
+        const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
+        return Array.from(items).map(item => {
+          const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
+          const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
+          const infoElement = item.querySelector('.AWSAvatar_avatarMeta__hubWM [data-test="last-updated"]');
+          
+          return {
+            title: titleElement?.textContent?.trim() || '沒有標題',
+            description: descriptionElement?.textContent?.trim() || '沒有描述',
+            link: titleElement?.getAttribute('href') || '沒有連結',
+            info: infoElement?.textContent?.trim() || '沒有更新資訊'
+          };
+        });
       });
 
       // 修改 link 以確保完整 URL
