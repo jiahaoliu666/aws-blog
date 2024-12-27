@@ -201,51 +201,67 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
 
     browser = await puppeteer.launch({ 
       headless: true,
-      args: ['--incognito'] 
+      args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox'],
+      defaultViewport: { width: 1920, height: 1080 }
     });
     const page = await browser.newPage();
     
+    page.setDefaultTimeout(30000);
+    page.setDefaultNavigationTimeout(30000);
+
     await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9'
+      'Accept-Language': 'en-US,en;q=0.9',
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
     });
 
+    console.log('開始訪問網頁...');
     await gotoWithRetry(
       page,
       'https://repost.aws/knowledge-center/all?view=all&sort=recent',
       {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle0',
         timeout: 60000,
       }
     );
 
+    console.log('等待頁面載入...');
+    await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
+    console.log('頁面已載入');
+
     while (totalArticlesInDatabase < targetNumberOfArticles) {
       const articles = await page.evaluate(() => {
         const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
+        console.log(`找到 ${items.length} 篇文章`);
+        
         return Array.from(items).map(item => {
           const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
           const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
-          const infoElement = item.querySelector('.AWSAvatar_avatarMeta__hubWM [data-test="last-updated"]');
+          const infoElement = item.querySelector('[data-test="last-updated"]');
           
-          return {
-            title: titleElement?.textContent?.trim() || '沒有標題',
-            description: descriptionElement?.textContent?.trim() || '沒有描述',
-            link: titleElement?.getAttribute('href') || '沒有連結',
-            info: infoElement?.textContent?.trim() || '沒有更新資訊'
-          };
+          const title = titleElement?.textContent?.trim() || '沒有標題';
+          const description = descriptionElement?.textContent?.trim() || '沒有描述';
+          const link = titleElement?.getAttribute('href') || '沒有連結';
+          const info = infoElement?.textContent?.trim() || '沒有更新資訊';
+          
+          return { title, description, link, info };
         });
       });
+
+      console.log(`本頁找到 ${articles.length} 篇文章`);
 
       // 修改 link 以確保完整 URL
       for (const article of articles) {
         if (!article.link.startsWith('http')) {
           article.link = `https://repost.aws${article.link}`;
         }
+        console.log('處理文章:', article);
       }
 
       for (const article of articles) {
         if (totalArticlesInDatabase < targetNumberOfArticles) {
           if (await saveToDynamoDB(article)) {
             totalArticlesInDatabase++;
+            console.log(`已處理 ${totalArticlesInDatabase}/${targetNumberOfArticles} 篇文章`);
           }
         } else {
           break;

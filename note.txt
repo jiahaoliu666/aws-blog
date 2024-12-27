@@ -81,7 +81,7 @@ src/components/common/Notification.tsx // 通知介面
 
 
 ------
-根據 @https://repost.aws/knowledge-center/all?view=all&sort=recent&page=eyJ2IjoyLCJuIjoicEJZWFM3ZHFqMDM1VUxQMHF3YWwrdz09IiwidCI6Ii9vRkxhQW93RGJnUjQ0dVJRbVFrb3c9PSJ9&pageSize=12
+根據 @https://repost.aws/knowledge-center/all?view=all&sort=recent
 ，以上我要爬取的網頁元素的內容，我要從中獲取以下資訊
 
 ------
