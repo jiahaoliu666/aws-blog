@@ -956,7 +956,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                   </div>
                   <Switch
-                    checked={settings.discord}
+                    checked={settings.discordNotification}
                     onChange={handleDiscordToggle}
                     disabled={isPageLoading || (!settings.discordId && !showDiscordVerification)}
                     sx={{
@@ -998,7 +998,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                         try {
                           await startDiscordAuth();
                         } catch (error) {
-                          // 錯誤已在 startDiscordAuth 中處理
                           console.error('Discord 授權失敗:', error);
                         }
                       }}

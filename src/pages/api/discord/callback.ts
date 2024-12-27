@@ -1,16 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { DISCORD_CONFIG } from '@/config/discord';
-import { discordBotService } from '@/services/discordBotService';
 import { logger } from '@/utils/logger';
-import { errorHandler } from '@/utils/errorHandler';
-import { updateUserDiscordSettings } from '@/services/userService';
+import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 
-export const config = {
-  api: {
-    bodyParser: true,
-    externalResolver: true,
-  },
-};
+const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 export default async function handler(
   req: NextApiRequest,
@@ -58,14 +51,33 @@ export default async function handler(
 
     const userData = await userResponse.json();
 
-    // 更新用戶的 Discord 設定
-    await updateUserDiscordSettings(req.query.state as string, {
-      discordId: userData.id,
-      discordUsername: userData.username,
-      discordDiscriminator: userData.discriminator
+    // 直接更新 DynamoDB
+    const params = {
+      TableName: "AWS_Blog_UserNotificationSettings",
+      Key: {
+        userId: { S: req.query.state as string }
+      },
+      UpdateExpression: `
+        SET discordNotification = :discordNotification,
+            discordId = :discordId,
+            updatedAt = :updatedAt
+      `,
+      ExpressionAttributeValues: {
+        ':discordNotification': { BOOL: true },
+        ':discordId': { S: userData.id },
+        ':updatedAt': { S: new Date().toISOString() }
+      }
+    };
+
+    const command = new UpdateItemCommand(params);
+    await dynamoClient.send(command);
+
+    logger.info('Discord 設定已更新:', {
+      userId: req.query.state,
+      discordId: userData.id
     });
 
-    // 構建授權成功的 HTML 回應，並傳遞更多用戶資訊
+    // 構建授權成功的 HTML 回應
     const html = `
     <!DOCTYPE html>
     <html>

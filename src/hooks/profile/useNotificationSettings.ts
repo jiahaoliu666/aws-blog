@@ -6,7 +6,7 @@ import { DISCORD_CONFIG } from '@/config/discord';
 interface NotificationSettings {
   emailNotification: boolean;
   lineNotification: boolean;
-  discord: boolean;
+  discordNotification: boolean;
   lineId?: string | null;
   discordId?: string | null;
 }
@@ -15,13 +15,13 @@ export const useNotificationSettings = (userId: string) => {
   const [originalSettings, setOriginalSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
-    discord: false,
+    discordNotification: false,
     lineId: null
   });
   const [tempSettings, setTempSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
-    discord: false,
+    discordNotification: false,
     lineId: null
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -42,14 +42,14 @@ export const useNotificationSettings = (userId: string) => {
       setOriginalSettings({
         emailNotification: data.emailNotification || false,
         lineNotification: data.lineNotification || false,
-        discord: data.discord || false,
+        discordNotification: data.discordNotification || false,
         lineId: data.lineId || null
       });
       
       setTempSettings({
         emailNotification: data.emailNotification || false,
         lineNotification: data.lineNotification || false,
-        discord: data.discord || false,
+        discordNotification: data.discordNotification || false,
         lineId: data.lineId || null
       });
     } catch (error) {
@@ -276,7 +276,7 @@ export const useNotificationSettings = (userId: string) => {
     setShowDiscordVerification(true);
     setTempSettings(prev => ({
       ...prev,
-      discord: false,
+      discordNotification: false,
       discordId: null
     }));
   };
@@ -299,7 +299,7 @@ export const useNotificationSettings = (userId: string) => {
         },
         body: JSON.stringify({
           userId,
-          discord: true,
+          discordNotification: true,
           discordId
         })
       });
@@ -312,13 +312,13 @@ export const useNotificationSettings = (userId: string) => {
       
       setOriginalSettings(prev => ({
         ...prev,
-        discord: true,
+        discordNotification: true,
         discordId: data.discordId
       }));
       
       setTempSettings(prev => ({
         ...prev,
-        discord: true,
+        discordNotification: true,
         discordId: data.discordId
       }));
 
@@ -341,7 +341,7 @@ export const useNotificationSettings = (userId: string) => {
   // 處理 Discord 設定變更
   const handleDiscordToggle = async () => {
     try {
-      if (!tempSettings.discord) {
+      if (!tempSettings.discordNotification) {
         // 開啟 Discord 通知
         if (!tempSettings.discordId) {
           startDiscordVerification();
@@ -357,7 +357,7 @@ export const useNotificationSettings = (userId: string) => {
             },
             body: JSON.stringify({
               userId,
-              discord: false
+              discordNotification: false
             })
           });
 
@@ -418,10 +418,23 @@ export const useNotificationSettings = (userId: string) => {
             authWindow.close();
           }
           
+          // 更新通知設定
+          await fetch('/api/profile/notification-settings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId,
+              discordNotification: true,
+              discordId: event.data.discord_id
+            })
+          });
+
           // 更新本地狀態
           setTempSettings(prev => ({
             ...prev,
-            discord: true,
+            discordNotification: true,
             discordId: event.data.discord_id
           }));
 

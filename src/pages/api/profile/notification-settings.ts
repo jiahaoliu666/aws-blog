@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { userId, lineNotification, emailNotification } = req.body;
+  const { userId, lineNotification, emailNotification, discord, discordId } = req.body;
 
   try {
     if (!userId) {
@@ -94,11 +94,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         UpdateExpression: `
           SET lineNotification = :lineNotification,
               emailNotification = :emailNotification,
+              discordNotification = :discordNotification,
+              discordId = :discordId,
               updatedAt = :updatedAt
         `,
         ExpressionAttributeValues: {
           ':lineNotification': { BOOL: lineNotification || false },
           ':emailNotification': { BOOL: emailNotification || false },
+          ':discordNotification': { BOOL: discord || false },
+          ':discordId': discordId ? { S: discordId } : { NULL: true },
           ':updatedAt': { S: new Date().toISOString() }
         },
         ReturnValues: ReturnValue.ALL_NEW
@@ -120,9 +124,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         settings: {
           lineNotification: lineNotification || false,
           emailNotification: emailNotification || false,
+          discordNotification: discord || false,
+          discordId: result.Attributes?.discordId?.S || null,
           lineId: result.Attributes?.lineId?.S || null
         }
       });
+    }
+
+    if (discord) {
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
+        },
+        UpdateExpression: `
+          SET discord = :discord,
+              discordId = :discordId,
+              updatedAt = :updatedAt
+        `,
+        ExpressionAttributeValues: {
+          ':discord': { BOOL: true },
+          ':discordId': { S: discordId },
+          ':updatedAt': { S: new Date().toISOString() }
+        },
+        ReturnValues: ReturnValue.ALL_NEW
+      };
+
+      const command = new UpdateItemCommand(params);
+      await dynamoClient.send(command);
     }
 
   } catch (error) {
