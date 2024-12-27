@@ -35,7 +35,7 @@ interface NotificationUser {
 dotenv.config({ path: ".env.local" });
 
 // 常量定義
-const NUMBER_OF_KNOWLEDGE_TO_FETCH = 2;
+const NUMBER_OF_KNOWLEDGE_TO_FETCH = 4;
 
 // 初始化客戶端
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -202,6 +202,17 @@ async function gotoWithRetry(
 async function scrapeAWSKnowledge(): Promise<void> {
   let browser: puppeteer.Browser | null = null;
   try {
+    // 計算需要爬取的文章數量
+    const currentCount = await countKnowledgeInDatabase();
+    const remainingArticles = NUMBER_OF_KNOWLEDGE_TO_FETCH - currentCount;
+
+    if (remainingArticles <= 0) {
+      console.log(`資料庫中已有足夠知識文章 (${currentCount}/${NUMBER_OF_KNOWLEDGE_TO_FETCH})，無需更新`);
+      return;
+    }
+
+    console.log(`需要爬取 ${remainingArticles} 篇新文章`);
+
     browser = await puppeteer.launch({ 
       headless: true,
       args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox'],
@@ -231,15 +242,15 @@ async function scrapeAWSKnowledge(): Promise<void> {
     await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
     console.log('頁面已載入');
 
+    let processedArticles = 0;
+
+    // 只獲取需要的文章數量
     const articles = await page.evaluate(() => {
       const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
-      console.log(`找到 ${items.length} 篇文章`);
-      
-      return Array.from(items).map(item => {
+      return Array.from(items).slice(0, 5).map(item => {
         const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
         const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
         
-        // 只取得連結和描述
         const link = titleElement?.getAttribute('href') || '沒有連結';
         const description = descriptionElement?.textContent?.trim() || '沒有描述';
         
@@ -247,12 +258,10 @@ async function scrapeAWSKnowledge(): Promise<void> {
       });
     });
 
-    console.log(`本頁找到 ${articles.length} 篇文章`);
+    // 處理文章
+    for (const article of articles) {
+      if (processedArticles >= remainingArticles) break;
 
-    // 修改 link 並爬取完整標題
-    const knowledgeArticles = articles.slice(0, NUMBER_OF_KNOWLEDGE_TO_FETCH);
-    
-    for (const article of knowledgeArticles) {
       if (!article.link.startsWith('http')) {
         article.link = `https://repost.aws${article.link}`;
       }
@@ -283,7 +292,10 @@ async function scrapeAWSKnowledge(): Promise<void> {
       }
 
       console.log('處理文章:', article);
-      await saveToDynamoDB(article);
+      if (await saveToDynamoDB(article)) {
+        processedArticles++;
+        console.log(`成功處理第 ${processedArticles}/${remainingArticles} 篇文章`);
+      }
     }
 
     console.log(`\n📊 更新執行報告`);
@@ -294,7 +306,7 @@ async function scrapeAWSKnowledge(): Promise<void> {
     console.log(`==================\n`);
 
   } catch (error) {
-    logger.error("執行更新時發生錯誤:", error instanceof Error ? error.message : String(error));
+    logger.error("執行更新時發生錯誤:", error);
     throw error;
   } finally {
     if (browser) {
@@ -383,6 +395,20 @@ async function broadcastNewKnowledge(knowledgeId: string): Promise<void> {
     }
   } catch (error) {
     logger.error("廣播新知識文章通知時發生錯誤:", error);
+  }
+}
+
+async function countKnowledgeInDatabase(): Promise<number> {
+  const scanParams = {
+    TableName: process.env.DYNAMODB_KNOWLEDGE_TABLE || 'AWS_Blog_Knowledge',
+  };
+
+  try {
+    const data = await dbClient.send(new ScanCommand(scanParams));
+    return data.Items ? data.Items.length : 0;
+  } catch (error) {
+    logger.error('計數資料庫知識文章時發生錯誤:', error);
+    return 0;
   }
 }
 

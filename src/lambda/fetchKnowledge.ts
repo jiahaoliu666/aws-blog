@@ -188,14 +188,17 @@ async function gotoWithRetry(
 async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void> {
   let browser: puppeteer.Browser | null = null;
   try {
+    // 先檢查資料庫現有數量
     const initialTotalArticles = await countKnowledgeInDatabase();
     console.log(`資料庫初始知識文章數量: ${initialTotalArticles}`);
 
-    let totalArticlesInDatabase = initialTotalArticles;
-    if (totalArticlesInDatabase >= targetNumberOfArticles) {
-      console.log(`資料庫中已有足夠知識文章，無需再抓取`);
+    const remainingArticles = targetNumberOfArticles - initialTotalArticles;
+    if (remainingArticles <= 0) {
+      console.log(`資料庫中已有足夠知識文章 (${initialTotalArticles}/${targetNumberOfArticles})，無需再爬取`);
       return;
     }
+
+    console.log(`需要爬取 ${remainingArticles} 篇新文章`);
 
     browser = await puppeteer.launch({ 
       headless: true,
@@ -226,12 +229,16 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
     await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
     console.log('頁面已載入');
 
-    while (totalArticlesInDatabase < targetNumberOfArticles) {
-      const articles = await page.evaluate(() => {
+    let processedArticles = 0;
+    let currentPage = 1;
+
+    while (processedArticles < remainingArticles) {
+      console.log(`正在處理第 ${currentPage} 頁`);
+      
+      // 獲取當前頁面的文章
+      const pageArticles = await page.evaluate(() => {
         const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
-        console.log(`找到 ${items.length} 篇文章`);
-        
-        return Array.from(items).map(item => {
+        return Array.from(items).slice(0, 5).map(item => {
           const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
           const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
           
@@ -242,67 +249,61 @@ async function scrapeAWSKnowledge(targetNumberOfArticles: number): Promise<void>
         });
       });
 
-      console.log(`本頁找到 ${articles.length} 篇文章`);
+      // 處理每篇文章
+      for (const article of pageArticles) {
+        if (processedArticles >= remainingArticles) break;
 
-      for (const article of articles) {
         if (!article.link.startsWith('http')) {
           article.link = `https://repost.aws${article.link}`;
         }
-        
+
         try {
-          await gotoWithRetry(
-            page,
-            article.link,
-            {
-              waitUntil: 'networkidle0',
-              timeout: 30000,
-            }
-          );
+          await gotoWithRetry(page, article.link, {
+            waitUntil: 'networkidle0',
+            timeout: 30000,
+          });
           
-          await page.waitForSelector('.KCArticleView_title___TWq1 h1');
-          
-          article.title = await page.$eval('.KCArticleView_title___TWq1 h1', 
+          article.title = await page.$eval(
+            '.KCArticleView_title___TWq1 h1',
             (element) => element.textContent?.trim() || '沒有標題'
           );
-          
-          console.log('獲取到完整標題:', article.title);
-        } catch (error) {
-          console.error(`爬取文章標題時發生錯誤 (${article.link}):`, error);
-          article.title = '無法獲取標題';
-        }
 
-        console.log('處理文章:', article);
+          if (await saveToDynamoDB(article)) {
+            processedArticles++;
+            console.log(`成功處理第 ${processedArticles}/${remainingArticles} 篇文章`);
+          }
+        } catch (error) {
+          console.error(`處理文章時發生錯誤:`, error);
+          continue;
+        }
       }
 
-      for (const article of articles) {
-        if (totalArticlesInDatabase < targetNumberOfArticles) {
-          if (await saveToDynamoDB(article)) {
-            totalArticlesInDatabase++;
-            console.log(`已處理 ${totalArticlesInDatabase}/${targetNumberOfArticles} 篇文章`);
-          }
+      // 檢查是否需要翻頁
+      if (processedArticles < remainingArticles) {
+        const nextButton = await page.$('button[aria-label="Next page"]');
+        if (nextButton) {
+          await nextButton.click();
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          currentPage++;
         } else {
+          console.log('沒有更多頁面了');
           break;
         }
       }
-
-      const nextButton = await page.$('button[aria-label="Next page"]');
-      if (nextButton && totalArticlesInDatabase < targetNumberOfArticles) {
-        await nextButton.click();
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      } else {
-        break;
-      }
     }
 
-    console.log(`成功存儲 ${insertedCount} 篇新知識文章`);
-    console.log(`跳過了 ${skippedCount} 篇已存在的知識文章`);
+    console.log('\n📊 爬取統計報告');
+    console.log('==================');
+    console.log(`✅ 新增文章數: ${insertedCount}`);
+    console.log(`⏭️ 跳過文章數: ${skippedCount}`);
+    console.log(`🎯 目標文章數: ${targetNumberOfArticles}`);
+    console.log(`📚 資料庫總數: ${await countKnowledgeInDatabase()}`);
+    console.log('==================\n');
 
-    totalArticlesInDatabase = await countKnowledgeInDatabase();
-    console.log(`爬取後資料庫知識文章總數: ${totalArticlesInDatabase}`);
   } catch (error) {
-    console.error('爬取過程中發生錯誤:', error instanceof Error ? error.message : error);
+    console.error('爬取過程中發生錯誤:', error);
   } finally {
-    if (browser !== null) {
+    if (browser) {
       await browser.close();
     }
   }
