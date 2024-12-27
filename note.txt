@@ -56,7 +56,6 @@ src/components/common/Notification.tsx // 通知介面
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 
-2. 要能進入repost.aws${article.link} 爬取完整標題
 --------
 待執行：
 1. 全部改為響應式設計 

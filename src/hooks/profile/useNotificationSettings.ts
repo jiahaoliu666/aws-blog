@@ -5,18 +5,22 @@ import { logger } from '@/utils/logger';
 interface NotificationSettings {
   emailNotification: boolean;
   lineNotification: boolean;
+  discord: boolean;
   lineId?: string | null;
+  discordId?: string | null;
 }
 
 export const useNotificationSettings = (userId: string) => {
   const [originalSettings, setOriginalSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
+    discord: false,
     lineId: null
   });
   const [tempSettings, setTempSettings] = useState<NotificationSettings>({
     emailNotification: false,
     lineNotification: false,
+    discord: false,
     lineId: null
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -35,12 +39,14 @@ export const useNotificationSettings = (userId: string) => {
       setOriginalSettings({
         emailNotification: data.emailNotification || false,
         lineNotification: data.lineNotification || false,
+        discord: data.discord || false,
         lineId: data.lineId || null
       });
       
       setTempSettings({
         emailNotification: data.emailNotification || false,
         lineNotification: data.lineNotification || false,
+        discord: data.discord || false,
         lineId: data.lineId || null
       });
     } catch (error) {

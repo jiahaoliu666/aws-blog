@@ -16,7 +16,7 @@ import {
   faTimes,
   faCheck
 } from '@fortawesome/free-solid-svg-icons';
-import { faLine } from '@fortawesome/free-brands-svg-icons';
+import { faLine, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
@@ -32,8 +32,10 @@ import { Card } from '../common/Card';
 interface NotificationSettings {
   line: boolean;
   email: boolean;
+  discord: boolean;
   lineUserId?: string;
   lineId: string | null;
+  discordId?: string | null;
 }
 
 interface NotificationSectionProps {
@@ -704,7 +706,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
           <div className="mb-8">
             <SectionTitle 
               title="通知設定"
-              description="管理您想要接收的通知方式"
+              description="管理您想要接收的通知方式 (僅限一種)"
             />
           </div>
 
@@ -853,6 +855,99 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     >
                       <FontAwesomeIcon icon={faLine} />
                       開始 LINE 驗證
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Discord 通知卡片 */}
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
+                      <FontAwesomeIcon 
+                        icon={faDiscord} 
+                        className="text-xl text-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">Discord 通知</h3>
+                      <p className="text-sm text-gray-600">透過 Discord 接收即時通知與重要更新</p>
+                      {settings.discordId ? (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-indigo-50 
+                            text-indigo-700 text-xs font-medium rounded-full border border-indigo-200
+                            shadow-sm shadow-indigo-100/50">
+                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                            已綁定
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Discord ID: {settings.discordId}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-50 
+                            text-gray-500 text-xs font-medium rounded-full border border-gray-200">
+                            未綁定
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.discord}
+                    onChange={() => handleToggle('discordNotification', !settings.discord)}
+                    disabled={!settings.discordId}
+                    sx={{
+                      '& .MuiSwitch-switchBase': {
+                        color: '#9ca3af',
+                        '&:hover': {
+                          backgroundColor: 'rgba(79, 70, 229, 0.04)',
+                        },
+                        '&.Mui-checked': {
+                          color: '#4f46e5',
+                          '&:hover': {
+                            backgroundColor: 'rgba(79, 70, 229, 0.04)',
+                          },
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#4f46e5',
+                            opacity: 0.5,
+                          },
+                        },
+                        '&.Mui-disabled': {
+                          color: '#e5e7eb',
+                        },
+                      },
+                      '& .MuiSwitch-track': {
+                        backgroundColor: '#d1d5db',
+                        opacity: 0.3,
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Discord 驗證流程區域 */}
+              {!settings.discordId && (
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                  <div className="text-center">
+                    <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
+                    <button
+                      onClick={() => {
+                        // TODO: 實作 Discord 驗證流程
+                        toast.info('Discord 驗證功能即將推出');
+                      }}
+                      className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
+                        hover:bg-indigo-700 active:bg-indigo-800
+                        transition-all duration-200 ease-in-out
+                        flex items-center gap-2 mx-auto
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    >
+                      <FontAwesomeIcon icon={faDiscord} />
+                      開始 Discord 驗證
                     </button>
                   </div>
                 </div>
