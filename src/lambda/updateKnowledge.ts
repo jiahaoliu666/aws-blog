@@ -239,25 +239,51 @@ async function scrapeAWSKnowledge(): Promise<void> {
         const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
         const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
         
-        const title = titleElement?.textContent?.trim() || '沒有標題';
-        const description = descriptionElement?.textContent?.trim() || '沒有描述';
+        // 只取得連結和描述
         const link = titleElement?.getAttribute('href') || '沒有連結';
+        const description = descriptionElement?.textContent?.trim() || '沒有描述';
         
-        return { title, description, link };
+        return { title: '', description, link };
       });
     });
 
     console.log(`本頁找到 ${articles.length} 篇文章`);
 
-    // 修改 link 以確保完整 URL
-    const knowledgeArticles = articles.slice(0, NUMBER_OF_KNOWLEDGE_TO_FETCH).map(article => ({
-      ...article,
-      link: !article.link.startsWith('http') ? `https://repost.aws${article.link}` : article.link
-    }));
+    // 修改 link 並爬取完整標題
+    const knowledgeArticles = articles.slice(0, NUMBER_OF_KNOWLEDGE_TO_FETCH);
+    
+    for (const article of knowledgeArticles) {
+      if (!article.link.startsWith('http')) {
+        article.link = `https://repost.aws${article.link}`;
+      }
 
-    for (const knowledge of knowledgeArticles) {
-      console.log('處理文章:', knowledge);
-      await saveToDynamoDB(knowledge);
+      try {
+        await gotoWithRetry(
+          page,
+          article.link,
+          {
+            waitUntil: 'networkidle0',
+            timeout: 30000,
+          }
+        );
+        
+        // 等待標題元素載入
+        await page.waitForSelector('.KCArticleView_title___TWq1 h1');
+        
+        // 獲取完整標題
+        article.title = await page.$eval('.KCArticleView_title___TWq1 h1', 
+          (element) => element.textContent?.trim() || '沒有標題'
+        );
+        
+        console.log('獲取到完整標題:', article.title);
+      } catch (error) {
+        logger.error(`爬取文章標題時發生錯誤 (${article.link}):`, error);
+        article.title = '無法獲取標題';
+        continue;
+      }
+
+      console.log('處理文章:', article);
+      await saveToDynamoDB(article);
     }
 
     console.log(`\n📊 更新執行報告`);
