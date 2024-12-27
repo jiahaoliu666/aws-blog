@@ -445,6 +445,21 @@ export const useNotificationSettings = (userId: string) => {
     }
   };
 
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch(`/api/profile/notification-settings/${userId}`);
+      const data = await response.json();
+      
+      setTempSettings({
+        ...data,
+        discordId: data.discordId || null,
+        discordNotification: data.discordNotification || false
+      });
+    } catch (error) {
+      console.error('Error fetching notification settings:', error);
+    }
+  };
+
   useEffect(() => {
     reloadSettings();
   }, [userId]);
@@ -476,6 +491,7 @@ export const useNotificationSettings = (userId: string) => {
     cancelDiscordVerification,
     handleDiscordVerificationComplete,
     handleDiscordToggle,
-    startDiscordAuth
+    startDiscordAuth,
+    fetchSettings
   };
 };

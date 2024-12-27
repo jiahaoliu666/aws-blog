@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { DynamoDBClient, UpdateItemCommand, ReturnValue, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, UpdateItemCommand, ReturnValue, DeleteItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '@/utils/logger';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });

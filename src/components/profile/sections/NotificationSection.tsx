@@ -33,9 +33,8 @@ interface NotificationSettings {
   line: boolean;
   email: boolean;
   discord: boolean;
-  lineUserId?: string;
-  lineId: string | null;
   discordId?: string | null;
+  lineId: string | null;
 }
 
 interface NotificationSectionProps {
@@ -70,6 +69,13 @@ interface NotificationSectionProps {
   setVerificationStep: (step: VerificationStep) => void;
   handleResetVerification: () => Promise<void>;
   setVerificationState: Dispatch<SetStateAction<VerificationState>>;
+  settings: {
+    discordId: string | null;
+    discordNotification: boolean;
+    line: boolean;
+    email: boolean;
+    lineId: string | null;
+  };
 }
 
 interface StepIndicatorsProps {
@@ -547,6 +553,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   setVerificationStep,
   handleResetVerification,
   setVerificationState,
+  settings: propSettings,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -940,28 +947,33 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Discord 通知</h3>
                       <p className="text-sm text-gray-600">透過 Discord 接收即時通知與重要更新</p>
-                      {settings.discordId ? (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-indigo-50 
-                            text-indigo-700 text-xs font-medium rounded-full border border-indigo-200
-                            shadow-sm shadow-indigo-100/50">
-                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                            已綁定
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            Discord ID: {settings.discordId}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-50 
-                            text-gray-500 text-xs font-medium rounded-full border border-gray-200">
+                      
+                      {/* 狀態標籤區域 */}
+                      <div className="mt-2 flex items-center gap-2">
+                        {settings.discordId ? (
+                          <>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 
+                              bg-indigo-50 text-indigo-700 text-xs font-medium 
+                              rounded-full border border-indigo-200">
+                              <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                              已綁定
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              Discord ID: {settings.discordId}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 
+                            bg-gray-50 text-gray-500 text-xs font-medium 
+                            rounded-full border border-gray-200">
                             未綁定
                           </span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Discord 通知開關 */}
                   <Switch
                     checked={settings.discordNotification}
                     onChange={handleDiscordToggle}
@@ -995,20 +1007,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 </div>
               </div>
 
-              {/* Discord 驗證流程區域 */}
-              {!settings.discordId && (
+              {/* Discord 驗證流程區域 - 只在未綁定且未啟用通知時顯示 */}
+              {!settings.discordId && !settings.discordNotification && (
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
-                      onClick={async () => {
-                        try {
-                          await startDiscordAuth();
-                        } catch (error) {
-                          console.error('Discord 授權失敗:', error);
-                          toast.error('Discord 授權失敗，請稍後再試');
-                        }
-                      }}
+                      onClick={startDiscordAuth}
                       className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
                         hover:bg-indigo-700 active:bg-indigo-800
                         transition-all duration-200 ease-in-out
