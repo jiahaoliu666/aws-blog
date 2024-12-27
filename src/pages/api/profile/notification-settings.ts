@@ -96,6 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               emailNotification = :emailNotification,
               discordNotification = :discordNotification,
               discordId = :discordId,
+              lineId = if_not_exists(lineId, :defaultLineId),
               updatedAt = :updatedAt
         `,
         ExpressionAttributeValues: {
@@ -103,6 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ':emailNotification': { BOOL: emailNotification || false },
           ':discordNotification': { BOOL: discord || false },
           ':discordId': discordId ? { S: discordId } : { NULL: true },
+          ':defaultLineId': { NULL: true },
           ':updatedAt': { S: new Date().toISOString() }
         },
         ReturnValues: ReturnValue.ALL_NEW
@@ -129,29 +131,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           lineId: result.Attributes?.lineId?.S || null
         }
       });
-    }
-
-    if (discord) {
-      const params = {
-        TableName: "AWS_Blog_UserNotificationSettings",
-        Key: {
-          userId: { S: userId }
-        },
-        UpdateExpression: `
-          SET discord = :discord,
-              discordId = :discordId,
-              updatedAt = :updatedAt
-        `,
-        ExpressionAttributeValues: {
-          ':discord': { BOOL: true },
-          ':discordId': { S: discordId },
-          ':updatedAt': { S: new Date().toISOString() }
-        },
-        ReturnValues: ReturnValue.ALL_NEW
-      };
-
-      const command = new UpdateItemCommand(params);
-      await dynamoClient.send(command);
     }
 
   } catch (error) {

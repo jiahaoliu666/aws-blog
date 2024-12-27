@@ -384,7 +384,6 @@ export const useNotificationSettings = (userId: string) => {
     try {
       logger.info('開始 Discord 授權流程');
       
-      // 發送 Discord 授權請求
       const response = await fetch('/api/discord/auth', {
         method: 'POST',
         headers: {
@@ -399,7 +398,6 @@ export const useNotificationSettings = (userId: string) => {
         throw new Error(data.message || 'Discord 授權失敗');
       }
 
-      // 開啟授權視窗
       const authWindow = window.open(
         data.authUrl,
         'Discord 授權',
@@ -417,25 +415,15 @@ export const useNotificationSettings = (userId: string) => {
           if (authWindow) {
             authWindow.close();
           }
-          
-          // 更新通知設定
-          await fetch('/api/profile/notification-settings', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId,
-              discordNotification: true,
-              discordId: event.data.discord_id
-            })
-          });
 
           // 更新本地狀態
           setTempSettings(prev => ({
             ...prev,
             discordNotification: true,
-            discordId: event.data.discord_id
+            discordId: event.data.discord_id,
+            lineNotification: prev.lineNotification,
+            emailNotification: prev.emailNotification,
+            lineId: prev.lineId
           }));
 
           // 顯示成功訊息
@@ -444,7 +432,7 @@ export const useNotificationSettings = (userId: string) => {
             duration: 3000
           });
           
-          // 重新載入設定
+          // 重新載入設定以確保狀態同步
           await reloadSettings();
         }
       });

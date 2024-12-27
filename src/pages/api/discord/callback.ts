@@ -60,12 +60,16 @@ export default async function handler(
       UpdateExpression: `
         SET discordNotification = :discordNotification,
             discordId = :discordId,
-            updatedAt = :updatedAt
+            updatedAt = :updatedAt,
+            lineNotification = if_not_exists(lineNotification, :defaultLineNotification),
+            emailNotification = if_not_exists(emailNotification, :defaultEmailNotification)
       `,
       ExpressionAttributeValues: {
         ':discordNotification': { BOOL: true },
         ':discordId': { S: userData.id },
-        ':updatedAt': { S: new Date().toISOString() }
+        ':updatedAt': { S: new Date().toISOString() },
+        ':defaultLineNotification': { BOOL: false },
+        ':defaultEmailNotification': { BOOL: false }
       }
     };
 
@@ -74,7 +78,8 @@ export default async function handler(
 
     logger.info('Discord 設定已更新:', {
       userId: req.query.state,
-      discordId: userData.id
+      discordId: userData.id,
+      discordNotification: true
     });
 
     // 構建授權成功的 HTML 回應
