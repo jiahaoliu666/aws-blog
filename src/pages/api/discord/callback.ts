@@ -59,13 +59,13 @@ export default async function handler(
     const userData = await userResponse.json();
 
     // 更新用戶的 Discord 設定
-    await updateUserDiscordSettings(userData.id, {
+    await updateUserDiscordSettings(req.query.state as string, {
       discordId: userData.id,
       discordUsername: userData.username,
       discordDiscriminator: userData.discriminator
     });
 
-    // 構建授權成功的 HTML 回應
+    // 構建授權成功的 HTML 回應，並傳遞更多用戶資訊
     const html = `
     <!DOCTYPE html>
     <html>
@@ -75,7 +75,9 @@ export default async function handler(
         window.opener.postMessage({
           type: 'DISCORD_AUTH_SUCCESS',
           discord_id: '${userData.id}',
-          username: '${userData.username}'
+          username: '${userData.username}',
+          discriminator: '${userData.discriminator}',
+          avatar: '${userData.avatar || ''}'
         }, '*');
         window.close();
       </script>

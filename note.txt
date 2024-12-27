@@ -76,3 +76,23 @@ src/components/common/Notification.tsx // 通知介面
 16. card 使用建立日期當作獲取日期 然後可以根據日期排序
 17. 添加 discord 通知功能
 18. 新聞文章 只留日期 去除 人名
+--------
+
+discord 通知功能
+src/services/discordService.ts
+src/config/discord.ts
+src/hooks/profile/useNotificationSettings.ts
+src/utils/logger.ts
+src/pages/api/discord/callback.ts
+src/pages/api/discord/auth.ts
+src/components/profile/sections/NotificationSection.tsx
+src/services/discordBotService.ts
+src/pages/api/profile/discord-verification.ts
+src/pages/api/discord/webhook.ts
+src/pages/_app.tsx
+src/types/env.d.ts
+src/types/discordTypes.ts
+src/utils/errorHandler.ts
+src/services/userService.ts
+
+--------

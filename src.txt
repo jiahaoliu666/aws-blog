@@ -1,4 +1,4 @@
-src/
+src/ 
 ├── types
 │   ├── announcementType.ts         // 公告文章相關的類型
 │   ├── newsType.ts                 // 新聞文章相關類型
@@ -7,9 +7,11 @@ src/
 │   ├── knowledgeType.ts            // 知識中心文章相關類型
 │   ├── profileTypes.ts             // 個人資料類型定義
 │   ├── next-auth.d.ts              // NextAuth.js 的類型定義
+│   ├── env.d.ts                    // 環境變量類型定義
 │   ├── emailTypes.ts               // 電子郵件通知類型
 │   ├── amazon-dax-client.d.ts      // Amazon DAX 客戶端的類型定義
 │   ├── lineTypes.ts                // LINE 通知相關類型
+│   └── discordTypes.ts             // Discord 相關類型
 │   └── userType.ts                 // 用戶相關的類型
 ├── pages
 │   ├── _app.tsx                    // 自定義應用程序入口
@@ -63,7 +65,8 @@ src/
 │   │   │   ├── addFavorite.ts      // 新增知識中心收藏的 API
 │   │   │   ├── removeFavorite.ts   // 移除知識中心收藏的 API
 │   │   │   └── getFavorites.ts     // 獲取知識中心收藏的 API
-│   │   ├── profile
+│   │   ├── profile 
+│   │   │   ├── discord-verification.ts // Discord 驗證的 API
 │   │   │   ├── recent-log.ts       // 獲取最近日誌的 API
 │   │   │   ├── notification-settings
 │   │   │   │   ├── [userId].ts     // 用戶通知設置的 API
@@ -74,15 +77,19 @@ src/
 │   │   │   └── activity-log.ts     // 活動日誌的 API
 │   │   ├── auth
 │   │   │   └── cleanup.ts          // 清理認證的 API
+│   │   └── notifications
+│   │   │   ├── sendEmail.ts        // 發送電子郵件的 API
+│   │   │   ├── mark-read.ts        // 標記通知為已讀的 API
+│   │   │   └── index.ts            // 通知 API 主入口
 │   │   ├── line
 │   │   │   ├── verify-code.ts      // 驗證 LINE 代碼的 API
 │   │   │   ├── verification-status.ts // 獲取驗證狀態的 API
 │   │   │   ├── message.ts          // 發送 LINE 消息的 API
 │   │   │   └── webhook.ts          // LINE Webhook API
-│   │   └── notifications
-│   │       ├── sendEmail.ts        // 發送電子郵件的 API
-│   │       ├── mark-read.ts        // 標記通知為已讀的 API
-│   │       └── index.ts            // 通知 API 主入口
+│   │   └── discord 
+│   │       └── callback.ts         // Discord 授權回調的 API
+│   │       └── auth.ts             // Discord 授權的 API
+│   │       └── webhook.ts          // Discord Webhook API
 ├── hooks
 │   ├── announcement
 │   │   ├── useAnnouncementPageLogic.ts // 使用公告頁面邏輯的 Hook
@@ -179,16 +186,20 @@ src/
 │   ├── authService.ts              // 認證服務
 │   ├── dbService.ts                // 資料庫服務
 │   ├── lineVerification.ts         // LINE 驗證服務
+│   ├── discordService.ts           // Discord 服務
+│   ├── discordBotService.ts        // Discord Bot 服務
+│   └── userService.ts              // 用戶服務
 │   ├── aws
 │   │   └── s3.ts                   // AWS S3 服務
 │   ├── emailService.ts             // 電子郵件服務
 │   └── lineService.ts              // LINE 服務
 ├── config
 │   ├── email.ts                    // 電子郵件配置
+│   └── line.ts                     // LINE 配置
+│   ├── discord.ts                  // Discord 配置
 │   ├── aws.ts                      // AWS 配置
 │   ├── constants.ts                // 常量配置
-│   └── line.ts                     // LINE 配置
-├── utils
+├── utils 
 │   ├── notificationUtils.ts        // 通知工具函數
 │   ├── rateLimiter.ts              // 限流工具
 │   ├── errorHandler.ts             // 錯誤處理工具

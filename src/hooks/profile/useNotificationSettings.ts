@@ -385,7 +385,14 @@ export const useNotificationSettings = (userId: string) => {
       logger.info('開始 Discord 授權流程');
       
       // 發送 Discord 授權請求
-      const response = await fetch('/api/discord/auth');
+      const response = await fetch('/api/discord/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId })
+      });
+      
       const data = await response.json();
       
       if (!data.success) {
@@ -419,7 +426,10 @@ export const useNotificationSettings = (userId: string) => {
           }));
 
           // 顯示成功訊息
-          showToast('Discord 驗證成功', 'success');
+          showToast('Discord 驗證成功', 'success', {
+            description: '您現在可以接收 Discord 通知了',
+            duration: 3000
+          });
           
           // 重新載入設定
           await reloadSettings();
