@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToastContext } from '@/context/ToastContext';
 import { logger } from '@/utils/logger';
+import { DISCORD_CONFIG } from '@/config/discord';
 
 interface NotificationSettings {
   emailNotification: boolean;
@@ -32,7 +33,7 @@ export const useNotificationSettings = (userId: string) => {
   const [showDiscordVerification, setShowDiscordVerification] = useState(false);
 
   // 載入設定
-  const loadSettings = async () => {
+  const reloadSettings = async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/profile/notification-settings/${userId}`);
@@ -381,27 +382,60 @@ export const useNotificationSettings = (userId: string) => {
 
   const startDiscordAuth = async () => {
     try {
+      logger.info('開始 Discord 授權流程');
+      
+      // 發送 Discord 授權請求
       const response = await fetch('/api/discord/auth');
-      const { authUrl } = await response.json();
+      const data = await response.json();
       
-      // 打開新窗口進行 Discord 授權
-      window.open(authUrl, 'discord_auth', 'width=600,height=800');
-      
-      // 監聽來自授權窗口的消息
+      if (!data.success) {
+        throw new Error(data.message || 'Discord 授權失敗');
+      }
+
+      // 開啟授權視窗
+      const authWindow = window.open(
+        data.authUrl,
+        'Discord 授權',
+        'width=500,height=700'
+      );
+
+      if (!authWindow) {
+        throw new Error('無法開啟 Discord 授權視窗');
+      }
+
+      // 監聽授權結果
       window.addEventListener('message', async (event) => {
         if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
-          const { discord_id } = event.data;
-          await handleDiscordVerificationComplete(discord_id);
+          logger.info('Discord 授權成功:', event.data);
+          if (authWindow) {
+            authWindow.close();
+          }
+          
+          // 更新本地狀態
+          setTempSettings(prev => ({
+            ...prev,
+            discord: true,
+            discordId: event.data.discord_id
+          }));
+
+          // 顯示成功訊息
+          showToast('Discord 驗證成功', 'success');
+          
+          // 重新載入設定
+          await reloadSettings();
         }
       });
     } catch (error) {
       logger.error('啟動 Discord 授權失敗:', error);
-      showToast('Discord 授權失敗', 'error');
+      showToast('Discord 授權失敗', 'error', {
+        description: error instanceof Error ? error.message : '請稍後再試或聯繫管理員',
+        duration: 5000
+      });
     }
   };
 
   useEffect(() => {
-    loadSettings();
+    reloadSettings();
   }, [userId]);
 
   return {
@@ -413,7 +447,7 @@ export const useNotificationSettings = (userId: string) => {
     hasChanges,
     handleSettingChange,
     saveSettings,
-    reloadSettings: loadSettings,
+    reloadSettings,
     handleSendUserId: async () => {
       return true;
     },

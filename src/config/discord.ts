@@ -1,3 +1,21 @@
+import { logger } from '@/utils/logger';
+
+const requiredEnvVars = [
+  'DISCORD_CLIENT_ID',
+  'DISCORD_CLIENT_SECRET',
+  'DISCORD_BOT_TOKEN',
+  'DISCORD_GUILD_ID',
+] as const;
+
+// 改為只在伺服器端檢查環境變數
+if (typeof window === 'undefined') {
+  requiredEnvVars.forEach((varName) => {
+    if (!process.env[varName]) {
+      console.warn(`警告: 缺少 Discord 環境變數: ${varName}`);
+    }
+  });
+}
+
 export const DISCORD_CONFIG = {
   CLIENT_ID: process.env.DISCORD_CLIENT_ID || '',
   CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || '',
@@ -10,6 +28,30 @@ export const DISCORD_CONFIG = {
   RATE_LIMIT: {
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000,
+  },
+  isConfigValid: () => {
+    try {
+      const requiredConfigs = [
+        'CLIENT_ID',
+        'CLIENT_SECRET',
+        'BOT_TOKEN',
+        'GUILD_ID'
+      ] as const;
+
+      const missingConfigs = requiredConfigs.filter(
+        config => !DISCORD_CONFIG[config as keyof typeof DISCORD_CONFIG]
+      );
+
+      if (missingConfigs.length > 0) {
+        logger.error('缺少必要的 Discord 配置:', missingConfigs);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('檢查 Discord 配置時發生錯誤:', error);
+      return false;
+    }
   }
 };
 

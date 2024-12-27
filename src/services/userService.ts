@@ -17,11 +17,12 @@ export const updateUserDiscordSettings = async (
     await dynamodb.update({
       TableName: process.env.USER_TABLE_NAME || 'Users',
       Key: { userId },
-      UpdateExpression: 'SET discordId = :did, discordUsername = :dun, discordDiscriminator = :dd',
+      UpdateExpression: 'SET discordId = :did, discordUsername = :dun, discordDiscriminator = :dd, discord = :d',
       ExpressionAttributeValues: {
         ':did': settings.discordId,
         ':dun': settings.discordUsername,
-        ':dd': settings.discordDiscriminator
+        ':dd': settings.discordDiscriminator,
+        ':d': true
       }
     }).promise();
     

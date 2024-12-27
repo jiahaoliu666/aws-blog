@@ -3,6 +3,7 @@ import { DISCORD_CONFIG } from '@/config/discord';
 import { discordBotService } from '@/services/discordBotService';
 import { logger } from '@/utils/logger';
 import { errorHandler } from '@/utils/errorHandler';
+import { updateUserDiscordSettings } from '@/services/userService';
 
 export const config = {
   api: {
@@ -23,7 +24,7 @@ export default async function handler(
 
   try {
     // 交換授權碼獲取訪問令牌
-    const tokenResponse = await fetch(`${DISCORD_CONFIG.API_ENDPOINT}/oauth2/token`, {
+    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -34,51 +35,65 @@ export default async function handler(
         code: code as string,
         grant_type: 'authorization_code',
         redirect_uri: DISCORD_CONFIG.REDIRECT_URI,
-        scope: 'identify email guilds.join webhook.incoming'
       }),
     });
 
-    const tokenData = await tokenResponse.json();
-
     if (!tokenResponse.ok) {
-      throw new Error('獲取訪問令牌失敗');
+      const error = await tokenResponse.json();
+      throw new Error(error.error_description || '獲取訪問令牌失敗');
     }
 
-    // 獲取用戶信息
-    const userResponse = await fetch(`${DISCORD_CONFIG.API_ENDPOINT}/users/@me`, {
+    const tokenData = await tokenResponse.json();
+
+    // 使用訪問令牌獲取用戶信息
+    const userResponse = await fetch('https://discord.com/api/users/@me', {
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,
       },
     });
 
+    if (!userResponse.ok) {
+      throw new Error('獲取用戶信息失敗');
+    }
+
     const userData = await userResponse.json();
 
-    // 將用戶加入指定的 Discord 伺服器
-    await fetch(`${DISCORD_CONFIG.API_ENDPOINT}/guilds/${DISCORD_CONFIG.GUILD_ID}/members/${userData.id}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        access_token: tokenData.access_token,
-      }),
+    // 更新用戶的 Discord 設定
+    await updateUserDiscordSettings(userData.id, {
+      discordId: userData.id,
+      discordUsername: userData.username,
+      discordDiscriminator: userData.discriminator
     });
 
-    // 為用戶創建專屬的 Webhook
-    const webhookUrl = await discordBotService.createWebhook(
-      DISCORD_CONFIG.NOTIFICATION_CHANNEL_ID,
-      `notification-${userData.id}`
-    );
+    // 構建授權成功的 HTML 回應
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Discord 授權成功</title>
+      <script>
+        window.opener.postMessage({
+          type: 'DISCORD_AUTH_SUCCESS',
+          discord_id: '${userData.id}',
+          username: '${userData.username}'
+        }, '*');
+        window.close();
+      </script>
+    </head>
+    <body>
+      <p>授權成功，請稍候...</p>
+    </body>
+    </html>
+    `;
 
-    // 儲存 Webhook URL 到資料庫
-    // ... 實作儲存邏輯 ...
+    return res.status(200).send(html);
 
-    res.redirect(
-      `/profile?discord_auth=success&discord_id=${userData.id}&webhook_url=${encodeURIComponent(webhookUrl)}`
-    );
   } catch (error) {
-    const result = errorHandler.handle(error);
-    return res.status(result.success ? 200 : 500).json(result);
+    logger.error('Discord 授權失敗:', error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : '未知錯誤',
+      code: 'DISCORD_AUTH_ERROR'
+    });
   }
 } 

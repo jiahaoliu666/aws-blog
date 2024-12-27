@@ -23,20 +23,29 @@ export class DiscordService {
   // 驗證 Discord ID
   public async verifyDiscordId(discordId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${DISCORD_CONFIG.API_ENDPOINT}/users/${discordId}`, {
-        headers: {
-          Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Discord ID 驗證失敗');
+      if (!DISCORD_CONFIG.BOT_TOKEN) {
+        throw new Error('Discord Bot Token 未設置');
       }
 
-      const user: DiscordUser = await response.json();
+      const response = await fetch(
+        `${DISCORD_CONFIG.API_ENDPOINT}/users/${discordId}`,
+        {
+          headers: {
+            Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        logger.error('Discord ID 驗證失敗:', error);
+        return false;
+      }
+
+      const user = await response.json();
       return Boolean(user.id);
     } catch (error) {
-      logger.error('Discord ID 驗證失敗:', error);
+      logger.error('Discord ID 驗證過程發生錯誤:', error);
       return false;
     }
   }
