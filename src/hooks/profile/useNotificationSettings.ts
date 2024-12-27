@@ -28,6 +28,8 @@ export const useNotificationSettings = (userId: string) => {
   const { showToast } = useToastContext();
   const [isLineVerified, setIsLineVerified] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
+  const [isDiscordVerifying, setIsDiscordVerifying] = useState(false);
+  const [showDiscordVerification, setShowDiscordVerification] = useState(false);
 
   // 載入設定
   const loadSettings = async () => {
@@ -268,6 +270,136 @@ export const useNotificationSettings = (userId: string) => {
     setTempSettings(originalSettings);
   };
 
+  // 處理 Discord 驗證開始
+  const startDiscordVerification = () => {
+    setShowDiscordVerification(true);
+    setTempSettings(prev => ({
+      ...prev,
+      discord: false,
+      discordId: null
+    }));
+  };
+
+  // 處理 Discord 驗證取消
+  const cancelDiscordVerification = () => {
+    setShowDiscordVerification(false);
+    setTempSettings(originalSettings);
+  };
+
+  // 處理 Discord 驗證完成
+  const handleDiscordVerificationComplete = async (discordId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch('/api/profile/notification-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          discord: true,
+          discordId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('更新 Discord 通知設定失敗');
+      }
+
+      const data = await response.json();
+      
+      setOriginalSettings(prev => ({
+        ...prev,
+        discord: true,
+        discordId: data.discordId
+      }));
+      
+      setTempSettings(prev => ({
+        ...prev,
+        discord: true,
+        discordId: data.discordId
+      }));
+
+      showToast('Discord 驗證成功', 'success');
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+      
+      return true;
+    } catch (error) {
+      logger.error('Discord 驗證完成處理失敗:', error);
+      showToast('更新 Discord 通知設定失敗', 'error');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 處理 Discord 設定變更
+  const handleDiscordToggle = async () => {
+    try {
+      if (!tempSettings.discord) {
+        // 開啟 Discord 通知
+        if (!tempSettings.discordId) {
+          startDiscordVerification();
+          return false;
+        }
+      } else {
+        // 關閉 Discord 通知
+        if (window.confirm('確定關閉 Discord 通知嗎？')) {
+          const response = await fetch('/api/profile/notification-settings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId,
+              discord: false
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('更新 Discord 通知設定失敗');
+          }
+
+          showToast('Discord 通知已關閉', 'success');
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        }
+      }
+      return true;
+    } catch (error) {
+      logger.error('更新 Discord 設定失敗:', error);
+      showToast('更新設定失敗', 'error');
+      return false;
+    }
+  };
+
+  const startDiscordAuth = async () => {
+    try {
+      const response = await fetch('/api/discord/auth');
+      const { authUrl } = await response.json();
+      
+      // 打開新窗口進行 Discord 授權
+      window.open(authUrl, 'discord_auth', 'width=600,height=800');
+      
+      // 監聽來自授權窗口的消息
+      window.addEventListener('message', async (event) => {
+        if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
+          const { discord_id } = event.data;
+          await handleDiscordVerificationComplete(discord_id);
+        }
+      });
+    } catch (error) {
+      logger.error('啟動 Discord 授權失敗:', error);
+      showToast('Discord 授權失敗', 'error');
+    }
+  };
+
   useEffect(() => {
     loadSettings();
   }, [userId]);
@@ -293,5 +425,12 @@ export const useNotificationSettings = (userId: string) => {
     showVerification,
     startVerification,
     cancelVerification,
+    isDiscordVerifying,
+    showDiscordVerification,
+    startDiscordVerification,
+    cancelDiscordVerification,
+    handleDiscordVerificationComplete,
+    handleDiscordToggle,
+    startDiscordAuth
   };
 };

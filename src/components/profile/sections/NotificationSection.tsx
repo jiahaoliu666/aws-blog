@@ -464,6 +464,64 @@ const VerificationProgress = ({ step, status }: { step: VerificationStep; status
   );
 };
 
+const DiscordVerificationStep: React.FC<{
+  onVerify: (discordId: string) => Promise<boolean>;
+  onCancel: () => void;
+  isLoading: boolean;
+}> = ({ onVerify, onCancel, isLoading }) => {
+  const [discordId, setDiscordId] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (discordId) {
+      await onVerify(discordId);
+    }
+  };
+
+  return (
+    <div className="p-6 bg-white rounded-lg shadow">
+      <h3 className="text-lg font-semibold mb-4">Discord 驗證</h3>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Discord ID
+          </label>
+          <input
+            type="text"
+            value={discordId}
+            onChange={(e) => setDiscordId(e.target.value)}
+            placeholder="請輸入您的 Discord ID"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            required
+          />
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+          >
+            取消
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading || !discordId}
+            className={`
+              px-4 py-2 rounded-md
+              ${isLoading || !discordId
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              }
+            `}
+          >
+            {isLoading ? '驗證中...' : '確認'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   isLoading: propIsLoading,
   isVerifying,
@@ -505,7 +563,14 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     handleSendUserId,
     handleVerifyCode,
     reloadSettings,
-    cancelVerification
+    cancelVerification,
+    isDiscordVerifying,
+    showDiscordVerification,
+    startDiscordVerification,
+    cancelDiscordVerification,
+    handleDiscordVerificationComplete,
+    handleDiscordToggle,
+    startDiscordAuth
   } = useNotificationSettings(userId);
 
   const isPageLoading = propIsLoading || settingsLoading;
@@ -899,8 +964,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   </div>
                   <Switch
                     checked={settings.discord}
-                    onChange={() => handleToggle('discordNotification', !settings.discord)}
-                    disabled={!settings.discordId}
+                    onChange={handleDiscordToggle}
+                    disabled={isPageLoading || (!settings.discordId && !showDiscordVerification)}
                     sx={{
                       '& .MuiSwitch-switchBase': {
                         color: '#9ca3af',
@@ -936,10 +1001,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
-                      onClick={() => {
-                        // TODO: 實作 Discord 驗證流程
-                        toast.info('Discord 驗證功能即將推出');
-                      }}
+                      onClick={startDiscordAuth}
                       className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
                         hover:bg-indigo-700 active:bg-indigo-800
                         transition-all duration-200 ease-in-out
@@ -947,7 +1009,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                       <FontAwesomeIcon icon={faDiscord} />
-                      開始 Discord 驗證
+                      使用 Discord 登入
                     </button>
                   </div>
                 </div>
@@ -996,6 +1058,14 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             </button>
           </div>
         </>
+      )}
+
+      {showDiscordVerification && (
+        <DiscordVerificationStep
+          onVerify={handleDiscordVerificationComplete}
+          onCancel={cancelDiscordVerification}
+          isLoading={isLoading}
+        />
       )}
     </div>
   );

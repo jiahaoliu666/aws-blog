@@ -13,8 +13,8 @@ import '@/styles/toast.css';
 import { ThemeProvider } from '@/context/ThemeContext';
 import '@aws-amplify/ui-react/styles.css';
 
-// 建立一個包裝組件來處理路由變化
-const RouteChangeHandler = ({ children }: { children: React.ReactNode }) => {
+// 建立一個包裝組件來處理路由變化和 Discord Bot 初始化
+const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { startLoading, stopLoading } = useLoading();
 
@@ -49,11 +49,11 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
             <ThemeProvider>
               <AppProvider>
                 <LanguageProvider>
-                  <RouteChangeHandler>
+                  <AppInitializer>
                     <div className="min-h-screen flex flex-col">
                       <Component {...pageProps} />
                     </div>
-                  </RouteChangeHandler>
+                  </AppInitializer>
                 </LanguageProvider>
               </AppProvider>
             </ThemeProvider>
