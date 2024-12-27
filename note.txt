@@ -52,7 +52,7 @@ src/pages/api/notifications/index.ts // 通知介面
 src/components/common/Notification.tsx // 通知介面
 --------
 進行中：
-1. 完成architecture知識庫文章 ＆ 爬文
+1. discord 通知功能
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 

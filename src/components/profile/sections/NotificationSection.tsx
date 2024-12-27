@@ -940,7 +940,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Discord 通知</h3>
                       <p className="text-sm text-gray-600">透過 Discord 接收即時通知與重要更新</p>
-                      {settings.discordId && (
+                      {settings.discordId ? (
                         <div className="mt-2 flex items-center gap-2">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-indigo-50 
                             text-indigo-700 text-xs font-medium rounded-full border border-indigo-200
@@ -952,13 +952,20 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                             Discord ID: {settings.discordId}
                           </span>
                         </div>
+                      ) : (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-50 
+                            text-gray-500 text-xs font-medium rounded-full border border-gray-200">
+                            未綁定
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
                   <Switch
                     checked={settings.discordNotification}
                     onChange={handleDiscordToggle}
-                    disabled={isPageLoading || (!settings.discordId && !showDiscordVerification)}
+                    disabled={!settings.discordId}
                     sx={{
                       '& .MuiSwitch-switchBase': {
                         color: '#9ca3af',
@@ -999,6 +1006,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                           await startDiscordAuth();
                         } catch (error) {
                           console.error('Discord 授權失敗:', error);
+                          toast.error('Discord 授權失敗，請稍後再試');
                         }
                       }}
                       className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
