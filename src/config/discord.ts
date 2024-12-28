@@ -21,7 +21,10 @@ export const DISCORD_CONFIG = {
   CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || '',
   BOT_TOKEN: process.env.DISCORD_BOT_TOKEN || '',
   WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL || '',
-  REDIRECT_URI: process.env.DISCORD_REDIRECT_URI || 'http://localhost:3000/api/discord/callback',
+  get REDIRECT_URI() {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    return `${baseUrl}/api/discord/callback`;
+  },
   API_ENDPOINT: 'https://discord.com/api/v10',
   GUILD_ID: process.env.DISCORD_GUILD_ID || '',
   NOTIFICATION_CHANNEL_ID: process.env.DISCORD_NOTIFICATION_CHANNEL_ID || '',
@@ -29,6 +32,7 @@ export const DISCORD_CONFIG = {
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000,
   },
+  TOKEN_ENDPOINT: 'https://discord.com/api/oauth2/token',
   isConfigValid: () => {
     try {
       const requiredConfigs = [
@@ -102,7 +106,9 @@ export const DISCORD_ERRORS = {
   AUTH_FAILED: 'DISCORD_AUTH_FAILED',
   INVALID_TOKEN: 'INVALID_DISCORD_TOKEN',
   WEBHOOK_FAILED: 'DISCORD_WEBHOOK_FAILED',
-  USER_NOT_FOUND: 'DISCORD_USER_NOT_FOUND'
+  USER_NOT_FOUND: 'DISCORD_USER_NOT_FOUND',
+  INVALID_REQUEST: 'DISCORD_INVALID_REQUEST',
+  WEBHOOK_LIMIT: 'DISCORD_WEBHOOK_LIMIT'
 } as const;
 
 export const DISCORD_SCOPES = [

@@ -110,6 +110,36 @@ export class DiscordService {
       return null;
     }
   }
+
+  public async exchangeCodeForToken(code: string): Promise<any> {
+    try {
+      const tokenParams = new URLSearchParams({
+        client_id: DISCORD_CONFIG.CLIENT_ID,
+        client_secret: DISCORD_CONFIG.CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: DISCORD_CONFIG.REDIRECT_URI,
+      });
+
+      const response = await fetch(DISCORD_CONFIG.TOKEN_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: tokenParams,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error_description || '獲取訪問令牌失敗');
+      }
+
+      return await response.json();
+    } catch (error) {
+      logger.error('交換訪問令牌失敗:', error);
+      throw error;
+    }
+  }
 }
 
 export const discordService = DiscordService.getInstance(); 

@@ -16,27 +16,63 @@ export default async function handler(
   }
 
   try {
-    // 交換授權碼獲取訪問令牌
-    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+    logger.info('開始處理 Discord 回調:', { code, state: req.query.state });
+
+    // 先檢查現有的 webhooks
+    const webhooksResponse = await fetch(
+      `${DISCORD_CONFIG.API_ENDPOINT}/guilds/${DISCORD_CONFIG.GUILD_ID}/webhooks`,
+      {
+        headers: {
+          Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
+        },
+      }
+    );
+
+    if (!webhooksResponse.ok) {
+      throw new Error('無法獲取 webhooks 列表');
+    }
+
+    const webhooks = await webhooksResponse.json();
+    
+    // 如果已經達到限制，刪除最舊的 webhook
+    if (webhooks.length >= 15) {
+      const oldestWebhook = webhooks[0];
+      await fetch(
+        `${DISCORD_CONFIG.API_ENDPOINT}/webhooks/${oldestWebhook.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
+          },
+        }
+      );
+    }
+
+    // 繼續原有的 token 交換流程
+    const tokenParams = new URLSearchParams({
+      client_id: DISCORD_CONFIG.CLIENT_ID,
+      client_secret: DISCORD_CONFIG.CLIENT_SECRET,
+      grant_type: 'authorization_code',
+      code: code as string,
+      redirect_uri: DISCORD_CONFIG.REDIRECT_URI,
+    });
+
+    logger.debug('Token 請求參數:', tokenParams.toString());
+
+    const tokenResponse = await fetch(DISCORD_CONFIG.TOKEN_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: DISCORD_CONFIG.CLIENT_ID,
-        client_secret: DISCORD_CONFIG.CLIENT_SECRET,
-        code: code as string,
-        grant_type: 'authorization_code',
-        redirect_uri: DISCORD_CONFIG.REDIRECT_URI,
-      }),
+      body: tokenParams,
     });
 
-    if (!tokenResponse.ok) {
-      const error = await tokenResponse.json();
-      throw new Error(error.error_description || '獲取訪問令牌失敗');
-    }
-
     const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok) {
+      logger.error('獲取訪問令牌失敗:', tokenData);
+      throw new Error(tokenData.error_description || '獲取訪問令牌失敗');
+    }
 
     // 使用訪問令牌獲取用戶信息
     const userResponse = await fetch('https://discord.com/api/users/@me', {
@@ -108,11 +144,25 @@ export default async function handler(
     return res.status(200).send(html);
 
   } catch (error) {
-    logger.error('Discord 授權失敗:', error);
-    return res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : '未知錯誤',
-      code: 'DISCORD_AUTH_ERROR'
-    });
+    logger.error('Discord 回調處理失敗:', error);
+    const errorHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Discord 授權失敗</title>
+        <script>
+          window.opener.postMessage({
+            type: 'DISCORD_AUTH_ERROR',
+            error: '${error instanceof Error ? error.message : '授權過程發生錯誤'}'
+          }, '*');
+          setTimeout(() => window.close(), 3000);
+        </script>
+      </head>
+      <body>
+        <p>授權失敗，視窗將在 3 秒後關閉...</p>
+      </body>
+      </html>
+    `;
+    return res.status(500).send(errorHtml);
   }
 } 

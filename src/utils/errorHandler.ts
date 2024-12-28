@@ -53,8 +53,14 @@ export const errorHandler = {
     logger.error('Discord API 錯誤:', {
       message: error.message,
       status: error.status,
-      details: error.details
+      code: error.code,
+      details: error.details,
+      stack: error.stack
     });
+
+    if (error.code === 30007) {
+      throw new DiscordError('Discord webhook 已達上限', 'WEBHOOK_LIMIT');
+    }
 
     if (error.status === 401) {
       throw new DiscordError('Discord 授權失敗', 'AUTH_FAILED');
@@ -64,7 +70,14 @@ export const errorHandler = {
       throw new DiscordError('找不到 Discord 用戶', 'USER_NOT_FOUND');
     }
 
-    throw new DiscordError('Discord 操作失敗', 'WEBHOOK_FAILED');
+    if (error.status === 400) {
+      throw new DiscordError('Discord 請求無效', 'INVALID_REQUEST');
+    }
+
+    throw new DiscordError(
+      error.message || 'Discord 操作失敗',
+      'WEBHOOK_FAILED'
+    );
   }
 };
 
