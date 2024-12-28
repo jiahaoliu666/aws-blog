@@ -50,9 +50,7 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
               <AppProvider>
                 <LanguageProvider>
                   <AppInitializer>
-                    <div className="min-h-screen flex flex-col">
-                      <Component {...pageProps} />
-                    </div>
+                    <Component {...pageProps} />
                   </AppInitializer>
                 </LanguageProvider>
               </AppProvider>

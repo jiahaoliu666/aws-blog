@@ -17,14 +17,50 @@ import Navbar from '../components/common/Navbar'; // 確保正確導入 Navbar
 import Footer from '../components/common/Footer'; // 引入 Footer  
 import { useAuthContext } from '@/context/AuthContext';  
 import { useTheme } from '@/context/ThemeContext';
+import { motion } from 'framer-motion';
+import { fadeIn, staggerContainer, hoverCard, textVariant, cardHoverEffect, containerAnimation, gradientAnimation } from '@/utils/animations';
+import { formatTimeAgo } from '@/utils/dateUtils';
 
 const Home: React.FC = () => {
   const { user } = useAuthContext();
   const { isDarkMode } = useTheme();
   const [isClient, setIsClient] = useState(false);
+  const [latestArticles, setLatestArticles] = useState<Array<{
+    article_id: string;
+    title: string;
+    date: number;
+    category: string;
+    link: string;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
+    
+    // 獲取最新文章
+    const fetchLatestArticles = async () => {
+      try {
+        setLoading(true);
+        // 使用 guest 作為訪客 ID 來獲取公開文章
+        const response = await fetch('/api/notifications?userId=guest&limit=6');
+        if (response.ok) {
+          const data = await response.json();
+          if (data && Array.isArray(data.notifications)) {
+            // 確保按時間排序
+            const sortedArticles = data.notifications.sort((a: any, b: any) => {
+              return new Date(b.date).getTime() - new Date(a.date).getTime();
+            });
+            setLatestArticles(sortedArticles);
+          }
+        }
+      } catch (error) {
+        console.error('獲取最新文章失敗:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestArticles();
   }, []);
 
   // 主要功能區塊
@@ -32,8 +68,13 @@ const Home: React.FC = () => {
     {
       icon: faNewspaper,
       title: '最新新聞',
-      description: '即時掌握 AWS 最新動態與產品更新',
-      link: '/news'
+      description: '第一時間獲取 AWS 產品更新與技術前沿資訊',
+      link: '/news',
+      gradient: isDarkMode 
+        ? 'from-blue-600/20 via-blue-500/10 to-blue-400/20' 
+        : 'from-blue-100 via-blue-50 to-blue-100',
+      iconColor: 'text-blue-500',
+      hoverEffect: 'hover:shadow-blue-500/20'
     },
     {
       icon: faBullhorn,
@@ -59,7 +100,12 @@ const Home: React.FC = () => {
       description: '深入了解 AWS 服務與技術',
       link: '/knowledge'
     }
-  ];
+  ].map(feature => ({
+    ...feature,
+    gradient: feature.gradient || (isDarkMode 
+      ? 'from-gray-700/40 via-gray-600/30 to-gray-700/40'
+      : 'from-gray-100 via-gray-50 to-gray-100')
+  }));
 
   // 平台優勢區塊
   const advantages = [
@@ -82,158 +128,265 @@ const Home: React.FC = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${
-      isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'
+      isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
     }`}>
       <Navbar />
       
-      {/* Hero Section */}
-      <main className="flex-grow">
-        <div className="relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-            <div className="text-center">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-8">
-                <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  歡迎來到 
-                </span>
-                <span className="text-blue-600 ml-2">
-                  AWS Blog 365
-                </span>
-              </h1>
-              <p className={`max-w-2xl mx-auto text-lg sm:text-xl mb-10 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                一站式 AWS 技術文章閱讀平台，讓您輕鬆掌握雲端技術脈動
-              </p>
-              
-              {!user && (
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/auth/register" className="
-                    inline-flex items-center justify-center
-                    px-6 py-3 border border-transparent
-                    text-base font-medium rounded-xl
-                    text-white bg-blue-600 hover:bg-blue-700
-                    transition duration-300 shadow-lg hover:shadow-xl
-                  ">
-                    立即註冊
-                  </Link>
-                  <Link href="/auth/login" className={`
-                    inline-flex items-center justify-center
-                    px-6 py-3 border rounded-xl
-                    text-base font-medium
-                    ${isDarkMode 
-                      ? 'border-gray-700 text-gray-300 hover:bg-gray-800' 
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }
-                    transition duration-300
-                  `}>
-                    登入
-                  </Link>
+      {/* 優化後的 Hero Section 與最新文章整合 */}
+      <motion.main 
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="flex-grow"
+      >
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden py-12">
+          <motion.div 
+            variants={gradientAnimation}
+            animate="animate"
+            className="absolute inset-0 opacity-10"
+          />
+
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Hero Content - 左側 */}
+              <motion.div 
+                variants={staggerContainer}
+                initial="hidden"
+                animate="show"
+                className="text-left"
+              >
+                <motion.h1 
+                  variants={textVariant(0.2)}
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight"
+                >
+                  歡迎來到 AWS Blog 365
+                </motion.h1>
+                
+                <motion.p 
+                  variants={textVariant(0.4)}
+                  className={`text-lg sm:text-xl mt-6 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}
+                >
+                  快速獲取 AWS 最新資訊與技術文章
+                </motion.p>
+
+                {!user && (
+                  <div className="flex gap-3 mt-8">
+                    <Link href="/auth/register" className={`
+                      px-6 py-3 rounded-lg text-base font-medium
+                      ${isDarkMode 
+                        ? 'bg-blue-600 hover:bg-blue-700' 
+                        : 'bg-blue-500 hover:bg-blue-600'
+                      }
+                      text-white transition-colors
+                    `}>
+                      開始使用
+                    </Link>
+                    <Link href="/auth/login" className={`
+                      px-6 py-3 rounded-lg text-base font-medium
+                      ${isDarkMode 
+                        ? 'bg-gray-700 hover:bg-gray-600' 
+                        : 'bg-gray-100 hover:bg-gray-200'
+                      }
+                      transition-colors
+                    `}>
+                      登入
+                    </Link>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* 最新文章區塊 - 右側 */}
+              <motion.div
+                variants={fadeIn('left', 'spring', 0.7)}
+                className="h-[600px] overflow-y-auto custom-scrollbar"
+              >
+                <div className="space-y-4">
+                  {loading ? (
+                    Array(6).fill(0).map((_, index) => (
+                      <div key={index} className={`animate-pulse rounded-xl p-6 ${
+                        isDarkMode 
+                          ? 'bg-gray-800/60 backdrop-blur-sm' 
+                          : 'bg-white/90 backdrop-blur-sm'
+                      }`}>
+                        <div className="h-4 bg-gray-300 rounded w-1/4 mb-4"></div>
+                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                      </div>
+                    ))
+                  ) : latestArticles.map((article) => (
+                    <motion.div
+                      key={article.article_id}
+                      variants={cardHoverEffect}
+                      initial="rest"
+                      whileHover="hover"
+                      className={`group rounded-xl p-6 transition-all duration-200 backdrop-blur-sm ${
+                        isDarkMode 
+                          ? 'bg-gray-800/60 hover:bg-gray-700/80' 
+                          : 'bg-white/90 hover:bg-white shadow-lg hover:shadow-xl'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                              article.category === 'news' 
+                                ? 'bg-blue-100/90 text-blue-800' 
+                                : article.category === 'solution'
+                                  ? 'bg-green-100/90 text-green-800'
+                                  : article.category === 'architecture'
+                                    ? 'bg-amber-100/90 text-amber-800'
+                                    : article.category === 'knowledge'
+                                      ? 'bg-indigo-100/90 text-indigo-800'
+                                      : 'bg-purple-100/90 text-purple-800'
+                            }`}>
+                              {article.category === 'news' 
+                                ? '最新新聞' 
+                                : article.category === 'solution'
+                                  ? '解決方案'
+                                  : article.category === 'architecture'
+                                    ? '架構參考'
+                                    : article.category === 'knowledge'
+                                      ? '知識中心'
+                                      : '最新公告'}
+                            </span>
+                            <span className={`text-xs ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
+                              {formatTimeAgo(new Date(article.date))}
+                            </span>
+                          </div>
+                          <a 
+                            href={article.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`text-sm font-medium line-clamp-2 ${
+                              isDarkMode 
+                                ? 'text-gray-100 hover:text-blue-400' 
+                                : 'text-gray-900 hover:text-blue-600'
+                            } transition-colors duration-200`}
+                          >
+                            {article.title}
+                          </a>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-              )}
+              </motion.div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Features Section */}
-        <div className={`py-16 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                主要功能
-              </h2>
-              <p className={`mt-4 text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                多元化的內容分類，滿足您不同的學習需求
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature) => (
-                <Link 
-                  key={feature.title} 
-                  href={feature.link}
-                  className={`
-                    group p-6 rounded-2xl transition-all duration-300
-                    ${isDarkMode 
-                      ? 'bg-gray-700 hover:bg-gray-600' 
-                      : 'bg-gray-50 hover:bg-blue-50'
-                    }
-                  `}
-                >
-                  <div className="flex flex-col items-start">
-                    <div className={`
-                      p-3 rounded-xl mb-4
-                      ${isDarkMode ? 'bg-gray-600' : 'bg-blue-100'}
-                    `}>
-                      <FontAwesomeIcon 
-                        icon={feature.icon} 
-                        className={`text-xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} 
-                      />
-                    </div>
-                    <h3 className={`text-xl font-semibold mb-2 group-hover:text-blue-600 
-                      ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {feature.title}
-                    </h3>
-                    <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {feature.description}
-                    </p>
-                    <div className="mt-auto flex items-center text-blue-600 font-medium">
-                      <span>了解更多</span>
-                      <FontAwesomeIcon 
-                        icon={faArrowRight} 
-                        className="ml-2 group-hover:translate-x-1 transition-transform" 
-                      />
+        {/* Features Section 優化 */}
+        <section className={`
+          py-20 relative overflow-hidden
+          ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}
+        `}>
+          <motion.div 
+            variants={containerAnimation}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                variants={cardHoverEffect}
+                initial="rest"
+                whileHover="hover"
+                className={`
+                  relative p-6 rounded-xl
+                  bg-gradient-to-br ${feature.gradient}
+                  backdrop-blur-sm
+                  ${isDarkMode 
+                    ? 'shadow-lg shadow-black/20' 
+                    : 'shadow-xl shadow-gray-200/50'}
+                  ${feature.hoverEffect}
+                `}
+              >
+                <Link href={feature.link} className="block h-full">
+                  <div className="flex items-center space-x-3">
+                    <FontAwesomeIcon 
+                      icon={feature.icon} 
+                      className={`text-lg ${feature.iconColor}`} 
+                    />
+                    <div>
+                      <h3 className="text-base font-medium">{feature.title}</h3>
+                      <p className={`
+                        text-sm mt-1
+                        ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}
+                      `}>
+                        {feature.description}
+                      </p>
                     </div>
                   </div>
                 </Link>
-              ))}
-            </div>
-          </div>
-        </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
 
-        {/* Advantages Section */}
-        <div className={`py-16 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        {/* Advantages Section 優化 */}
+        <section className={`py-24 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                平台優勢
-              </h2>
-              <p className={`mt-4 text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                為什麼選擇 AWS Blog 365
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {advantages.map((advantage) => (
-                <div 
-                  key={advantage.title}
-                  className={`
-                    p-6 rounded-2xl text-center
-                    ${isDarkMode ? 'bg-gray-800' : 'bg-white'}
-                    transition-all duration-300 hover:transform hover:-translate-y-1
-                  `}
-                >
-                  <div className={`
-                    w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4
-                    ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'}
-                  `}>
-                    <FontAwesomeIcon 
-                      icon={advantage.icon} 
-                      className={`text-2xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} 
-                    />
-                  </div>
-                  <h3 className={`text-xl font-semibold mb-2 
-                    ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {advantage.title}
-                  </h3>
-                  <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                    {advantage.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <motion.div 
+              variants={fadeIn('up', 'spring', 0.7)}
+              className="text-center space-y-16"
+            >
+              <div>
+                <h2 className={`text-4xl font-bold ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  為什麼選擇我們
+                </h2>
+                <div className="h-1 w-20 mx-auto mt-4 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                {advantages.map((advantage, index) => (
+                  <motion.div 
+                    key={advantage.title}
+                    variants={fadeIn('up', 'spring', 0.7 + index * 0.1)}
+                    whileHover={{ y: -8 }}
+                    className={`
+                      p-8 rounded-2xl
+                      transition-all duration-300
+                      ${isDarkMode 
+                        ? 'bg-gray-800/50 hover:bg-gray-700/50' 
+                        : 'bg-gray-50 hover:bg-white'
+                      }
+                      hover:shadow-xl
+                    `}
+                  >
+                    <div className={`
+                      w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6
+                      transition-colors duration-300
+                      ${isDarkMode 
+                        ? 'bg-gray-700 group-hover:bg-blue-600/20' 
+                        : 'bg-blue-100 group-hover:bg-blue-200'
+                      }
+                    `}>
+                      <FontAwesomeIcon 
+                        icon={advantage.icon} 
+                        className={`text-3xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} 
+                      />
+                    </div>
+                    <h3 className={`text-2xl font-bold mb-4
+                      ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {advantage.title}
+                    </h3>
+                    <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {advantage.description}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </main>
+        </section>
+      </motion.main>
 
       <Footer />
     </div>

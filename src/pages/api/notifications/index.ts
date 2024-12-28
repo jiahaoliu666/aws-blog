@@ -1,4 +1,4 @@
-import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, QueryCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type QueryParams = {
@@ -22,18 +22,69 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log('收到通知請求:', {
-    method: req.method,
-    query: req.query
-  });
-
   if (req.method !== 'GET') {
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { userId, category } = req.query;
-  console.log('用戶ID:', userId, '分類:', category);
+  const { userId, category, limit = '6' } = req.query;
+  const isGuest = userId === 'guest';
+  
+  // 訪客模式只返回公開文章
+  if (isGuest) {
+    try {
+      // 定義所有要查詢的表格
+      const tables = [
+        { name: 'AWS_Blog_News', category: 'news' },
+        { name: 'AWS_Blog_Announcement', category: 'announcement' },
+        { name: 'AWS_Blog_Solutions', category: 'solution' },
+        { name: 'AWS_Blog_Architecture', category: 'architecture' },
+        { name: 'AWS_Blog_Knowledge', category: 'knowledge' }
+      ];
 
+      // 並行查詢所有表格
+      const allArticles = await Promise.all(
+        tables.map(async ({ name, category }) => {
+          const params = {
+            TableName: name,
+            Limit: parseInt(limit as string),
+          };
+
+          try {
+            const result = await dynamoClient.send(new ScanCommand(params));
+            return (result.Items || []).map(article => ({
+              article_id: article.article_id.S,
+              title: article.translated_title?.S || article.title.S,
+              date: article.published_at?.N ? parseInt(article.published_at.N) * 1000 : Date.now(),
+              category,
+              link: article.link?.S || '',
+            }));
+          } catch (error) {
+            console.error(`Error scanning ${name}:`, error);
+            return [];
+          }
+        })
+      );
+
+      // 合併所有結果並排序
+      const formattedArticles = allArticles
+        .flat()
+        .sort((a, b) => b.date - a.date)
+        .slice(0, parseInt(limit as string));
+
+      return res.status(200).json({
+        notifications: formattedArticles,
+        total: formattedArticles.length
+      });
+    } catch (error) {
+      console.error('獲取公開文章失敗:', error);
+      return res.status(500).json({ 
+        message: '獲取文章失敗',
+        error: (error as Error).message 
+      });
+    }
+  }
+
+  // 原有的用戶通知邏輯保持不變
   if (!userId || typeof userId !== 'string') {
     return res.status(400).json({ message: '無效的用戶ID' });
   }
