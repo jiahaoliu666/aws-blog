@@ -590,7 +590,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     if (!hasChanges) {
       return;
     }
-    await saveSettings();
+    
+    const success = await saveSettings();
+    if (success) {
+      // Toast 通知會由 useNotificationSettings 處理
+      // 頁面刷新也會由 hook 處理
+      return;
+    }
   };
 
   const handleEmailToggle = () => {
@@ -719,7 +725,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     const handleDiscordAuthMessage = (event: MessageEvent) => {
       if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
         if (isDiscordVerifying) {
-          showToast('Discord 綁定成功', 'success');
           setSettings(prev => ({
             ...prev,
             discordId: event.data.discord_id,
@@ -728,10 +733,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
           setShowDiscordVerification(false);
           setIsDiscordVerifying(false);
           
-          // 等待 toast 消息顯示完畢後重新載入頁面
-          setTimeout(() => {
-            window.location.reload();
-          }, 3000);
+          // Toast 通知和頁面刷新會由 useNotificationSettings 處理
         }
       } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
         if (isDiscordVerifying) {
@@ -744,20 +746,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
     window.addEventListener('message', handleDiscordAuthMessage);
     return () => window.removeEventListener('message', handleDiscordAuthMessage);
-  }, [isDiscordVerifying, showToast, setSettings]);
-
-  const handleDiscordAuth = async () => {
-    try {
-      setIsDiscordVerifying(true);
-      await startDiscordAuth();
-    } catch (error) {
-      setIsDiscordVerifying(false);
-      showToast(
-        error instanceof Error ? error.message : 'Discord 授權失敗',
-        'error'
-      );
-    }
-  };
+  }, [isDiscordVerifying]);
 
   return (
     <div className="w-full">
@@ -831,7 +820,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
           <div className="mb-8">
             <SectionTitle 
               title="通知設定"
-              description="管理您想要接收的通知方式 (僅限一種)"
+              description="選擇您想要接收的通知方式 (僅限一種)"
             />
           </div>
 
@@ -1066,7 +1055,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
-                      onClick={handleDiscordAuth}
+                      onClick={startDiscordAuth}
                       className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
                         hover:bg-indigo-700 active:bg-indigo-800
                         transition-all duration-200 ease-in-out

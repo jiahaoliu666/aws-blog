@@ -132,6 +132,7 @@ export default async function handler(
     <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="UTF-8">
       <title>Discord 授權成功</title>
       <script>
         window.opener.postMessage({
@@ -141,11 +142,88 @@ export default async function handler(
           discriminator: '${userData.discriminator}',
           avatar: '${userData.avatar || ''}'
         }, '*');
-        setTimeout(() => window.close(), 3000);
+        
+        // 倒數計時功能
+        let countdown = 5;
+        const timer = setInterval(() => {
+          countdown--;
+          document.getElementById('countdown').textContent = countdown;
+          if (countdown <= 0) {
+            clearInterval(timer);
+            window.close();
+            window.opener.location.reload();
+          }
+        }, 1000);
       </script>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+          background-color: #f9fafb;
+        }
+        .container {
+          background-color: white;
+          padding: 2rem;
+          border-radius: 1rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          text-align: center;
+          max-width: 90%;
+          width: 400px;
+        }
+        .icon {
+          font-size: 3rem;
+          color: #5865F2;
+          margin-bottom: 1rem;
+        }
+        .title {
+          color: #111827;
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+        .message {
+          color: #6B7280;
+          font-size: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        .countdown {
+          background-color: #5865F2;
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 9999px;
+          font-size: 0.875rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: .5;
+          }
+        }
+      </style>
     </head>
     <body>
-      <p>授權成功，視窗將在 3 秒後關閉...</p>
+      <div class="container">
+        <div class="icon">✨</div>
+        <h1 class="title">Discord 授權成功</h1>
+        <p class="message">您的 Discord 帳號已成功連結</p>
+        <div class="countdown">
+          <span>視窗將在</span>
+          <span id="countdown" class="pulse">5</span>
+          <span>秒後關閉</span>
+        </div>
+      </div>
     </body>
     </html>
     `;
@@ -156,23 +234,107 @@ export default async function handler(
     logger.error('Discord 回調處理失敗:', error);
     const errorMessage = error instanceof Error ? error.message : '授權過程發生錯誤';
     const errorHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Discord 授權失敗</title>
-        <script>
-          window.opener.postMessage({
-            type: 'DISCORD_AUTH_ERROR',
-            error: '${errorMessage}'
-          }, '*');
-          setTimeout(() => window.close(), 3000);
-        </script>
-      </head>
-      <body>
-        <p>授權失敗：${errorMessage}</p>
-        <p>視窗將在 3 秒後關閉...</p>
-      </body>
-      </html>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Discord 授權失敗</title>
+      <script>
+        window.opener.postMessage({
+          type: 'DISCORD_AUTH_ERROR',
+          error: '${errorMessage}'
+        }, '*');
+        
+        let countdown = 5;
+        const timer = setInterval(() => {
+          countdown--;
+          document.getElementById('countdown').textContent = countdown;
+          if (countdown <= 0) {
+            clearInterval(timer);
+            window.close();
+          }
+        }, 1000);
+      </script>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+          background-color: #f9fafb;
+        }
+        .container {
+          background-color: white;
+          padding: 2rem;
+          border-radius: 1rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          text-align: center;
+          max-width: 90%;
+          width: 400px;
+        }
+        .icon {
+          font-size: 3rem;
+          color: #EF4444;
+          margin-bottom: 1rem;
+        }
+        .title {
+          color: #111827;
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+        .message {
+          color: #6B7280;
+          font-size: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        .error-text {
+          color: #EF4444;
+          font-size: 0.875rem;
+          margin-bottom: 1.5rem;
+          padding: 0.75rem;
+          background-color: #FEE2E2;
+          border-radius: 0.5rem;
+        }
+        .countdown {
+          background-color: #6B7280;
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 9999px;
+          font-size: 0.875rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: .5;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="icon">❌</div>
+        <h1 class="title">Discord 授權失敗</h1>
+        <p class="message">很抱歉，授權過程發生錯誤</p>
+        <div class="error-text">${errorMessage}</div>
+        <div class="countdown">
+          <span>視窗將在</span>
+          <span id="countdown" class="pulse">5</span>
+          <span>秒後關閉</span>
+        </div>
+      </div>
+    </body>
+    </html>
     `;
     return res.status(500).send(errorHtml);
   }

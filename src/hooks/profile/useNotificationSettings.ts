@@ -100,6 +100,9 @@ export const useNotificationSettings = (userId: string) => {
       if (data.success) {
         setSettings(data.settings);
         showToast('設定已更新', 'success');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         throw new Error(data.message || '更新設定失敗');
       }
@@ -144,17 +147,20 @@ export const useNotificationSettings = (userId: string) => {
       await updateSettings(settingsToUpdate);
       setSettings(settingsToUpdate);
       setHasChanges(false);
-      showToast('設定已更新', 'success');
 
-      // 添加延遲後重新載入頁面
+      showToast('設定已更新', 'success');
+      
       setTimeout(() => {
         window.location.reload();
-      }, 1500); // 等待 1.5 秒讓使用者看到成功訊息後再重整
+      }, 1000);
+
+      return true;
 
     } catch (error) {
       showToast('儲存設定失敗', 'error');
       logger.error('儲存設定失敗:', error);
       setTempSettings(settings);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -206,15 +212,11 @@ export const useNotificationSettings = (userId: string) => {
     setIsDiscordVerifying(false);
   };
 
-  const handleDiscordVerificationComplete = async (discordId: string): Promise<boolean> => {
+  const handleDiscordVerificationComplete = async (discordId: string) => {
     try {
       await updateSettings({ discordNotification: true, discordId });
       setIsDiscordVerifying(false);
       setShowDiscordVerification(false);
-      showToast('Discord 綁定成功', 'success');
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
       return true;
     } catch (error) {
       logger.error('Discord 驗證完成處理失敗:', error);
@@ -244,9 +246,10 @@ export const useNotificationSettings = (userId: string) => {
           
           showToast('Discord 綁定成功', 'success');
           
+          // 延遲 1 秒後刷新頁面
           setTimeout(() => {
             window.location.reload();
-          }, 3000);
+          }, 1000);
         }
       } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
         if (isDiscordVerifying) {
@@ -259,7 +262,7 @@ export const useNotificationSettings = (userId: string) => {
 
     window.addEventListener('message', handleDiscordAuthMessage);
     return () => window.removeEventListener('message', handleDiscordAuthMessage);
-  }, [isDiscordVerifying, showToast, setSettings]);
+  }, [isDiscordVerifying]);
 
   const startDiscordAuth = async () => {
     try {
