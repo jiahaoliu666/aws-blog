@@ -18,7 +18,7 @@ import Footer from '../components/common/Footer'; // 引入 Footer
 import { useAuthContext } from '@/context/AuthContext';  
 import { useTheme } from '@/context/ThemeContext';
 import { motion } from 'framer-motion';
-import { fadeIn, staggerContainer, hoverCard, textVariant, cardHoverEffect, containerAnimation, gradientAnimation, smoothReveal, buttonHoverEffect } from '@/utils/animations';
+import { fadeIn, staggerContainer, hoverCard, textVariant, cardHoverEffect, containerAnimation, gradientAnimation, smoothReveal, buttonHoverEffect, enhancedCardHover } from '@/utils/animations';
 import { formatTimeAgo } from '@/utils/dateUtils';
 
 const Home: React.FC = () => {
@@ -83,44 +83,89 @@ const Home: React.FC = () => {
     {
       icon: faNewspaper,
       title: '最新新聞',
-      description: '第一時間獲取 AWS 產品更新與技術前沿資訊',
+      description: '即時更新 AWS 新功能與服務資訊',
       link: '/news',
-      gradient: isDarkMode 
-        ? 'from-blue-600/20 via-blue-500/10 to-blue-400/20' 
-        : 'from-blue-100 via-blue-50 to-blue-100',
-      iconColor: 'text-blue-500',
-      hoverEffect: 'hover:shadow-blue-500/20'
+      color: 'text-blue-500',
+      bgColor: isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50',
+      className: `
+        relative rounded-xl p-8
+        transition-all duration-300
+        hover:shadow-2xl
+        ${isDarkMode 
+          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
+          : 'bg-white/90 hover:bg-white/95'}
+        glass-morphism
+      `
     },
     {
       icon: faBullhorn,
       title: '最新公告',
-      description: '重要公告與系統維護資訊',
-      link: '/announcement'
+      description: '重要公告與系統維護通知',
+      link: '/announcement',
+      color: 'text-purple-500',
+      bgColor: isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50',
+      className: `
+        relative rounded-xl p-8
+        transition-all duration-300
+        hover:shadow-2xl
+        ${isDarkMode 
+          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
+          : 'bg-white/90 hover:bg-white/95'}
+        glass-morphism
+      `
     },
     {
       icon: faLightbulb,
       title: '解決方案',
       description: '各種情境的最佳實踐與解決方案',
-      link: '/solutions'
+      link: '/solutions',
+      color: 'text-amber-500',
+      bgColor: isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50',
+      className: `
+        relative rounded-xl p-8
+        transition-all duration-300
+        hover:shadow-2xl
+        ${isDarkMode 
+          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
+          : 'bg-white/90 hover:bg-white/95'}
+        glass-morphism
+      `
     },
     {
       icon: faCubes,
       title: '架構參考',
       description: '雲端架構設計範例與建議',
-      link: '/architecture'
+      link: '/architecture',
+      color: 'text-emerald-500',
+      bgColor: isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50',
+      className: `
+        relative rounded-xl p-8
+        transition-all duration-300
+        hover:shadow-2xl
+        ${isDarkMode 
+          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
+          : 'bg-white/90 hover:bg-white/95'}
+        glass-morphism
+      `
     },
     {
       icon: faBook,
       title: '知識中心',
       description: '深入了解 AWS 服務與技術',
-      link: '/knowledge'
+      link: '/knowledge',
+      color: 'text-rose-500',
+      bgColor: isDarkMode ? 'bg-rose-500/10' : 'bg-rose-50',
+      className: `
+        relative rounded-xl p-8
+        transition-all duration-300
+        hover:shadow-2xl
+        ${isDarkMode 
+          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
+          : 'bg-white/90 hover:bg-white/95'}
+        glass-morphism
+      `
     }
-  ].map(feature => ({
-    ...feature,
-    gradient: feature.gradient || (isDarkMode 
-      ? 'from-gray-700/40 via-gray-600/30 to-gray-700/40'
-      : 'from-gray-100 via-gray-50 to-gray-100')
-  }));
+  ];
 
   // 平台優勢區塊
   const advantages = [
@@ -154,7 +199,7 @@ const Home: React.FC = () => {
         animate="show"
         className="flex-grow"
       >
-        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden py-12">
+        <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden py-12">
           <motion.div 
             variants={gradientAnimation}
             animate="animate"
@@ -216,21 +261,16 @@ const Home: React.FC = () => {
               <motion.div
                 variants={fadeIn('left', 'spring', 0.7)}
                 className={`
-                  relative h-[600px] rounded-2xl p-6
-                  ${isDarkMode 
-                    ? 'bg-gray-800/40 backdrop-blur-sm' 
-                    : 'bg-white/90 backdrop-blur-sm'
-                  }
-                  border border-gray-200/20
-                  shadow-lg
+                  relative h-[500px] rounded-2xl p-6
+                  glass-morphism custom-scrollbar
+                  ${isDarkMode ? 'bg-gray-800/70' : 'bg-white/90'}
                 `}
               >
                 <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-inherit to-transparent"></div>
                 <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-inherit to-transparent"></div>
                 
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <FontAwesomeIcon icon={faNewspaper} className="text-blue-500" />
-                  最新更新
+                <h2 className="gradient-text text-4xl font-bold mb-6">
+                  最新文章
                 </h2>
 
                 <div className="space-y-4 overflow-hidden h-[calc(100%-4rem)]">
@@ -322,53 +362,69 @@ const Home: React.FC = () => {
         </section>
 
         {/* Features Section 優化 */}
-        <section className={`
-          py-20 relative overflow-hidden
-          ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}
-        `}>
-          <motion.div 
-            variants={containerAnimation}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-          >
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                variants={buttonHoverEffect}
-                initial="rest"
-                whileHover="hover"
-                whileTap="tap"
-                className={`
-                  relative p-6 rounded-xl
-                  glass-morphism gradient-border
-                  ${isDarkMode 
-                    ? 'hover:bg-gray-700/90' 
-                    : 'hover:bg-white/95'
-                  }
-                `}
-              >
-                <Link href={feature.link} className="block h-full">
-                  <div className="flex items-center space-x-3">
-                    <FontAwesomeIcon 
-                      icon={feature.icon} 
-                      className={`text-lg ${feature.iconColor}`} 
-                    />
-                    <div>
-                      <h3 className="text-base font-medium">{feature.title}</h3>
-                      <p className={`
-                        text-sm mt-1
-                        ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}
+        <section className={`py-20 relative overflow-hidden`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {features.map((feature) => (
+                <motion.div
+                  key={feature.title}
+                  variants={buttonHoverEffect}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                  className={`
+                    relative rounded-xl p-6
+                    card-hover-effect
+                    ${feature.bgColor}
+                    ${isDarkMode ? 'hover:bg-opacity-90' : 'hover:bg-opacity-95'}
+                  `}
+                >
+                  <Link href={feature.link} className="block h-full">
+                    <div className="space-y-4">
+                      <div className={`
+                        w-12 h-12 rounded-lg 
+                        flex items-center justify-center
+                        ${feature.color} 
+                        ${isDarkMode ? 'bg-white/10' : 'bg-white'}
                       `}>
-                        {feature.description}
-                      </p>
+                        <FontAwesomeIcon 
+                          icon={feature.icon} 
+                          className="text-xl"
+                        />
+                      </div>
+                      
+                      <div>
+                        <h3 className={`
+                          text-lg font-semibold
+                          ${isDarkMode ? 'text-white' : 'text-gray-900'}
+                        `}>
+                          {feature.title}
+                        </h3>
+                        <p className={`
+                          mt-2 text-sm
+                          ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}
+                        `}>
+                          {feature.description}
+                        </p>
+                      </div>
+                      
+                      <div className={`
+                        text-sm font-medium
+                        ${feature.color}
+                        flex items-center gap-1
+                      `}>
+                        了解更多
+                        <FontAwesomeIcon 
+                          icon={faArrowRight} 
+                          className="text-xs"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* Advantages Section 優化 */}
@@ -391,16 +447,15 @@ const Home: React.FC = () => {
                 {advantages.map((advantage, index) => (
                   <motion.div 
                     key={advantage.title}
-                    variants={fadeIn('up', 'spring', 0.7 + index * 0.1)}
-                    whileHover={{ y: -8 }}
+                    variants={enhancedCardHover}
+                    initial="rest"
+                    whileHover="hover"
                     className={`
                       p-8 rounded-2xl
-                      transition-all duration-300
+                      glass-morphism
                       ${isDarkMode 
-                        ? 'bg-gray-800/50 hover:bg-gray-700/50' 
-                        : 'bg-gray-50 hover:bg-white'
-                      }
-                      hover:shadow-xl
+                        ? 'bg-gray-800/50 hover:bg-gray-700/60' 
+                        : 'bg-gray-50/90 hover:bg-white/95'}
                     `}
                   >
                     <div className={`

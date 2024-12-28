@@ -1,7 +1,7 @@
 export const fadeIn = (direction: string, type: string, delay: number) => ({
   hidden: {
-    x: direction === 'left' ? 20 : direction === 'right' ? -20 : 0,
-    y: direction === 'up' ? 20 : direction === 'down' ? -20 : 0,
+    x: direction === 'left' ? 30 : direction === 'right' ? -30 : 0,
+    y: direction === 'up' ? 30 : direction === 'down' ? -30 : 0,
     opacity: 0,
   },
   show: {
@@ -11,7 +11,7 @@ export const fadeIn = (direction: string, type: string, delay: number) => ({
     transition: {
       type,
       delay,
-      duration: 0.3,
+      duration: 0.5,
       ease: 'easeOut',
     },
   },
@@ -159,11 +159,13 @@ export const gradientAnimation = {
     background: [
       "linear-gradient(45deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%)",
       "linear-gradient(45deg, #93C5FD 0%, #3B82F6 50%, #60A5FA 100%)",
+      "linear-gradient(45deg, #60A5FA 0%, #93C5FD 50%, #3B82F6 100%)",
     ],
     transition: {
-      duration: 8,
+      duration: 10,
       repeat: Infinity,
-      repeatType: "reverse" as const
+      repeatType: "reverse" as const,
+      ease: "linear"
     }
   }
 };
@@ -172,7 +174,6 @@ export const enhancedCardHover = {
   rest: {
     scale: 1,
     y: 0,
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
     transition: {
       type: "spring",
       stiffness: 400,
@@ -182,7 +183,6 @@ export const enhancedCardHover = {
   hover: {
     scale: 1.02,
     y: -8,
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
     transition: {
       type: "spring",
       stiffness: 400,
@@ -246,6 +246,44 @@ export const smoothReveal = {
       type: "spring",
       stiffness: 300,
       damping: 30
+    }
+  }
+};
+
+export const pageTransition = {
+  hidden: {
+    opacity: 0,
+    y: 20
+  },
+  enter: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.43, 0.13, 0.23, 0.96]
+    }
+  },
+  exit: {
+    opacity: 0,
+    y: 10,
+    transition: {
+      duration: 0.2,
+      ease: [0.43, 0.13, 0.23, 0.96]
+    }
+  }
+};
+
+export const smoothScroll = {
+  initial: { 
+    opacity: 0,
+    y: 30
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.6, -0.05, 0.01, 0.99]
     }
   }
 }; 
