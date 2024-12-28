@@ -124,10 +124,31 @@ function useFavoritePageLogic() {
         }
     };
 
-    const toggleFavorite = useCallback(async (article: ExtendedNews) => {
-        // 實現收藏切換邏輯
-        console.log('Toggle favorite for article:', article);
-    }, []);
+    const toggleFavorite = useCallback(async (article: FavoriteItem) => {
+        try {
+            const response = await fetch('/api/favorite/removeFavorite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    articleId: article.article_id,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('移除收藏失敗');
+            }
+
+            setCurrentItems(prev => prev.filter(item => item.article_id !== article.article_id));
+            setFilteredFavorites(prev => prev.filter(item => item.article_id !== article.article_id));
+
+        } catch (error) {
+            console.error('移除收藏時發生錯誤:', error);
+            throw error;
+        }
+    }, [user?.id]);
 
     // 計算過濾後的收藏數量
     const filteredFavoritesCount = useMemo(() => {

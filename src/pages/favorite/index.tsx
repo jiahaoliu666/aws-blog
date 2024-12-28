@@ -12,6 +12,7 @@ import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 import { FavoriteItem } from "@/types/favoriteTypes";
+import { ExtendedNews } from '@/types/newsType';
 
 type EnhancedFavoriteItem = FavoriteItem & {
     type: string;
@@ -83,6 +84,16 @@ const FavoritePage: React.FC = () => {
         setShowSummaries(false);
     };
 
+    const handleFavoriteRemoved = async (article: ExtendedNews | FavoriteItem) => {
+        try {
+            await toggleFavorite(article as FavoriteItem);
+            toast.success('已成功移除收藏');
+        } catch (error) {
+            console.error('移除收藏失敗:', error);
+            toast.error('移除收藏失敗，請稍後再試');
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex flex-col min-h-screen bg-gray-100">
@@ -120,6 +131,7 @@ const FavoritePage: React.FC = () => {
                     toggleShowSummaries={() => setShowSummaries(!showSummaries)}
                     showSummaries={showSummaries}
                     setShowSummaries={setShowSummaries}
+                    currentPage="收藏文章"
                 />
 
                 <Search
@@ -130,22 +142,19 @@ const FavoritePage: React.FC = () => {
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
                     {currentItems.length > 0 ? (
-                        currentItems.map((article, index: number) => {
-                            const isFavorited = favorites.some((fav: EnhancedFavoriteItem) => fav.article_id === article.article_id);
-                            return (
-                                <Card
-                                    key={article.article_id}
-                                    article={article}
-                                    index={index}
-                                    gridView={gridView}
-                                    toggleFavorite={toggleFavorite}
-                                    language={language}
-                                    showSummaries={showSummaries}
-                                    isFavorited={isFavorited}
-                                    sourcePage={currentSourcePage}
-                                />
-                            );
-                        })
+                        currentItems.map((article, index: number) => (
+                            <Card
+                                key={article.article_id}
+                                article={article}
+                                index={index}
+                                gridView={gridView}
+                                toggleFavorite={handleFavoriteRemoved}
+                                language={language}
+                                showSummaries={showSummaries}
+                                isFavorited={true}
+                                sourcePage={currentSourcePage}
+                            />
+                        ))
                     ) : (
                         <p className="text-center text-gray-500 col-span-full">您還沒有收藏任何文章！</p>
                     )}

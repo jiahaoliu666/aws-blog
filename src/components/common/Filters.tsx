@@ -25,6 +25,7 @@ interface FiltersProps<T> {
   toggleShowSummaries: () => void;  
   showSummaries: boolean;  
   setShowSummaries: (value: boolean) => void;  
+  currentPage?: string;
 }  
 
 const DEFAULT_PREFERENCES = {
@@ -51,7 +52,8 @@ export const Filters = <T extends object>({
   language,  
   setLanguage,  
   showSummaries,  
-  setShowSummaries  
+  setShowSummaries,  
+  currentPage  
 }: FiltersProps<T>) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const { preferences, updatePreferences } = useProfilePreferences();
@@ -135,8 +137,9 @@ export const Filters = <T extends object>({
             <SwitchField
               label={<span className={`whitespace-nowrap text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>檢視收藏</span>}
               labelPosition="start"
-              isChecked={showFavorites}
-              onChange={(e) => setShowFavorites(e.target.checked)}
+              isChecked={currentPage === '收藏文章' ? true : showFavorites}
+              onChange={(e) => currentPage !== '收藏文章' && setShowFavorites(e.target.checked)}
+              isDisabled={currentPage === '收藏文章'}
               className="scale-[0.75]"
             />
           </div>

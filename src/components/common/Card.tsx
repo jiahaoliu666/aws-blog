@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ExtendedNews } from '@/types/newsType';
+import { FavoriteItem } from '@/types/favoriteTypes';
 import { useAuthContext } from '@/context/AuthContext';
 import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 
 interface CardProps {
-    article: ExtendedNews;
+    article: ExtendedNews | FavoriteItem;
     index: number;
     gridView: boolean;
     language: string;
     showSummaries: boolean;
-    toggleFavorite: (article: ExtendedNews) => Promise<void>;
+    toggleFavorite: (article: ExtendedNews | FavoriteItem) => Promise<void>;
     isFavorited: boolean;
     sourcePage: string;
 }
@@ -61,7 +62,11 @@ const Card: React.FC<CardProps> = ({
 
     const handleToggleFavorite = async () => {
         try {
-            await toggleFavorite(article);
+            if (sourcePage === '收藏文章') {
+                await toggleFavorite(article);
+            } else {
+                await toggleFavorite(article);
+            }
         } catch (error) {
             console.error('收藏操作失敗:', error);
             toast.error('收藏操作失敗，請稍後再試');
@@ -144,8 +149,11 @@ const Card: React.FC<CardProps> = ({
             )}
             <div className="flex justify-between items-center mt-4">
                 <div className="flex">
-                    <button onClick={handleToggleFavorite} className={buttonClass}>
-                        {isFavorited ? '已收藏' : '收藏'}
+                    <button 
+                        onClick={handleToggleFavorite} 
+                        className={buttonClass}
+                    >
+                        {sourcePage === '收藏' ? '已收藏' : (isFavorited ? '已收藏' : '收藏')}
                     </button>
                     <button onClick={handleSummaryClick} className="mx-2 px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-300">
                         {isSummaryVisible ? '隱藏總結' : '顯示總結'}
