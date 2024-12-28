@@ -130,9 +130,9 @@ src/
 │   ├── line
 │   │   ├── useLineVerification.ts  // 使用 LINE 驗證的 Hook
 │   │   └── index.ts                // LINE Hook 入口
-│   ├── useAppLogic.ts              // 使用應用邏輯的 Hook
 │   └── notifications
-│       └── useEmailNotifications.ts // 使用電子郵件通知的 Hook
+│   │   └── useEmailNotifications.ts // 使用電子郵件通知的 Hook
+│   └── useAppLogic.ts              // 使用應用邏輯的 Hook
 ├── lambda
 │   ├── fetchNews.ts                // 獲取新聞的 Lambda 函數
 │   ├── fetchAnnouncement.ts        // 獲取公告的 Lambda 函數

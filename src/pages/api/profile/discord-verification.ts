@@ -18,21 +18,21 @@ export default async function handler(
       return res.status(400).json({ message: '缺少必要參數' });
     }
 
-    // 驗證 Discord ID
+    // 1. 驗證 Discord ID
     const isValid = await discordService.verifyDiscordId(discordId);
 
     if (!isValid) {
       return res.status(400).json({ message: 'Discord ID 驗證失敗' });
     }
 
-    // 獲取用戶 Discord 資訊
+    // 2. 獲取用戶 Discord 資訊
     const discordUser = await discordService.getUserInfo(discordId);
     
     if (!discordUser) {
       return res.status(400).json({ message: '無法獲取 Discord 用戶資訊' });
     }
 
-    // 更新用戶的 Discord 設定
+    // 3. 更新用戶的 Discord 設定
     await updateUserDiscordSettings(userId, {
       discordId,
       discordUsername: discordUser.username,

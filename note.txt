@@ -1,4 +1,23 @@
 
+--------
+
+discord 通知功能
+src/services/discordService.ts
+src/config/discord.ts
+src/hooks/profile/useNotificationSettings.ts
+src/utils/logger.ts
+src/pages/api/discord/callback.ts
+src/pages/api/discord/auth.ts
+src/components/profile/sections/NotificationSection.tsx
+src/services/discordBotService.ts
+src/pages/api/profile/discord-verification.ts
+src/pages/api/discord/webhook.ts
+src/pages/_app.tsx
+src/types/env.d.ts
+src/types/discordTypes.ts
+src/utils/errorHandler.ts
+src/services/userService.ts
+
 ------
 # 啟動 ngrok，轉發本地 3000 端口
 ngrok http 3000
@@ -25,6 +44,9 @@ npx ts-node src/lambda/updateKnowledge.ts
 knowledge 知識中心
 
 ------
+
+
+--------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
 一致風格、舒適
 更好的用戶體驗和更清晰的視覺引導，同時保留所有功能，其餘不變
@@ -34,22 +56,7 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 考慮到這些文件的邏輯完全相同，您可以考慮將共同的邏輯抽取到一個共用的函數中，
 只需傳入不同的表名作為參數，這樣可以減少代碼重複，提高維護性。
 --------
-修改模組：  
-Type // 類型
-pages/index // 頁面
-│   │ useNewsPageLogic.ts     // Hook
-│   │ useFetchNews.ts         
-│   │ useNewsFavorites.ts     
-│   │     summary.ts          // api
-│   │     addFavorite.ts      
-│   │     removeFavorite.ts  
-│   │     index.ts           
-│   │     getFavorites.ts    
-src/lambda/fetch
-src/lambda/update
-src/hooks/profile/useProfileArticles.ts // 觀看紀錄
-src/pages/api/notifications/index.ts // 通知介面
-src/components/common/Notification.tsx // 通知介面
+
 --------
 進行中：
 1. discord 通知功能
@@ -79,21 +86,25 @@ src/components/common/Notification.tsx // 通知介面
 18. 新聞文章 只留日期 去除 人名
 --------
 
-discord 通知功能
-src/services/discordService.ts
-src/config/discord.ts
-src/hooks/profile/useNotificationSettings.ts
-src/utils/logger.ts
-src/pages/api/discord/callback.ts
-src/pages/api/discord/auth.ts
-src/components/profile/sections/NotificationSection.tsx
-src/services/discordBotService.ts
-src/pages/api/profile/discord-verification.ts
-src/pages/api/discord/webhook.ts
-src/pages/_app.tsx
-src/types/env.d.ts
-src/types/discordTypes.ts
-src/utils/errorHandler.ts
-src/services/userService.ts
 
 --------
+
+建立爬蟲模組  
+Type // 類型
+pages/index // 頁面
+│   │ useNewsPageLogic.ts     // Hook
+│   │ useFetchNews.ts         
+│   │ useNewsFavorites.ts     
+│   │     summary.ts          // api
+│   │     addFavorite.ts      
+│   │     removeFavorite.ts  
+│   │     index.ts           
+│   │     getFavorites.ts    
+src/lambda/fetch
+src/lambda/update
+src/hooks/profile/useProfileArticles.ts // 觀看紀錄
+src/pages/api/notifications/index.ts // 通知介面
+src/components/common/Notification.tsx // 通知介面
+
+--------
+
