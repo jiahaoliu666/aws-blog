@@ -5,15 +5,22 @@ import { logger } from '@/utils/logger';
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ message: '方法不允許' });
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ 
+      success: false, 
+      message: '方法不允許',
+      allowedMethods: ['GET', 'POST']
+    });
   }
 
   try {
     const { userId } = req.query;
 
     if (!userId || Array.isArray(userId)) {
-      return res.status(400).json({ message: '無效的用戶 ID' });
+      return res.status(400).json({ 
+        success: false, 
+        message: '無效的用戶 ID' 
+      });
     }
 
     const params = {
@@ -30,10 +37,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!result.Item) {
       return res.status(200).json({
-        emailNotification: false,
-        lineNotification: false,
-        lineUserId: null,
-        lineId: null
+        success: true,
+        settings: {
+          emailNotification: false,
+          lineNotification: false,
+          discordNotification: false,
+          lineUserId: null,
+          lineId: null,
+          discordId: null
+        }
       });
     }
 

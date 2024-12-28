@@ -9,10 +9,19 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { code } = req.query;
+  const { code, state: userId } = req.query;
 
-  if (!code) {
-    return res.status(400).json({ message: '缺少授權碼' });
+  if (!code || !userId) {
+    return res.status(400).json({ 
+      message: '缺少必要參數',
+      code: code ? true : false,
+      userId: userId ? true : false
+    });
+  }
+
+  // 在更新 DynamoDB 之前先檢查 userId
+  if (typeof userId !== 'string') {
+    throw new Error('無效的 userId');
   }
 
   try {
@@ -91,7 +100,7 @@ export default async function handler(
     const params = {
       TableName: "AWS_Blog_UserNotificationSettings",
       Key: {
-        userId: { S: req.query.state as string }
+        userId: { S: userId }
       },
       UpdateExpression: `
         SET discordNotification = :discordNotification,

@@ -22,15 +22,24 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
+    // 確保 userId 被正確傳遞
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少必要參數 userId' 
+      });
+    }
+
     // 構建授權 URL
     const scope = DISCORD_SCOPES.join(' ');
-    const state = req.body?.userId || ''; // 從請求體中獲取 userId
 
     const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${
       DISCORD_CONFIG.CLIENT_ID
     }&redirect_uri=${encodeURIComponent(
       DISCORD_CONFIG.REDIRECT_URI
-    )}&response_type=code&scope=${scope}&state=${state}`;
+    )}&response_type=code&scope=${scope}&state=${encodeURIComponent(userId)}`;
 
     logger.info('生成 Discord 授權 URL 成功');
     logger.debug('授權 URL:', authUrl);

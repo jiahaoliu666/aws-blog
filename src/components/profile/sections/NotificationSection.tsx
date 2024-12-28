@@ -254,7 +254,7 @@ const SendIdStep: React.FC<StepProps & {
   onCopyUserId: () => void;
   onBack: () => void;
   onNext: () => void;
-  onSendId: () => Promise<boolean>;
+  onSendId: (lineId: string) => Promise<boolean>;
   isLoading: boolean;
 }> = ({ 
   onBack, 
@@ -586,7 +586,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     if (!hasChanges) {
       return;
     }
-    await saveSettings(settings);
+    await saveSettings();
   };
 
   const handleEmailToggle = async () => {
@@ -613,7 +613,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       }
     } catch (error) {
       console.error('切換 LINE 通知失敗:', error);
-      toast.error('LINE 通知設定更失敗，請稍後再試');
+      toast.error('LINE 通知設定更新失敗，請稍後再試');
     }
   };
 
@@ -744,7 +744,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 onCopyUserId={onCopyUserId}
                 onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
                 onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
-                onSendId={handleSendUserId}
+                onSendId={(lineId: string) => handleSendUserId(lineId)}
                 isLoading={isLoading}
               />
             )}
@@ -976,7 +976,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   {/* Discord 通知開關 */}
                   <Switch
                     checked={settings.discordNotification}
-                    onChange={handleDiscordToggle}
+                    onChange={(_, checked) => handleDiscordToggle(checked)}
                     disabled={!settings.discordId}
                     sx={{
                       '& .MuiSwitch-switchBase': {
