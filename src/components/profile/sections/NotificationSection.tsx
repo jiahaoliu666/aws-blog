@@ -28,6 +28,7 @@ import { validateVerificationCode } from '@/utils/lineUtils';
 import { useToastContext } from '@/context/ToastContext';
 import { SectionTitle } from '../common/SectionTitle';
 import { Card } from '../common/Card';
+import { logger } from '@/utils/logger';
 
 interface NotificationSettings {
   line: boolean;
@@ -560,6 +561,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const { user } = useAuthContext();
   const {
     settings,
+    setSettings,
     isLoading: settingsLoading,
     showVerification,
     startVerification,
@@ -572,7 +574,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     reloadSettings,
     cancelVerification,
     isDiscordVerifying,
+    setIsDiscordVerifying,
     showDiscordVerification,
+    setShowDiscordVerification,
     startDiscordVerification,
     cancelDiscordVerification,
     handleDiscordVerificationComplete,
@@ -703,20 +707,55 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
   };
 
-  const previousDiscordId = React.useRef<string | null>(null);
-
-  useEffect(() => {
-    if (settings.discordId && !previousDiscordId.current) {
-      showToast('Discord 已成功綁定', 'success');
-    }
-    previousDiscordId.current = settings.discordId;
-  }, [settings.discordId]);
-
-  const { showToast } = useToastContext();
-
   const handleDiscordSwitch = (checked: boolean) => {
     if (!checked || window.confirm('確定要關閉 Discord 通知嗎？')) {
       handleDiscordToggle(checked);
+    }
+  };
+
+  const { showToast } = useToastContext();
+
+  useEffect(() => {
+    const handleDiscordAuthMessage = (event: MessageEvent) => {
+      if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
+        if (isDiscordVerifying) {
+          showToast('Discord 綁定成功', 'success');
+          setSettings(prev => ({
+            ...prev,
+            discordId: event.data.discord_id,
+            discordNotification: true
+          }));
+          setShowDiscordVerification(false);
+          setIsDiscordVerifying(false);
+          
+          // 等待 toast 消息顯示完畢後重新載入頁面
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        }
+      } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
+        if (isDiscordVerifying) {
+          showToast(event.data.error || 'Discord 綁定失敗', 'error');
+          setIsDiscordVerifying(false);
+          logger.error('Discord 授權失敗:', event.data.error);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleDiscordAuthMessage);
+    return () => window.removeEventListener('message', handleDiscordAuthMessage);
+  }, [isDiscordVerifying, showToast, setSettings]);
+
+  const handleDiscordAuth = async () => {
+    try {
+      setIsDiscordVerifying(true);
+      await startDiscordAuth();
+    } catch (error) {
+      setIsDiscordVerifying(false);
+      showToast(
+        error instanceof Error ? error.message : 'Discord 授權失敗',
+        'error'
+      );
     }
   };
 
@@ -1027,15 +1066,16 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
-                      onClick={startDiscordAuth}
+                      onClick={handleDiscordAuth}
                       className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
                         hover:bg-indigo-700 active:bg-indigo-800
                         transition-all duration-200 ease-in-out
                         flex items-center gap-2 mx-auto
                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                      disabled={isDiscordVerifying}
                     >
                       <FontAwesomeIcon icon={faDiscord} />
-                      使用 Discord 登入
+                      {isDiscordVerifying ? '授權中...' : '使用 Discord 登入'}
                     </button>
                   </div>
                 </div>

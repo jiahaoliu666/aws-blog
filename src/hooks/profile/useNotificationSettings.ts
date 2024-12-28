@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { logger } from '@/utils/logger';
 import { useToastContext } from '@/context/ToastContext';
 
@@ -27,7 +27,7 @@ export const useNotificationSettings = (userId: string) => {
     discordId: null
   });
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (isInitialLoad: boolean = false) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -47,6 +47,7 @@ export const useNotificationSettings = (userId: string) => {
       
       if (data.success) {
         setSettings(data.settings);
+        setTempSettings(data.settings);
         return data.settings;
       } else {
         throw new Error(data.message || '獲取設定失敗');
@@ -54,7 +55,9 @@ export const useNotificationSettings = (userId: string) => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       setError(errorMessage);
-      showToast('載入設定失敗', 'error');
+      if (!isInitialLoad) {
+        showToast('載入設定失敗', 'error');
+      }
       logger.error('獲取通知設定失敗:', error);
       return null;
     } finally {
@@ -64,7 +67,7 @@ export const useNotificationSettings = (userId: string) => {
 
   useEffect(() => {
     if (userId) {
-      fetchSettings().then(fetchedSettings => {
+      fetchSettings(true).then(fetchedSettings => {
         if (fetchedSettings) {
           setSettings(fetchedSettings);
           setTempSettings(fetchedSettings);
@@ -208,6 +211,10 @@ export const useNotificationSettings = (userId: string) => {
       await updateSettings({ discordNotification: true, discordId });
       setIsDiscordVerifying(false);
       setShowDiscordVerification(false);
+      showToast('Discord 綁定成功', 'success');
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
       return true;
     } catch (error) {
       logger.error('Discord 驗證完成處理失敗:', error);
@@ -226,32 +233,33 @@ export const useNotificationSettings = (userId: string) => {
   useEffect(() => {
     const handleDiscordAuthMessage = (event: MessageEvent) => {
       if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
-        // 授權成功
-        showToast('Discord 綁定成功', 'success');
-        setSettings(prev => ({
-          ...prev,
-          discordId: event.data.discord_id,
-          discordNotification: true
-        }));
-        setShowDiscordVerification(false);
-        setIsDiscordVerifying(false);
-        
-        // 添加延遲後重新載入頁面
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500); // 等待 1.5 秒讓使用者看到成功訊息後再重整
-        
+        if (isDiscordVerifying) {
+          setSettings(prev => ({
+            ...prev,
+            discordId: event.data.discord_id,
+            discordNotification: true
+          }));
+          setShowDiscordVerification(false);
+          setIsDiscordVerifying(false);
+          
+          showToast('Discord 綁定成功', 'success');
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        }
       } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
-        // 授權失敗
-        showToast(event.data.error || 'Discord 綁定失敗', 'error');
-        setIsDiscordVerifying(false);
-        logger.error('Discord 授權失敗:', event.data.error);
+        if (isDiscordVerifying) {
+          showToast(event.data.error || 'Discord 綁定失敗', 'error');
+          setIsDiscordVerifying(false);
+          logger.error('Discord 授權失敗:', event.data.error);
+        }
       }
     };
 
     window.addEventListener('message', handleDiscordAuthMessage);
     return () => window.removeEventListener('message', handleDiscordAuthMessage);
-  }, []);
+  }, [isDiscordVerifying, showToast, setSettings]);
 
   const startDiscordAuth = async () => {
     try {
@@ -297,6 +305,7 @@ export const useNotificationSettings = (userId: string) => {
 
   return {
     settings: tempSettings,
+    setSettings,
     originalSettings: settings,
     resetSettings,
     saveSettings,
@@ -313,7 +322,9 @@ export const useNotificationSettings = (userId: string) => {
     reloadSettings,
     cancelVerification,
     isDiscordVerifying,
+    setIsDiscordVerifying,
     showDiscordVerification,
+    setShowDiscordVerification,
     startDiscordVerification,
     cancelDiscordVerification,
     handleDiscordVerificationComplete,

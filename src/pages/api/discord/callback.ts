@@ -141,11 +141,11 @@ export default async function handler(
           discriminator: '${userData.discriminator}',
           avatar: '${userData.avatar || ''}'
         }, '*');
-        window.close();
+        setTimeout(() => window.close(), 3000);
       </script>
     </head>
     <body>
-      <p>授權成功，請稍候...</p>
+      <p>授權成功，視窗將在 3 秒後關閉...</p>
     </body>
     </html>
     `;
@@ -154,6 +154,7 @@ export default async function handler(
 
   } catch (error) {
     logger.error('Discord 回調處理失敗:', error);
+    const errorMessage = error instanceof Error ? error.message : '授權過程發生錯誤';
     const errorHtml = `
       <!DOCTYPE html>
       <html>
@@ -162,13 +163,14 @@ export default async function handler(
         <script>
           window.opener.postMessage({
             type: 'DISCORD_AUTH_ERROR',
-            error: '${error instanceof Error ? error.message : '授權過程發生錯誤'}'
+            error: '${errorMessage}'
           }, '*');
           setTimeout(() => window.close(), 3000);
         </script>
       </head>
       <body>
-        <p>授權失敗，視窗將在 3 秒後關閉...</p>
+        <p>授權失敗：${errorMessage}</p>
+        <p>視窗將在 3 秒後關閉...</p>
       </body>
       </html>
     `;
