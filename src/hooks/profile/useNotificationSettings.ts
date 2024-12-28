@@ -228,7 +228,12 @@ export const useNotificationSettings = (userId: string) => {
         }));
         setShowDiscordVerification(false);
         setIsDiscordVerifying(false);
-        reloadSettings(); // 重新載入設定以確保資料同步
+        
+        // 添加延遲後重新載入頁面
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500); // 等待 1.5 秒讓使用者看到成功訊息後再重整
+        
       } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
         // 授權失敗
         showToast(event.data.error || 'Discord 連結失敗', 'error');
