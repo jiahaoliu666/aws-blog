@@ -706,6 +706,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
   };
 
+  const previousDiscordId = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    if (settings.discordId && !previousDiscordId.current) {
+      showToast('Discord 已成功連結', 'success');
+    }
+    previousDiscordId.current = settings.discordId;
+  }, [settings.discordId]);
+
+  const { showToast } = useToastContext();
+
   return (
     <div className="w-full">
       {/* 如果正在進行驗證，顯示驗證介面 */}

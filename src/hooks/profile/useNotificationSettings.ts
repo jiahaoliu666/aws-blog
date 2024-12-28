@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 import { useToastContext } from '@/context/ToastContext';
 
 export const useNotificationSettings = (userId: string) => {
+  const { showToast } = useToastContext();
   const [settings, setSettings] = useState({
     emailNotification: false,
     lineNotification: false,
@@ -13,7 +14,6 @@ export const useNotificationSettings = (userId: string) => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { showToast } = useToastContext();
   const [showVerification, setShowVerification] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isDiscordVerifying, setIsDiscordVerifying] = useState(false);
@@ -202,6 +202,31 @@ export const useNotificationSettings = (userId: string) => {
     await updateSettings({ discordNotification: enabled });
   };
 
+  useEffect(() => {
+    const handleDiscordAuthMessage = (event: MessageEvent) => {
+      if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
+        // 授權成功
+        showToast('Discord 連結成功', 'success');
+        setSettings(prev => ({
+          ...prev,
+          discordId: event.data.discord_id,
+          discordNotification: true
+        }));
+        setShowDiscordVerification(false);
+        setIsDiscordVerifying(false);
+        reloadSettings(); // 重新載入設定以確保資料同步
+      } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
+        // 授權失敗
+        showToast(event.data.error || 'Discord 連結失敗', 'error');
+        setIsDiscordVerifying(false);
+        logger.error('Discord 授權失敗:', event.data.error);
+      }
+    };
+
+    window.addEventListener('message', handleDiscordAuthMessage);
+    return () => window.removeEventListener('message', handleDiscordAuthMessage);
+  }, []);
+
   const startDiscordAuth = async () => {
     try {
       if (!userId) {
@@ -222,7 +247,17 @@ export const useNotificationSettings = (userId: string) => {
       }
 
       if (data.authUrl) {
-        window.open(data.authUrl, 'discord-auth', 'width=800,height=600');
+        // 開啟 Discord 授權視窗
+        const authWindow = window.open(
+          data.authUrl, 
+          'discord-auth',
+          'width=800,height=600,location=yes,resizable=yes,scrollbars=yes,status=yes'
+        );
+
+        // 檢查視窗是否被封鎖
+        if (authWindow === null) {
+          showToast('請允許開啟彈出視窗以完成 Discord 授權', 'warning');
+        }
       } else {
         throw new Error('無法獲取授權 URL');
       }
@@ -230,6 +265,7 @@ export const useNotificationSettings = (userId: string) => {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       showToast('Discord 授權失敗', 'error');
       logger.error('Discord 授權失敗:', errorMessage);
+      setIsDiscordVerifying(false);
     }
   };
 
