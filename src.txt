@@ -1,160 +1,160 @@
 src/ 
 ├── types
-│   ├── announcementType.ts         // 公告文章相關的類型
-│   ├── newsType.ts                 // 新聞文章相關類型
-│   ├── solutionType.ts             // 解決方案文章相關類型
-│   ├── architectureType.ts         // 架構文章相關類型
-│   ├── knowledgeType.ts            // 知識中心文章相關類型
-│   ├── profileTypes.ts             // 個人資料類型定義
-│   ├── favoriteTypes.ts            // 收藏文章類型定義
-│   ├── next-auth.d.ts              // NextAuth.js 的類型定義
-│   ├── env.d.ts                    // 環境變量類型定義
+│   ├── announcementType.ts         // 最新公告類型
+│   ├── newsType.ts                 // 最新新聞類型
+│   ├── solutionType.ts             // 解決方案類型
+│   ├── architectureType.ts         // 架構參考類型
+│   ├── knowledgeType.ts            // 知識中心類型
+│   ├── profileTypes.ts             // 個人資料類型
+│   ├── favoriteTypes.ts            // 收藏文章類型
+│   ├── userType.ts                 // 用戶類型
 │   ├── emailTypes.ts               // 電子郵件通知類型
-│   ├── amazon-dax-client.d.ts      // Amazon DAX 客戶端的類型定義
 │   ├── lineTypes.ts                // LINE 通知相關類型
-│   └── discordTypes.ts             // Discord 相關類型
-│   └── userType.ts                 // 用戶相關的類型
+│   ├── discordTypes.ts             // Discord 相關類型
+│   ├── env.d.ts                    // 環境變量類型
+│   ├── next-auth.d.ts              // NextAuth.js 類型
+│   └── amazon-dax-client.d.ts      // Amazon DAX 客戶端類型
 ├── pages
-│   ├── _app.tsx                    // 自定義應用程序入口
+│   ├── _app.tsx                    // 應用程序入口
 │   ├── index.tsx                   // 首頁
 │   ├── announcement
-│   │   └── index.tsx               // 公告頁面
+│   │   └── index.tsx               // 最新公告頁面
 │   ├── news
-│   │   └── index.tsx               // 新聞頁面
+│   │   └── index.tsx               // 最新新聞頁面
 │   ├── solutions
 │   │   └── index.tsx               // 解決方案頁面
 │   ├── architecture
-│   │   └── index.tsx               // 架構圖頁面
+│   │   └── index.tsx               // 架構參考頁面
 │   ├── knowledge
 │   │   └── index.tsx               // 知識中心頁面
-│   ├── profile
-│   │   └── index.tsx               // 個人資料頁面
 │   ├── favorite
 │   │   └── index.tsx               // 收藏文章頁面
+│   ├── profile
+│   │   └── index.tsx               // 個人資料頁面
 │   ├── auth
-│   │   ├── login.tsx               // 登錄頁面
+│   │   ├── login.tsx               // 登入頁面
 │   │   ├── register.tsx            // 註冊頁面
 │   │   └── forgot-password.tsx     // 忘記密碼頁面
-│   ├── 404.tsx                     // 404 錯誤頁面
-│   ├── _document.tsx               // 自定義文檔
 │   ├── api  
 │   │   ├── announcement
 │   │   │   ├── index.ts            // 公告 API 主入口
-│   │   │   ├── summary.ts          // 獲取公告摘要的 API
-│   │   │   ├── addFavorite.ts      // 新增公告收藏的 API
-│   │   │   ├── removeFavorite.ts   // 移除公告收藏的 API
-│   │   │   └── getFavorites.ts     // 獲取公告收藏的 API
+│   │   │   ├── summary.ts          // 獲取公告摘要 API
+│   │   │   ├── addFavorite.ts      // 新增公告收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除公告收藏 API
+│   │   │   └── getFavorites.ts     // 獲取公告收藏 API
 │   │   ├── news
 │   │   │   ├── index.ts            // 新聞 API 主入口
-│   │   │   ├── summary.ts          // 獲取新聞摘要的 API
-│   │   │   ├── addFavorite.ts      // 新增新聞收藏的 API
-│   │   │   ├── removeFavorite.ts   // 移除新聞收藏的 API
-│   │   │   └── getFavorites.ts     // 獲取新聞收藏的 API
+│   │   │   ├── summary.ts          // 獲取新聞摘要 API
+│   │   │   ├── addFavorite.ts      // 新增新聞收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除新聞收藏 API
+│   │   │   └── getFavorites.ts     // 獲取新聞收藏 API
 │   │   ├── solutions
 │   │   │   ├── index.ts            // 解決方案 API 主入口
-│   │   │   ├── summary.ts          // 獲取解決方案摘要的 API
-│   │   │   ├── addFavorite.ts      // 新增解決方案收藏的 API
-│   │   │   ├── removeFavorite.ts   // 移除解決方案收藏的 API
-│   │   │   └── getFavorites.ts     // 獲取解決方案收藏的 API
+│   │   │   ├── summary.ts          // 獲取解決方案摘要 API
+│   │   │   ├── addFavorite.ts      // 新增解決方案收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除解決方案收藏 API
+│   │   │   └── getFavorites.ts     // 獲取解決方案收藏 API
 │   │   ├── architecture
-│   │   │   ├── index.ts            // 架構圖 API 主入口
-│   │   │   ├── summary.ts          // 獲取架構圖摘要的 API
-│   │   │   ├── addFavorite.ts      // 新增架構圖收藏的 API
-│   │   │   ├── removeFavorite.ts   // 移除架構圖收藏的 API
-│   │   │   └── getFavorites.ts     // 獲取架構圖收藏的 API
+│   │   │   ├── index.ts            // 架構參考 API 主入口
+│   │   │   ├── summary.ts          // 獲取架構圖摘要 API
+│   │   │   ├── addFavorite.ts      // 新增架構圖收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除架構圖收藏 API
+│   │   │   └── getFavorites.ts     // 獲取架構圖收藏 API
 │   │   ├── knowledge
 │   │   │   ├── index.ts            // 知識中心 API 主入口
-│   │   │   ├── summary.ts          // 獲取知識中心摘要的 API
-│   │   │   ├── addFavorite.ts      // 新增知識中心收藏的 API
-│   │   │   ├── removeFavorite.ts   // 移除知識中心收藏的 API
-│   │   │   └── getFavorites.ts     // 獲取知識中心收藏的 API
+│   │   │   ├── summary.ts          // 獲取知識中心摘要 API
+│   │   │   ├── addFavorite.ts      // 新增知識中心收藏 API
+│   │   │   ├── removeFavorite.ts   // 移除知識中心收藏 API
+│   │   │   └── getFavorites.ts     // 獲取知識中心收藏 API
 │   │   ├── favorite
 │   │   │   ├── index.ts            // 收藏 API 主入口
-│   │   │   ├── summary.ts          // 獲取收藏摘要的 API
-│   │   │   ├── removeFavorite.ts   // 移除收藏的 API
-│   │   │   └── getFavorites.ts     // 獲取收藏的 API
+│   │   │   ├── summary.ts          // 獲取摘要 API
+│   │   │   ├── removeFavorite.ts   // 移除收藏 API
+│   │   │   └── getFavorites.ts     // 獲取收藏 API
 │   │   ├── profile 
-│   │   │   ├── discord-verification.ts // Discord 驗證的 API
-│   │   │   ├── recent-log.ts       // 獲取最近日誌的 API
+│   │   │   ├── discord-verification.ts // Discord 驗證 API
+│   │   │   ├── recent-log.ts       // 獲取最近日誌 API
 │   │   │   ├── notification-settings
-│   │   │   │   ├── [userId].ts     // 用戶通知設置的 API
-│   │   │   │   └── index.ts        // 通知設置的主 API
-│   │   │   ├── sendFeedback.ts     // 發送反饋的 API
+│   │   │   │   ├── [userId].ts     // 用戶通知設置 API
+│   │   │   │   └── index.ts        // 通知設置主 API
+│   │   │   ├── sendFeedback.ts     // 發送反饋 API
 │   │   │   ├── account
-│   │   │   │   └── delete.ts       // 刪除帳戶的 API
-│   │   │   └── activity-log.ts     // 活動日誌的 API
+│   │   │   │   └── delete.ts       // 刪除帳戶 API
+│   │   │   └── activity-log.ts     // 活動日誌 API
 │   │   ├── auth
-│   │   │   └── cleanup.ts          // 清理認證的 API
+│   │   │   └── cleanup.ts          // 清理認證 API
 │   │   └── notifications
-│   │   │   ├── sendEmail.ts        // 發送電子郵件的 API
-│   │   │   ├── mark-read.ts        // 標記通知為已讀的 API
+│   │   │   ├── sendEmail.ts        // 發送電子郵件 API
+│   │   │   ├── mark-read.ts        // 標記通知為已讀 API
 │   │   │   └── index.ts            // 通知 API 主入口
 │   │   ├── line
-│   │   │   ├── verify-code.ts      // 驗證 LINE 代碼的 API
-│   │   │   ├── verification-status.ts // 獲取驗證狀態的 API
-│   │   │   ├── message.ts          // 發送 LINE 消息的 API
+│   │   │   ├── verify-code.ts      // 驗證 LINE 代碼 API
+│   │   │   ├── verification-status.ts // 獲取驗證狀態 API
+│   │   │   ├── message.ts          // 發送 LINE 消息 API
 │   │   │   └── webhook.ts          // LINE Webhook API
 │   │   └── discord 
-│   │       └── callback.ts         // Discord 授權回調的 API
-│   │       └── auth.ts             // Discord 授權的 API
+│   │       └── callback.ts         // Discord 授權回調 API
+│   │       └── auth.ts             // Discord 授權 API
 │   │       └── webhook.ts          // Discord Webhook API
+│   ├── 404.tsx                     // 404 錯誤頁面
+│   ├── _document.tsx               // 自定義文檔
 ├── hooks
 │   ├── announcement
-│   │   ├── useAnnouncementPageLogic.ts // 使用公告頁面邏輯的 Hook
-│   │   ├── useFetchAnnouncement.ts // 使用獲取公告的 Hook
-│   │   └── useAnnouncementFavorites.ts // 使用公告收藏的 Hook
+│   │   ├── useAnnouncementPageLogic.ts // 公告頁面邏輯 Hook
+│   │   ├── useFetchAnnouncement.ts // 獲取公告 Hook
+│   │   └── useAnnouncementFavorites.ts // 公告收藏 Hook
 │   ├── news
-│   │   └── useNewsPageLogic.ts     // 使用新聞頁面邏輯的 Hook
-│   │   └── useFetchNews.ts         // 使用獲取新聞的 Hook
-│   │   └── useNewsFavorites.ts     // 使用新聞收藏的 Hook
+│   │   └── useNewsPageLogic.ts     // 新聞頁面邏輯 Hook
+│   │   └── useFetchNews.ts         // 獲取新聞 Hook
+│   │   └── useNewsFavorites.ts     // 新聞收藏 Hook
 │   ├── solutions
-│   │   └── useSolutionsPageLogic.ts // 使用解決方案頁面邏輯的 Hook
-│   │   └── useFetchSolutions.ts // 使用獲取解決方案的 Hook
-│   │   └── useSolutionFavorites.ts // 使用解決方案收藏的 Hook
+│   │   └── useSolutionsPageLogic.ts // 解決方案頁面邏輯 Hook
+│   │   └── useFetchSolutions.ts // 獲取解決方案 Hook
+│   │   └── useSolutionFavorites.ts // 解決方案收藏 Hook
 │   ├── architecture
-│   │   └── useArchitecturePageLogic.ts // 使用架構圖頁面邏輯的 Hook
-│   │   └── useFetchArchitecture.ts // 使用獲取架構圖的 Hook
-│   │   └── useArchitectureFavorites.ts // 使用架構圖收藏的 Hook
+│   │   └── useArchitecturePageLogic.ts // 架構參考頁面邏輯 Hook
+│   │   └── useFetchArchitecture.ts // 獲取架構參考 Hook
+│   │   └── useArchitectureFavorites.ts // 架構參考收藏 Hook
 │   ├── knowledge
-│   │   └── useKnowledgePageLogic.ts // 使用知識中心頁面邏輯的 Hook
-│   │   └── useFetchKnowledge.ts // 使用獲取知識中心的 Hook
-│   │   └── useKnowledgeFavorites.ts // 使用知識中心收藏的 Hook
+│   │   └── useKnowledgePageLogic.ts // 知識中心頁面邏輯 Hook
+│   │   └── useFetchKnowledge.ts // 獲取知識中心 Hook
+│   │   └── useKnowledgeFavorites.ts // 知識中心收藏 Hook
 │   ├── favorite
-│   │   └── useFavoritePageLogic.ts // 使用收藏頁面邏輯的 Hook 
-│   │   └── useFetchFavorite.ts // 使用獲取收藏的 Hook
-│   │   └── useFavoriteFavorites.ts // 使用收藏文章的 Hook
+│   │   └── useFavoritePageLogic.ts // 收藏頁面邏輯 Hook 
+│   │   └── useFetchFavorite.ts // 獲取收藏 Hook
+│   │   └── useFavoriteFavorites.ts // 收藏文章 Hook
 │   ├── profile
-│   │   ├── useProfileAvatar.ts     // 使用個人資料頭像的 Hook
-│   │   ├── useProfileFeedback.ts   // 使用個人資料反饋的 Hook
-│   │   ├── useProfileForm.ts       // 使用個人資料表單的 Hook
-│   │   ├── useProfileActivity.ts   // 使用個人資料活動的 Hook
-│   │   ├── useNotificationSettings.ts // 使用通知設置的 Hook
-│   │   ├── useProfileLine.ts       // 使用個人資料 LINE 的 Hook
-│   │   ├── useProfilePreferences.ts // 使用個人資料偏好的 Hook
-│   │   ├── useProfileCore.ts       // 使用個人資料核心的 Hook
-│   │   ├── useProfileArticles.ts   // 使用個人資料文章的 Hook
 │   │   ├── index.ts                // 個人資料 Hook 入口
-│   │   ├── useProfilePassword.ts   // 使用個人資料密碼的 Hook
-│   │   └── useProfileAccount.ts    // 使用個人資料帳戶的 Hook
+│   │   ├── useProfileAvatar.ts     // 個人資料頭像 Hook
+│   │   ├── useProfileFeedback.ts   // 個人資料反饋 Hook
+│   │   ├── useProfileForm.ts       // 個人資料表單 Hook
+│   │   ├── useProfileActivity.ts   // 個人資料活動 Hook
+│   │   ├── useNotificationSettings.ts // 通知設置 Hook
+│   │   ├── useProfileLine.ts       // 個人資料 LINE  Hook
+│   │   ├── useProfilePreferences.ts // 個人資料偏好 Hook
+│   │   ├── useProfileCore.ts       // 個人資料核心 Hook
+│   │   ├── useProfileArticles.ts   // 個人資料文章 Hook
+│   │   ├── useProfilePassword.ts   // 個人資料密碼 Hook
+│   │   └── useProfileAccount.ts    // 個人資料帳戶 Hook
 │   ├── toast
-│   │   └── useToast.ts             // 使用 Toast 的 Hook
-│   ├── useAuth.ts                  // 使用認證的 Hook
+│   │   └── useToast.ts             //  Toast  Hook
+│   ├── useAuth.ts                  // 認證 Hook
 │   ├── line
-│   │   ├── useLineVerification.ts  // 使用 LINE 驗證的 Hook
+│   │   ├── useLineVerification.ts  //  LINE 驗證 Hook
 │   │   └── index.ts                // LINE Hook 入口
 │   └── notifications
-│   │   └── useEmailNotifications.ts // 使用電子郵件通知的 Hook
-│   └── useAppLogic.ts              // 使用應用邏輯的 Hook
+│   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
+│   └── useAppLogic.ts              // 應用邏輯 Hook
 ├── lambda
-│   ├── fetchNews.ts                // 獲取新聞的 Lambda 函數
-│   ├── fetchAnnouncement.ts        // 獲取公告的 Lambda 函數
-│   ├── fetchSolutions.ts           // 獲取解決方案的 Lambda 函數
-│   ├── fetchArchitecture.ts         // 獲取架構圖的 Lambda 函數
-│   ├── fetchKnowledge.ts           // 獲取知識中心的 Lambda 函數
-│   ├── updateNews.ts               // 更新新聞的 Lambda 函數
-│   └── updateAnnouncement.ts       // 更新公告的 Lambda 函數
-│   └── updateSolutions.ts          // 更新解決方案的 Lambda 函數
-│   └── updateKnowledge.ts          // 更新知識中心的 Lambda 函數
+│   ├── fetchNews.ts                // 獲取新聞 Lambda 函數
+│   ├── fetchAnnouncement.ts        // 獲取公告 Lambda 函數
+│   ├── fetchSolutions.ts           // 獲取解決方案 Lambda 函數
+│   ├── fetchArchitecture.ts         // 獲取架構圖 Lambda 函數
+│   ├── fetchKnowledge.ts           // 獲取知識中心 Lambda 函數
+│   ├── updateNews.ts               // 更新新聞 Lambda 函數
+│   └── updateAnnouncement.ts       // 更新公告 Lambda 函數
+│   └── updateSolutions.ts          // 更新解決方案 Lambda 函數
+│   └── updateKnowledge.ts          // 更新知識中心 Lambda 函數
 ├── components
 │   ├── common
 │   │   ├── Navbar.tsx              // 導航欄組件
@@ -222,7 +222,7 @@ src/
 │   ├── cognitoClient.ts            // Cognito 客戶端工具
 │   ├── browserStorage.ts           // 瀏覽器存儲工具
 │   ├── dynamodb.ts                 // DynamoDB 工具
-│   ├── extractDateFromInfo.ts      // 從信息中提取日期的工具
+│   ├── extractDateFromInfo.ts      // 從信息中提取日期工具
 │   ├── cacheUtils.ts               // 緩存工具
 │   └── retryUtils.ts               // 重試工具
 ├── libs
@@ -234,4 +234,4 @@ src/
 │   └── user.ts                     // 用戶 API
 ├── templates
 │   ├── lineTemplates.ts            // LINE 模板
-│   └── deleteAccountEmail.ts       // 刪除帳戶的電子郵件模板
+│   └── deleteAccountEmail.ts       // 刪除帳戶電子郵件模板
