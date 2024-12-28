@@ -1,5 +1,5 @@
 src/ 
-├── types
+├── types 
 │   ├── announcementType.ts         // 最新公告類型
 │   ├── newsType.ts                 // 最新新聞類型
 │   ├── solutionType.ts             // 解決方案類型
@@ -225,6 +225,7 @@ src/
 │   ├── extractDateFromInfo.ts      // 從信息中提取日期工具
 │   ├── cacheUtils.ts               // 緩存工具
 │   └── retryUtils.ts               // 重試工具
+│   └── animations.ts               // 動畫工具
 ├── libs
 │   └── dynamodb.ts                 // DynamoDB 庫
 ├── styles

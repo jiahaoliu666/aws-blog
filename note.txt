@@ -129,3 +129,11 @@ src/pages/api/profile/discord-verification.ts
 src/config/discord.ts
 
 --------
+
+首頁樣式
+src/pages/index.tsx
+src/styles/globals.css
+src/utils/animations.ts
+
+--------
+
