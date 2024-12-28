@@ -133,14 +133,21 @@ export const useNotificationSettings = (userId: string) => {
     try {
       setIsLoading(true);
       
-      if (!tempSettings.discordNotification && settings.discordNotification) {
-        logger.info('正在關閉 Discord 通知設定');
-      }
+      const settingsToUpdate = {
+        ...tempSettings,
+        discordId: tempSettings.discordNotification ? settings.discordId : null
+      };
       
-      await updateSettings(tempSettings);
-      setSettings(tempSettings);
+      await updateSettings(settingsToUpdate);
+      setSettings(settingsToUpdate);
       setHasChanges(false);
       showToast('設定已更新', 'success');
+
+      // 添加延遲後重新載入頁面
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500); // 等待 1.5 秒讓使用者看到成功訊息後再重整
+
     } catch (error) {
       showToast('儲存設定失敗', 'error');
       logger.error('儲存設定失敗:', error);
@@ -211,7 +218,7 @@ export const useNotificationSettings = (userId: string) => {
   const handleDiscordToggle = async (enabled: boolean) => {
     setTempSettings(prev => ({
       ...prev,
-      discordNotification: enabled
+      discordNotification: enabled,
     }));
     setHasChanges(true);
   };
@@ -220,7 +227,7 @@ export const useNotificationSettings = (userId: string) => {
     const handleDiscordAuthMessage = (event: MessageEvent) => {
       if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
         // 授權成功
-        showToast('Discord 連結成功', 'success');
+        showToast('Discord 綁定成功', 'success');
         setSettings(prev => ({
           ...prev,
           discordId: event.data.discord_id,
@@ -236,7 +243,7 @@ export const useNotificationSettings = (userId: string) => {
         
       } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
         // 授權失敗
-        showToast(event.data.error || 'Discord 連結失敗', 'error');
+        showToast(event.data.error || 'Discord 綁定失敗', 'error');
         setIsDiscordVerifying(false);
         logger.error('Discord 授權失敗:', event.data.error);
       }

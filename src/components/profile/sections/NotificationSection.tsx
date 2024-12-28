@@ -707,12 +707,18 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   useEffect(() => {
     if (settings.discordId && !previousDiscordId.current) {
-      showToast('Discord 已成功連結', 'success');
+      showToast('Discord 已成功綁定', 'success');
     }
     previousDiscordId.current = settings.discordId;
   }, [settings.discordId]);
 
   const { showToast } = useToastContext();
+
+  const handleDiscordSwitch = (checked: boolean) => {
+    if (!checked || window.confirm('確定要關閉 Discord 通知嗎？')) {
+      handleDiscordToggle(checked);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -984,11 +990,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   {/* Discord 通知開關 */}
                   <Switch
                     checked={settings.discordNotification}
-                    onChange={(_, checked) => {
-                      if (!checked || window.confirm('確定要關閉 Discord 通知嗎？')) {
-                        handleDiscordToggle(checked);
-                      }
-                    }}
+                    onChange={(_, checked) => handleDiscordSwitch(checked)}
                     disabled={!settings.discordId}
                     sx={{
                       '& .MuiSwitch-switchBase': {

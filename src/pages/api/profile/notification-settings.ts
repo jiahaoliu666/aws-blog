@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: '方法不允許' });
   }
 
-  const { userId, lineNotification, emailNotification, discord, discordId } = req.body;
+  const { userId, lineNotification, emailNotification, discordNotification, discordId } = req.body;
 
   try {
     if (!userId) {
@@ -22,68 +22,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    if (lineNotification === false) {
+    if (discordNotification === false) {
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Key: {
           userId: { S: userId }
         },
         UpdateExpression: `
-          SET lineNotification = :lineNotification,
+          SET discordNotification = :discordNotification,
+              lineNotification = :lineNotification,
               emailNotification = :emailNotification,
               updatedAt = :updatedAt
-          REMOVE lineId,
-                 lineUserId,
-                 verificationCode,
-                 verificationExpiry,
-                 verificationStep,
-                 verificationStatus,
-                 isVerified,
-                 lastVerified,
-                 lastCancelled,
-                 verificationCount,
-                 cancellationCount
+          REMOVE discordId
         `,
         ExpressionAttributeValues: {
-          ':lineNotification': { BOOL: false },
+          ':discordNotification': { BOOL: false },
+          ':lineNotification': { BOOL: lineNotification || false },
           ':emailNotification': { BOOL: emailNotification || false },
           ':updatedAt': { S: new Date().toISOString() }
         },
         ReturnValues: ReturnValue.ALL_NEW
       };
 
-      try {
-        const command = new UpdateItemCommand(params);
-        const result = await dynamoClient.send(command);
+      const command = new UpdateItemCommand(params);
+      const result = await dynamoClient.send(command);
 
-        await dynamoClient.send(new DeleteItemCommand({
-          TableName: "AWS_Blog_LineVerifications",
-          Key: {
-            userId: { S: userId }
-          }
-        }));
+      logger.info('Discord 通知設定已更新:', {
+        userId,
+        discordNotification: false,
+        result: result.Attributes
+      });
 
-        logger.info('通知設定已更新:', {
-          userId,
-          lineNotification: false,
-          emailNotification,
-          result: result.Attributes
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: '通知設定已更新',
-          settings: {
-            lineNotification: false,
-            emailNotification: emailNotification || false,
-            lineId: null
-          }
-        });
-
-      } catch (error) {
-        logger.error('更新通知設定失敗:', error);
-        throw new Error('更新通知設定失敗');
-      }
+      return res.status(200).json({
+        success: true,
+        message: '通知設定已更新',
+        reloadRequired: true,
+        settings: {
+          discordNotification: false,
+          discordId: null,
+          lineNotification: lineNotification || false,
+          emailNotification: emailNotification || false,
+          lineId: result.Attributes?.lineId?.S || null
+        }
+      });
     } else {
       // 處理一般的設定更新(當 lineNotification 不是 false 時)
       const params = {
@@ -102,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ExpressionAttributeValues: {
           ':lineNotification': { BOOL: lineNotification || false },
           ':emailNotification': { BOOL: emailNotification || false },
-          ':discordNotification': { BOOL: discord || false },
+          ':discordNotification': { BOOL: discordNotification || false },
           ':discordId': discordId ? { S: discordId } : { NULL: true },
           ':defaultLineId': { NULL: true },
           ':updatedAt': { S: new Date().toISOString() }
@@ -123,10 +104,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({
         success: true,
         message: '通知設定已更新',
+        reloadRequired: true,
         settings: {
           lineNotification: lineNotification || false,
           emailNotification: emailNotification || false,
-          discordNotification: discord || false,
+          discordNotification: discordNotification || false,
           discordId: result.Attributes?.discordId?.S || null,
           lineId: result.Attributes?.lineId?.S || null
         }
