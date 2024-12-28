@@ -18,6 +18,14 @@ export const useNotificationSettings = (userId: string) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [isDiscordVerifying, setIsDiscordVerifying] = useState(false);
   const [showDiscordVerification, setShowDiscordVerification] = useState(false);
+  const [tempSettings, setTempSettings] = useState({
+    emailNotification: false,
+    lineNotification: false,
+    discordNotification: false,
+    lineId: null,
+    lineUserId: null,
+    discordId: null
+  });
 
   const fetchSettings = async () => {
     try {
@@ -25,7 +33,7 @@ export const useNotificationSettings = (userId: string) => {
       setError(null);
 
       const response = await fetch(`/api/profile/notification-settings/${userId}`, {
-        method: 'GET', // 明確指定使用 GET 方法
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -39,6 +47,7 @@ export const useNotificationSettings = (userId: string) => {
       
       if (data.success) {
         setSettings(data.settings);
+        return data.settings;
       } else {
         throw new Error(data.message || '獲取設定失敗');
       }
@@ -47,6 +56,7 @@ export const useNotificationSettings = (userId: string) => {
       setError(errorMessage);
       showToast('載入設定失敗', 'error');
       logger.error('獲取通知設定失敗:', error);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +64,12 @@ export const useNotificationSettings = (userId: string) => {
 
   useEffect(() => {
     if (userId) {
-      fetchSettings();
+      fetchSettings().then(fetchedSettings => {
+        if (fetchedSettings) {
+          setSettings(fetchedSettings);
+          setTempSettings(fetchedSettings);
+        }
+      });
     }
   }, [userId]);
 
@@ -96,16 +111,9 @@ export const useNotificationSettings = (userId: string) => {
   };
 
   const resetSettings = async () => {
-    try {
-      setIsLoading(true);
-      await fetchSettings(); // 重新獲取原始設定
-      showToast('設定已重置', 'success');
-    } catch (error) {
-      showToast('重置設定失敗', 'error');
-      logger.error('重置設定失敗:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    setTempSettings(settings);
+    setHasChanges(false);
+    showToast('設定已重置', 'info');
   };
 
   const startVerification = () => {
@@ -113,28 +121,30 @@ export const useNotificationSettings = (userId: string) => {
   };
 
   const handleSettingChange = async (type: string, value: boolean): Promise<boolean> => {
-    try {
-      setHasChanges(true);
-      const newSettings = {
-        ...settings,
-        [`${type}Notification`]: value
-      };
-      await updateSettings(newSettings);
-      return true;
-    } catch (error) {
-      logger.error('設定更新失敗:', error);
-      return false;
-    }
+    setHasChanges(true);
+    setTempSettings(prev => ({
+      ...prev,
+      [`${type}Notification`]: value
+    }));
+    return true;
   };
 
   const saveSettings = async () => {
     try {
       setIsLoading(true);
-      await updateSettings(settings);
+      
+      if (!tempSettings.discordNotification && settings.discordNotification) {
+        logger.info('正在關閉 Discord 通知設定');
+      }
+      
+      await updateSettings(tempSettings);
+      setSettings(tempSettings);
       setHasChanges(false);
+      showToast('設定已更新', 'success');
     } catch (error) {
       showToast('儲存設定失敗', 'error');
       logger.error('儲存設定失敗:', error);
+      setTempSettings(settings);
     } finally {
       setIsLoading(false);
     }
@@ -199,7 +209,11 @@ export const useNotificationSettings = (userId: string) => {
   };
 
   const handleDiscordToggle = async (enabled: boolean) => {
-    await updateSettings({ discordNotification: enabled });
+    setTempSettings(prev => ({
+      ...prev,
+      discordNotification: enabled
+    }));
+    setHasChanges(true);
   };
 
   useEffect(() => {
@@ -270,17 +284,18 @@ export const useNotificationSettings = (userId: string) => {
   };
 
   return {
-    settings,
+    settings: tempSettings,
+    originalSettings: settings,
+    resetSettings,
+    saveSettings,
+    handleSettingChange,
+    hasChanges,
     isLoading,
     error,
     updateSettings,
     fetchSettings,
-    resetSettings,
     showVerification,
     startVerification,
-    hasChanges,
-    handleSettingChange,
-    saveSettings,
     handleSendUserId,
     handleVerifyCode,
     reloadSettings,

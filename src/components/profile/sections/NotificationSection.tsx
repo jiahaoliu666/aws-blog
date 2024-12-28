@@ -589,8 +589,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     await saveSettings();
   };
 
-  const handleEmailToggle = async () => {
-    await handleToggle('emailNotification', !settings.emailNotification);
+  const handleEmailToggle = () => {
+    handleToggle('emailNotification', !settings.emailNotification);
   };
 
   const handleLineToggle = async () => {
@@ -603,11 +603,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         }
       } else {
         if (settings.lineId) {
-          if (window.confirm('確定關閉 LINE 通知嗎？這將會清您的驗證狀態。')) {
-            const wasChanged = await handleToggle('lineNotification', false);
-            if (wasChanged) {
-              await handleResetVerification();
-            }
+          if (window.confirm('確定關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
+            await handleToggle('lineNotification', false);
           }
         }
       }
@@ -987,7 +984,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   {/* Discord 通知開關 */}
                   <Switch
                     checked={settings.discordNotification}
-                    onChange={(_, checked) => handleDiscordToggle(checked)}
+                    onChange={(_, checked) => {
+                      if (!checked || window.confirm('確定要關閉 Discord 通知嗎？')) {
+                        handleDiscordToggle(checked);
+                      }
+                    }}
                     disabled={!settings.discordId}
                     sx={{
                       '& .MuiSwitch-switchBase': {
@@ -1056,7 +1057,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             )}
             
             <button
-              onClick={handleSave}
+              onClick={saveSettings}
               disabled={isSaving || !hasChanges}
               className={`
                 px-6 py-2.5 rounded-lg flex items-center gap-2
