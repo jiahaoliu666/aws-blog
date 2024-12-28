@@ -18,7 +18,7 @@ import Footer from '../components/common/Footer'; // 引入 Footer
 import { useAuthContext } from '@/context/AuthContext';  
 import { useTheme } from '@/context/ThemeContext';
 import { motion } from 'framer-motion';
-import { fadeIn, staggerContainer, hoverCard, textVariant, cardHoverEffect, containerAnimation, gradientAnimation } from '@/utils/animations';
+import { fadeIn, staggerContainer, hoverCard, textVariant, cardHoverEffect, containerAnimation, gradientAnimation, smoothReveal, buttonHoverEffect } from '@/utils/animations';
 import { formatTimeAgo } from '@/utils/dateUtils';
 
 const Home: React.FC = () => {
@@ -33,6 +33,8 @@ const Home: React.FC = () => {
     link: string;
   }>>([]);
   const [loading, setLoading] = useState(true);
+  const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
+  const articlesPerView = 4; // 一次顯示的文章數量
 
   useEffect(() => {
     setIsClient(true);
@@ -62,6 +64,19 @@ const Home: React.FC = () => {
 
     fetchLatestArticles();
   }, []);
+
+  useEffect(() => {
+    if (latestArticles.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setCurrentArticleIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1;
+        return nextIndex >= latestArticles.length ? 0 : nextIndex;
+      });
+    }, 3000); // 每3秒輪播一次
+
+    return () => clearInterval(interval);
+  }, [latestArticles]);
 
   // 主要功能區塊
   const features = [
@@ -200,9 +215,25 @@ const Home: React.FC = () => {
               {/* 最新文章區塊 - 右側 */}
               <motion.div
                 variants={fadeIn('left', 'spring', 0.7)}
-                className="h-[600px] overflow-y-auto custom-scrollbar"
+                className={`
+                  relative h-[600px] rounded-2xl p-6
+                  ${isDarkMode 
+                    ? 'bg-gray-800/40 backdrop-blur-sm' 
+                    : 'bg-white/90 backdrop-blur-sm'
+                  }
+                  border border-gray-200/20
+                  shadow-lg
+                `}
               >
-                <div className="space-y-4">
+                <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-inherit to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-inherit to-transparent"></div>
+                
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <FontAwesomeIcon icon={faNewspaper} className="text-blue-500" />
+                  最新更新
+                </h2>
+
+                <div className="space-y-4 overflow-hidden h-[calc(100%-4rem)]">
                   {loading ? (
                     Array(6).fill(0).map((_, index) => (
                       <div key={index} className={`animate-pulse rounded-xl p-6 ${
@@ -214,64 +245,76 @@ const Home: React.FC = () => {
                         <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                       </div>
                     ))
-                  ) : latestArticles.map((article) => (
-                    <motion.div
-                      key={article.article_id}
-                      variants={cardHoverEffect}
-                      initial="rest"
-                      whileHover="hover"
-                      className={`group rounded-xl p-6 transition-all duration-200 backdrop-blur-sm ${
-                        isDarkMode 
-                          ? 'bg-gray-800/60 hover:bg-gray-700/80' 
-                          : 'bg-white/90 hover:bg-white shadow-lg hover:shadow-xl'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                              article.category === 'news' 
-                                ? 'bg-blue-100/90 text-blue-800' 
-                                : article.category === 'solution'
-                                  ? 'bg-green-100/90 text-green-800'
-                                  : article.category === 'architecture'
-                                    ? 'bg-amber-100/90 text-amber-800'
-                                    : article.category === 'knowledge'
-                                      ? 'bg-indigo-100/90 text-indigo-800'
-                                      : 'bg-purple-100/90 text-purple-800'
-                            }`}>
-                              {article.category === 'news' 
-                                ? '最新新聞' 
-                                : article.category === 'solution'
-                                  ? '解決方案'
-                                  : article.category === 'architecture'
-                                    ? '架構參考'
-                                    : article.category === 'knowledge'
-                                      ? '知識中心'
-                                      : '最新公告'}
-                            </span>
-                            <span className={`text-xs ${
-                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                            }`}>
-                              {formatTimeAgo(new Date(article.date))}
-                            </span>
+                  ) : (
+                    <div className="transition-transform duration-1000 ease-in-out"
+                         style={{
+                           transform: `translateY(-${currentArticleIndex * 100}px)`,
+                         }}>
+                      {latestArticles.map((article, index) => (
+                        <motion.div
+                          key={article.article_id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          className={`
+                            group rounded-xl p-6 mb-4
+                            glass-morphism
+                            ${isDarkMode 
+                              ? 'hover:bg-gray-700/90 bg-gray-800/60' 
+                              : 'hover:bg-white/95 bg-white/60'
+                            }
+                            transform transition-all duration-300 hover:scale-[1.02]
+                            border border-gray-200/20
+                          `}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                  article.category === 'news' 
+                                    ? 'bg-blue-100/90 text-blue-800' 
+                                    : article.category === 'solution'
+                                      ? 'bg-green-100/90 text-green-800'
+                                      : article.category === 'architecture'
+                                        ? 'bg-amber-100/90 text-amber-800'
+                                        : article.category === 'knowledge'
+                                          ? 'bg-indigo-100/90 text-indigo-800'
+                                          : 'bg-purple-100/90 text-purple-800'
+                                }`}>
+                                  {article.category === 'news' 
+                                    ? '最新新聞' 
+                                    : article.category === 'solution'
+                                      ? '解決方案'
+                                      : article.category === 'architecture'
+                                        ? '架構參考'
+                                        : article.category === 'knowledge'
+                                          ? '知識中心'
+                                          : '最新公告'}
+                                </span>
+                                <span className={`text-xs ${
+                                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
+                                  {formatTimeAgo(new Date(article.date))}
+                                </span>
+                              </div>
+                              <a 
+                                href={article.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`text-sm font-medium line-clamp-2 ${
+                                  isDarkMode 
+                                    ? 'text-gray-100 hover:text-blue-400' 
+                                    : 'text-gray-900 hover:text-blue-600'
+                                } transition-colors duration-200`}
+                              >
+                                {article.title}
+                              </a>
+                            </div>
                           </div>
-                          <a 
-                            href={article.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`text-sm font-medium line-clamp-2 ${
-                              isDarkMode 
-                                ? 'text-gray-100 hover:text-blue-400' 
-                                : 'text-gray-900 hover:text-blue-600'
-                            } transition-colors duration-200`}
-                          >
-                            {article.title}
-                          </a>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </div>
@@ -293,17 +336,17 @@ const Home: React.FC = () => {
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                variants={cardHoverEffect}
+                variants={buttonHoverEffect}
                 initial="rest"
                 whileHover="hover"
+                whileTap="tap"
                 className={`
                   relative p-6 rounded-xl
-                  bg-gradient-to-br ${feature.gradient}
-                  backdrop-blur-sm
+                  glass-morphism gradient-border
                   ${isDarkMode 
-                    ? 'shadow-lg shadow-black/20' 
-                    : 'shadow-xl shadow-gray-200/50'}
-                  ${feature.hoverEffect}
+                    ? 'hover:bg-gray-700/90' 
+                    : 'hover:bg-white/95'
+                  }
                 `}
               >
                 <Link href={feature.link} className="block h-full">
@@ -339,7 +382,7 @@ const Home: React.FC = () => {
                 <h2 className={`text-4xl font-bold ${
                   isDarkMode ? 'text-white' : 'text-gray-900'
                 }`}>
-                  為什麼選擇我們
+                  為什麼選擇此平台
                 </h2>
                 <div className="h-1 w-20 mx-auto mt-4 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
               </div>
