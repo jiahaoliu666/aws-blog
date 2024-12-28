@@ -40,7 +40,6 @@ npx ts-node src/lambda/updateArchitecture.ts
 npx ts-node src/lambda/updateKnowledge.ts
 
 根據當前代碼的模式製作 
-knowledge 知識中心
 
 ------
 
@@ -59,7 +58,7 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 --------
 進行中：
 1. discord 通知功能
-2. 當discord成功授權後會將discordNotification狀態true數據插入到 AWS_Blog_UserNotificationSettings資料表，此時，要將[需要先完成 Discord 驗證才能啟用通知功能、使用 Discord 登入] 隱藏，並將未綁定改為已綁定
+2. 收藏文章頁面
 --------
 已執行：
 1. Navbar 的其他資源暫時隱藏 

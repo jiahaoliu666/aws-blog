@@ -838,7 +838,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                      <p className="text-sm text-gray-600">接收新消息和重要更新</p>
+                      <p className="text-sm text-gray-600">透過 Mail 接收即時通知</p>
                       <div className="mt-2 flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-50 
                           text-blue-700 text-xs font-medium rounded-full border border-blue-200
@@ -894,7 +894,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
-                      <p className="text-sm text-gray-600">透過 LINE 接收即時通知與重要更新</p>
+                      <p className="text-sm text-gray-600">透過 LINE 接收即時通知</p>
                       {settings.lineId ? (
                         <div className="mt-2 flex items-center gap-2">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 
@@ -988,7 +988,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Discord 通知</h3>
-                      <p className="text-sm text-gray-600">透過 Discord 接收即時通知與重要更新</p>
+                      <p className="text-sm text-gray-600">透過 Discord 接收即時通知</p>
                       
                       {/* 狀態標籤區域 */}
                       <div className="mt-2 flex items-center gap-2">
