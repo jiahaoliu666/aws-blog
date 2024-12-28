@@ -3,10 +3,12 @@ import axios from 'axios';
 import { ExtendedAnnouncement } from '@/types/announcementType';
 import { User } from '@/types/userType';
 import { useAuth } from '../useAuth';
+import { useToastContext } from '@/context/ToastContext';
 
 export const useAnnouncementFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedAnnouncement[]>([]);
+    const toast = useToastContext();
 
     useEffect(() => {
         const fetchFavorites = async () => {
@@ -44,12 +46,12 @@ export const useAnnouncementFavorites = () => {
                 setFavorites((prev) =>
                     prev.filter((fav) => fav.article_id !== announcement.article_id)
                 );
-                alert('已取消收藏');
+                toast.success('已成功移除收藏');
             } else {
                 const response = await axios.post('/api/announcement/addFavorite', params);
                 if (response.status === 200) {
                     setFavorites((prev) => [{ ...announcement }, ...prev]);
-                    alert('已收藏');
+                    toast.success('已成功加入收藏');
                 }
             }
         } catch (error) {

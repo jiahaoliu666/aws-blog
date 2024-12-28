@@ -3,11 +3,11 @@ import axios from 'axios';
 import { ExtendedSolution } from '@/types/solutionType';
 import { User } from '@/types/userType';
 import { useAuth } from '../useAuth';
-
+import { useToastContext } from '@/context/ToastContext';
 export const useSolutionFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedSolution[]>([]);
-
+    const toast = useToastContext();
     useEffect(() => {
         const fetchFavorites = async () => {
             if (user) {
@@ -44,12 +44,12 @@ export const useSolutionFavorites = () => {
                 setFavorites((prev) =>
                     prev.filter((fav) => fav.article_id !== solution.article_id)
                 );
-                alert('已取消收藏');
+                toast.success('已成功移除收藏');
             } else {
                 const response = await axios.post('/api/solutions/addFavorite', params);
                 if (response.status === 200) {
                     setFavorites((prev) => [{ ...solution }, ...prev]);
-                    alert('已收藏');
+                    toast.success('已成功加入收藏');
                 }
             }
         } catch (error) {

@@ -3,11 +3,11 @@ import axios from 'axios';
 import { ExtendedNews } from '@/types/newsType';
 import { User } from '@/types/userType';
 import { useAuth } from '../useAuth';
-
+import { useToastContext } from '@/context/ToastContext';
 export const useNewsFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedNews[]>([]);
-
+    const toast = useToastContext();
     useEffect(() => {
         const fetchFavorites = async () => {
             if (user) {
@@ -46,12 +46,12 @@ export const useNewsFavorites = () => {
             if (isAlreadyFavorited) {
                 await removeFavorite(user.sub, articleId);
                 setFavorites((prev) => prev.filter((fav) => fav.article_id !== articleId));
-                alert('已取消收藏');
+                toast.success('已成功移除收藏');
             } else {
                 const response = await axios.post('/api/news/addFavorite', params);
                 if (response.status === 200) {
                     setFavorites((prev) => [{ ...article }, ...prev]);
-                    alert('已收藏');
+                    toast.success('已成功加入收藏');
                 }
             }
         } catch (error) {

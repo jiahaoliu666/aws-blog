@@ -3,10 +3,12 @@ import axios from 'axios';
 import { ExtendedArchitecture } from '@/types/architectureType';
 import { User } from '@/types/userType';
 import { useAuth } from '../useAuth';
+import { useToastContext } from '@/context/ToastContext';
 
 export const useArchitectureFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedArchitecture[]>([]);
+    const toast = useToastContext();
 
     useEffect(() => {
         const fetchFavorites = async () => {
@@ -44,12 +46,12 @@ export const useArchitectureFavorites = () => {
                 setFavorites((prev) =>
                     prev.filter((fav) => fav.article_id !== architecture.article_id)
                 );
-                alert('已取消收藏');
+                toast.success('已成功移除收藏');
             } else {
                 const response = await axios.post('/api/architecture/addFavorite', params);
                 if (response.status === 200) {
                     setFavorites((prev) => [{ ...architecture }, ...prev]);
-                    alert('已收藏');
+                    toast.success('已成功加入收藏');
                 }
             }
         } catch (error) {
