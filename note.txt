@@ -3,20 +3,19 @@
 
 discord 通知功能
 src/services/discordService.ts
-src/config/discord.ts
 src/hooks/profile/useNotificationSettings.ts
-src/utils/logger.ts
-src/pages/api/discord/callback.ts
-src/pages/api/discord/auth.ts
 src/components/profile/sections/NotificationSection.tsx
-src/services/discordBotService.ts
-src/pages/api/profile/discord-verification.ts
-src/pages/api/discord/webhook.ts
-src/pages/_app.tsx
-src/types/env.d.ts
-src/types/discordTypes.ts
+src/pages/api/discord/callback.ts
+src/pages/api/profile/notification-settings.ts
 src/utils/errorHandler.ts
+src/pages/api/profile/notification-settings/[userId].ts
+src/types/discordTypes.ts
+src/services/discordBotService.ts
+src/pages/api/discord/auth.ts
 src/services/userService.ts
+src/pages/api/discord/webhook.ts
+src/pages/api/profile/discord-verification.ts
+src/config/discord.ts
 
 ------
 # 啟動 ngrok，轉發本地 3000 端口
@@ -84,6 +83,7 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 16. card 使用建立日期當作獲取日期 然後可以根據日期排序
 17. 添加 discord 通知功能
 18. 新聞文章 只留日期 去除 人名
+19. 電子郵件通知切換按鈕要能正常切換
 --------
 
 

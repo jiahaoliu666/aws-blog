@@ -820,7 +820,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
           <div className="mb-8">
             <SectionTitle 
               title="通知設定"
-              description="選擇您想要接收的通知方式 (僅限一種)"
+              description="選擇您習慣的接收方式 (僅限一種)"
             />
           </div>
 
