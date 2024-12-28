@@ -32,7 +32,6 @@ export const useNotificationSettings = (userId: string) => {
   const [isDiscordVerifying, setIsDiscordVerifying] = useState(false);
   const [showDiscordVerification, setShowDiscordVerification] = useState(false);
 
-  // 載入設定
   const reloadSettings = async () => {
     try {
       setIsLoading(true);
@@ -40,17 +39,19 @@ export const useNotificationSettings = (userId: string) => {
       const data = await response.json();
       
       setOriginalSettings({
-        emailNotification: data.emailNotification || false,
-        lineNotification: data.lineNotification || false,
-        discordNotification: data.discordNotification || false,
-        lineId: data.lineId || null
+        emailNotification: data.settings.emailNotification || false,
+        lineNotification: data.settings.lineNotification || false,
+        discordNotification: data.settings.discordNotification || false,
+        lineId: data.settings.lineId || null,
+        discordId: data.settings.discordId || null
       });
       
       setTempSettings({
-        emailNotification: data.emailNotification || false,
-        lineNotification: data.lineNotification || false,
-        discordNotification: data.discordNotification || false,
-        lineId: data.lineId || null
+        emailNotification: data.settings.emailNotification || false,
+        lineNotification: data.settings.lineNotification || false,
+        discordNotification: data.settings.discordNotification || false,
+        lineId: data.settings.lineId || null,
+        discordId: data.settings.discordId || null
       });
     } catch (error) {
       logger.error('載入通知設定失敗:', error);
@@ -59,6 +60,51 @@ export const useNotificationSettings = (userId: string) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSettings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/profile/notification-settings/${userId}`);
+        const data = await response.json();
+        
+        if (isMounted) {
+          setOriginalSettings({
+            emailNotification: data.settings.emailNotification || false,
+            lineNotification: data.settings.lineNotification || false,
+            discordNotification: data.settings.discordNotification || false,
+            lineId: data.settings.lineId || null,
+            discordId: data.settings.discordId || null
+          });
+          
+          setTempSettings({
+            emailNotification: data.settings.emailNotification || false,
+            lineNotification: data.settings.lineNotification || false,
+            discordNotification: data.settings.discordNotification || false,
+            lineId: data.settings.lineId || null,
+            discordId: data.settings.discordId || null
+          });
+        }
+      } catch (error) {
+        logger.error('載入通知設定失敗:', error);
+        if (isMounted) {
+          showToast('載入設定失敗，請重新整理頁面', 'error');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadSettings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   // 儲存設定
   const saveSettings = async (newSettings: Partial<NotificationSettings>) => {
@@ -459,10 +505,6 @@ export const useNotificationSettings = (userId: string) => {
       console.error('Error fetching notification settings:', error);
     }
   };
-
-  useEffect(() => {
-    reloadSettings();
-  }, [userId]);
 
   return {
     settings: tempSettings,

@@ -37,16 +37,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const settings = {
-      emailNotification: result.Item.emailNotification?.BOOL || false,
-      lineNotification: result.Item.lineNotification?.BOOL || false,
-      lineUserId: result.Item.lineUserId?.S || null,
-      lineId: result.Item.lineId?.S || null
+    const formatSettings = (dbItem: any) => {
+      return {
+        emailNotification: dbItem.emailNotification?.BOOL || false,
+        lineNotification: dbItem.lineNotification?.BOOL || false,
+        discordNotification: dbItem.discordNotification?.BOOL || false,
+        lineId: dbItem.lineId?.S || null,
+        lineUserId: dbItem.lineUserId?.S || null,
+        discordId: dbItem.discordId?.S || null,
+      };
     };
 
+    const settings = formatSettings(result.Item);
     logger.info('返回的設定:', settings);
 
-    return res.status(200).json(settings);
+    return res.status(200).json({
+      success: true,
+      settings
+    });
 
   } catch (error) {
     logger.error('獲取通知設定失敗:', error);
