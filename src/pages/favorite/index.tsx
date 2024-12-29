@@ -176,7 +176,7 @@ const FavoritePage: React.FC = () => {
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
-                    show={currentItems.length > 0}
+                    show={filteredFavorites.length > 0}
                 />
             </div>
             <Footer />
