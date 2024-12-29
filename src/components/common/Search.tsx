@@ -65,6 +65,12 @@ export const Search = <T extends {
     return () => clearTimeout(handler);  
   }, [searchTerm, articles, setFilteredArticles, onSearch]);  
 
+  const handleClear = () => {
+    setSearchTerm('');
+    setFilteredArticles(articles);
+    onSearch?.('');
+  };
+
   return (  
     <div className="mb-4">  
       <SearchField  
@@ -74,6 +80,7 @@ export const Search = <T extends {
         hasSearchIcon={true}  
         value={searchTerm}  
         onChange={(event) => setSearchTerm(event.target.value)}  
+        onClear={handleClear}  
         className={`w-full amplify-searchfield ${isDarkMode ? 'dark' : ''}`}
         labelHidden={true}
       />  
