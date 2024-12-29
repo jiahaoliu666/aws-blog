@@ -35,6 +35,7 @@ function useFavoritePageLogic() {
     const [isLanguageChanging, setIsLanguageChanging] = useState(false);
     const [showFavorites, setShowFavorites] = useState<boolean>(true);
     const [filteredFavorites, setFilteredFavorites] = useState<EnhancedFavoriteItem[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>("");
 
     // 獲取各種類型的收藏
     const { favorites: announcementFavorites } = useAnnouncementFavorites();
@@ -74,38 +75,73 @@ function useFavoritePageLogic() {
         return all;
     }, [announcementFavorites, newsFavorites, knowledgeFavorites, solutionFavorites, architectureFavorites]);
 
-    // 處理分頁和過濾邏輯
+    // 修改分頁和過濾邏輯
     useEffect(() => {
         let filteredItems = selectedType === 'all' 
             ? allFavorites 
             : allFavorites.filter((item: EnhancedFavoriteItem) => item.type === selectedType);
 
-        if (startDate || endDate) {
+        // 搜尋過濾邏輯
+        if (searchTerm) {
             filteredItems = filteredItems.filter(item => {
-                const dateFromInfo = extractDateFromInfo(item.info);
-                const start = startDate ? new Date(startDate) : null;
-                const end = endDate ? new Date(endDate) : null;
-                return dateFromInfo && (!start || dateFromInfo >= start) && (!end || dateFromInfo <= end);
+                const title = (item.translated_title || item.title || '').toLowerCase();
+                const description = (item.translated_description || item.description || '').toLowerCase();
+                const info = (item.info || '').toLowerCase();
+                const searchLower = searchTerm.toLowerCase();
+                
+                return title.includes(searchLower) || 
+                       description.includes(searchLower) || 
+                       info.includes(searchLower);
             });
         }
 
+        // 日期過濾
+        if (startDate || endDate) {
+            filteredItems = filteredItems.filter(item => {
+                const itemDate = extractDateFromInfo(item.info);
+                if (!itemDate) return true;
+                
+                const date = new Date(itemDate);
+                const start = startDate ? new Date(startDate) : null;
+                const end = endDate ? new Date(endDate) : null;
+                
+                if (start && end) {
+                    return date >= start && date <= end;
+                } else if (start) {
+                    return date >= start;
+                } else if (end) {
+                    return date <= end;
+                }
+                return true;
+            });
+        }
+
+        // 排序
         filteredItems.sort((a, b) => {
-            const dateA = new Date(extractDateFromInfo(a.info) || 0);
-            const dateB = new Date(extractDateFromInfo(b.info) || 0);
-            return sortOrder === "newest" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
+            const dateA = extractDateFromInfo(a.info)?.toString() || '';
+            const dateB = extractDateFromInfo(b.info)?.toString() || '';
+            return sortOrder === 'newest' 
+                ? dateB.localeCompare(dateA)
+                : dateA.localeCompare(dateB);
         });
 
+        setFilteredFavorites(filteredItems);
+
+        // 更新分頁
         const newTotalPages = Math.ceil(filteredItems.length / 12);
         setTotalPages(newTotalPages);
 
+        // 更新當前顯示項目
         const startIndex = (currentPage - 1) * 12;
-        const newCurrentItems = filteredItems.slice(startIndex, startIndex + 12);
+        const endIndex = startIndex + 12;
+        const newCurrentItems = filteredItems.slice(startIndex, endIndex);
         setCurrentItems(newCurrentItems);
 
+        // 如果當前頁碼超出範圍，重置為第一頁
         if (currentPage > newTotalPages && newTotalPages > 0) {
-            setCurrentPage(newTotalPages);
+            setCurrentPage(1);
         }
-    }, [allFavorites, selectedType, startDate, endDate, sortOrder, currentPage]);
+    }, [allFavorites, selectedType, searchTerm, currentPage, startDate, endDate, sortOrder]);
 
     const handlePageChange = useCallback((newPageIndex?: number) => {
         if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {
@@ -195,6 +231,8 @@ function useFavoritePageLogic() {
         toggleFavorite,
         filteredFavoritesCount,
         favorites: allFavorites,
+        searchTerm,
+        setSearchTerm,
     };
 }
 

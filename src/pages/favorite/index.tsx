@@ -94,6 +94,30 @@ const FavoritePage: React.FC = () => {
         }
     };
 
+    const handleSearch = (searchTerm: string) => {
+        setSearchTerm(searchTerm);
+        
+        if (!searchTerm) {
+            // 如果搜尋詞為空，顯示所有文章
+            setFilteredFavorites(favorites);
+        } else {
+            // 過濾符合搜尋條件的文章
+            const filtered = favorites.filter(article => {
+                const title = article.title?.toLowerCase() || '';
+                const translatedTitle = article.translated_title?.toLowerCase() || '';
+                const description = article.description?.toLowerCase() || '';
+                const translatedDescription = article.translated_description?.toLowerCase() || '';
+                
+                return title.includes(searchTerm.toLowerCase()) ||
+                       translatedTitle.includes(searchTerm.toLowerCase()) ||
+                       description.includes(searchTerm.toLowerCase()) ||
+                       translatedDescription.includes(searchTerm.toLowerCase());
+            });
+            
+            setFilteredFavorites(filtered);
+        }
+    };
+
     return (
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
             <Navbar setCurrentSourcePage={setCurrentSourcePage} />
@@ -122,31 +146,33 @@ const FavoritePage: React.FC = () => {
                     currentPage="收藏文章"
                 />
 
-                <Search<FavoriteItem>
-                    articles={favorites}
-                    setFilteredArticles={setFilteredFavorites as React.Dispatch<React.SetStateAction<FavoriteItem[]>>}
+                <Search<EnhancedFavoriteItem>
+                    articles={currentItems}
+                    setFilteredArticles={setFilteredFavorites}
                     isDarkMode={isDarkMode}
-                    onSearch={setSearchTerm}
+                    onSearch={handleSearch}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
-                    {currentItems.length > 0 ? (
-                        currentItems.map((article, index: number) => (
+                    {filteredFavorites.length > 0 ? (
+                        filteredFavorites.map((item, index) => (
                             <Card
-                                key={article.article_id}
-                                article={article}
+                                key={item.article_id}
+                                article={item}
                                 index={index}
                                 gridView={gridView}
-                                toggleFavorite={handleFavoriteRemoved}
                                 language={language}
                                 showSummaries={showSummaries}
+                                toggleFavorite={(article) => toggleFavorite(article as FavoriteItem)}
                                 isFavorited={true}
-                                sourcePage={currentSourcePage}
+                                sourcePage="收藏文章"
                                 searchTerm={searchTerm}
                             />
                         ))
                     ) : (
-                        <p className="text-center text-gray-500 col-span-full">您還沒有收藏任何文章！</p>
+                        <div className="col-span-full text-center py-8">
+                            <p>未找到符合條件的收藏文章</p>
+                        </div>
                     )}
                 </div>
 

@@ -32,26 +32,36 @@ export const Search = <T extends {
   
   useEffect(() => {  
     const handler = setTimeout(() => {  
-      const debouncedTerm = searchTerm.toLowerCase();  
+      const debouncedTerm = searchTerm.toLowerCase().trim();  
       onSearch?.(debouncedTerm);
+      
+      if (!debouncedTerm) {
+        setFilteredArticles(articles);
+        return;
+      }
       
       const filtered = articles.filter((article) => {
         const mainTitle = article.title || 
-                         article.article_title || 
-                         article.article?.title || '';
+                        article.article_title || 
+                        article.article?.title || '';
         const translatedTitle = article.translated_title || 
                               article.article?.translated_title || '';
         const description = article.description || '';
         const translatedDescription = article.translated_description || '';
         
-        return mainTitle.toLowerCase().includes(debouncedTerm) || 
-               translatedTitle.toLowerCase().includes(debouncedTerm) ||
-               description.toLowerCase().includes(debouncedTerm) ||
-               translatedDescription.toLowerCase().includes(debouncedTerm);
+        const searchableText = [
+          mainTitle,
+          translatedTitle,
+          description,
+          translatedDescription
+        ].map(text => (text || '').toLowerCase());
+        
+        return searchableText.some(text => text.includes(debouncedTerm));
       });  
+
       setFilteredArticles(filtered);  
     }, 300);  
-  
+
     return () => clearTimeout(handler);  
   }, [searchTerm, articles, setFilteredArticles, onSearch]);  
 
