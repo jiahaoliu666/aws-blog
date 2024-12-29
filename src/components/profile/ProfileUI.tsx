@@ -1,5 +1,4 @@
 import React, { useState, useEffect, FormEvent, Dispatch, SetStateAction } from 'react';
-import { Loader } from '@aws-amplify/ui-react';
 import { useRouter } from 'next/router';
 import { useAuthContext } from '@/context/AuthContext';
 import {
@@ -358,7 +357,6 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
         <Navbar />
         <div className="flex items-center justify-center flex-grow px-4 py-8">
           <div className="text-center py-10">
-            <Loader className="mb-4" size="large" />
             <h2 className="text-2xl font-semibold text-red-600">請先登入！</h2>
             <p className="text-lg text-gray-700">重新導向至登入頁面...</p>
           </div>
@@ -483,6 +481,13 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
 
           {core.activeTab === 'notificationSettings' && (
             <NotificationSection 
+              settings={{
+                discordId: null,
+                discordNotification: false,
+                line: settings.line ?? false,
+                email: settings.email ?? false,
+                lineId: settings.lineId ?? null
+              }}
               isLoading={notificationsLoading}
               isVerifying={isLoading}
               saveAllSettings={handleSaveNotificationSettings}

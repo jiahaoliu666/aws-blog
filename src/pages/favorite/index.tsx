@@ -7,7 +7,6 @@ import { Filters } from '@/components/common/Filters';
 import Pagination from '@/components/common/Pagination';
 import useFavoritePageLogic from '@/hooks/favorite/useFavoritePageLogic';
 import Footer from '@/components/common/Footer';
-import { Loader } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
@@ -93,18 +92,6 @@ const FavoritePage: React.FC = () => {
             toast.error('移除收藏失敗，請稍後再試');
         }
     };
-
-    if (isLoading) {
-        return (
-            <div className="flex flex-col min-h-screen bg-gray-100">
-                <Navbar setCurrentSourcePage={setCurrentSourcePage} />
-                <div className="flex-grow flex justify-center items-center">
-                    <Loader />
-                </div>
-                <Footer />
-            </div>
-        );
-    }
 
     return (
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>

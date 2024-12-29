@@ -3,16 +3,96 @@
 @tailwind utilities;
 
 @layer utilities {
+  /* 淡入動畫 */
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  /* 脈動旋轉動畫 */
+  .animate-pulse-spin {
+    animation: pulse-spin 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* 新增快速旋轉動畫 */
+  .animate-spin-fast {
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* 新增反向旋轉動畫 */
+  .animate-spin-reverse {
+    animation: spin-reverse 1.2s linear infinite;
+  }
+
+  /* 添加慢速旋轉動畫 */
   .animate-spin-slow {
-    animation: spin 1.5s linear infinite;
+    animation: spin 3s linear infinite;
+  }
+
+  /* 添加慢速反向旋轉動畫 */
+  .animate-spin-reverse-slow {
+    animation: spin-reverse 2s linear infinite;
+  }
+
+  /* 添加進度條動畫 */
+  .animate-progress {
+    animation: progress 2s ease-out;
   }
 }
 
+/* 淡入動畫關鍵幀 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 脈動旋轉動畫關鍵幀 */
+@keyframes pulse-spin {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: rotate(180deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+}
+
+/* 新增反向旋轉關鍵幀 */
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+/* 新增一般旋轉關鍵幀 */
 @keyframes spin {
   from {
     transform: rotate(0deg);
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* 添加進度條動畫關鍵幀 */
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
   }
 }
