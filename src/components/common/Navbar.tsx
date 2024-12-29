@@ -235,21 +235,6 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
             <Link href="/solutions" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('解決方案')}>解決方案</Link>
             <Link href="/architecture" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('架構參考')}>架構參考</Link>
             <Link href="/knowledge" className="text-white hover:text-gray-400 transition duration-300 text-lg" onClick={() => handleLinkClick('知識中心')}>知識中心</Link>  
-            {/* <div className="relative" ref={resourcesDropdownRef}>  
-              <button onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)} className="text-white hover:text-gray-400 transition duration-300 flex items-center text-lg">  
-                其他資源  
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">  
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />  
-                </svg>  
-              </button>  
-              {isResourcesDropdownOpen && (  
-                <div className="flex flex-col mt-2 space-y-2 lg:absolute lg:right-0 lg:mt-2 lg:w-48 lg:bg-gray-800 lg:rounded-md lg:shadow-lg lg:z-20 lg:py-1">  
-                  <Link href="https://docs.aws.amazon.com/" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 官方文檔</Link>    
-                  <Link href="https://aws.amazon.com/tw/faqs/?nc1=f_dr" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 常見問答集</Link>                      
-                  <Link href="https://status.aws.amazon.com/" target="_blank" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">AWS 服務狀態儀表板</Link>                      
-                </div>  
-              )}  
-            </div> */}
 
             {user ? (  
               <div className="relative" ref={dropdownRef}>  
@@ -271,7 +256,6 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                   <div className="flex flex-col mt-2 space-y-2 lg:absolute lg:right-0 lg:mt-2 lg:w-48 lg:bg-gray-800 lg:rounded-md lg:shadow-lg lg:z-20 lg:py-1">  
                     <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">個人資訊</Link>
                     <Link href="/favorite" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">收藏文章</Link>  
-                    {/* <Link href="/notifications" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">所有通知</Link>    */}
                     <div className="border-t border-gray-700"></div>  
                     <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">登出</button>  
                   </div>  
