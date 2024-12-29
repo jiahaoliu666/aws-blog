@@ -13,8 +13,8 @@ import {
   faShieldAlt,
   faRocket
 } from '@fortawesome/free-solid-svg-icons';  
-import Navbar from '../components/common/Navbar'; // 確保正確導入 Navbar  
-import Footer from '../components/common/Footer'; // 引入 Footer  
+import Navbar from '../components/common/Navbar';  
+import Footer from '../components/common/Footer'; 
 import { useAuthContext } from '@/context/AuthContext';  
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer, hoverCard, textVariant, cardHoverEffect, containerAnimation, gradientAnimation, smoothReveal, buttonHoverEffect, enhancedCardHover } from '@/utils/animations';
@@ -300,7 +300,11 @@ const Home: React.FC = () => {
                                           : '最新公告'}
                                 </span>
                                 <span className="text-xs text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
-                                  {formatTimeAgo(new Date(article.date))}
+                                  {formatTimeAgo(new Date(
+                                    typeof article.date === 'string' 
+                                      ? parseInt(article.date) * (parseInt(article.date) < 1e12 ? 1000 : 1)
+                                      : article.date * (article.date < 1e12 ? 1000 : 1)
+                                  ))}
                                 </span>
                               </div>
                               <a 

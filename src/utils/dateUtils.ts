@@ -19,17 +19,17 @@ export function formatTimeAgo(date: Date): string {
     const months = Math.floor(days / 30);
     const years = Math.floor(days / 365);
 
-    // 根據時間差返回對應的文字
+    // 優化顯示邏輯
     if (years > 0) {
-      return `${years} 年前`;
+      return years === 1 ? '1 年前' : `${years} 年前`;
     } else if (months > 0) {
-      return `${months} 個月前`;
+      return months === 1 ? '1 個月前' : `${months} 個月前`;
     } else if (days > 0) {
-      return `${days} 天前`;
+      return days === 1 ? '1 天前' : `${days} 天前`;
     } else if (hours > 0) {
-      return `${hours} 小時前`;
+      return hours === 1 ? '1 小時前' : `${hours} 小時前`;
     } else if (minutes > 0) {
-      return `${minutes} 分鐘前`;
+      return minutes === 1 ? '1 分鐘前' : `${minutes} 分鐘前`;
     } else if (seconds >= 30) {
       return `${seconds} 秒前`;
     } else {

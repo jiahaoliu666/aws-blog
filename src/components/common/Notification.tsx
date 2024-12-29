@@ -180,8 +180,9 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       const numericTimestamp = typeof timestamp === 'string' 
         ? parseInt(timestamp) 
         : timestamp;
-
-      const date = new Date(numericTimestamp);
+      
+      const millisecondTimestamp = numericTimestamp * (numericTimestamp < 1e12 ? 1000 : 1);
+      const date = new Date(millisecondTimestamp);
 
       if (!(date instanceof Date) || isNaN(date.getTime())) {
         console.warn('無效的日期格式:', timestamp);
