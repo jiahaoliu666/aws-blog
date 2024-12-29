@@ -212,20 +212,18 @@ const Home: React.FC = () => {
                   在這裡，您可以輕鬆獲取 AWS 最新資訊與技術文章，讓學習更有效率。
                 </motion.p>
 
-                {!user && (
-                  <div className="flex gap-4 mt-8">
-                    <Link 
-                      href="/news" 
-                      className="px-8 py-4 rounded-xl text-base font-medium
-                        bg-blue-600 hover:bg-blue-700
-                        text-white transition-all duration-300
-                        shadow-lg hover:shadow-blue-200/50
-                        transform hover:-translate-y-0.5"
-                    >
-                      開始使用
-                    </Link>
-                  </div>
-                )}
+                <div className="flex gap-4 mt-8">
+                  <Link 
+                    href="/news" 
+                    className="px-8 py-4 rounded-xl text-base font-medium
+                      bg-blue-600 hover:bg-blue-700
+                      text-white transition-all duration-300
+                      shadow-lg hover:shadow-blue-200/50
+                      transform hover:-translate-y-0.5"
+                  >
+                    開始使用
+                  </Link>
+                </div>
               </motion.div>
 
               {/* 最新文章區塊 - 右側 */}
