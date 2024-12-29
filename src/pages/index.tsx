@@ -33,6 +33,7 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
   const articlesPerView = 4; // 一次顯示的文章數量
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -64,17 +65,17 @@ const Home: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (latestArticles.length === 0) return;
+    if (latestArticles.length === 0 || isPaused) return;
     
     const interval = setInterval(() => {
       setCurrentArticleIndex((prevIndex) => {
         const nextIndex = prevIndex + 1;
         return nextIndex >= latestArticles.length ? 0 : nextIndex;
       });
-    }, 3000); // 每3秒輪播一次
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [latestArticles]);
+  }, [latestArticles, isPaused]);
 
   // 主要功能區塊
   const features = [
@@ -254,7 +255,10 @@ const Home: React.FC = () => {
                     <div className="transition-transform duration-1000 ease-in-out"
                          style={{
                            transform: `translateY(-${currentArticleIndex * 100}px)`,
-                         }}>
+                         }}
+                         onMouseEnter={() => setIsPaused(true)}
+                         onMouseLeave={() => setIsPaused(false)}
+                    >
                       {latestArticles.map((article, index) => (
                         <motion.div
                           key={article.article_id}
@@ -262,25 +266,29 @@ const Home: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: index * 0.1 }}
                           className="group rounded-xl p-6 mb-4
-                            hover:bg-white
+                            bg-white/50 backdrop-blur-sm
                             transform transition-all duration-300
-                            hover:scale-[1.02] hover:shadow-lg
-                            border border-gray-100"
+                            hover:bg-white hover:scale-[1.02]
+                            hover:shadow-lg hover:-translate-y-1
+                            border border-gray-100/50 hover:border-gray-200
+                            cursor-pointer"
                         >
                           <div className="flex items-start gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
-                                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                <span className={`text-xs px-2.5 py-1 rounded-full font-medium 
+                                  transition-colors duration-300
+                                  group-hover:shadow-sm ${
                                   article.category === 'news' 
-                                    ? 'bg-blue-100/90 text-blue-800' 
+                                    ? 'bg-blue-100/90 text-blue-800 group-hover:bg-blue-200' 
                                     : article.category === 'solution'
-                                      ? 'bg-green-100/90 text-green-800'
+                                      ? 'bg-green-100/90 text-green-800 group-hover:bg-green-200'
                                       : article.category === 'architecture'
-                                        ? 'bg-amber-100/90 text-amber-800'
+                                        ? 'bg-amber-100/90 text-amber-800 group-hover:bg-amber-200'
                                         : article.category === 'knowledge'
-                                          ? 'bg-indigo-100/90 text-indigo-800'
-                                          : 'bg-purple-100/90 text-purple-800'
-                                }`}>
+                                          ? 'bg-indigo-100/90 text-indigo-800 group-hover:bg-indigo-200'
+                                          : 'bg-purple-100/90 text-purple-800 group-hover:bg-purple-200'
+                                  }`}>
                                   {article.category === 'news' 
                                     ? '最新新聞' 
                                     : article.category === 'solution'
@@ -291,7 +299,7 @@ const Home: React.FC = () => {
                                           ? '知識中心'
                                           : '最新公告'}
                                 </span>
-                                <span className={`text-xs text-gray-500`}>
+                                <span className="text-xs text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
                                   {formatTimeAgo(new Date(article.date))}
                                 </span>
                               </div>
@@ -299,7 +307,9 @@ const Home: React.FC = () => {
                                 href={article.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm font-medium line-clamp-2 text-gray-900 hover:text-blue-600 transition-colors duration-200"
+                                className="text-sm font-medium line-clamp-2 
+                                  text-gray-900 group-hover:text-blue-600 
+                                  transition-colors duration-300"
                               >
                                 {article.title}
                               </a>
@@ -318,6 +328,13 @@ const Home: React.FC = () => {
         {/* Features Section */}
         <section className="py-24 bg-gradient-to-br from-white to-gray-50 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+                文章分類
+              </h2>
+              <div className="h-1 w-24 mx-auto mt-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {features.map((feature) => (
                 <motion.div
