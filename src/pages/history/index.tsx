@@ -13,7 +13,6 @@ import {
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import BaseCard from '@/components/common/BaseCard';
-import { useTheme } from '@/context/ThemeContext';
 
 interface VersionHistory {
   version: string;
@@ -133,7 +132,6 @@ const getTypeStyles = (type: string) => {
 };
 
 const HistoryPage = () => {
-  const { isDarkMode } = useTheme();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -145,7 +143,7 @@ const HistoryPage = () => {
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
@@ -153,17 +151,17 @@ const HistoryPage = () => {
           {/* 頁面標題 */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+              <div className="p-3 rounded-xl bg-white shadow-md">
                 <FontAwesomeIcon 
                   icon={faHistory} 
-                  className={`text-2xl ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} 
+                  className="text-2xl text-blue-500" 
                 />
               </div>
               <div>
-                <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h1 className="text-2xl font-bold text-gray-900">
                   版本歷史
                 </h1>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className="text-sm text-gray-600">
                   追蹤系統更新與改進記錄
                 </p>
               </div>
@@ -179,12 +177,10 @@ const HistoryPage = () => {
                 <div key={version.version} className="relative">
                   {/* 連接線 */}
                   {index !== versionHistory.length - 1 && (
-                    <div className={`absolute left-6 top-14 bottom-0 w-0.5 ${
-                      isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-                    }`} />
+                    <div className="absolute left-6 top-14 bottom-0 w-0.5 bg-gray-200" />
                   )}
                   
-                  <BaseCard className={`relative ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                  <BaseCard className="relative bg-white">
                     <div className="p-6">
                       {/* 版本資訊 */}
                       <div className="flex items-start gap-4">
@@ -197,9 +193,7 @@ const HistoryPage = () => {
                         
                         <div className="flex-1">
                           <div className="flex items-center gap-3 flex-wrap">
-                            <h2 className={`text-lg font-semibold ${
-                              isDarkMode ? 'text-white' : 'text-gray-900'
-                            }`}>
+                            <h2 className="text-lg font-semibold text-gray-900">
                               版本 {version.version}
                             </h2>
                             <span className={`
@@ -209,29 +203,21 @@ const HistoryPage = () => {
                             `}>
                               {typeStyles.label}
                             </span>
-                            <time className={`text-sm ${
-                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                            }`}>
+                            <time className="text-sm text-gray-500">
                               {version.date}
                             </time>
                           </div>
                           
-                          <h3 className={`text-base font-medium mt-2 ${
-                            isDarkMode ? 'text-gray-200' : 'text-gray-800'
-                          }`}>
+                          <h3 className="text-base font-medium mt-2 text-gray-800">
                             {version.title}
                           </h3>
                           
-                          <ul className={`mt-4 space-y-2 ${
-                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                          }`}>
+                          <ul className="mt-4 space-y-2 text-gray-600">
                             {version.description.map((item, i) => (
                               <li key={i} className="flex items-start gap-2">
                                 <FontAwesomeIcon 
                                   icon={faCodeBranch} 
-                                  className={`mt-1 text-sm ${
-                                    isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                                  }`} 
+                                  className="mt-1 text-sm text-gray-400" 
                                 />
                                 <span className="text-sm">{item}</span>
                               </li>

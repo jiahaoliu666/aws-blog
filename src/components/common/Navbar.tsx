@@ -272,7 +272,6 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
                     <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">個人資訊</Link>
                     <Link href="/favorite" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">收藏文章</Link>  
                     {/* <Link href="/notifications" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">所有通知</Link>    */}
-                    <Link href="/history" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">版本歷史</Link>   
                     <div className="border-t border-gray-700"></div>  
                     <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">登出</button>  
                   </div>  
