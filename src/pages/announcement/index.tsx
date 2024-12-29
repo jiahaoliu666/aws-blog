@@ -19,6 +19,7 @@ const AnnouncementPage: React.FC = () => {
     const toast = useToastContext();
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {
         language,
@@ -112,6 +113,7 @@ const AnnouncementPage: React.FC = () => {
                     articles={announcements}
                     setFilteredArticles={setFilteredAnnouncements}
                     isDarkMode={isDarkMode}
+                    onSearch={setSearchTerm}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
@@ -129,6 +131,7 @@ const AnnouncementPage: React.FC = () => {
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
                                     sourcePage={currentSourcePage}
+                                    searchTerm={searchTerm}
                                 />
                             );
                         })

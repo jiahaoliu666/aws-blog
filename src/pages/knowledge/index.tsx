@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/common/Navbar';
 import { ExtendedKnowledge } from '@/types/knowledgeType';
@@ -18,6 +18,7 @@ const KnowledgePage: React.FC = () => {
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('知識中心');
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {
         language,
@@ -107,10 +108,11 @@ const KnowledgePage: React.FC = () => {
                     setShowSummaries={setShowSummaries}
                 />
 
-                <Search
+                <Search<ExtendedKnowledge>
                     articles={knowledge}
-                    setFilteredArticles={setFilteredKnowledge as React.Dispatch<React.SetStateAction<any[]>>}
+                    setFilteredArticles={setFilteredKnowledge as Dispatch<SetStateAction<ExtendedKnowledge[]>>}
                     isDarkMode={isDarkMode}
+                    onSearch={setSearchTerm}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
@@ -128,6 +130,7 @@ const KnowledgePage: React.FC = () => {
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
                                     sourcePage={currentSourcePage}
+                                    searchTerm={searchTerm}
                                 />
                             );
                         })

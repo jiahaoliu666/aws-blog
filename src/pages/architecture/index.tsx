@@ -18,6 +18,7 @@ const ArchitecturePage: React.FC = () => {
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('架構參考');
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {
         language,
@@ -111,6 +112,7 @@ const ArchitecturePage: React.FC = () => {
                     articles={architectures}
                     setFilteredArticles={setFilteredArchitectures}
                     isDarkMode={isDarkMode}
+                    onSearch={setSearchTerm}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
@@ -128,6 +130,7 @@ const ArchitecturePage: React.FC = () => {
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
                                     sourcePage={currentSourcePage}
+                                    searchTerm={searchTerm}
                                 />
                             );
                         })

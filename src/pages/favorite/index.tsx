@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/common/Navbar';
 import Card from '@/components/common/Card';
@@ -23,6 +23,7 @@ const FavoritePage: React.FC = () => {
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('收藏文章');
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {
         language,
@@ -121,10 +122,11 @@ const FavoritePage: React.FC = () => {
                     currentPage="收藏文章"
                 />
 
-                <Search
+                <Search<FavoriteItem>
                     articles={favorites}
-                    setFilteredArticles={setFilteredFavorites}
+                    setFilteredArticles={setFilteredFavorites as React.Dispatch<React.SetStateAction<FavoriteItem[]>>}
                     isDarkMode={isDarkMode}
+                    onSearch={setSearchTerm}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
@@ -140,6 +142,7 @@ const FavoritePage: React.FC = () => {
                                 showSummaries={showSummaries}
                                 isFavorited={true}
                                 sourcePage={currentSourcePage}
+                                searchTerm={searchTerm}
                             />
                         ))
                     ) : (

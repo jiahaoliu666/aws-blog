@@ -19,6 +19,7 @@ const NewsPage: React.FC = () => {
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
     const { startLoading, stopLoading } = useLoading();
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {
         language,
@@ -145,6 +146,7 @@ const NewsPage: React.FC = () => {
                     articles={articles}
                     setFilteredArticles={setFilteredArticles}
                     isDarkMode={isDarkMode}
+                    onSearch={setSearchTerm}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
@@ -161,7 +163,8 @@ const NewsPage: React.FC = () => {
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
-                                    sourcePage={currentSourcePage} // 傳遞 sourcePage
+                                    sourcePage={currentSourcePage}
+                                    searchTerm={searchTerm}
                                 />
                             );
                         })

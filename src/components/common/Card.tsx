@@ -16,6 +16,7 @@ interface CardProps {
     toggleFavorite: (article: ExtendedNews | FavoriteItem) => Promise<void>;
     isFavorited: boolean;
     sourcePage: string;
+    searchTerm?: string;
     className?: string;
 }
 
@@ -28,6 +29,7 @@ const Card: React.FC<CardProps> = ({
     toggleFavorite,
     isFavorited,
     sourcePage,
+    searchTerm = '',
     children,
     className = '',
 }) => {
@@ -125,6 +127,37 @@ const Card: React.FC<CardProps> = ({
         }
     };
 
+    const highlightText = (text: string) => {
+        if (!searchTerm || !text) return text;
+        
+        try {
+            const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const parts = text.split(new RegExp(`(${escapedSearchTerm})`, 'gi'));
+            return (
+                <>
+                    {parts.map((part, i) => 
+                        part.toLowerCase() === searchTerm.toLowerCase() ? (
+                            <span key={i} className={`
+                                ${isDarkMode 
+                                    ? 'bg-yellow-600 text-white' 
+                                    : 'bg-yellow-200 text-black'
+                                }
+                                px-1 rounded
+                            `}>
+                                {part}
+                            </span>
+                        ) : (
+                            part
+                        )
+                    )}
+                </>
+            );
+        } catch (error) {
+            console.error('Highlight text error:', error);
+            return text;
+        }
+    };
+
     return (
         <div className={`
             border rounded-lg p-4 transition-shadow duration-300 
@@ -143,14 +176,16 @@ const Card: React.FC<CardProps> = ({
                     className="hover:underline hover:text-blue-500 transition-colors duration-300" 
                     onClick={handleTitleClick}
                 >
-                    {displayTitle}
+                    {highlightText(displayTitle)}
                 </a>
             </h2>
             {article.info && (
-                <span className="text-sm text-gray-500 mb-2 block">{article.info}</span>
+                <span className="text-sm text-gray-500 mb-2 block">
+                    {highlightText(article.info)}
+                </span>
             )}
             {sourcePage !== '最新公告' && (
-                <p className="mt-2">{displayDescription}</p>
+                <p className="mt-2">{highlightText(displayDescription)}</p>
             )}
             <div className="flex justify-between items-center mt-4">
                 <div className="flex">
