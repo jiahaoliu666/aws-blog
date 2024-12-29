@@ -8,14 +8,12 @@ import { Filters } from '../../components/common/Filters';
 import Pagination from '../../components/common/Pagination';
 import useAnnouncementPageLogic from '../../hooks/announcement/useAnnouncementPageLogic';
 import Footer from '../../components/common/Footer';
-import { Loader } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 
 const AnnouncementPage: React.FC = () => {
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新公告');
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
@@ -61,27 +59,12 @@ const AnnouncementPage: React.FC = () => {
     }, [router.events]);
 
     useEffect(() => {
-        const loadData = async () => {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setIsLoading(false);
-        };
-
-        loadData();
-    }, []);
-
-    useEffect(() => {
         setCurrentSourcePage('最新公告');
     }, []);
 
     useEffect(() => {
         resetFilters();
     }, []);
-
-    useEffect(() => {
-        if (currentAnnouncements.length > 0) {
-            setIsLoading(false);
-        }
-    }, [currentAnnouncements]);
 
     const resetFilters = () => {
         setGridView(false);
@@ -97,18 +80,6 @@ const AnnouncementPage: React.FC = () => {
     const toggleShowSummaries = () => {
         setShowSummaries(!showSummaries);
     };
-
-    if (isLoading) {
-        return (
-            <div className="flex flex-col min-h-screen bg-gray-100">
-                <Navbar setCurrentSourcePage={setCurrentSourcePage} />
-                <div className="flex-grow flex justify-center items-center">
-                    <Loader />
-                </div>
-                <Footer />
-            </div>
-        );
-    }
 
     return (
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
@@ -144,11 +115,7 @@ const AnnouncementPage: React.FC = () => {
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
-                    {isLoading ? (
-                        <div className="text-center py-4">
-                            <p>載入中...</p>
-                        </div>
-                    ) : currentAnnouncements.length > 0 ? (
+                    {currentAnnouncements.length > 0 ? (
                         currentAnnouncements.map((announcement: ExtendedAnnouncement, index: number) => {
                             const isFavorited = favorites.some((fav: ExtendedAnnouncement) => fav.article_id === announcement.article_id);
                             return (

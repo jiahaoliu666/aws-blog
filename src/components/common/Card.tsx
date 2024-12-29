@@ -7,6 +7,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 
 interface CardProps {
+    children?: React.ReactNode;
     article: ExtendedNews | FavoriteItem;
     index: number;
     gridView: boolean;
@@ -15,7 +16,6 @@ interface CardProps {
     toggleFavorite: (article: ExtendedNews | FavoriteItem) => Promise<void>;
     isFavorited: boolean;
     sourcePage: string;
-    children: React.ReactNode;
     className?: string;
 }
 

@@ -8,10 +8,9 @@ import { Filters } from '../../components/common/Filters';
 import Pagination from '../../components/common/Pagination';
 import useNewsPageLogic from '../../hooks/news/useNewsPageLogic';
 import Footer from '../../components/common/Footer';
-import { Loader } from '@aws-amplify/ui-react'; // 導入 Loader
-import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
+import { useLoading } from '@/context/LoadingContext';
 
 const NewsPage: React.FC = () => {
     const router = useRouter();
@@ -19,6 +18,7 @@ const NewsPage: React.FC = () => {
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新新聞'); // 設置默認值
     const { isDarkMode } = useTheme();
     const toast = useToastContext(); 
+    const { startLoading, stopLoading } = useLoading();
 
     const {
         language,
@@ -63,11 +63,14 @@ const NewsPage: React.FC = () => {
     }, [router.events]);
 
     useEffect(() => {
-        // 模擬數據加載過程
         const loadData = async () => {
-            // 模擬一個 API 請求或其他異步操作
-            await new Promise(resolve => setTimeout(resolve, 1000)); // 模擬 1 秒的加載時間
-            setIsLoading(false); // 加載完後設置 isLoading 為 false
+            startLoading();
+            try {
+                await new Promise(resolve => setTimeout(resolve, 800)); // 減少等待時間
+            } finally {
+                setIsLoading(false);
+                stopLoading();
+            }
         };
 
         loadData();
@@ -104,15 +107,7 @@ const NewsPage: React.FC = () => {
     }, []);
 
     if (isLoading) {
-        return (
-            <div className="flex flex-col min-h-screen bg-gray-100">
-                <Navbar setCurrentSourcePage={setCurrentSourcePage} /> {/* 傳遞 setCurrentSourcePage */}
-                <div className="flex-grow flex justify-center items-center">
-                    <Loader />
-                </div>
-                <Footer />
-            </div>
-        );
+        return null; // LoadingContext 會處理載入畫面
     }
 
     return (

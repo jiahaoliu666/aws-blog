@@ -13,7 +13,6 @@ import '@/styles/toast.css';
 import { ThemeProvider } from '@/context/ThemeContext';
 import '@aws-amplify/ui-react/styles.css';
 
-// 建立一個包裝組件來處理路由變化和 Discord Bot 初始化
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { startLoading, stopLoading } = useLoading();
