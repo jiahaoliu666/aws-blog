@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
 
             {/* 快速連結 */}
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4">實用連結</h3>
+              <h3 className="text-lg font-semibold mb-4">其他連結</h3>
               <ul className="space-y-2">
                 <li>
                   <Link href="/history" className="text-gray-400 hover:text-white text-sm transition duration-300">
@@ -49,7 +49,7 @@ const Footer: React.FC = () => {
             {/* 版權資訊 */}
             <div className="text-center md:text-right">
               <h3 className="text-lg font-semibold mb-4">聯絡資訊</h3>
-              <p className="text-gray-400 text-sm mb-2">support@awsblog365.com</p>
+              <p className="text-gray-400 text-sm mb-2">awsblog365@gmail.com</p>
               <p className="text-gray-400 text-sm">
                 &copy; {new Date().getFullYear()} AWS Blog 365
                 <br />
