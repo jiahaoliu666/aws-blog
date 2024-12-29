@@ -16,14 +16,12 @@ import {
 import Navbar from '../components/common/Navbar'; // 確保正確導入 Navbar  
 import Footer from '../components/common/Footer'; // 引入 Footer  
 import { useAuthContext } from '@/context/AuthContext';  
-import { useTheme } from '@/context/ThemeContext';
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer, hoverCard, textVariant, cardHoverEffect, containerAnimation, gradientAnimation, smoothReveal, buttonHoverEffect, enhancedCardHover } from '@/utils/animations';
 import { formatTimeAgo } from '@/utils/dateUtils';
 
 const Home: React.FC = () => {
   const { user } = useAuthContext();
-  const { isDarkMode } = useTheme();
   const [isClient, setIsClient] = useState(false);
   const [latestArticles, setLatestArticles] = useState<Array<{
     article_id: string;
@@ -85,16 +83,12 @@ const Home: React.FC = () => {
       title: '最新新聞',
       description: '即時更新 AWS 新功能與服務資訊',
       link: '/news',
-      color: 'text-blue-500',
-      bgColor: isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50',
       className: `
         relative rounded-xl p-8
         transition-all duration-300
         hover:shadow-2xl
-        ${isDarkMode 
-          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
-          : 'bg-white/90 hover:bg-white/95'}
-        glass-morphism
+        bg-white/90 hover:bg-white/95
+        transition-all duration-300
       `
     },
     {
@@ -103,15 +97,13 @@ const Home: React.FC = () => {
       description: '重要公告與系統維護通知',
       link: '/announcement',
       color: 'text-purple-500',
-      bgColor: isDarkMode ? 'bg-purple-500/10' : 'bg-purple-50',
+      bgColor: 'bg-purple-50',
       className: `
         relative rounded-xl p-8
         transition-all duration-300
         hover:shadow-2xl
-        ${isDarkMode 
-          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
-          : 'bg-white/90 hover:bg-white/95'}
-        glass-morphism
+        bg-white/90 hover:bg-white/95
+        transition-all duration-300
       `
     },
     {
@@ -120,15 +112,13 @@ const Home: React.FC = () => {
       description: '各種情境的最佳實踐與解決方案',
       link: '/solutions',
       color: 'text-amber-500',
-      bgColor: isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50',
+      bgColor: 'bg-amber-50',
       className: `
         relative rounded-xl p-8
         transition-all duration-300
         hover:shadow-2xl
-        ${isDarkMode 
-          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
-          : 'bg-white/90 hover:bg-white/95'}
-        glass-morphism
+        bg-white/90 hover:bg-white/95
+        transition-all duration-300
       `
     },
     {
@@ -137,15 +127,13 @@ const Home: React.FC = () => {
       description: '雲端架構設計範例與建議',
       link: '/architecture',
       color: 'text-emerald-500',
-      bgColor: isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50',
+      bgColor: 'bg-emerald-50',
       className: `
         relative rounded-xl p-8
         transition-all duration-300
         hover:shadow-2xl
-        ${isDarkMode 
-          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
-          : 'bg-white/90 hover:bg-white/95'}
-        glass-morphism
+        bg-white/90 hover:bg-white/95
+        transition-all duration-300
       `
     },
     {
@@ -154,15 +142,13 @@ const Home: React.FC = () => {
       description: '深入了解 AWS 服務與技術',
       link: '/knowledge',
       color: 'text-rose-500',
-      bgColor: isDarkMode ? 'bg-rose-500/10' : 'bg-rose-50',
+      bgColor: 'bg-rose-50',
       className: `
         relative rounded-xl p-8
         transition-all duration-300
         hover:shadow-2xl
-        ${isDarkMode 
-          ? 'bg-gray-800/70 hover:bg-gray-700/80' 
-          : 'bg-white/90 hover:bg-white/95'}
-        glass-morphism
+        bg-white/90 hover:bg-white/95
+        transition-all duration-300
       `
     }
   ];
@@ -187,71 +173,56 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className={`min-h-screen flex flex-col ${
-      isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
-    }`}>
+    <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <Navbar />
       
-      {/* 優化後的 Hero Section 與最新文章整合 */}
       <motion.main 
         variants={staggerContainer}
         initial="hidden"
         animate="show"
         className="flex-grow"
       >
-        <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden py-12">
+        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden py-16 bg-gradient-to-br from-gray-50 to-blue-50">
           <motion.div 
             variants={gradientAnimation}
             animate="animate"
-            className="absolute inset-0 opacity-10"
+            className="absolute inset-0 bg-grid-pattern opacity-5"
           />
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               {/* Hero Content - 左側 */}
               <motion.div 
                 variants={staggerContainer}
                 initial="hidden"
                 animate="show"
-                className="text-left"
+                className="text-left space-y-8"
               >
                 <motion.h1 
                   variants={textVariant(0.2)}
-                  className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight"
+                  className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600"
                 >
                   歡迎來到 AWS Blog 365
                 </motion.h1>
                 
                 <motion.p 
                   variants={textVariant(0.4)}
-                  className={`text-lg sm:text-xl mt-6 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}
+                  className="text-lg sm:text-xl text-gray-600 leading-relaxed"
                 >
-                  快速獲取 AWS 最新資訊與技術文章
+                  在這裡，您可以輕鬆獲取 AWS 最新資訊與技術文章，讓學習更有效率。
                 </motion.p>
 
                 {!user && (
-                  <div className="flex gap-3 mt-8">
-                    <Link href="/auth/register" className={`
-                      px-6 py-3 rounded-lg text-base font-medium
-                      ${isDarkMode 
-                        ? 'bg-blue-600 hover:bg-blue-700' 
-                        : 'bg-blue-500 hover:bg-blue-600'
-                      }
-                      text-white transition-colors
-                    `}>
+                  <div className="flex gap-4 mt-8">
+                    <Link 
+                      href="/news" 
+                      className="px-8 py-4 rounded-xl text-base font-medium
+                        bg-blue-600 hover:bg-blue-700
+                        text-white transition-all duration-300
+                        shadow-lg hover:shadow-blue-200/50
+                        transform hover:-translate-y-0.5"
+                    >
                       開始使用
-                    </Link>
-                    <Link href="/auth/login" className={`
-                      px-6 py-3 rounded-lg text-base font-medium
-                      ${isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600' 
-                        : 'bg-gray-100 hover:bg-gray-200'
-                      }
-                      transition-colors
-                    `}>
-                      登入
                     </Link>
                   </div>
                 )}
@@ -260,27 +231,23 @@ const Home: React.FC = () => {
               {/* 最新文章區塊 - 右側 */}
               <motion.div
                 variants={fadeIn('left', 'spring', 0.7)}
-                className={`
-                  relative h-[500px] rounded-2xl p-6
-                  glass-morphism custom-scrollbar
-                  ${isDarkMode ? 'bg-gray-800/70' : 'bg-white/90'}
-                `}
+                className="relative h-[600px] rounded-2xl p-8
+                  bg-white/80 backdrop-blur-sm
+                  shadow-xl hover:shadow-2xl
+                  transition-all duration-500
+                  border border-gray-100"
               >
                 <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-inherit to-transparent"></div>
                 <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-inherit to-transparent"></div>
                 
-                <h2 className="gradient-text text-4xl font-bold mb-6">
+                <h2 className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 text-4xl font-bold mb-6">
                   最新文章
                 </h2>
 
                 <div className="space-y-4 overflow-hidden h-[calc(100%-4rem)]">
                   {loading ? (
                     Array(6).fill(0).map((_, index) => (
-                      <div key={index} className={`animate-pulse rounded-xl p-6 ${
-                        isDarkMode 
-                          ? 'bg-gray-800/60 backdrop-blur-sm' 
-                          : 'bg-white/90 backdrop-blur-sm'
-                      }`}>
+                      <div key={index} className="animate-pulse rounded-xl p-6 bg-white/90 backdrop-blur-sm">
                         <div className="h-4 bg-gray-300 rounded w-1/4 mb-4"></div>
                         <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                       </div>
@@ -296,16 +263,11 @@ const Home: React.FC = () => {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: index * 0.1 }}
-                          className={`
-                            group rounded-xl p-6 mb-4
-                            glass-morphism
-                            ${isDarkMode 
-                              ? 'hover:bg-gray-700/90 bg-gray-800/60' 
-                              : 'hover:bg-white/95 bg-white/60'
-                            }
-                            transform transition-all duration-300 hover:scale-[1.02]
-                            border border-gray-200/20
-                          `}
+                          className="group rounded-xl p-6 mb-4
+                            hover:bg-white
+                            transform transition-all duration-300
+                            hover:scale-[1.02] hover:shadow-lg
+                            border border-gray-100"
                         >
                           <div className="flex items-start gap-3">
                             <div className="flex-1 min-w-0">
@@ -331,9 +293,7 @@ const Home: React.FC = () => {
                                           ? '知識中心'
                                           : '最新公告'}
                                 </span>
-                                <span className={`text-xs ${
-                                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                }`}>
+                                <span className={`text-xs text-gray-500`}>
                                   {formatTimeAgo(new Date(article.date))}
                                 </span>
                               </div>
@@ -341,11 +301,7 @@ const Home: React.FC = () => {
                                 href={article.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`text-sm font-medium line-clamp-2 ${
-                                  isDarkMode 
-                                    ? 'text-gray-100 hover:text-blue-400' 
-                                    : 'text-gray-900 hover:text-blue-600'
-                                } transition-colors duration-200`}
+                                className="text-sm font-medium line-clamp-2 text-gray-900 hover:text-blue-600 transition-colors duration-200"
                               >
                                 {article.title}
                               </a>
@@ -361,10 +317,10 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* Features Section 優化 */}
-        <section className={`py-20 relative overflow-hidden`}>
+        {/* Features Section */}
+        <section className="py-24 bg-gradient-to-br from-white to-gray-50 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {features.map((feature) => (
                 <motion.div
                   key={feature.title}
@@ -372,12 +328,12 @@ const Home: React.FC = () => {
                   initial="rest"
                   whileHover="hover"
                   whileTap="tap"
-                  className={`
-                    relative rounded-xl p-6
-                    card-hover-effect
-                    ${feature.bgColor}
-                    ${isDarkMode ? 'hover:bg-opacity-90' : 'hover:bg-opacity-95'}
-                  `}
+                  className="relative rounded-2xl p-8
+                    bg-white
+                    transition-all duration-300
+                    shadow-lg hover:shadow-xl
+                    border border-gray-100
+                    transform hover:-translate-y-1"
                 >
                   <Link href={feature.link} className="block h-full">
                     <div className="space-y-4">
@@ -385,7 +341,7 @@ const Home: React.FC = () => {
                         w-12 h-12 rounded-lg 
                         flex items-center justify-center
                         ${feature.color} 
-                        ${isDarkMode ? 'bg-white/10' : 'bg-white'}
+                        bg-white
                       `}>
                         <FontAwesomeIcon 
                           icon={feature.icon} 
@@ -396,13 +352,13 @@ const Home: React.FC = () => {
                       <div>
                         <h3 className={`
                           text-lg font-semibold
-                          ${isDarkMode ? 'text-white' : 'text-gray-900'}
+                          text-gray-900
                         `}>
                           {feature.title}
                         </h3>
                         <p className={`
                           mt-2 text-sm
-                          ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}
+                          text-gray-600
                         `}>
                           {feature.description}
                         </p>
@@ -427,55 +383,48 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* Advantages Section 優化 */}
-        <section className={`py-24 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        {/* Advantages Section */}
+        <section className="py-32 bg-gradient-to-br from-blue-50 to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               variants={fadeIn('up', 'spring', 0.7)}
-              className="text-center space-y-16"
+              className="text-center space-y-20"
             >
               <div>
-                <h2 className={`text-4xl font-bold ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>
+                <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
                   為什麼選擇此平台
                 </h2>
-                <div className="h-1 w-20 mx-auto mt-4 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
+                <div className="h-1 w-24 mx-auto mt-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                 {advantages.map((advantage, index) => (
                   <motion.div 
                     key={advantage.title}
                     variants={enhancedCardHover}
                     initial="rest"
                     whileHover="hover"
-                    className={`
-                      p-8 rounded-2xl
-                      glass-morphism
-                      ${isDarkMode 
-                        ? 'bg-gray-800/50 hover:bg-gray-700/60' 
-                        : 'bg-gray-50/90 hover:bg-white/95'}
-                    `}
+                    className="p-10 rounded-2xl
+                      bg-white
+                      transition-all duration-300
+                      shadow-lg hover:shadow-xl
+                      border border-gray-100
+                      transform hover:-translate-y-2"
                   >
                     <div className={`
                       w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6
                       transition-colors duration-300
-                      ${isDarkMode 
-                        ? 'bg-gray-700 group-hover:bg-blue-600/20' 
-                        : 'bg-blue-100 group-hover:bg-blue-200'
-                      }
+                      bg-blue-100 group-hover:bg-blue-200"
                     `}>
                       <FontAwesomeIcon 
                         icon={advantage.icon} 
-                        className={`text-3xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} 
+                        className="text-3xl text-blue-600"
                       />
                     </div>
-                    <h3 className={`text-2xl font-bold mb-4
-                      ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <h3 className="text-2xl font-bold mb-4 text-gray-900">
                       {advantage.title}
                     </h3>
-                    <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p className="text-lg text-gray-600">
                       {advantage.description}
                     </p>
                   </motion.div>
