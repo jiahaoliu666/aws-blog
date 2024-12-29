@@ -15,6 +15,8 @@ interface CardProps {
     toggleFavorite: (article: ExtendedNews | FavoriteItem) => Promise<void>;
     isFavorited: boolean;
     sourcePage: string;
+    children: React.ReactNode;
+    className?: string;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -26,6 +28,8 @@ const Card: React.FC<CardProps> = ({
     toggleFavorite,
     isFavorited,
     sourcePage,
+    children,
+    className = '',
 }) => {
     if (!article || !article.title || !article.article_id) {
         return null;
@@ -129,6 +133,7 @@ const Card: React.FC<CardProps> = ({
                 : 'bg-white text-textColor border-gray-200'
             }
             ${gridView ? 'shadow-md hover:shadow-lg' : 'mb-4'}
+            ${className}
         `}>
             <h2 className="text-xl font-bold mb-2">
                 <a 
@@ -166,6 +171,7 @@ const Card: React.FC<CardProps> = ({
                     <p>{article.summary}</p>
                 </div>
             )}
+            {children}
         </div>
     );
 };

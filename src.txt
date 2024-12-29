@@ -159,7 +159,8 @@ src/
 │   ├── common
 │   │   ├── Navbar.tsx              // 導航欄組件
 │   │   ├── Pagination.tsx          // 分頁組件
-│   │   ├── Card.tsx                // 卡片組件
+│   │   ├── Card.tsx                // 卡片組件 (文章)
+│   │   ├── BaseCard.tsx            // 卡片組件 (版本歷史頁面)
 │   │   ├── Filters.tsx             // 篩選器組件
 │   │   ├── ErrorMessage.tsx        // 錯誤信息組件
 │   │   ├── Search.tsx              // 搜索組件
