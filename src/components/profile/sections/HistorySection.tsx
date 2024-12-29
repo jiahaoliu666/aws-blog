@@ -90,9 +90,18 @@ const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
                     <div className="flex gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                          <span className="inline-flex items-center px-2.5 py-0.5 
-                            rounded-full text-xs font-medium bg-blue-50 text-blue-600 
-                            border border-blue-100">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 
+                            rounded-full text-xs font-medium
+                            ${article.sourcePage === '最新新聞' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : article.sourcePage === '解決方案'
+                                ? 'bg-green-100 text-green-800'
+                                : article.sourcePage === '架構參考'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : article.sourcePage === '知識中心'
+                                    ? 'bg-indigo-100 text-indigo-800'
+                                    : 'bg-purple-100 text-purple-800'
+                            }`}>
                             {article.sourcePage}
                           </span>
                           <time className="text-xs sm:text-sm text-gray-500 flex items-center gap-1.5">
