@@ -14,10 +14,10 @@ import { useLoading } from '@/context/LoadingContext';
 
 const NewsPage: React.FC = () => {
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true); // 管理加載狀態
-    const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新新聞'); // 設置默認值
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentSourcePage, setCurrentSourcePage] = useState<string>('最新新聞');
     const { isDarkMode } = useTheme();
-    const toast = useToastContext(); 
+    const toast = useToastContext();
     const { startLoading, stopLoading } = useLoading();
 
     const {
@@ -64,17 +64,25 @@ const NewsPage: React.FC = () => {
 
     useEffect(() => {
         const loadData = async () => {
-            startLoading();
             try {
-                await new Promise(resolve => setTimeout(resolve, 800)); // 減少等待時間
-            } finally {
+                console.log('開始加載新聞數據...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log('當前新聞數據:', currentArticles);
                 setIsLoading(false);
-                stopLoading();
+            } catch (error) {
+                console.error('加載數據時出錯:', error);
+                setIsLoading(false);
             }
         };
 
         loadData();
-    }, []);
+    }, [currentArticles]);
+
+    useEffect(() => {
+        console.log('articles 數據更新:', articles);
+        console.log('filteredArticles 數據更新:', filteredArticles);
+        console.log('currentArticles 數據更新:', currentArticles);
+    }, [articles, filteredArticles, currentArticles]);
 
     useEffect(() => {
         setCurrentSourcePage('最新新聞');
@@ -105,10 +113,6 @@ const NewsPage: React.FC = () => {
 
         initializeLanguage();
     }, []);
-
-    if (isLoading) {
-        return null; // LoadingContext 會處理載入畫面
-    }
 
     return (
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
