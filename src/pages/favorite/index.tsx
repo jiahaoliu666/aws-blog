@@ -87,10 +87,8 @@ const FavoritePage: React.FC = () => {
     const handleFavoriteRemoved = async (article: ExtendedNews | FavoriteItem) => {
         try {
             await toggleFavorite(article as FavoriteItem);
-            toast.success('已成功移除收藏');
         } catch (error) {
             console.error('移除收藏失敗:', error);
-            toast.error('移除收藏失敗，請稍後再試');
         }
     };
 
@@ -170,9 +168,7 @@ const FavoritePage: React.FC = () => {
                             />
                         ))
                     ) : (
-                        <div className="col-span-full text-center py-8">
-                            <p>未找到符合條件的收藏文章</p>
-                        </div>
+                        <p className="text-center text-gray-500 col-span-full">未找到符合條件的文章，請嘗試不同的搜尋條件！</p>
                     )}
                 </div>
 

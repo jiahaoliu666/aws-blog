@@ -10,6 +10,7 @@ import { useSolutionFavorites } from "../solutions/useSolutionFavorites";
 import { useArchitectureFavorites } from "../architecture/useArchitectureFavorites";
 import { FavoriteItem } from "@/types/favoriteTypes";
 import { ExtendedNews } from '@/types/newsType';
+import { useToastContext } from '@/context/ToastContext';
 
 // 擴展 FavoriteItem 類型
 type EnhancedFavoriteItem = FavoriteItem & {
@@ -36,6 +37,7 @@ function useFavoritePageLogic() {
     const [showFavorites, setShowFavorites] = useState<boolean>(true);
     const [filteredFavorites, setFilteredFavorites] = useState<EnhancedFavoriteItem[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>("");
+    const toast = useToastContext();
 
     // 獲取各種類型的收藏
     const { favorites: announcementFavorites } = useAnnouncementFavorites();
@@ -179,12 +181,15 @@ function useFavoritePageLogic() {
 
             setCurrentItems(prev => prev.filter(item => item.article_id !== article.article_id));
             setFilteredFavorites(prev => prev.filter(item => item.article_id !== article.article_id));
+            
+            toast.success('已成功移除收藏');
 
         } catch (error) {
             console.error('移除收藏時發生錯誤:', error);
+            toast.error('移除收藏失敗，請稍後再試');
             throw error;
         }
-    }, [user?.id]);
+    }, [user?.id, toast]);
 
     // 計算過濾後的收藏數量
     const filteredFavoritesCount = useMemo(() => {

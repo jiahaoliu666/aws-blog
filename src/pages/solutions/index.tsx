@@ -138,7 +138,7 @@ const SolutionsPage: React.FC = () => {
                             );
                         })
                     ) : (
-                        <p className="text-center text-gray-500 col-span-full">未找到符合條件的解決方案，請嘗試不同的搜尋條件！</p>
+                        <p className="text-center text-gray-500 col-span-full">未找到符合條件的文章，請嘗試不同的搜尋條件！</p>
                     )}
                 </div>
 
