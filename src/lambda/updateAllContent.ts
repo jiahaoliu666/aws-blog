@@ -170,6 +170,8 @@ async function saveToDynamoDB(
     await translateText(content.description) : '';
 
   const contentId = uuidv4();
+  const timestamp = Math.floor(Date.now() / 1000);
+
   const params = {
     TableName: tableName,
     Item: {
@@ -178,10 +180,10 @@ async function saveToDynamoDB(
       translated_title: { S: translatedTitle },
       link: { S: content.link },
       summary: { S: summary },
-      created_at: { N: String(Math.floor(Date.now() / 1000)) },
+      created_at: { N: String(timestamp) },
       ...(content.description && { description: { S: content.description } }),
       ...(translatedDescription && { translated_description: { S: translatedDescription } }),
-      ...(content.info && { info: { S: content.info } })
+      ...(content.info && { info: { S: content.info } }),
     },
   };
 
@@ -195,11 +197,10 @@ async function saveToDynamoDB(
     const contentData: ContentData = {
       title: translatedTitle,
       link: content.link,
-      timestamp: Date.now().toString(),
+      timestamp: String(timestamp),
       summary: summary
     };
 
-    // 發送通知
     await sendNotifications(contentData, type);
     await broadcastNewContent(contentId, type);
 
@@ -240,6 +241,15 @@ function convertDateFormat(dateStr: string): string {
   }
 }
 
+// 在檔案中新增這個日期提取函數
+function extractDate(info: string): string {
+  const dateMatch = info.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (dateMatch) {
+    return dateMatch[0];
+  }
+  return info;
+}
+
 // 各類型內容的爬蟲函數
 async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.news;
@@ -259,13 +269,31 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
 
       return Array.from(titles)
         .slice(0, count)
-        .map((titleElem, index) => ({
-          title: (titleElem as HTMLElement).innerText || "沒有標題",
-          info: (infos[index] as HTMLElement)?.innerText || "沒有資訊",
-          description: (descriptions[index] as HTMLElement)?.innerText || "沒有描述",
-          link: (links[index] as HTMLAnchorElement)?.href || "沒有連結",
-        }));
+        .map((titleElem, index) => {
+          const infoText = (infos[index] as HTMLElement)?.innerText || "沒有資訊";
+          // 提取日期，格式為：作者名稱, MM/DD/YYYY
+          const dateMatch = infoText.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          let formattedDate = infoText;
+          
+          if (dateMatch) {
+            const [_, month, day, year] = dateMatch;
+            formattedDate = `${year}年${month}月${day}日`;
+          }
+          
+          return {
+            title: (titleElem as HTMLElement).innerText || "沒有標題",
+            info: formattedDate,
+            description: (descriptions[index] as HTMLElement)?.innerText || "沒有描述",
+            link: (links[index] as HTMLAnchorElement)?.href || "沒有連結",
+          };
+        });
     }, FETCH_COUNTS.news);
+
+    // 確保 articles 是陣列
+    if (!Array.isArray(articles)) {
+      logger.error(`   ${emoji} 【${name}】爬取的資料格式不正確`);
+      return;
+    }
 
     for (const article of articles) {
       await saveToDynamoDB(article, 'news', 'AWS_Blog_News');
