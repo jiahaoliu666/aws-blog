@@ -51,6 +51,8 @@ function useAnnouncementPageLogic() {
             isFavorite: !!favorites.find(fav => fav.article_id === announcement.article_id),
             translated_description: announcement.translated_description || announcement.description || '',
             translated_title: announcement.translated_title || announcement.title || '',
+            itemType: 'announcement',
+            created_at: announcement.createdAt || announcement.published_at
         }));
     }, [fetchedAnnouncements, favorites, language]);
 

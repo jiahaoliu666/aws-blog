@@ -14,6 +14,7 @@ export interface Announcement {
     translated_description?: string;
 }
 
-export type ExtendedAnnouncement = Omit<Announcement, 'isFavorite'> & {
-    isFavorite: boolean;
-};
+export interface ExtendedAnnouncement extends Announcement {
+    itemType: string;
+    created_at: string;
+}

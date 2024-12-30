@@ -4,6 +4,8 @@ import { ExtendedAnnouncement } from '@/types/announcementType';
 import { User } from '@/types/userType';
 import { useAuth } from '../useAuth';
 import { useToastContext } from '@/context/ToastContext';
+import { ExtendedNews } from '@/types/newsType';
+import { FavoriteItem } from '@/types/favoriteTypes';
 
 export const useAnnouncementFavorites = () => {
     const { user } = useAuth() as { user: User | null };
@@ -24,7 +26,7 @@ export const useAnnouncementFavorites = () => {
         fetchFavorites();
     }, [user]);
 
-    const toggleFavorite = async (announcement: ExtendedAnnouncement) => {
+    const toggleFavorite = async (announcement: ExtendedAnnouncement | ExtendedNews | FavoriteItem) => {
         if (!user) {
             alert('請先登入才能收藏公告！');
             return;
@@ -50,7 +52,15 @@ export const useAnnouncementFavorites = () => {
             } else {
                 const response = await axios.post('/api/announcement/addFavorite', params);
                 if (response.status === 200) {
-                    setFavorites((prev) => [{ ...announcement }, ...prev]);
+                    setFavorites((prev) => [{
+                        ...announcement,
+                        itemType: 'announcement',
+                        published_at: 'published_at' in announcement 
+                            ? announcement.published_at 
+                            : ('created_at' in announcement 
+                                ? announcement.created_at 
+                                : new Date().toISOString())
+                    } as ExtendedAnnouncement, ...prev]);
                     toast.success('已成功加入收藏');
                 }
             }
