@@ -154,7 +154,9 @@ src/
 │   ├── updateNews.ts               // 更新新聞 Lambda 函數
 │   └── updateAnnouncement.ts       // 更新公告 Lambda 函數
 │   └── updateSolutions.ts          // 更新解決方案 Lambda 函數
+│   └── updateArchitecture.ts       // 更新架構參考 Lambda 函數
 │   └── updateKnowledge.ts          // 更新知識中心 Lambda 函數
+│   └── updateAllContent.ts         // 更新所有內容 Lambda 函數
 ├── components
 │   ├── common
 │   │   ├── Navbar.tsx              // 導航欄組件
