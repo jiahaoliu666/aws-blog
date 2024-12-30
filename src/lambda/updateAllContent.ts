@@ -37,7 +37,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 4, // 更新公告數量
+  announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
   solutions: 1, // 更新解決方案數量
   architecture: 1, // 更新架構數量
@@ -60,11 +60,11 @@ const dbClient = new DynamoDBClient({
 
 // 統計計數器
 const stats = {
-  news: { inserted: 0, skipped: 0, failed: 0 },
-  announcement: { inserted: 0, skipped: 0, failed: 0 },
-  knowledge: { inserted: 0, skipped: 0, failed: 0 },
-  solutions: { inserted: 0, skipped: 0, failed: 0 },
-  architecture: { inserted: 0, skipped: 0, failed: 0 }
+  announcement: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
+  news: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
+  solutions: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
+  architecture: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
+  knowledge: { inserted: 0, skipped: 0, failed: 0, notifications: 0 }
 };
 
 // 在檔案開頭新增這些常量
@@ -571,6 +571,7 @@ async function broadcastNewContent(contentId: string, type: string): Promise<voi
     const users = await getAllUserIds();
     for (const userId of users) {
       await addNotification(userId, contentId, type);
+      stats[type as keyof typeof stats].notifications++;
     }
   } catch (error) {
     logger.error(`廣播新${type}通知時發生錯誤:`, error);
@@ -578,11 +579,11 @@ async function broadcastNewContent(contentId: string, type: string): Promise<voi
 }
 
 // 修改日誌輸出格式
-function logUpdateResult(type: string, result: { inserted: number, skipped: number, failed: number }) {
+function logUpdateResult(type: string, result: { inserted: number, skipped: number, failed: number, notifications: number }) {
   const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
   const total = result.inserted + result.skipped + result.failed;
   
-  const boxWidth = 62; // 增加寬度以確保內容完整顯示
+  const boxWidth = 62;
   const line = '─'.repeat(boxWidth - 2);
   
   logger.info(`┌${line}┐`);
@@ -591,6 +592,7 @@ function logUpdateResult(type: string, result: { inserted: number, skipped: numb
   logger.info(`│ ✨ 新增內容：${result.inserted}${' '.repeat(boxWidth - 13 - result.inserted.toString().length)}`);
   logger.info(`│ ⏭️  跳過內容：${result.skipped}${' '.repeat(boxWidth - 13 - result.skipped.toString().length)}`);
   logger.info(`│ ❌ 失敗內容：${result.failed}${' '.repeat(boxWidth - 13 - result.failed.toString().length)}`);
+  logger.info(`│ 👥 通知數量：${result.notifications}${' '.repeat(boxWidth - 13 - result.notifications.toString().length)}`);
   logger.info(`│ 📊 處理總數：${total}${' '.repeat(boxWidth - 13 - total.toString().length)}`);
   logger.info(`└${line}┘`);
 
@@ -661,17 +663,20 @@ export async function updateAllContent(): Promise<void> {
     logger.info(`│ 📊 更新執行總結${' '.repeat(boxWidth - 10)}`);
     logger.info(`├${line}┤`);
     
-    Object.entries(stats).forEach(([type, count]) => {
-      logUpdateResult(type, count);
+    const reportOrder = ['announcement', 'news', 'solutions', 'architecture', 'knowledge'];
+    reportOrder.forEach(type => {
+      logUpdateResult(type, stats[type as keyof typeof stats]);
     });
 
     const totalInserted = Object.values(stats).reduce((sum, count) => sum + count.inserted, 0);
     const totalSkipped = Object.values(stats).reduce((sum, count) => sum + count.skipped, 0);
     const totalFailed = Object.values(stats).reduce((sum, count) => sum + count.failed, 0);
+    const totalNotifications = Object.values(stats).reduce((sum, count) => sum + count.notifications, 0);
     
     logger.info(`│ ✨ 總更新數量：${totalInserted}${' '.repeat(boxWidth - 13 - totalInserted.toString().length)}│`);
     logger.info(`│ ⏭️  總跳過數量：${totalSkipped}${' '.repeat(boxWidth - 13 - totalSkipped.toString().length)}│`);
     logger.info(`│ ❌ 總失敗數量：${totalFailed}${' '.repeat(boxWidth - 13 - totalFailed.toString().length)}│`);
+    logger.info(`│ 👥 總通知數量：${totalNotifications}${' '.repeat(boxWidth - 13 - totalNotifications.toString().length)}│`);
     logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(boxWidth - 14 - duration.toString().length)}│`);
     logger.info(`└${line}┘`);
 
