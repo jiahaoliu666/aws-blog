@@ -60,20 +60,20 @@ const dbClient = new DynamoDBClient({
 
 // 統計計數器
 const stats = {
-  news: { inserted: 0, skipped: 0 },
-  announcement: { inserted: 0, skipped: 0 },
-  knowledge: { inserted: 0, skipped: 0 },
-  solutions: { inserted: 0, skipped: 0 },
-  architecture: { inserted: 0, skipped: 0 }
+  news: { inserted: 0, skipped: 0, failed: 0 },
+  announcement: { inserted: 0, skipped: 0, failed: 0 },
+  knowledge: { inserted: 0, skipped: 0, failed: 0 },
+  solutions: { inserted: 0, skipped: 0, failed: 0 },
+  architecture: { inserted: 0, skipped: 0, failed: 0 }
 };
 
 // 在檔案開頭新增這些常量
 const CONTENT_TYPES = {
-  news: { name: '最新消息', emoji: '📰' },
+  news: { name: '最新新聞', emoji: '📰' },
   announcement: { name: '最新公告', emoji: '📢' },
   knowledge: { name: '知識中心', emoji: '📚' },
   solutions: { name: '解決方案', emoji: '💡' },
-  architecture: { name: '參考架構', emoji: '🏗️' }
+  architecture: { name: '架構參考', emoji: '🏗️' }
 };
 
 // 通用功能函數
@@ -223,7 +223,10 @@ async function gotoWithRetry(
 // 各類型內容的爬蟲函數
 async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.news;
-  logger.info(`\n${emoji} ${name}爬取開始...`);
+  logger.info('┌' + '─'.repeat(60) + '┐');
+  logger.info(`│ ${emoji} ${formatTitle(name)}爬取開始${' '.repeat(45 - name.length)}│`);
+  logger.info('└' + '─'.repeat(60) + '┘');
+  
   const page = await browser.newPage();
   try {
     logger.info(`   ⏳ 正在載入頁面...`);
@@ -253,13 +256,23 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
       await saveToDynamoDB(article, 'news', 'AWS_Blog_News');
     }
     
-    logger.info(`   ✅ ${name}爬取完成！`);
+    logger.info('┌' + '─'.repeat(60) + '┐');
+    logger.info(`│ ${emoji} ${formatTitle(name)}爬取完成${' '.repeat(45 - name.length)}│`);
+    logger.info('└' + '─'.repeat(60) + '┘');
   } catch (error) {
-    logger.error(`   ❌ ${name}爬取失敗:`, error);
+    logger.error('┌' + '─'.repeat(60) + '┐');
+    logger.error(`│ ${emoji} ${formatTitle(name)}爬取失敗${' '.repeat(45 - name.length)}│`);
+    logger.error('└' + '─'.repeat(60) + '┘');
+    logger.error(error as string);
   }
 }
 
 async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
+  const { name, emoji } = CONTENT_TYPES.announcement;
+  logger.info('┌' + '─'.repeat(60) + '┐');
+  logger.info(`│ ${emoji} ${formatTitle(name)}爬取開始${' '.repeat(45 - name.length)}│`);
+  logger.info('└' + '─'.repeat(60) + '┘');
+  
   const page = await browser.newPage();
   try {
     await page.setExtraHTTPHeaders({
@@ -300,8 +313,15 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
     for (const announcement of announcements) {
       await saveToDynamoDB(announcement, 'announcement', 'AWS_Blog_Announcement');
     }
+
+    logger.info('┌' + '─'.repeat(60) + '┐');
+    logger.info(`│ ${emoji} ${formatTitle(name)}爬取完成${' '.repeat(45 - name.length)}│`);
+    logger.info('└' + '─'.repeat(60) + '┘');
   } catch (error) {
-    logger.error("爬取公告時發生錯誤:", error);
+    logger.error('┌' + '─'.repeat(60) + '┐');
+    logger.error(`│ ${emoji} ${formatTitle(name)}爬取失敗${' '.repeat(45 - name.length)}│`);
+    logger.error('└' + '─'.repeat(60) + '┘');
+    logger.error(error as string);
   }
 }
 
@@ -555,25 +575,49 @@ async function broadcastNewContent(contentId: string, type: string): Promise<voi
   }
 }
 
-// 修改 logger 輸出格式
-function logUpdateResult(type: string, result: { inserted: number, skipped: number }) {
+// 新增進度追蹤函數
+function logProgress(type: string, current: number, total: number, action: string) {
   const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
-  const total = result.inserted + result.skipped;
-  
-  logger.info(`\n${emoji} ${name}更新結果`);
-  logger.info("====================");
-  logger.info(`   ✨ 新增內容：${result.inserted} 筆`);
-  logger.info(`   ⏭️  跳過內容：${result.skipped} 筆`);
-  logger.info(`   📊 處理總數：${total} 筆`);
+  const percentage = Math.round((current / total) * 100);
+  const progressBar = '█'.repeat(Math.floor(percentage / 5)) + '░'.repeat(20 - Math.floor(percentage / 5));
+  logger.info(`${emoji} ${name} - ${action}`);
+  logger.info(`   進度：${progressBar} ${percentage}% (${current}/${total})`);
 }
 
-// 主程序
+// 新增標題格式化函數
+function formatTitle(title: string): string {
+  return '【' + title + '】';
+}
+
+// 修改日誌輸出格式
+function logUpdateResult(type: string, result: { inserted: number, skipped: number, failed: number }) {
+  const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
+  const total = result.inserted + result.skipped + result.failed;
+  
+  logger.info('┌' + '─'.repeat(60) + '┐');
+  logger.info(`│ ${emoji} ${formatTitle(name)}${' '.repeat(45 - name.length)}│`);
+  logger.info('├' + '─'.repeat(60) + '┤');
+  logger.info(`│ ✨ 新增內容：${result.inserted.toString().padEnd(47)}│`);
+  logger.info(`│ ⏭️  跳過內容：${result.skipped.toString().padEnd(46)}│`);
+  logger.info(`│ ❌ 失敗內容：${result.failed.toString().padEnd(47)}│`);
+  logger.info(`│ 📊 處理總數：${total.toString().padEnd(47)}│`);
+  logger.info('└' + '─'.repeat(60) + '┘');
+
+  if (result.failed > 0) {
+    logger.warn(`⚠️  注意：${formatTitle(name)}有 ${result.failed} 筆內容處理失敗`);
+  }
+}
+
+// 修改主程序的日誌輸出
 export async function updateAllContent(): Promise<void> {
   let browser: puppeteer.Browser | null = null;
+  const startTime = Date.now();
 
   try {
-    logger.info("\n🚀 開始更新 AWS 內容");
-    logger.info("====================");
+    logger.info('┌' + '─'.repeat(60) + '┐');
+    logger.info(`│ 🚀 AWS 內容更新程序開始${' '.repeat(41)}│`);
+    logger.info(`│ 📅 執行時間：${new Date().toLocaleString().padEnd(43)}│`);
+    logger.info('└' + '─'.repeat(60) + '┘');
     
     browser = await puppeteer.launch({ 
       headless: true,
@@ -593,34 +637,54 @@ export async function updateAllContent(): Promise<void> {
 
     for (const task of tasks) {
       const { name, emoji } = CONTENT_TYPES[task.type as keyof typeof CONTENT_TYPES];
-      logger.info(`\n${emoji} 開始處理${name}...`);
+      logger.info('┌' + '─'.repeat(60) + '┐');
+      logger.info(`│ ${emoji} 開始處理${formatTitle(name)}${' '.repeat(45 - name.length)}│`);
+      logger.info('└' + '─'.repeat(60) + '┘');
+      
       await task.fn(browser);
     }
 
     // 輸出總結報告
-    logger.info("\n📊 更新執行總結");
-    logger.info("====================");
+    const endTime = Date.now();
+    const duration = Math.round((endTime - startTime) / 1000);
+    
+    logger.info('┌' + '─'.repeat(60) + '┐');
+    logger.info(`│ 📊 更新執行總結${' '.repeat(47)}│`);
+    logger.info('├' + '─'.repeat(60) + '┤');
+    
     Object.entries(stats).forEach(([type, count]) => {
       logUpdateResult(type, count);
     });
 
     const totalInserted = Object.values(stats).reduce((sum, count) => sum + count.inserted, 0);
     const totalSkipped = Object.values(stats).reduce((sum, count) => sum + count.skipped, 0);
+    const totalFailed = Object.values(stats).reduce((sum, count) => sum + count.failed, 0);
     
-    logger.info("\n🎯 最終統計");
-    logger.info("====================");
-    logger.info(`✨ 總更新數量：${totalInserted} 筆`);
-    logger.info(`⏭️ 總跳過數量：${totalSkipped} 筆`);
-    logger.info(`🔄 總處理數量：${totalInserted + totalSkipped} 筆`);
-    logger.info("\n✅ 所有更新程序已完成！");
+    logger.info(`│ ✨ 總更新數量：${totalInserted.toString().padEnd(47)}│`);
+    logger.info(`│ ⏭️  總跳過數量：${totalSkipped.toString().padEnd(46)}│`);
+    logger.info(`│ ❌ 總失敗數量：${totalFailed.toString().padEnd(47)}│`);
+    logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(47 - duration.toString().length)}│`);
+    logger.info('└' + '─'.repeat(60) + '┘');
+
+    if (totalFailed > 0) {
+      logger.warn(`⚠️  注意：總共有 ${totalFailed} 筆內容處理失敗`);
+    }
+
+    logger.info('┌' + '─'.repeat(60) + '┐');
+    logger.info(`│ ✅ 所有更新程序已完成${' '.repeat(43)}│`);
+    logger.info('└' + '─'.repeat(60) + '┘');
 
   } catch (error) {
-    logger.error("\n❌ 執行更新程序時發生錯誤:", error);
+    logger.error('┌' + '─'.repeat(60) + '┐');
+    logger.error(`│ ❌ 執行更新程序時發生錯誤${' '.repeat(39)}│`);
+    logger.error('└' + '─'.repeat(60) + '┘');
     throw error;
   } finally {
     if (browser) {
       await browser.close();
+      logger.info('==========================================');
       logger.info("🌐 瀏覽器已關閉");
+      logger.info('==========================================');
     }
   }
 }
@@ -629,7 +693,7 @@ export async function updateAllContent(): Promise<void> {
 // 移除原本的 if (require.main === module) 判斷
 // 改用 import.meta.url 判斷是否為直接執行
 
-const isDirectlyExecuted = import.meta.url === `file://${process.argv[1]}`;
+const isDirectlyExecuted = process.argv[1] ? import.meta.url.includes(process.argv[1]) : false;
 
 if (isDirectlyExecuted) {
   (async () => {
