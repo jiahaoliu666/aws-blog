@@ -119,16 +119,26 @@ const SolutionsPage: React.FC = () => {
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
-                    {currentSolutions.length > 0 ? (
-                        currentSolutions.map((solution: ExtendedSolution, index: number) => {
+                    {filteredSolutions.length > 0 ? (
+                        filteredSolutions.map((solution: ExtendedSolution, index: number) => {
                             const isFavorited = favorites.some(fav => fav.article_id === solution.article_id);
                             return (
                                 <Card
                                     key={solution.article_id}
-                                    article={solution}
+                                    article={{
+                                        ...solution,
+                                        article_id: solution.article_id,
+                                        title: solution.title,
+                                        translated_title: solution.translated_title,
+                                        description: solution.description,
+                                        translated_description: solution.translated_description,
+                                        link: solution.link,
+                                        info: solution.info,
+                                        summary: solution.summary
+                                    }}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={toggleFavorite}
+                                    toggleFavorite={() => toggleFavorite(solution)}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
@@ -146,7 +156,7 @@ const SolutionsPage: React.FC = () => {
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
-                    show={currentSolutions.length > 0}
+                    show={filteredSolutions.length > 0}
                 />
             </div>
             <Footer />

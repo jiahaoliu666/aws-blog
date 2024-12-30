@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const scanParams = {
         TableName: process.env.DYNAMODB_SOLUTIONS_TABLE || 'AWS_Blog_Solutions',
-        ProjectionExpression: "article_id, title, created_at, description, link, summary, translated_title, translated_description"
+        ProjectionExpression: "article_id, title, created_at, description, link, summary, translated_title, translated_description, info",
     };
 
     try {
@@ -39,6 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 : item.description?.S,
             link: item.link?.S,
             summary: item.summary?.S,
+            info: item.info?.S
         }));
 
         console.log('處理後的解決方案數據:', JSON.stringify(solutions, null, 2));

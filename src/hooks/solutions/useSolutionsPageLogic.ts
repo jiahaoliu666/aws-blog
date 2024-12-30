@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { ExtendedSolution } from "@/types/solutionType";
+import { ExtendedSolution, Solution } from "@/types/solutionType";
 import { extractDateFromInfo } from "@/utils/extractDateFromInfo";
 import { useProfilePreferences } from '@/hooks/profile/useProfilePreferences';
 import { useAuthContext } from '@/context/AuthContext';
@@ -24,6 +24,9 @@ function useSolutionsPageLogic() {
     const [filteredSolutions, setFilteredSolutions] = useState<ExtendedSolution[]>([]);
     const [currentSolutions, setCurrentSolutions] = useState<ExtendedSolution[]>([]);
     const [isLanguageChanging, setIsLanguageChanging] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [solutions, setSolutions] = useState<ExtendedSolution[]>([]);
 
     useEffect(() => {
         setIsClient(true);
@@ -44,11 +47,12 @@ function useSolutionsPageLogic() {
     const fetchedSolutions = useFetchSolutions(language);
     const { favorites, toggleFavorite } = useSolutionFavorites();
 
-    const solutions = useMemo(() => {
-        return fetchedSolutions.map(solution => ({
+    useEffect(() => {
+        const updatedSolutions = fetchedSolutions.map(solution => ({
             ...solution,
             isFavorite: !!favorites.find(fav => fav.article_id === solution.article_id),
         }));
+        setSolutions(updatedSolutions);
     }, [fetchedSolutions, favorites]);
 
     // 分頁和過濾邏輯
@@ -99,6 +103,41 @@ function useSolutionsPageLogic() {
         }
     };
 
+    const processArticles = (articles: ExtendedSolution[]) => {
+        return articles.map(article => ({
+            ...article,
+            info: article.info || '',
+            title: article.title,
+            translated_title: article.translated_title,
+            description: article.description,
+            translated_description: article.translated_description,
+            link: article.link,
+            article_id: article.article_id,
+        }));
+    };
+
+    const fetchSolutions = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch('/api/solutions');
+            const data = await response.json();
+            
+            // 確保處理 info 欄位
+            const processedSolutions = data.solutions.map((solution: Solution) => ({
+                ...solution,
+                info: solution.info || '', // 確保即使沒有 info 也有預設值
+            }));
+
+            setSolutions(processedSolutions);
+            setFilteredSolutions(processedSolutions);
+        } catch (error) {
+            console.error('獲取解決方案失敗:', error);
+            setError('獲取解決方案失敗，請稍後重試');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return {
         language,
         setLanguage: handleLanguageChange,
@@ -130,6 +169,9 @@ function useSolutionsPageLogic() {
         favorites,
         solutions,
         isLanguageChanging,
+        isLoading,
+        error,
+        fetchSolutions,
     };
 }
 

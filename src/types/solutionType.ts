@@ -1,20 +1,15 @@
 export interface Solution {
     article_id: string;
     title: string;
-    published_at: string;
-    info: string;
-    description: string;
-    link: string;
-    summary?: string;
-    isFavorite?: boolean;
-    createdAt?: string;
-    author?: string;
     translated_title?: string;
+    description: string;
     translated_description?: string;
-    category?: string;
-    tags?: string[];
+    link: string;
+    created_at: string;
+    summary?: string;
+    info?: string;
 }
 
-export type ExtendedSolution = Omit<Solution, 'isFavorite'> & {
-    isFavorite: boolean;
-}; 
+export interface ExtendedSolution extends Solution {
+    isFavorited?: boolean;
+} 
