@@ -39,8 +39,8 @@ dotenv.config({ path: ".env.local" });
 const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
-  solutions: 4, // 更新解決方案數量
-  architecture: 1, // 更新架構數量
+  solutions: 1, // 更新解決方案數量
+  architecture: 2, // 更新架構數量
   knowledge: 1, // 更新知識中心數量
 };
 
@@ -506,12 +506,24 @@ async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
       await card.hover();
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const architecture = await card.evaluate((el) => ({
-        title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
-        description: el.querySelector('.m-desc')?.textContent?.trim() || '沒有描述',
-        link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
-        info: ''
-      }));
+      const architecture = await card.evaluate((el) => {
+        const descElement = el.querySelector('.m-desc');
+        let description = '';
+        
+        if (descElement) {
+          // 取得第一個文字節點的內容
+          const textNodes = Array.from(descElement.childNodes)
+            .filter(node => node.nodeType === Node.TEXT_NODE);
+          description = textNodes[0]?.textContent?.trim() || '';
+        }
+
+        return {
+          title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
+          description: description || '沒有描述',
+          link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
+          info: ''
+        };
+      });
 
       // 加入時間戳並轉換為中文日期格式
       const timestamp = Math.floor(Date.now() / 1000);
