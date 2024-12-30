@@ -11,6 +11,7 @@ import Footer from '../../components/common/Footer';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 import { useLoading } from '@/context/LoadingContext';
+import { FavoriteItem } from '@/types/favoriteTypes';
 
 const NewsPage: React.FC = () => {
     const router = useRouter();
@@ -159,7 +160,7 @@ const NewsPage: React.FC = () => {
                                     article={article}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={toggleFavorite}
+                                    toggleFavorite={(article) => toggleFavorite(article as ExtendedNews | FavoriteItem)}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}

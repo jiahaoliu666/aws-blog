@@ -54,14 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // 修改語言過濾邏輯
-        const filteredItems = result.Items;  // 先移除語言過濾，檢查是否有資料
-
-        // 如果確定要過濾，使用更寬鬆的條件
-        // const filteredItems = result.Items.filter(item => {
-        //     return language === 'zh-TW' ? true : 
-        //            (item.title?.includes(`[${language}]`) || 
-        //            item.info?.includes(`[${language}]`));
-        // });
+        const filteredItems = result.Items;  
 
         console.log(`成功過濾 ${language} 語言的公告，共 ${filteredItems.length} 筆`);
         res.status(200).json(filteredItems);

@@ -6,15 +6,16 @@ import { useProfileArticles } from '@/hooks/profile/useProfileArticles';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 import { ExtendedAnnouncement } from '@/types/announcementType';
+import { ExtendedSolution } from '@/types/solutionType';
 
 interface CardProps {
     children?: React.ReactNode;
-    article: ExtendedAnnouncement | ExtendedNews | FavoriteItem;
+    article: ExtendedNews | FavoriteItem | ExtendedAnnouncement | ExtendedSolution;
     index: number;
     gridView: boolean;
     language: string;
     showSummaries: boolean;
-    toggleFavorite: (article: ExtendedAnnouncement | ExtendedNews | FavoriteItem) => Promise<void>;
+    toggleFavorite: (article: ExtendedNews | FavoriteItem | ExtendedAnnouncement | ExtendedSolution) => Promise<void>;
     isFavorited: boolean;
     sourcePage: string;
     searchTerm?: string;

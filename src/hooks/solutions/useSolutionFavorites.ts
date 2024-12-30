@@ -4,6 +4,10 @@ import { ExtendedSolution } from '@/types/solutionType';
 import { User } from '@/types/userType';
 import { useAuth } from '../useAuth';
 import { useToastContext } from '@/context/ToastContext';
+import { ExtendedNews } from '@/types/newsType';
+import { FavoriteItem } from '@/types/favoriteTypes';
+import { ExtendedAnnouncement } from '@/types/announcementType';
+
 export const useSolutionFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedSolution[]>([]);
@@ -22,7 +26,7 @@ export const useSolutionFavorites = () => {
         fetchFavorites();
     }, [user]);
 
-    const toggleFavorite = async (solution: ExtendedSolution) => {
+    const toggleFavorite = async (article: ExtendedSolution | ExtendedNews | FavoriteItem | ExtendedAnnouncement) => {
         if (!user) {
             alert('請先登入才能收藏！');
             return;
@@ -30,25 +34,28 @@ export const useSolutionFavorites = () => {
 
         const params = {
             userId: user.sub,
-            articleId: solution.article_id,
-            title: solution.title
+            articleId: article.article_id,
+            title: article.title
         };
 
         try {
             const isFavorited = favorites.some(
-                (fav) => fav.article_id === solution.article_id
+                (fav) => fav.article_id === article.article_id
             );
 
             if (isFavorited) {
                 await axios.post('/api/solutions/removeFavorite', params);
                 setFavorites((prev) =>
-                    prev.filter((fav) => fav.article_id !== solution.article_id)
+                    prev.filter((fav) => fav.article_id !== article.article_id)
                 );
                 toast.success('已成功移除收藏');
             } else {
                 const response = await axios.post('/api/solutions/addFavorite', params);
                 if (response.status === 200) {
-                    setFavorites((prev) => [{ ...solution }, ...prev]);
+                    setFavorites((prev) => [{
+                        ...article,
+                        published_at: (article as any).published_at || new Date().toISOString()
+                    } as ExtendedSolution, ...prev]);
                     toast.success('已成功加入收藏');
                 }
             }
