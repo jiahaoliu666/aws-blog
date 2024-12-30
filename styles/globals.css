@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 基礎排版設定 */
+@layer base {
+  /* 強制套用字體 */
+  * {
+    font-family: 'Noto Sans TC', 'Inter', system-ui, sans-serif;
+  }
+
+  html {
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "pnum" 1, "tnum" 0, "onum" 0, "lnum" 0, "dlig" 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    @apply text-gray-900 bg-gray-50 font-sans;
+    letter-spacing: 0.025em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 標題系統 */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-title tracking-normal;
+    font-family: 'Roboto', 'Noto Sans TC', sans-serif;
+  }
+
+  h1 {
+    @apply text-4xl font-bold leading-tight md:text-5xl;
+    letter-spacing: -0.02em;
+  }
+  
+  h2 {
+    @apply text-3xl font-bold leading-tight md:text-4xl;
+    letter-spacing: -0.02em;
+  }
+  
+  h3 {
+    @apply text-2xl font-semibold leading-snug md:text-3xl;
+    letter-spacing: -0.01em;
+  }
+  
+  h4 {
+    @apply text-xl font-semibold leading-snug md:text-2xl;
+  }
+  
+  h5 {
+    @apply text-lg font-semibold leading-snug md:text-xl;
+  }
+  
+  h6 {
+    @apply text-base font-semibold leading-normal md:text-lg;
+  }
+
+  /* 程式碼區塊 */
+  pre, code {
+    @apply font-mono;
+    font-feature-settings: "liga" 1;
+  }
+
+  /* 段落文字 */
+  p {
+    @apply leading-relaxed;
+  }
+
+  /* 引用區塊 */
+  blockquote {
+    @apply pl-4 border-l-4 border-gray-200 italic;
+  }
+}
+
+@layer utilities {
+  /* 淡入動畫 */
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  /* 脈動旋轉動畫 */
+  .animate-pulse-spin {
+    animation: pulse-spin 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* 新增快速旋轉動畫 */
+  .animate-spin-fast {
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* 新增反向旋轉動畫 */
+  .animate-spin-reverse {
+    animation: spin-reverse 1.2s linear infinite;
+  }
+
+  /* 添加慢速旋轉動畫 */
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+
+  /* 添加慢速反向旋轉動畫 */
+  .animate-spin-reverse-slow {
+    animation: spin-reverse 2s linear infinite;
+  }
+
+  /* 添加進度條動畫 */
+  .animate-progress {
+    animation: progress 2s ease-out;
+  }
+}
+
+/* 淡入動畫關鍵幀 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 脈動旋轉動畫關鍵幀 */
+@keyframes pulse-spin {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: rotate(180deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+}
+
+/* 新增反向旋轉關鍵幀 */
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+/* 新增一般旋轉關鍵幀 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 添加進度條動畫關鍵幀 */
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* 在文件的適當位置添加以下樣式 */
+.dark-search input {
+  color: #ffffff !important;
+  background-color: #1a1a1a !important;
+}
+
+.dark-search input::placeholder {
+  color: #888888 !important;
+}
+
+.dark-search svg {
+  color: #ffffff !important;
+}

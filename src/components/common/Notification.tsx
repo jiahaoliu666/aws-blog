@@ -240,7 +240,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             )}
           </span>
           <span className="text-sm font-normal text-gray-500">
-            · 共 {totalCount || 0} 則
+            · 總共 {totalCount || 0} 則
           </span>
         </h2>
         <div className="flex items-center gap-2">
