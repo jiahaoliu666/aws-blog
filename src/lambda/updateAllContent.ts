@@ -40,7 +40,7 @@ const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
   solutions: 1, // 更新解決方案數量
-  architecture: 3, // 更新架構數量
+  architecture: 2, // 更新架構數量
   knowledge: 1, // 更新知識中心數量
 };
 

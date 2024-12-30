@@ -50,6 +50,7 @@ export const useArchitecturePageLogic = () => {
             isFavorite: !!favorites.find((fav: ExtendedArchitecture) => fav.article_id === architecture.article_id),
             translated_description: architecture.translated_description || architecture.description || '',
             translated_title: architecture.translated_title || architecture.title || '',
+            info: architecture.info || '',
         }));
     }, [fetchedArchitectures, favorites, language]);
 

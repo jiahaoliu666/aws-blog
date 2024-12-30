@@ -18,6 +18,7 @@ const useFetchArchitecture = (language: string): ExtendedArchitecture[] => {
                     isFavorite: architecture.isFavorite ?? false,
                     translated_description: architecture.translated_description || '',
                     translated_title: architecture.translated_title || '',
+                    info: architecture.info || '',
                 }));
 
                 setArchitectures(initializedArchitectures);

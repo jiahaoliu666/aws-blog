@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const scanParams = {
         TableName: process.env.DYNAMODB_ARCHITECTURE_TABLE || 'AWS_Blog_Architecture',
-        ProjectionExpression: "article_id, title, created_at, description, link, summary, translated_title, translated_description"
+        ProjectionExpression: "article_id, title, created_at, description, link, summary, translated_title, translated_description, info"
     };
 
     try {
@@ -34,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 ? (item.translated_title?.S || item.title?.S) 
                 : item.title?.S,
             published_at: item.created_at?.S,
+            info: item.info?.S || '',
             description: language === 'zh-TW'
                 ? (item.translated_description?.S || item.description?.S)
                 : item.description?.S,
