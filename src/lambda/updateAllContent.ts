@@ -40,7 +40,7 @@ const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
   solutions: 1, // 更新解決方案數量
-  architecture: 1, // 更新架構數量
+  architecture: 3, // 更新架構數量
   knowledge: 1, // 更新知識中心數量
 };
 
@@ -502,7 +502,12 @@ async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
         title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
         description: el.querySelector('.m-desc')?.textContent?.trim() || '沒有描述',
         link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
+        info: ''
       }));
+
+      // 加入時間戳並轉換為中文日期格式
+      const timestamp = Math.floor(Date.now() / 1000);
+      architecture.info = timestampToChineseDate(timestamp);
 
       architectures.push(architecture);
     }
