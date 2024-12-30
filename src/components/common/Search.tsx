@@ -81,7 +81,7 @@ export const Search = <T extends {
         value={searchTerm}  
         onChange={(event) => setSearchTerm(event.target.value)}  
         onClear={handleClear}  
-        className={`w-full amplify-searchfield ${isDarkMode ? 'dark' : ''}`}
+        className={`w-full amplify-searchfield ${isDarkMode ? 'dark-search' : ''}`}
         labelHidden={true}
       />  
     </div>  

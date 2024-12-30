@@ -96,3 +96,17 @@
     width: 100%;
   }
 }
+
+/* 在文件的適當位置添加以下樣式 */
+.dark-search input {
+  color: #ffffff !important;
+  background-color: #1a1a1a !important;
+}
+
+.dark-search input::placeholder {
+  color: #888888 !important;
+}
+
+.dark-search svg {
+  color: #ffffff !important;
+}
