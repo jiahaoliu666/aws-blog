@@ -1,8 +1,8 @@
 export interface Knowledge {
     article_id: string;
     title: string;
-    published_at: string;
-    info: string;
+    published_at?: string;
+    info?: string;
     description: string;
     link: string;
     summary?: string;

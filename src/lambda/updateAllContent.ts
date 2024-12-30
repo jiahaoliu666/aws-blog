@@ -40,8 +40,8 @@ const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
   solutions: 1, // 更新解決方案數量
-  architecture: 2, // 更新架構數量
-  knowledge: 1, // 更新知識中心數量
+  architecture: 1, // 更新架構數量
+  knowledge: 2, // 更新知識中心數量
 };
 
 const prompts = {
@@ -171,6 +171,7 @@ async function saveToDynamoDB(
 
   const contentId = uuidv4();
   const timestamp = Math.floor(Date.now() / 1000);
+  const chineseDateFormat = timestampToChineseDate(timestamp);
 
   const params = {
     TableName: tableName,
@@ -181,9 +182,9 @@ async function saveToDynamoDB(
       link: { S: content.link },
       summary: { S: summary },
       created_at: { N: String(timestamp) },
+      info: { S: chineseDateFormat },
       ...(content.description && { description: { S: content.description } }),
       ...(translatedDescription && { translated_description: { S: translatedDescription } }),
-      ...(content.info && { info: { S: content.info } }),
     },
   };
 
@@ -395,7 +396,7 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
         const link = titleElement?.getAttribute('href') || '沒有連結';
         const description = descriptionElement?.textContent?.trim() || '沒有描述';
         
-        return { title: '', description, link };
+        return { title: '', description, link, info: '' };
       });
     });
 
@@ -419,6 +420,10 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
         article.title = await page.$eval('.KCArticleView_title___TWq1 h1', 
           (element) => element.textContent?.trim() || '沒有標題'
         );
+
+        // 加入時間戳並轉換為中文日期格式
+        const timestamp = Math.floor(Date.now() / 1000);
+        article.info = timestampToChineseDate(timestamp);
         
         await saveToDynamoDB(article, 'knowledge', 'AWS_Blog_Knowledge');
       } catch (error) {

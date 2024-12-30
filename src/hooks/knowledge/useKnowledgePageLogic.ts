@@ -50,6 +50,7 @@ function useKnowledgePageLogic() {
             isFavorite: !!favorites.find(fav => fav.article_id === item.article_id),
             translated_description: item.translated_description || item.description || '',
             translated_title: item.translated_title || item.title || '',
+            info: item.info || ''
         }));
     }, [fetchedKnowledge, favorites, language]);
 

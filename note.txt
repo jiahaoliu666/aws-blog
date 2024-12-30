@@ -58,7 +58,7 @@ metaage郵箱 沒有收到 刪除帳號的通知
 優化全部字體
 手機版測試
 移除刷新頁面右下角出現三角形的圖示
-
+解決方案要能正常顯示收藏
 --------
 
 建立爬蟲模組  
@@ -147,4 +147,10 @@ npx tsx src/lambda/updateKnowledge.ts
 npx tsx src/lambda/updateAllContent.ts
 --------
 
+獲取資料表info值
 
+src/hooks/architecture/useArchitecturePageLogic.ts
+src/lambda/updateAllContent.ts
+src/types/architectureType.ts
+src/pages/api/architecture/index.ts
+src/hooks/architecture/useFetchArchitecture.ts

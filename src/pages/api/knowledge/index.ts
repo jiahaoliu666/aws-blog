@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const scanParams = {
         TableName: process.env.DYNAMODB_KNOWLEDGE_TABLE || 'AWS_Blog_Knowledge',
-        ProjectionExpression: "article_id, title, created_at, description, link, summary, translated_title, translated_description"
+        ProjectionExpression: "article_id, title, created_at, info, description, link, summary, translated_title, translated_description"
     };
 
     try {
@@ -33,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             title: language === 'zh-TW' 
                 ? (item.translated_title?.S || item.title?.S) 
                 : item.title?.S,
+            info: item.info?.S,
             published_at: item.created_at?.S,
             description: language === 'zh-TW'
                 ? (item.translated_description?.S || item.description?.S)

@@ -15,6 +15,7 @@ const useFetchKnowledge = (language: string): ExtendedKnowledge[] => {
                 
                 const initializedKnowledgeItems: ExtendedKnowledge[] = data.map((knowledge: Knowledge) => ({
                     ...knowledge,
+                    info: knowledge.info || '',
                     isFavorite: knowledge.isFavorite ?? false,
                     translated_description: knowledge.translated_description || '',
                     translated_title: knowledge.translated_title || '',
