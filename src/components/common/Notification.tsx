@@ -335,7 +335,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                     </span>
                   </div>
                   <h3 className="text-sm text-gray-900 font-medium leading-relaxed
-                    group-hover:text-black line-clamp-2">
+                    group-hover:text-black">
                     <a 
                       href={notification.link} 
                       target="_blank" 
