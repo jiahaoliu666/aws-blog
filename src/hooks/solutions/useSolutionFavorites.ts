@@ -54,7 +54,6 @@ export const useSolutionFavorites = () => {
                 if (response.status === 200) {
                     setFavorites((prev) => [{
                         ...article,
-                        published_at: (article as any).published_at || new Date().toISOString()
                     } as ExtendedSolution, ...prev]);
                     toast.success('已成功加入收藏');
                 }
