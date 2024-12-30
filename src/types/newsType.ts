@@ -1,18 +1,20 @@
 export interface News {
-  article_id: string; 
+  article_id: string;
   title: string;
-  published_at: string;
-  info: string;
-  description: string; 
+  description?: string;
+  info?: string;
   link: string;
   summary?: string;
-  isFavorite?: boolean; 
-  createdAt?: string;
-  author?: string;
-  translated_title?: string;
+  created_at: string;
   translated_description?: string;
+  translated_title?: string;
+  isFavorite?: boolean;
 }
 
-export type ExtendedNews = Omit<News, 'isFavorite'> & { 
-  isFavorite: boolean; 
-};
+export interface ExtendedNews extends News {
+  isFavorite: boolean;
+}
+
+export interface FavoriteItem extends News {
+  userId: string;
+}

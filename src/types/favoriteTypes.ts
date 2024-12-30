@@ -15,6 +15,7 @@ export interface BaseFavorite {
   summary?: string;
   isFavorite: boolean;
   createdAt?: string;
+  created_at: string;
   author?: string;
   translated_title?: string;
   translated_description?: string;
