@@ -40,7 +40,7 @@ const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
   solutions: 1, // 更新解決方案數量
-  architecture: 2, // 更新架構數量
+  architecture: 3, // 更新架構數量
   knowledge: 1, // 更新知識中心數量
 };
 
@@ -511,10 +511,21 @@ async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
         let description = '';
         
         if (descElement) {
-          // 取得第一個文字節點的內容
+          // 處理第一種情況：直接文字節點
           const textNodes = Array.from(descElement.childNodes)
             .filter(node => node.nodeType === Node.TEXT_NODE);
-          description = textNodes[0]?.textContent?.trim() || '';
+          
+          if (textNodes.length > 0) {
+            description = textNodes[0]?.textContent?.trim() || '';
+          }
+          
+          // 如果沒有直接文字節點，處理第二種情況：<p>標籤內的文字
+          if (!description) {
+            const firstP = descElement.querySelector('p');
+            if (firstP) {
+              description = firstP.textContent?.trim() || '';
+            }
+          }
         }
 
         return {
