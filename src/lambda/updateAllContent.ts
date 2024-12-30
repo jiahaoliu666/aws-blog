@@ -76,6 +76,11 @@ const CONTENT_TYPES = {
   architecture: { name: '架構參考', emoji: '🏗️' }
 };
 
+// 標題格式化函數
+function formatTitle(title: string): string {
+  return '【' + title + '】';
+}
+
 // 通用功能函數
 async function checkIfExists(title: string, tableName: string): Promise<boolean | string> {
   const scanParams = {
@@ -154,7 +159,8 @@ async function saveToDynamoDB(
   const exists = await checkIfExists(content.title, tableName);
   if (exists) {
     stats[type].skipped++;
-    logger.info(`${type} 內容已存在，跳過: ${content.title}`);
+    const { emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
+    logger.info(`   ${emoji} 內容已存在，跳過: ${content.title}`);
     return false;
   }
 
@@ -223,19 +229,14 @@ async function gotoWithRetry(
 // 各類型內容的爬蟲函數
 async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.news;
-  logger.info('┌' + '─'.repeat(60) + '┐');
-  logger.info(`│ ${emoji} ${formatTitle(name)}爬取開始${' '.repeat(45 - name.length)}│`);
-  logger.info('└' + '─'.repeat(60) + '┘');
   
   const page = await browser.newPage();
   try {
-    logger.info(`   ⏳ 正在載入頁面...`);
     await gotoWithRetry(page, "https://aws.amazon.com/blogs/", {
       waitUntil: "networkidle2",
       timeout: 60000,
     });
     
-    logger.info(`   🔍 正在解析內容...`);
     const articles = await page.evaluate((count) => {
       const titles = document.querySelectorAll(".m-card-title");
       const infos = document.querySelectorAll(".m-card-info");
@@ -255,23 +256,14 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
     for (const article of articles) {
       await saveToDynamoDB(article, 'news', 'AWS_Blog_News');
     }
-    
-    logger.info('┌' + '─'.repeat(60) + '┐');
-    logger.info(`│ ${emoji} ${formatTitle(name)}爬取完成${' '.repeat(45 - name.length)}│`);
-    logger.info('└' + '─'.repeat(60) + '┘');
   } catch (error) {
-    logger.error('┌' + '─'.repeat(60) + '┐');
-    logger.error(`│ ${emoji} ${formatTitle(name)}爬取失敗${' '.repeat(45 - name.length)}│`);
-    logger.error('└' + '─'.repeat(60) + '┘');
-    logger.error(error as string);
+    logger.error(`   ${emoji} 【${name}】爬取失敗`);
+    logger.error(`   ${error}`);
   }
 }
 
 async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.announcement;
-  logger.info('┌' + '─'.repeat(60) + '┐');
-  logger.info(`│ ${emoji} ${formatTitle(name)}爬取開始${' '.repeat(45 - name.length)}│`);
-  logger.info('└' + '─'.repeat(60) + '┘');
   
   const page = await browser.newPage();
   try {
@@ -313,15 +305,9 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
     for (const announcement of announcements) {
       await saveToDynamoDB(announcement, 'announcement', 'AWS_Blog_Announcement');
     }
-
-    logger.info('┌' + '─'.repeat(60) + '┐');
-    logger.info(`│ ${emoji} ${formatTitle(name)}爬取完成${' '.repeat(45 - name.length)}│`);
-    logger.info('└' + '─'.repeat(60) + '┘');
   } catch (error) {
-    logger.error('┌' + '─'.repeat(60) + '┐');
-    logger.error(`│ ${emoji} ${formatTitle(name)}爬取失敗${' '.repeat(45 - name.length)}│`);
-    logger.error('└' + '─'.repeat(60) + '┘');
-    logger.error(error as string);
+    logger.error(`   ${emoji} 【${name}】爬取失敗`);
+    logger.error(`   ${error}`);
   }
 }
 
@@ -575,56 +561,63 @@ async function broadcastNewContent(contentId: string, type: string): Promise<voi
   }
 }
 
-// 新增進度追蹤函數
-function logProgress(type: string, current: number, total: number, action: string) {
-  const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
-  const percentage = Math.round((current / total) * 100);
-  const progressBar = '█'.repeat(Math.floor(percentage / 5)) + '░'.repeat(20 - Math.floor(percentage / 5));
-  logger.info(`${emoji} ${name} - ${action}`);
-  logger.info(`   進度：${progressBar} ${percentage}% (${current}/${total})`);
-}
-
-// 新增標題格式化函數
-function formatTitle(title: string): string {
-  return '【' + title + '】';
-}
-
 // 修改日誌輸出格式
 function logUpdateResult(type: string, result: { inserted: number, skipped: number, failed: number }) {
   const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
   const total = result.inserted + result.skipped + result.failed;
   
-  logger.info('┌' + '─'.repeat(60) + '┐');
-  logger.info(`│ ${emoji} ${formatTitle(name)}${' '.repeat(45 - name.length)}│`);
-  logger.info('├' + '─'.repeat(60) + '┤');
-  logger.info(`│ ✨ 新增內容：${result.inserted.toString().padEnd(47)}│`);
-  logger.info(`│ ⏭️  跳過內容：${result.skipped.toString().padEnd(46)}│`);
-  logger.info(`│ ❌ 失敗內容：${result.failed.toString().padEnd(47)}│`);
-  logger.info(`│ 📊 處理總數：${total.toString().padEnd(47)}│`);
-  logger.info('└' + '─'.repeat(60) + '┘');
+  const boxWidth = 62; // 增加寬度以確保內容完整顯示
+  const line = '─'.repeat(boxWidth - 2);
+  
+  logger.info(`┌${line}┐`);
+  logger.info(`│ ${emoji} ${formatTitle(name)}${' '.repeat(boxWidth - name.length - emoji.length - 5)}`);
+  logger.info(`├${line}┤`);
+  logger.info(`│ ✨ 新增內容：${result.inserted}${' '.repeat(boxWidth - 13 - result.inserted.toString().length)}`);
+  logger.info(`│ ⏭️  跳過內容：${result.skipped}${' '.repeat(boxWidth - 13 - result.skipped.toString().length)}`);
+  logger.info(`│ ❌ 失敗內容：${result.failed}${' '.repeat(boxWidth - 13 - result.failed.toString().length)}`);
+  logger.info(`│ 📊 處理總數：${total}${' '.repeat(boxWidth - 13 - total.toString().length)}`);
+  logger.info(`└${line}┘`);
 
   if (result.failed > 0) {
-    logger.warn(`⚠️  注意：${formatTitle(name)}有 ${result.failed} 筆內容處理失敗`);
+    const warningMsg = `⚠️  注意：${formatTitle(name)}有 ${result.failed} 筆內容處理失敗`;
+    logger.warn(`┌${line}┐`);
+    logger.warn(`│ ${warningMsg}${' '.repeat(boxWidth - warningMsg.length - 3)}│`);
+    logger.warn(`└${line}┘`);
   }
+}
+
+// 修改進度追蹤函數
+function logProgress(type: string, current: number, total: number, action: string) {
+  const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
+  const percentage = Math.round((current / total) * 100);
+  const progressBar = '█'.repeat(Math.floor(percentage / 5)) + '░'.repeat(20 - Math.floor(percentage / 5));
+  
+  const boxWidth = 62;
+  const line = '─'.repeat(boxWidth - 2);
+  
+  logger.info(`┌${line}┐`);
+  logger.info(`│ ${emoji} ${name} - ${action}${' '.repeat(boxWidth - emoji.length - name.length - action.length - 5)}│`);
+  logger.info(`│ ${progressBar} ${percentage}% (${current}/${total})${' '.repeat(boxWidth - progressBar.length - percentage.toString().length - current.toString().length - total.toString().length - 9)}│`);
+  logger.info(`└${line}┘`);
 }
 
 // 修改主程序的日誌輸出
 export async function updateAllContent(): Promise<void> {
   let browser: puppeteer.Browser | null = null;
   const startTime = Date.now();
+  const boxWidth = 62;
+  const line = '─'.repeat(boxWidth - 2);
 
   try {
-    logger.info('┌' + '─'.repeat(60) + '┐');
-    logger.info(`│ 🚀 AWS 內容更新程序開始${' '.repeat(41)}│`);
-    logger.info(`│ 📅 執行時間：${new Date().toLocaleString().padEnd(43)}│`);
-    logger.info('└' + '─'.repeat(60) + '┘');
+    logger.info(`┌${line}┐`);
+    logger.info(`│ 🚀 AWS 爬取文章程序開始${' '.repeat(boxWidth - 20)}`);
+    logger.info(`│ 📅 執行時間：${new Date().toLocaleString()}${' '.repeat(boxWidth - new Date().toLocaleString().length - 8)}`);
+    logger.info(`└${line}┘`);
     
     browser = await puppeteer.launch({ 
       headless: true,
       args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox']
     });
-    
-    logger.info("🌐 瀏覽器初始化完成");
     
     // 依序執行各項爬取任務
     const tasks = [
@@ -638,7 +631,7 @@ export async function updateAllContent(): Promise<void> {
     for (const task of tasks) {
       const { name, emoji } = CONTENT_TYPES[task.type as keyof typeof CONTENT_TYPES];
       logger.info('┌' + '─'.repeat(60) + '┐');
-      logger.info(`│ ${emoji} 開始處理${formatTitle(name)}${' '.repeat(45 - name.length)}│`);
+      logger.info(`│ ${emoji} 開始處理【${name}】${' '.repeat(60 - emoji.length - name.length - 6)}`);
       logger.info('└' + '─'.repeat(60) + '┘');
       
       await task.fn(browser);
@@ -648,9 +641,9 @@ export async function updateAllContent(): Promise<void> {
     const endTime = Date.now();
     const duration = Math.round((endTime - startTime) / 1000);
     
-    logger.info('┌' + '─'.repeat(60) + '┐');
-    logger.info(`│ 📊 更新執行總結${' '.repeat(47)}│`);
-    logger.info('├' + '─'.repeat(60) + '┤');
+    logger.info(`┌${line}┐`);
+    logger.info(`│ 📊 更新執行總結${' '.repeat(boxWidth - 10)}`);
+    logger.info(`├${line}┤`);
     
     Object.entries(stats).forEach(([type, count]) => {
       logUpdateResult(type, count);
@@ -660,38 +653,34 @@ export async function updateAllContent(): Promise<void> {
     const totalSkipped = Object.values(stats).reduce((sum, count) => sum + count.skipped, 0);
     const totalFailed = Object.values(stats).reduce((sum, count) => sum + count.failed, 0);
     
-    logger.info(`│ ✨ 總更新數量：${totalInserted.toString().padEnd(47)}│`);
-    logger.info(`│ ⏭️  總跳過數量：${totalSkipped.toString().padEnd(46)}│`);
-    logger.info(`│ ❌ 總失敗數量：${totalFailed.toString().padEnd(47)}│`);
-    logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(47 - duration.toString().length)}│`);
-    logger.info('└' + '─'.repeat(60) + '┘');
+    logger.info(`│ ✨ 總更新數量：${totalInserted}${' '.repeat(boxWidth - 13 - totalInserted.toString().length)}│`);
+    logger.info(`│ ⏭️  總跳過數量：${totalSkipped}${' '.repeat(boxWidth - 13 - totalSkipped.toString().length)}│`);
+    logger.info(`│ ❌ 總失敗數量：${totalFailed}${' '.repeat(boxWidth - 13 - totalFailed.toString().length)}│`);
+    logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(boxWidth - 14 - duration.toString().length)}│`);
+    logger.info(`└${line}┘`);
 
     if (totalFailed > 0) {
-      logger.warn(`⚠️  注意：總共有 ${totalFailed} 筆內容處理失敗`);
+      const warningMsg = `⚠️  注意：總共有 ${totalFailed} 筆內容處理失敗`;
+      logger.warn(`┌${line}┐`);
+      logger.warn(`│ ${warningMsg}${' '.repeat(boxWidth - warningMsg.length - 3)}│`);
+      logger.warn(`└${line}┘`);
     }
 
-    logger.info('┌' + '─'.repeat(60) + '┐');
-    logger.info(`│ ✅ 所有更新程序已完成${' '.repeat(43)}│`);
-    logger.info('└' + '─'.repeat(60) + '┘');
+    logger.info(`┌${line}┐`);
+    logger.info(`│ ✅ 所有更新程序已完成${' '.repeat(boxWidth - 14)}`);
+    logger.info(`└${line}┘`);
 
   } catch (error) {
-    logger.error('┌' + '─'.repeat(60) + '┐');
-    logger.error(`│ ❌ 執行更新程序時發生錯誤${' '.repeat(39)}│`);
-    logger.error('└' + '─'.repeat(60) + '┘');
+    logger.error(`┌${line}┐`);
+    logger.error(`│ ❌ 執行更新程序時發生錯誤${' '.repeat(boxWidth - 16)}`);
+    logger.error(`└${line}┘`);
     throw error;
   } finally {
     if (browser) {
       await browser.close();
-      logger.info('==========================================');
-      logger.info("🌐 瀏覽器已關閉");
-      logger.info('==========================================');
     }
   }
 }
-
-// 修改主程序執行部分
-// 移除原本的 if (require.main === module) 判斷
-// 改用 import.meta.url 判斷是否為直接執行
 
 const isDirectlyExecuted = process.argv[1] ? import.meta.url.includes(process.argv[1]) : false;
 
