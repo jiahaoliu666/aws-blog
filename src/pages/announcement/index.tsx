@@ -11,6 +11,8 @@ import Footer from '../../components/common/Footer';
 import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
+import { ExtendedNews } from '@/types/newsType';
+import { FavoriteItem } from '@/types/favoriteTypes';
 
 const AnnouncementPage: React.FC = () => {
     const router = useRouter();
@@ -126,7 +128,7 @@ const AnnouncementPage: React.FC = () => {
                                     article={announcement}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={toggleFavorite}
+                                    toggleFavorite={(article) => toggleFavorite(article as ExtendedAnnouncement | ExtendedNews | FavoriteItem)}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
