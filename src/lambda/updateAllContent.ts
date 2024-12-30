@@ -37,11 +37,11 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
+  announcement: 3, // 更新公告數量
   news: 1, // 更新新聞數量
-  announcement: 1, // 更新公告數量
-  knowledge: 1, // 更新知識中心數量
   solutions: 1, // 更新解決方案數量
-  architecture: 1 // 更新架構數量
+  architecture: 1, // 更新架構數量
+  knowledge: 1, // 更新知識中心數量
 };
 
 const prompts = {
@@ -189,6 +189,9 @@ async function saveToDynamoDB(
     await dbClient.send(new PutItemCommand(params));
     stats[type].inserted++;
 
+    const { emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
+    logger.info(`   ${emoji} 成功處理內容：${translatedTitle}`);
+
     const contentData: ContentData = {
       title: translatedTitle,
       link: content.link,
@@ -273,7 +276,7 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
 
     await gotoWithRetry(
       page,
-      "https://aws.amazon.com/about-aws/whats-new/",
+      "https://aws.amazon.com/about-aws/whats-new/?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all",
       {
         waitUntil: "networkidle2",
         timeout: 60000,
@@ -543,7 +546,7 @@ async function addNotification(
 
   try {
     await dbClient.send(new PutItemCommand(params));
-    logger.info(`成功新增通知: userId=${userId}, content_id=${contentId}, category=${category}`);
+    logger.info(`成功新增通知：\n   👤 用戶ID：${userId}\n   📄 文章ID：${contentId}\n   📑 分類：${category}`);
   } catch (error) {
     logger.error("新增通知失敗:", error);
     throw error;
@@ -621,11 +624,11 @@ export async function updateAllContent(): Promise<void> {
     
     // 依序執行各項爬取任務
     const tasks = [
-      { fn: scrapeNews, type: 'news' },
-      { fn: scrapeAnnouncement, type: 'announcement' },
-      { fn: scrapeKnowledge, type: 'knowledge' },
-      { fn: scrapeSolutions, type: 'solutions' },
-      { fn: scrapeArchitecture, type: 'architecture' }
+      { fn: scrapeAnnouncement, type: 'announcement' },  // 最新公告
+      { fn: scrapeNews, type: 'news' },                 // 最新新聞
+      { fn: scrapeSolutions, type: 'solutions' },       // 解決方案
+      { fn: scrapeArchitecture, type: 'architecture' }, // 架構參考
+      { fn: scrapeKnowledge, type: 'knowledge' }        // 知識中心
     ];
 
     for (const task of tasks) {
