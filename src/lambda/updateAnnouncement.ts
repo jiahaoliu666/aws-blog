@@ -154,7 +154,7 @@ async function saveToDynamoDB(announcement: Announcement): Promise<boolean> {
       info: { S: announcement.info },
       link: { S: announcement.link },
       summary: { S: summary },
-      published_at: { N: String(Math.floor(Date.now() / 1000)) },
+      created_at: { N: String(Math.floor(Date.now() / 1000)) }
     }
   };
 

@@ -136,7 +136,6 @@ async function translateText(text: string): Promise<string> {
 async function insertArticle(article: Article): Promise<boolean> {
   console.log(`開始處理文章: ${article.title}`);
   
-  // 檢查文章是否存在
   const exists = await checkIfExists(article.title);
   if (exists) {
     skippedCount++;
@@ -144,13 +143,14 @@ async function insertArticle(article: Article): Promise<boolean> {
     return false;
   }
 
-  // 格式化日期
   const formatDate = (dateStr: string) => {
-    const [month, day, year] = dateStr.split('/');
+    if (!dateStr) return "沒有日期";
+    const parts = dateStr.trim().split('/');
+    if (parts.length !== 3) return dateStr;
+    const [month, day, year] = parts;
     return `${year}年${month}月${day}日`;
   };
 
-  // 獲取摘要和翻譯標題
   const summary = await summarizeArticle(article.link);
   const translatedTitle = await translateText(article.title);
 
@@ -163,7 +163,7 @@ async function insertArticle(article: Article): Promise<boolean> {
       info: { S: formatDate(article.info) },
       link: { S: article.link },
       summary: { S: summary },
-      published_at: { N: String(Math.floor(Date.now() / 1000)) }
+      created_at: { N: String(Math.floor(Date.now() / 1000)) }
     }
   };
 

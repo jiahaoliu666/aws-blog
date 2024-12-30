@@ -37,7 +37,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 3, // 更新公告數量
+  announcement: 4, // 更新公告數量
   news: 1, // 更新新聞數量
   solutions: 1, // 更新解決方案數量
   architecture: 1, // 更新架構數量
@@ -69,11 +69,11 @@ const stats = {
 
 // 在檔案開頭新增這些常量
 const CONTENT_TYPES = {
-  news: { name: '最新新聞', emoji: '📰' },
   announcement: { name: '最新公告', emoji: '📢' },
-  knowledge: { name: '知識中心', emoji: '📚' },
+  news: { name: '最新新聞', emoji: '📰' },
   solutions: { name: '解決方案', emoji: '💡' },
-  architecture: { name: '架構參考', emoji: '🏗️' }
+  architecture: { name: '架構參考', emoji: '🏗️' },
+  knowledge: { name: '知識中心', emoji: '📚' },
 };
 
 // 標題格式化函數
@@ -229,6 +229,17 @@ async function gotoWithRetry(
   }
 }
 
+// 在檔案開頭新增日期轉換函數
+function convertDateFormat(dateStr: string): string {
+  try {
+    const [month, day, year] = dateStr.split('/');
+    return `${year}年${month}月${day}日`;
+  } catch (error) {
+    logger.error('日期格式轉換失敗:', error);
+    return dateStr;
+  }
+}
+
 // 各類型內容的爬蟲函數
 async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.news;
@@ -306,6 +317,8 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
     }, FETCH_COUNTS.announcement);
 
     for (const announcement of announcements) {
+      // 轉換日期格式
+      announcement.info = convertDateFormat(announcement.info);
       await saveToDynamoDB(announcement, 'announcement', 'AWS_Blog_Announcement');
     }
   } catch (error) {
