@@ -38,7 +38,7 @@ dotenv.config({ path: ".env.local" });
 // 常量定義
 const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
-  news: 2, // 更新新聞數量
+  news: 1, // 更新新聞數量
   solutions: 1, // 更新解決方案數量
   architecture: 1, // 更新架構數量
   knowledge: 1, // 更新知識中心數量
@@ -250,6 +250,15 @@ function extractDate(info: string): string {
   return info;
 }
 
+// 新增一個日期轉換的輔助函數
+function timestampToChineseDate(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${year}年${month}月${day}日`;
+}
+
 // 各類型內容的爬蟲函數
 async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.news;
@@ -448,7 +457,12 @@ async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
         title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
         description: el.querySelector('.m-desc')?.textContent?.trim() || '沒有描述',
         link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
+        info: ''
       }));
+
+      // 加入時間戳並轉換為中文日期格式
+      const timestamp = Math.floor(Date.now() / 1000);
+      solution.info = timestampToChineseDate(timestamp);
 
       solutions.push(solution);
     }

@@ -184,7 +184,7 @@ const Card: React.FC<CardProps> = ({
                     {highlightText(article.info)}
                 </span>
             )}
-            {sourcePage !== '最新公告' && (
+            {sourcePage !== '最新公告' && displayDescription && (
                 <p className="mt-2">{highlightText(displayDescription)}</p>
             )}
             <div className="flex justify-between items-center mt-4">
