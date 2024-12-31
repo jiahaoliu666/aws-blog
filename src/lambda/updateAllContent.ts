@@ -37,6 +37,7 @@ interface NotificationUser {
   lineNotification?: { BOOL: boolean };
   email?: { S: string };
   lineId?: { S: string };
+  webhookUrl?: { S: string };
 }
 
 interface FailedNotification {
@@ -72,13 +73,24 @@ const dbClient = new DynamoDBClient({
   region: "ap-northeast-1",
 });
 
-// 統計計數器
-const stats = {
-  announcement: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
-  news: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
-  solutions: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
-  architecture: { inserted: 0, skipped: 0, failed: 0, notifications: 0 },
-  knowledge: { inserted: 0, skipped: 0, failed: 0, notifications: 0 }
+// 在檔案開頭定義 StatsType
+type StatsType = {
+  [K in ContentType]: {
+    inserted: number;
+    skipped: number;
+    failed: number;
+    notifications: number;
+    notificationsFailed: number;
+  }
+};
+
+// 修改 stats 的宣告
+const stats: StatsType = {
+  announcement: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
+  news: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
+  solutions: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
+  architecture: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
+  knowledge: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 }
 };
 
 // 在檔案開頭新增這些常量
@@ -87,7 +99,7 @@ const CONTENT_TYPES = {
   news: { name: '最新新聞', emoji: '📰' },
   solutions: { name: '解決方案', emoji: '💡' },
   architecture: { name: '架構參考', emoji: '🏗️' },
-  knowledge: { name: '知識中心', emoji: '📚' },
+  knowledge: { name: '知識中心', emoji: '📚' }
 };
 
 // 新增一個型別來定義允許的內容類型
@@ -574,48 +586,52 @@ async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
 
 // 通知相關函數
 async function sendNotifications(
-  contentType: ContentType,
+  type: ContentType,
   article: ContentData,
   users: NotificationUser[]
 ): Promise<void> {
-  // ... 現有的通知邏輯 ...
+  try {
+    // 篩選出啟用 Discord 通知的用戶
+    const discordUsers = users.filter(user => 
+      user.discordNotification?.BOOL && user.webhookUrl?.S
+    );
+    
+    if (discordUsers.length > 0) {
+      const notificationType = mapTypeToNotificationType(type);
+      const contentType = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
+      
+      for (const user of discordUsers) {
+        if (!user.webhookUrl?.S) continue;
+        
+        try {
+          // 使用用戶特定的 webhook URL
+          const success = await discordService.sendNotification(
+            user.webhookUrl.S,
+            notificationType,
+            article.title,
+            `${article.summary}\n\n🔗 詳細內容：${article.link}`
+          );
 
-  // 新增 Discord 通知邏輯
-  const discordUsers = users.filter(user => 
-    user.discordNotification?.BOOL && user.discordId?.S
-  );
-
-  if (discordUsers.length > 0) {
-    try {
-      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[
-        contentType.toUpperCase() as keyof typeof DISCORD_MESSAGE_TEMPLATES.NOTIFICATION
-      ];
-
-      if (messageTemplate) {
-        const message = messageTemplate(
-          article.title,
-          `${article.summary}\n\n閱讀全文: ${article.link}`
-        );
-
-        await discordService.sendNotification(
-          DISCORD_CONFIG.WEBHOOK_URL,
-          contentType.toUpperCase() as 'ANNOUNCEMENT' | 'NEWS' | 'SYSTEM',
-          article.title,
-          `${article.summary}\n\n閱讀全文: ${article.link}`
-        );
-
-        stats[contentType].notifications += discordUsers.length;
-        logger.info(`成功發送 Discord 通知給 ${discordUsers.length} 位用戶`);
+          if (success) {
+            stats[type as ContentType].notifications++;
+            logger.info(`成功發送 Discord 通知給用戶 ${user.userId.S}`);
+          } else {
+            logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S})`);
+          }
+        } catch (error) {
+          logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S}):`, error);
+          failedNotifications.push({
+            userId: user.userId.S,
+            articleId: article.link,
+            type: 'discord',
+            error: error instanceof Error ? error.message : '未知錯誤'
+          });
+        }
       }
-    } catch (error) {
-      logger.error('發送 Discord 通知失敗:', error);
-      failedNotifications.push(...discordUsers.map(user => ({
-        userId: user.userId.S,
-        articleId: article.title,
-        type: 'discord',
-        error: error instanceof Error ? error.message : '未知錯誤'
-      })));
     }
+  } catch (error) {
+    logger.error('發送通知時發生錯誤:', error);
+    throw error;
   }
 }
 
@@ -733,7 +749,7 @@ async function broadcastNewContent(contentId: string, type: string): Promise<voi
         );
 
         if (success) {
-          stats[type as keyof typeof stats].notifications += users.length;
+          stats[type as ContentType].notifications += users.length;
           logger.info(`成功發送 Discord 通知給 ${users.length} 位用戶`);
           return;
         }
@@ -745,6 +761,8 @@ async function broadcastNewContent(contentId: string, type: string): Promise<voi
         retryCount++;
         
         if (retryCount === maxRetries) {
+          // 增加通知失敗計數
+          stats[type as ContentType].notificationsFailed++;
           // 將失敗的通知加入重試佇列
           failedNotifications.push(...users.map(user => ({
             userId: user.userId.S,
@@ -758,13 +776,15 @@ async function broadcastNewContent(contentId: string, type: string): Promise<voi
       }
     }
   } catch (error) {
+    // 增加通知失敗計數
+    stats[type as ContentType].notificationsFailed++;
     logger.error('廣播新內容時發生錯誤:', error);
     throw error;
   }
 }
 
 // 修改日誌輸出格式
-function logUpdateResult(type: string, result: { inserted: number, skipped: number, failed: number, notifications: number }) {
+function logUpdateResult(type: string, result: { inserted: number, skipped: number, failed: number, notifications: number, notificationsFailed: number }) {
   const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
   const total = result.inserted + result.skipped + result.failed;
   
@@ -778,11 +798,12 @@ function logUpdateResult(type: string, result: { inserted: number, skipped: numb
   logger.info(`│ ⏭️  跳過內容：${result.skipped}${' '.repeat(boxWidth - 13 - result.skipped.toString().length)}`);
   logger.info(`│ ❌ 失敗內容：${result.failed}${' '.repeat(boxWidth - 13 - result.failed.toString().length)}`);
   logger.info(`│ 👥 通知數量：${result.notifications}${' '.repeat(boxWidth - 13 - result.notifications.toString().length)}`);
+  logger.info(`│ 📊 通知失敗：${result.notificationsFailed}${' '.repeat(boxWidth - 13 - result.notificationsFailed.toString().length)}`);
   logger.info(`│ 📊 處理總數：${total}${' '.repeat(boxWidth - 13 - total.toString().length)}`);
   logger.info(`└${line}┘`);
 
-  if (result.failed > 0) {
-    const warningMsg = `⚠️  注意：${formatTitle(name)}有 ${result.failed} 筆內容處理失敗`;
+  if (result.failed > 0 || result.notificationsFailed > 0) {
+    const warningMsg = `⚠️  注意：${formatTitle(name)}有 ${result.failed} 筆內容處理失敗，${result.notificationsFailed} 筆通知發送失敗`;
     logger.warn(`┌${line}┐`);
     logger.warn(`│ ${warningMsg}${' '.repeat(boxWidth - warningMsg.length - 3)}│`);
     logger.warn(`└${line}┘`);
@@ -817,7 +838,7 @@ function mapTypeToNotificationType(type: string): "ANNOUNCEMENT" | "NEWS" | "SYS
   return (typeMap[type as keyof typeof typeMap] || "SYSTEM");
 }
 
-// 新增獲取啟用 Discord 通知用戶的函數
+// 修改獲取 Discord 通知用戶的函數
 async function getDiscordNotificationUsers(): Promise<NotificationUser[]> {
   try {
     const params = {
@@ -825,11 +846,35 @@ async function getDiscordNotificationUsers(): Promise<NotificationUser[]> {
       FilterExpression: "discordNotification = :enabled",
       ExpressionAttributeValues: {
         ":enabled": { BOOL: true }
-      }
+      },
+      ProjectionExpression: "userId, discordId, discordNotification, webhookUrl"
     };
 
     const data = await dbClient.send(new ScanCommand(params));
-    return (data.Items || []) as unknown as NotificationUser[];
+    
+    if (!data.Items || data.Items.length === 0) {
+      logger.info('沒有啟用 Discord 通知的用戶');
+      return [];
+    }
+
+    // 驗證每個用戶的 webhook URL
+    const validUsers = data.Items.filter(item => {
+      const webhookUrl = item.webhookUrl?.S;
+      if (!webhookUrl) {
+        logger.warn(`用戶 ${item.userId.S} 缺少 webhook URL`);
+        return false;
+      }
+      
+      if (!webhookUrl.match(/^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/)) {
+        logger.warn(`用戶 ${item.userId.S} 的 webhook URL 格式無效`);
+        return false;
+      }
+      
+      return true;
+    });
+
+    logger.info(`找到 ${validUsers.length} 個有效的 Discord 通知用戶`);
+    return validUsers as unknown as NotificationUser[];
   } catch (error) {
     logger.error('獲取 Discord 通知用戶失敗:', error);
     return [];
@@ -902,16 +947,18 @@ export async function updateAllContent(): Promise<void> {
     const totalSkipped = Object.values(stats).reduce((sum, count) => sum + count.skipped, 0);
     const totalFailed = Object.values(stats).reduce((sum, count) => sum + count.failed, 0);
     const totalNotifications = Object.values(stats).reduce((sum, count) => sum + count.notifications, 0);
+    const totalNotificationsFailed = Object.values(stats).reduce((sum, count) => sum + count.notificationsFailed, 0);
     
     logger.info(`│ ✨ 總更新數量：${totalInserted}${' '.repeat(boxWidth - 13 - totalInserted.toString().length)}│`);
     logger.info(`│ ⏭️  總跳過數量：${totalSkipped}${' '.repeat(boxWidth - 13 - totalSkipped.toString().length)}│`);
     logger.info(`│ ❌ 總失敗數量：${totalFailed}${' '.repeat(boxWidth - 13 - totalFailed.toString().length)}│`);
     logger.info(`│ 👥 總通知數量：${totalNotifications}${' '.repeat(boxWidth - 13 - totalNotifications.toString().length)}│`);
+    logger.info(`│ 🕒 通知失敗總數：${totalNotificationsFailed}${' '.repeat(boxWidth - 15 - totalNotificationsFailed.toString().length)}│`);
     logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(boxWidth - 14 - duration.toString().length)}│`);
     logger.info(`└${line}┘`);
 
-    if (totalFailed > 0) {
-      const warningMsg = `⚠️  注意：總共有 ${totalFailed} 筆內容處理失敗`;
+    if (totalFailed > 0 || totalNotificationsFailed > 0) {
+      const warningMsg = `⚠️  注意：總共有 ${totalFailed} 筆內容處理失敗，${totalNotificationsFailed} 筆通知發送失敗`;
       logger.warn(`┌${line}┐`);
       logger.warn(`│ ${warningMsg}${' '.repeat(boxWidth - warningMsg.length - 3)}│`);
       logger.warn(`└${line}┘`);

@@ -1,5 +1,6 @@
 import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '@/config/discord';
 import { logger } from '@/utils/logger';
+import { GetItemCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 interface DiscordUser {
   id: string;
@@ -10,8 +11,11 @@ interface DiscordUser {
 export class DiscordService {
   private static instance: DiscordService;
   private retryCount: number = 0;
+  private dbClient: DynamoDBClient;
 
-  private constructor() {}
+  private constructor() {
+    this.dbClient = new DynamoDBClient({ region: 'ap-northeast-1' });
+  }
 
   public static getInstance(): DiscordService {
     if (!DiscordService.instance) {
@@ -57,8 +61,78 @@ export class DiscordService {
     title: string,
     content: string
   ): Promise<boolean> {
-    this.retryCount = 0; // 重置重試計數
-    return this.sendNotificationWithRetry(webhookUrl, type, title, content);
+    try {
+      // 先驗證 webhook
+      const isValid = await this.validateWebhook(webhookUrl);
+      if (!isValid) {
+        logger.error('Discord webhook 無效，跳過發送');
+        return false;
+      }
+
+      // 驗證 webhook URL 格式
+      if (!webhookUrl.match(/^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/)) {
+        logger.error('無效的 Discord Webhook URL 格式');
+        return false;
+      }
+
+      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
+      if (!messageTemplate) {
+        throw new Error(`找不到對應的消息模板: ${type}`);
+      }
+
+      const message = messageTemplate(title, content);
+      
+      // 添加重試機制
+      let retries = 0;
+      const maxRetries = 3;
+
+      while (retries < maxRetries) {
+        try {
+          const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(message)
+          });
+
+          if (response.ok) {
+            return true;
+          }
+
+          const errorData = await response.json();
+          
+          // 處理特定錯誤
+          if (response.status === 404) {
+            logger.error('Discord webhook 不存在或已失效');
+            return false;
+          }
+
+          if (response.status === 429) {
+            // 處理速率限制
+            const retryAfter = response.headers.get('Retry-After');
+            await new Promise(resolve => 
+              setTimeout(resolve, (parseInt(retryAfter || '1000')))
+            );
+            retries++;
+            continue;
+          }
+
+          throw new Error(`Discord API 錯誤: ${errorData.message || '未知錯誤'}`);
+        } catch (error) {
+          retries++;
+          if (retries === maxRetries) {
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
+      }
+
+      return false;
+    } catch (error) {
+      logger.error('發送 Discord 通知失敗:', error);
+      return false;
+    }
   }
 
   // 新增私有的重試方法
@@ -196,6 +270,121 @@ export class DiscordService {
     } catch (error) {
       logger.error('交換訪問令牌失敗:', error);
       throw error;
+    }
+  }
+
+  public async testWebhook(): Promise<boolean> {
+    try {
+      const testMessage = {
+        content: "測試 Discord Webhook 連接",
+        username: "AWS Blog 365",
+        avatar_url: "https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/bot-avatar.png"
+      };
+
+      const response = await fetch(DISCORD_CONFIG.WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(testMessage)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        logger.error('Webhook 測試失敗:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('Webhook 測試過程發生錯誤:', error);
+      return false;
+    }
+  }
+
+  public async createWebhookForUser(accessToken: string, channelId: string): Promise<string> {
+    try {
+      // 使用用戶的 access token 創建 webhook
+      const response = await fetch(
+        `${DISCORD_CONFIG.API_ENDPOINT}/channels/${DISCORD_CONFIG.NOTIFICATION_CHANNEL_ID}/webhooks`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: 'AWS Blog 365 Notifications',
+            avatar: 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/bot-avatar.png'
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`創建 webhook 失敗: ${error.message}`);
+      }
+
+      const webhook = await response.json();
+      return `https://discord.com/api/webhooks/${webhook.id}/${webhook.token}`;
+    } catch (error) {
+      logger.error('創建 Discord webhook 失敗:', error);
+      throw error;
+    }
+  }
+
+  public async sendNotificationToUser(
+    userId: string,
+    type: 'ANNOUNCEMENT' | 'NEWS' | 'SYSTEM',
+    title: string,
+    content: string
+  ): Promise<boolean> {
+    try {
+      // 獲取用戶的 webhook URL
+      const params = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
+        },
+        ProjectionExpression: "webhookUrl"
+      };
+
+      const result = await this.dbClient.send(new GetItemCommand(params));
+      const webhookUrl = result.Item?.webhookUrl?.S;
+
+      if (!webhookUrl) {
+        logger.error(`用戶 ${userId} 沒有有效的 webhook URL`);
+        return false;
+      }
+
+      // 使用用戶特定的 webhook 發送通知
+      return await this.sendNotification(webhookUrl, type, title, content);
+    } catch (error) {
+      logger.error(`發送通知給用戶 ${userId} 失敗:`, error);
+      return false;
+    }
+  }
+
+  public async validateWebhook(webhookUrl: string): Promise<boolean> {
+    try {
+      // 首先檢查 URL 格式
+      if (!webhookUrl.match(/^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/)) {
+        logger.error('無效的 Discord Webhook URL 格式');
+        return false;
+      }
+
+      // 發送測試請求
+      const response = await fetch(webhookUrl);
+      
+      if (response.status === 404) {
+        logger.error('Discord webhook 不存在或已失效');
+        return false;
+      }
+
+      return response.ok;
+    } catch (error) {
+      logger.error('驗證 webhook 失敗:', error);
+      return false;
     }
   }
 }

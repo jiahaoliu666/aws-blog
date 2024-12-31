@@ -24,4 +24,18 @@ export interface DiscordWebhook {
   application_id: string | null;
   token: string;
   url: string;
+}
+
+export interface DiscordSettings {
+  discordId: string;
+  discordNotification: boolean;
+  webhookUrl?: string;
+  updatedAt: string;
+}
+
+export interface NotificationUser {
+  userId: { S: string };
+  discordId?: { S: string };
+  discordNotification?: { BOOL: boolean };
+  webhookUrl?: { S: string };
 } 

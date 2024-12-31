@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { DISCORD_CONFIG } from '@/config/discord';
 import { logger } from '@/utils/logger';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { discordService } from '@/services/discordService';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
@@ -96,32 +97,34 @@ export default async function handler(
 
     const userData = await userResponse.json();
 
-    // 直接更新 DynamoDB
-    const params = {
+    // 在成功獲取用戶信息後，創建 webhook
+    const webhookUrl = await discordService.createWebhookForUser(
+      tokenData.access_token,
+      DISCORD_CONFIG.NOTIFICATION_CHANNEL_ID
+    );
+
+    // 更新用戶的 webhook 設定
+    const updateParams = {
       TableName: "AWS_Blog_UserNotificationSettings",
       Key: {
-        userId: { S: userId }
+        userId: { S: userId as string }
       },
-      UpdateExpression: `
-        SET discordNotification = :discordNotification,
-            discordId = :discordId,
-            updatedAt = :updatedAt
-      `,
+      UpdateExpression: "SET discordId = :did, discordNotification = :dn, webhookUrl = :wh, updatedAt = :ua",
       ExpressionAttributeValues: {
-        ':discordNotification': { BOOL: true },
-        ':discordId': { S: userData.id },
-        ':updatedAt': { S: new Date().toISOString() }
+        ":did": { S: userData.id },
+        ":dn": { BOOL: true },
+        ":wh": { S: webhookUrl },
+        ":ua": { S: new Date().toISOString() }
       }
     };
 
-    const command = new UpdateItemCommand(params);
-    await dynamoClient.send(command);
-
-    logger.info('Discord 設定已更新:', {
-      userId: req.query.state,
-      discordId: userData.id,
-      discordNotification: true
-    });
+    try {
+      await dynamoClient.send(new UpdateItemCommand(updateParams));
+      logger.info('成功更新用戶 Discord 設定和 webhook');
+    } catch (error) {
+      logger.error('更新用戶 Discord 設定失敗:', error);
+      throw error;
+    }
 
     // 構建授權成功的 HTML 回應
     const html = `

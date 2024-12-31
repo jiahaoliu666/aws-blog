@@ -33,6 +33,8 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 
 添加 discord 通知功能
 
+爬文新增通知失敗的數量
+
 --------
 待執行：
 
@@ -41,6 +43,8 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 首頁最新文章要能顯示資料表的時間差
 
 通知介面能顯示完整的文章數量嗎？分類要能顯示正確數量
+
+新增line discord email 通知人數的總數
 
 --------
 最後執行：
@@ -68,20 +72,22 @@ src/hooks/favorite/useFavoritePageLogic.ts
 --------
 
 discord 通知功能
-src/services/discordService.ts
-src/hooks/profile/useNotificationSettings.ts
-src/components/profile/sections/NotificationSection.tsx
-src/pages/api/discord/callback.ts
-src/pages/api/profile/notification-settings.ts
-src/utils/errorHandler.ts
-src/pages/api/profile/notification-settings/[userId].ts
-src/types/discordTypes.ts
-src/services/discordBotService.ts
-src/pages/api/discord/auth.ts
-src/services/userService.ts
-src/pages/api/discord/webhook.ts
-src/pages/api/profile/discord-verification.ts
+src/lambda/updateAllContent.ts
 src/config/discord.ts
+src/pages/api/profile/discord-verification.ts
+src/pages/api/discord/webhook.ts
+src/services/userService.ts
+src/pages/api/discord/auth.ts
+src/services/discordBotService.ts
+src/types/discordTypes.ts
+src/pages/api/profile/notification-settings/[userId].ts
+src/utils/errorHandler.ts
+src/pages/api/profile/notification-settings.ts
+src/pages/api/discord/callback.ts
+src/components/profile/sections/NotificationSection.tsx
+src/hooks/profile/useNotificationSettings.ts
+src/services/discordService.ts
+src/utils/notificationUtils.ts
 
 --------
 

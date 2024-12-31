@@ -314,25 +314,20 @@ export const useNotificationSettings = (userId: string) => {
       }
 
       if (data.authUrl) {
-        // 開啟 Discord 授權視窗
         const authWindow = window.open(
           data.authUrl, 
           'discord-auth',
           'width=800,height=600,location=yes,resizable=yes,scrollbars=yes,status=yes'
         );
 
-        // 檢查視窗是否被封鎖
         if (authWindow === null) {
           showToast('請允許開啟彈出視窗以完成 Discord 授權', 'warning');
         }
-      } else {
-        throw new Error('無法獲取授權 URL');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       showToast('Discord 授權失敗', 'error');
       logger.error('Discord 授權失敗:', errorMessage);
-      setIsDiscordVerifying(false);
     }
   };
 
