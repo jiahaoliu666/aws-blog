@@ -15,8 +15,17 @@ export interface Architecture {
     tags?: string[];
 }
 
-export type ExtendedArchitecture = Architecture & {
+export interface ExtendedArchitecture {
+    article_id: string;
+    title: string;
+    description?: string;
+    link?: string;
     isFavorite: boolean;
-    translated_description?: string;
+    itemType?: string;
+    created_at?: string;
+    published_at?: string;
     translated_title?: string;
-}; 
+    translated_description?: string;
+    info?: string;
+    summary?: string;
+} 

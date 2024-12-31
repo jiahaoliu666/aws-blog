@@ -12,6 +12,8 @@ export const useSolutionFavorites = () => {
     const { user } = useAuth() as { user: User | null };
     const [favorites, setFavorites] = useState<ExtendedSolution[]>([]);
     const toast = useToastContext();
+
+    // 加載收藏
     useEffect(() => {
         const fetchFavorites = async () => {
             if (user) {
@@ -20,6 +22,7 @@ export const useSolutionFavorites = () => {
                     setFavorites(response.data.items || []);
                 } catch (error) {
                     console.error('獲取收藏解決方案失敗:', error);
+                    toast.error('獲取收藏失敗');
                 }
             }
         };
@@ -28,7 +31,7 @@ export const useSolutionFavorites = () => {
 
     const toggleFavorite = async (article: ExtendedSolution | ExtendedNews | FavoriteItem | ExtendedAnnouncement) => {
         if (!user) {
-            alert('請先登入才能收藏！');
+            toast.error('請先登入才能收藏！');
             return;
         }
 
@@ -54,13 +57,14 @@ export const useSolutionFavorites = () => {
                 if (response.status === 200) {
                     setFavorites((prev) => [{
                         ...article,
+                        isFavorited: true
                     } as ExtendedSolution, ...prev]);
                     toast.success('已成功加入收藏');
                 }
             }
         } catch (error) {
             console.error('收藏操作失敗:', error);
-            alert('收藏操作失敗，請稍後再試');
+            toast.error('收藏操作失敗，請稍後再試');
         }
     };
 

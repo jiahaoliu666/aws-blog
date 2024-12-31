@@ -45,7 +45,7 @@ export const useArchitecturePageLogic = () => {
     const { favorites, toggleFavorite } = useArchitectureFavorites();
 
     const architectures = useMemo(() => {
-        return fetchedArchitectures.map((architecture: Architecture) => ({
+        return fetchedArchitectures.map((architecture: ExtendedArchitecture) => ({
             ...architecture,
             isFavorite: !!favorites.find((fav: ExtendedArchitecture) => fav.article_id === architecture.article_id),
             translated_description: architecture.translated_description || architecture.description || '',

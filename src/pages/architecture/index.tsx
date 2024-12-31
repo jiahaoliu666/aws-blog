@@ -125,7 +125,7 @@ const ArchitecturePage: React.FC = () => {
                                     article={architecture}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={toggleFavorite}
+                                    toggleFavorite={(article) => toggleFavorite(article as ExtendedArchitecture)}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}

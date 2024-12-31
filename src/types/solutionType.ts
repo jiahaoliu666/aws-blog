@@ -11,5 +11,5 @@ export interface Solution {
 }
 
 export interface ExtendedSolution extends Solution {
-    isFavorited?: boolean;
+    isFavorited: boolean;
 } 

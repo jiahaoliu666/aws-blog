@@ -112,8 +112,8 @@ const SolutionsPage: React.FC = () => {
                 />
 
                 <Search
-                    articles={solutions}
-                    setFilteredArticles={setFilteredSolutions}
+                    articles={solutions as any[]}
+                    setFilteredArticles={setFilteredSolutions as any}
                     isDarkMode={isDarkMode}
                     onSearch={setSearchTerm}
                 />

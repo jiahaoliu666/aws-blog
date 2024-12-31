@@ -15,8 +15,16 @@ export interface Knowledge {
     tags?: string[];
 }
 
-export interface ExtendedKnowledge extends Knowledge {
+export interface ExtendedKnowledge {
+    article_id: string;
+    title: string;
+    description?: string;
+    link?: string;
     isFavorite: boolean;
-    translated_description?: string;
+    itemType?: string;
+    created_at?: string;
     translated_title?: string;
+    translated_description?: string;
+    info?: string;
+    summary?: string;
 } 

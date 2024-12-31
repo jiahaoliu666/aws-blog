@@ -7,15 +7,17 @@ import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 import { ExtendedAnnouncement } from '@/types/announcementType';
 import { ExtendedSolution } from '@/types/solutionType';
+import { ExtendedKnowledge } from '@/types/knowledgeType';
+import { ExtendedArchitecture } from '@/types/architectureType';
 
 interface CardProps {
     children?: React.ReactNode;
-    article: ExtendedNews | FavoriteItem | ExtendedAnnouncement | ExtendedSolution;
+    article: ExtendedNews | FavoriteItem | ExtendedAnnouncement | ExtendedSolution | ExtendedKnowledge | ExtendedArchitecture;
     index: number;
     gridView: boolean;
     language: string;
     showSummaries: boolean;
-    toggleFavorite: (article: ExtendedNews | FavoriteItem | ExtendedAnnouncement | ExtendedSolution) => Promise<void>;
+    toggleFavorite: (article: ExtendedNews | FavoriteItem | ExtendedAnnouncement | ExtendedSolution | ExtendedKnowledge | ExtendedArchitecture) => Promise<void>;
     isFavorited: boolean;
     sourcePage: string;
     searchTerm?: string;
@@ -99,7 +101,7 @@ const Card: React.FC<CardProps> = ({
             await logRecentArticle(
                 article.article_id,
                 displayTitle,
-                article.link,
+                article.link || '#',
                 actualSource,
             );
         } else {

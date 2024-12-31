@@ -26,7 +26,6 @@ function useSolutionsPageLogic() {
     const [isLanguageChanging, setIsLanguageChanging] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [solutions, setSolutions] = useState<ExtendedSolution[]>([]);
 
     useEffect(() => {
         setIsClient(true);
@@ -47,17 +46,21 @@ function useSolutionsPageLogic() {
     const fetchedSolutions = useFetchSolutions(language);
     const { favorites, toggleFavorite } = useSolutionFavorites();
 
-    useEffect(() => {
-        const updatedSolutions = fetchedSolutions.map(solution => ({
+    const solutions = useMemo(() => {
+        return fetchedSolutions.map(solution => ({
             ...solution,
-            isFavorite: !!favorites.find(fav => fav.article_id === solution.article_id),
+            isFavorited: favorites.some(fav => fav.article_id === solution.article_id),
+            translated_description: solution.translated_description || solution.description || '',
+            translated_title: solution.translated_title || solution.title || '',
+            info: solution.info || ''
         }));
-        setSolutions(updatedSolutions);
     }, [fetchedSolutions, favorites]);
 
     // 分頁和過濾邏輯
     useEffect(() => {
-        let updatedSolutions = showFavorites ? favorites : filteredSolutions;
+        let updatedSolutions = showFavorites 
+            ? solutions.filter(solution => solution.isFavorited)
+            : solutions;
 
         if (startDate || endDate) {
             updatedSolutions = updatedSolutions.filter(solution => {
@@ -74,6 +77,8 @@ function useSolutionsPageLogic() {
             return sortOrder === "newest" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
         });
 
+        setFilteredSolutions(updatedSolutions);
+
         const newTotalPages = Math.ceil(updatedSolutions.length / 12);
         setTotalPages(newTotalPages);
 
@@ -82,9 +87,9 @@ function useSolutionsPageLogic() {
         setCurrentSolutions(newCurrentSolutions);
 
         if (currentPage > newTotalPages && newTotalPages > 0) {
-            setCurrentPage(newTotalPages);
+            setCurrentPage(1);
         }
-    }, [filteredSolutions, showFavorites, startDate, endDate, sortOrder, currentPage, favorites]);
+    }, [solutions, showFavorites, startDate, endDate, sortOrder, currentPage, favorites]);
 
     const handlePageChange = useCallback((newPageIndex?: number) => {
         if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {
@@ -103,33 +108,12 @@ function useSolutionsPageLogic() {
         }
     };
 
-    const processArticles = (articles: ExtendedSolution[]) => {
-        return articles.map(article => ({
-            ...article,
-            info: article.info || '',
-            title: article.title,
-            translated_title: article.translated_title,
-            description: article.description,
-            translated_description: article.translated_description,
-            link: article.link,
-            article_id: article.article_id,
-        }));
-    };
-
     const fetchSolutions = async () => {
         try {
             setIsLoading(true);
             const response = await fetch('/api/solutions');
             const data = await response.json();
-            
-            // 確保處理 info 欄位
-            const processedSolutions = data.solutions.map((solution: Solution) => ({
-                ...solution,
-                info: solution.info || '', // 確保即使沒有 info 也有預設值
-            }));
-
-            setSolutions(processedSolutions);
-            setFilteredSolutions(processedSolutions);
+            setFilteredSolutions(data.solutions);
         } catch (error) {
             console.error('獲取解決方案失敗:', error);
             setError('獲取解決方案失敗，請稍後重試');
@@ -169,9 +153,6 @@ function useSolutionsPageLogic() {
         favorites,
         solutions,
         isLanguageChanging,
-        isLoading,
-        error,
-        fetchSolutions,
     };
 }
 

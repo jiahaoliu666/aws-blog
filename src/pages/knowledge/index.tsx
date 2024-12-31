@@ -125,7 +125,7 @@ const KnowledgePage: React.FC = () => {
                                     article={article}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={toggleFavorite}
+                                    toggleFavorite={(article) => toggleFavorite(article as ExtendedKnowledge)}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}

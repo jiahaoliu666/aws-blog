@@ -15,7 +15,7 @@ const useFetchSolutions = (language: string): ExtendedSolution[] => {
                 
                 const initializedSolutions: ExtendedSolution[] = data.map((solution: Solution) => ({
                     ...solution,
-                    isFavorite: solution.isFavorite ?? false,
+                    isFavorited: false,
                     translated_description: solution.translated_description || '',
                     translated_title: solution.translated_title || '',
                 }));

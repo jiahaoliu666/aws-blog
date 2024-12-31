@@ -39,7 +39,7 @@ dotenv.config({ path: ".env.local" });
 const FETCH_COUNTS = {
   announcement: 0, // 更新公告數量
   news: 0, // 更新新聞數量
-  solutions: 2, // 更新解決方案數量
+  solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
@@ -343,10 +343,14 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
         const linkElement = card.querySelector('.m-card-title a');
 
         if (titleElement && linkElement) {
+          const href = linkElement.getAttribute('href') || "";
+          // 組合完整的 URL
+          const fullUrl = href.startsWith('http') ? href : `https://aws.amazon.com${href}`;
+          
           results.push({
             title: titleElement.textContent?.trim() || "沒有標題",
             info: infoElement?.textContent?.trim() || "沒有日期",
-            link: linkElement.getAttribute('href') || "沒有連結"
+            link: fullUrl
           });
         }
       }
