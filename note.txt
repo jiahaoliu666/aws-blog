@@ -46,6 +46,8 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 
 新增line discord email 通知人數的總數
 
+解決要手動 export DISCORD_WEBHOOK_URL 才取的到值的問題，要自動抓取資料表的WEBHOOK
+
 --------
 最後執行：
 全部改為響應式設計 
@@ -73,6 +75,7 @@ src/hooks/favorite/useFavoritePageLogic.ts
 
 discord 通知功能
 src/lambda/updateAllContent.ts
+src/services/discordService.ts
 src/config/discord.ts
 src/pages/api/profile/discord-verification.ts
 src/pages/api/discord/webhook.ts
@@ -86,7 +89,6 @@ src/pages/api/profile/notification-settings.ts
 src/pages/api/discord/callback.ts
 src/components/profile/sections/NotificationSection.tsx
 src/hooks/profile/useNotificationSettings.ts
-src/services/discordService.ts
 src/utils/notificationUtils.ts
 
 --------
