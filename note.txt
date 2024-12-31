@@ -160,3 +160,16 @@ tailwind.config.ts
 
 --------
 
+解決方案頁面
+src/types/solutionType.ts
+src/pages/solutions/index.tsx
+src/hooks/solutions/useSolutionsPageLogic.ts
+src/hooks/solutions/useSolutionFavorites.ts
+src/hooks/solutions/useFetchSolutions.ts
+src/pages/api/solutions/summary.ts
+src/pages/api/solutions/addFavorite.ts
+src/pages/api/solutions/removeFavorite.ts
+src/pages/api/solutions/getFavorites.ts
+
+--------
+

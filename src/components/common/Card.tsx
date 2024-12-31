@@ -71,15 +71,21 @@ const Card: React.FC<CardProps> = ({
     }`;
 
     const handleToggleFavorite = async () => {
+        if (!user) {
+            toast.error('請先登入才能收藏');
+            return;
+        }
+
         try {
-            if (sourcePage === '收藏文章') {
-                await toggleFavorite(article);
-            } else {
-                await toggleFavorite(article);
-            }
-        } catch (error) {
+            await toggleFavorite(article);
+        } catch (error: any) {
             console.error('收藏操作失敗:', error);
-            toast.error('收藏操作失敗，請稍後再試');
+            if (error.response) {
+                console.log('錯誤響應:', error.response);
+                toast.error(`收藏操作失敗: ${error.response.data.message || '未知錯誤'}`);
+            } else {
+                toast.error('收藏操作失敗，請稍後再試');
+            }
         }
     };
 

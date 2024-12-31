@@ -6,13 +6,13 @@ import Card from '@/components/common/Card';
 import Search from '@/components/common/Search';
 import { Filters } from '@/components/common/Filters';
 import Pagination from '@/components/common/Pagination';
-import useSolutionsPageLogic from '@/hooks/solutions/useSolutionsPageLogic';
+import useSolutionPageLogic from '@/hooks/solutions/useSolutionsPageLogic';
 import Footer from '@/components/common/Footer';
 import '@aws-amplify/ui-react/styles.css';
 import { useTheme } from '@/context/ThemeContext';
 import { useToastContext } from '@/context/ToastContext';
 
-const SolutionsPage: React.FC = () => {
+const SolutionPage: React.FC = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [currentSourcePage, setCurrentSourcePage] = useState<string>('解決方案');
@@ -46,13 +46,12 @@ const SolutionsPage: React.FC = () => {
         handleDateFilterChange,
         favorites,
         solutions,
-    } = useSolutionsPageLogic();
+    } = useSolutionPageLogic();
 
     useEffect(() => {
         const loadData = async () => {
             try {
                 console.log('開始加載解決方案數據...');
-                // 等待 useSolutionsPageLogic 中的數據加載
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 console.log('當前解決方案數據:', currentSolutions);
                 setIsLoading(false);
@@ -82,8 +81,6 @@ const SolutionsPage: React.FC = () => {
         setShowSummaries(false);
     };
 
-
-
     return (
         <div className={`${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-900"} flex flex-col min-h-screen overflow-x-hidden`}>
             <Navbar setCurrentSourcePage={setCurrentSourcePage} />
@@ -111,34 +108,24 @@ const SolutionsPage: React.FC = () => {
                     setShowSummaries={setShowSummaries}
                 />
 
-                <Search
-                    articles={solutions as any[]}
-                    setFilteredArticles={setFilteredSolutions as any}
+                <Search<ExtendedSolution>
+                    articles={solutions}
+                    setFilteredArticles={setFilteredSolutions}
                     isDarkMode={isDarkMode}
                     onSearch={setSearchTerm}
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
-                    {filteredSolutions.length > 0 ? (
-                        filteredSolutions.map((solution: ExtendedSolution, index: number) => {
-                            const isFavorited = favorites.some(fav => fav.article_id === solution.article_id);
+                    {currentSolutions.length > 0 ? (
+                        currentSolutions.map((solution: ExtendedSolution, index: number) => {
+                            const isFavorited = favorites.some((fav: ExtendedSolution) => fav.article_id === solution.article_id);
                             return (
                                 <Card
                                     key={solution.article_id}
-                                    article={{
-                                        ...solution,
-                                        article_id: solution.article_id,
-                                        title: solution.title,
-                                        translated_title: solution.translated_title,
-                                        description: solution.description,
-                                        translated_description: solution.translated_description,
-                                        link: solution.link,
-                                        info: solution.info,
-                                        summary: solution.summary
-                                    }}
+                                    article={solution}
                                     index={index}
                                     gridView={gridView}
-                                    toggleFavorite={() => toggleFavorite(solution)}
+                                    toggleFavorite={(article) => toggleFavorite(article as ExtendedSolution)}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}
@@ -156,7 +143,7 @@ const SolutionsPage: React.FC = () => {
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
-                    show={filteredSolutions.length > 0}
+                    show={currentSolutions.length > 0}
                 />
             </div>
             <Footer />
@@ -164,4 +151,4 @@ const SolutionsPage: React.FC = () => {
     );
 };
 
-export default SolutionsPage; 
+export default SolutionPage;

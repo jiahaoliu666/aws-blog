@@ -52,7 +52,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.log('收藏成功:', params.Item);
 
             return res.status(200).json({ message: '收藏成功', item: { userId, article_id: articleId } });
-        } catch (error: unknown) {
+        } catch (error) {
+            console.error('收藏失敗:', {
+                error,
+                params: getAnnouncementParams,
+                userId,
+                articleId
+            });
             if (error instanceof Error) {
                 console.error('發生錯誤:', error);
                 return res.status(500).json({ message: '內部伺服器錯誤', error: error.message });

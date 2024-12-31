@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: '請求參數不完整' });
         }
 
-        console.log('請求參數:', { userId, articleId, title });
+        console.log('收到收藏請求:', { userId, articleId, title });
 
         // 查詢 AWS_Blog_News 表，檢查文章是否存在
         const getNewsParams = {
@@ -32,14 +32,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
         };
 
-        console.log('正在查詢 AWS_Blog_News:', JSON.stringify(getNewsParams));
-
         try {
+            console.log('查詢新聞文章:', getNewsParams);
             const articleResponse = await client.send(new GetCommand(getNewsParams));
-            const articleData = articleResponse.Item;
+            
+            console.log('查詢結果:', articleResponse.Item);
 
             // 檢查查詢結果
-            if (!articleData) {
+            if (!articleResponse.Item) {
                 console.warn('未找到文章:', { articleId, title });
                 return res.status(404).json({ message: '未找到文章' });
             }

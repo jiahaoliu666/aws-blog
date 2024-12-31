@@ -36,8 +36,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             return res.status(200).json({ summary });
         } else {
-            console.warn("Solution not found in database");
-            return res.status(404).json({ message: "Solution not found" });
+            console.warn("Article not found in database");
+            return res.status(404).json({ message: "Article not found" });
         }
     } catch (error: any) {
         console.error("從資料庫獲取摘要時出現錯誤:", error);
@@ -45,4 +45,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             .status(500)
             .json({ message: "Server error", error: error.message });
     }
-} 
+}
