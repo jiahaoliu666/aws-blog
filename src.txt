@@ -1,5 +1,5 @@
 src/ 
-├── types 
+├── types -----------------------------------------------------------類型
 │   ├── announcementType.ts         // 最新公告類型
 │   ├── newsType.ts                 // 最新新聞類型
 │   ├── solutionType.ts             // 解決方案類型
@@ -14,7 +14,7 @@ src/
 │   ├── env.d.ts                    // 環境變量類型
 │   ├── next-auth.d.ts              // NextAuth.js 類型
 │   └── amazon-dax-client.d.ts      // Amazon DAX 客戶端類型
-├── pages
+├── pages-----------------------------------------------------------頁面
 │   ├── _app.tsx                    // 應用程序入口
 │   ├── index.tsx                   // 首頁
 │   ├── announcement
@@ -35,7 +35,7 @@ src/
 │   │   ├── login.tsx               // 登入頁面
 │   │   ├── register.tsx            // 註冊頁面
 │   │   └── forgot-password.tsx     // 忘記密碼頁面
-│   ├── api  
+│   ├── api----------------------------------------------------------- API
 │   │   ├── announcement
 │   │   │   ├── index.ts            // 公告 API 主入口
 │   │   │   ├── summary.ts          // 獲取公告摘要 API
@@ -67,7 +67,7 @@ src/
 │   │   │   ├── removeFavorite.ts   // 移除知識中心收藏 API
 │   │   │   └── getFavorites.ts     // 獲取知識中心收藏 API
 │   │   ├── favorite
-│   │   │   ├── index.ts            // 收藏 API 主入口
+│   │   │   ├── index.ts            // 收藏頁面 API 主入口
 │   │   │   ├── summary.ts          // 獲取摘要 API
 │   │   │   ├── removeFavorite.ts   // 移除收藏 API
 │   │   │   └── getFavorites.ts     // 獲取收藏 API
@@ -86,7 +86,7 @@ src/
 │   │   └── notifications
 │   │   │   ├── sendEmail.ts        // 發送電子郵件 API
 │   │   │   ├── mark-read.ts        // 標記通知為已讀 API
-│   │   │   └── index.ts            // 通知 API 主入口
+│   │   │   └── index.ts            // 通知頁面 API 主入口
 │   │   ├── line
 │   │   │   ├── verify-code.ts      // 驗證 LINE 代碼 API
 │   │   │   ├── verification-status.ts // 獲取驗證狀態 API
@@ -98,7 +98,7 @@ src/
 │   │       └── webhook.ts          // Discord Webhook API
 │   ├── 404.tsx                     // 404 錯誤頁面
 │   ├── _document.tsx               // 自定義文檔
-├── hooks
+├── hooks----------------------------------------------------------- Hooks
 │   ├── announcement
 │   │   ├── useAnnouncementPageLogic.ts // 公告頁面邏輯 Hook
 │   │   ├── useFetchAnnouncement.ts // 獲取公告 Hook
@@ -145,7 +145,7 @@ src/
 │   └── notifications
 │   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
 │   └── useAppLogic.ts              // 應用邏輯 Hook
-├── lambda
+├── lambda----------------------------------------------------------- 爬文
 │   ├── fetchNews.ts                // 獲取新聞 Lambda 函數
 │   ├── fetchAnnouncement.ts        // 獲取公告 Lambda 函數
 │   ├── fetchSolutions.ts           // 獲取解決方案 Lambda 函數
@@ -157,7 +157,7 @@ src/
 │   └── updateArchitecture.ts       // 更新架構參考 Lambda 函數
 │   └── updateKnowledge.ts          // 更新知識中心 Lambda 函數
 │   └── updateAllContent.ts         // 更新所有內容 Lambda 函數
-├── components
+├── components----------------------------------------------------------- 組件
 │   ├── common
 │   │   ├── Navbar.tsx              // 導航欄組件
 │   │   ├── Pagination.tsx          // 分頁組件
@@ -172,7 +172,7 @@ src/
 │   │   ├── Alert.tsx               // 警告組件
 │   │   ├── Footer.tsx              // 頁腳組件
 │   │   └── Notification.tsx        // 通知組件
-│   └── profile
+│   └── profile----------------------------------------------------------- 個人資料頁面
 │       ├── sections
 │       │   ├── ProfileSection.tsx  // 個人資訊
 │       │   ├── PasswordSection.tsx // 修改密碼
@@ -189,14 +189,14 @@ src/
 │       │   ├── Sidebar.tsx         // 側邊欄
 │       │   └── SectionContainer.tsx // 容器
 │       └── ProfileUI.tsx           // 個人資料界面
-├── context
+├── context----------------------------------------------------------- 上下文
 │   ├── ToastContext.tsx            // Toast 通知上下文
 │   ├── ThemeContext.tsx            // 主題上下文
 │   ├── AuthContext.tsx             // 認證上下文
 │   ├── AppContext.tsx              // 應用程序上下文
 │   ├── LanguageContext.tsx         // 語言上下文
 │   └── LoadingContext.tsx          // 加載狀態上下文
-├── services
+├── services----------------------------------------------------------- 服務
 │   ├── notificationService.ts      // 通知服務
 │   ├── authService.ts              // 認證服務
 │   ├── dbService.ts                // 資料庫服務
@@ -208,13 +208,13 @@ src/
 │   │   └── s3.ts                   // AWS S3 服務
 │   ├── emailService.ts             // 電子郵件服務
 │   └── lineService.ts              // LINE 服務
-├── config
+├── config----------------------------------------------------------- 配置
 │   ├── email.ts                    // 電子郵件配置
 │   └── line.ts                     // LINE 配置
 │   ├── discord.ts                  // Discord 配置
 │   ├── aws.ts                      // AWS 配置
 │   ├── constants.ts                // 常量配置
-├── utils 
+├── utils----------------------------------------------------------- 工具
 │   ├── notificationUtils.ts        // 通知工具函數
 │   ├── rateLimiter.ts              // 限流工具
 │   ├── errorHandler.ts             // 錯誤處理工具
@@ -229,13 +229,13 @@ src/
 │   ├── cacheUtils.ts               // 緩存工具
 │   └── retryUtils.ts               // 重試工具
 │   └── animations.ts               // 動畫工具
-├── libs
+├── libs----------------------------------------------------------- 庫
 │   └── dynamodb.ts                 // DynamoDB 庫
-├── styles
+├── styles----------------------------------------------------------- 樣式
 │   ├── toast.css                   // Toast 樣式
 │   └── globals.css                 // 全局樣式
-├── api
+├── api-----------------------------------------------------------   API
 │   └── user.ts                     // 用戶 API
-├── templates
+├── templates----------------------------------------------------------- 模板
 │   ├── lineTemplates.ts            // LINE 模板
 │   └── deleteAccountEmail.ts       // 刪除帳戶電子郵件模板

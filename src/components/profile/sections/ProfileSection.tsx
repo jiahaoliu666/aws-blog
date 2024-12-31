@@ -136,7 +136,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full">
       <div className="mb-8">
         <SectionTitle 
           title="個人資訊"
