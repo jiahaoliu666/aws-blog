@@ -86,7 +86,14 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
         articleId: item.articleId?.S,
         timestamp: item.timestamp?.S,
         sourcePage: item.sourcePage?.S || '未知來源'
-      })).filter(data => data.articleId && data.timestamp) || [];
+      }))
+      // 過濾掉 sourcePage = "收藏文章" 的記錄
+      .filter(data => {
+        const validSourcePages = ['最新公告', '最新新聞', '解決方案', '架構參考', '知識中心'];
+        return data.articleId && 
+               data.timestamp && 
+               validSourcePages.includes(data.sourcePage);
+      }) || [];
 
       const articles = await Promise.all(articleData.map(async ({ articleId, timestamp, sourcePage }) => {
         const validSourcePage = ['最新公告', '最新新聞', '解決方案', '架構參考', '知識中心'].includes(sourcePage) 
