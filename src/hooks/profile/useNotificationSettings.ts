@@ -139,6 +139,36 @@ export const useNotificationSettings = (userId: string) => {
     try {
       setIsLoading(true);
       
+      // 如果 Discord 通知被關閉，直接發送請求刪除所有設定
+      if (!tempSettings.discordNotification) {
+        const response = await fetch('/api/profile/notification-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId,
+            discordNotification: false
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setSettings(data.settings);
+          setHasChanges(false);
+          showToast('設定已更新', 'success');
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          
+          return true;
+        } else {
+          throw new Error(data.message || '更新設定失敗');
+        }
+      }
+
       const settingsToUpdate = {
         ...tempSettings,
         discordId: tempSettings.discordNotification ? settings.discordId : null

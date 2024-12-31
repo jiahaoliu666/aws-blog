@@ -31,15 +31,15 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 
 進行中：
 
+添加 discord 通知功能
 
 --------
 待執行：
 
-添加 discord 通知功能
+
 電子郵件通知切換按鈕要能正常切換
 首頁最新文章要能顯示資料表的時間差
 
-profile 收藏文章要取得標題
 通知介面能顯示完整的文章數量嗎？分類要能顯示正確數量
 
 --------
@@ -52,25 +52,6 @@ metaage郵箱 沒有收到 刪除帳號的通知
 把重複的代碼統一使用統一的變數 並優化整體代碼 優化重複性代碼
 手機版測試
 移除刷新頁面右下角出現三角形的圖示 (應該只有測試環境會顯示、生產環境需測試)
---------
-
-建立爬蟲模組  
-Type // 類型
-pages/index // 頁面
-│   │ useNewsPageLogic.ts     // Hook
-│   │ useFetchNews.ts         
-│   │ useNewsFavorites.ts     
-│   │     summary.ts          // api
-│   │     addFavorite.ts      
-│   │     removeFavorite.ts  
-│   │     index.ts           
-│   │     getFavorites.ts    
-src/lambda/fetch
-src/lambda/update
-src/hooks/profile/useProfileArticles.ts // 觀看紀錄
-src/pages/api/notifications/index.ts // 通知介面
-src/components/common/Notification.tsx // 通知介面
-
 --------
 
 全部收藏
@@ -137,6 +118,7 @@ npx tsx src/lambda/updateAnnouncement.ts
 npx tsx src/lambda/updateSolutions.ts
 npx tsx src/lambda/updateArchitecture.ts
 npx tsx src/lambda/updateKnowledge.ts
+
 npx tsx src/lambda/updateAllContent.ts
 --------
 

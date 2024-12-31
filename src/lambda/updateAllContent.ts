@@ -10,7 +10,9 @@ import { v4 as uuidv4 } from "uuid";
 import OpenAI from "openai";
 import { logger } from "../utils/logger.js";
 import { lineService } from "../services/lineService.js";
+import { discordService } from "../services/discordService.js";
 import { sendEmailWithRetry, failedNotifications, processFailedNotifications } from "../utils/notificationUtils.js";
+import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '../config/discord';
 
 // 通用介面定義
 interface BaseContent {
@@ -29,7 +31,19 @@ interface ContentData {
 
 interface NotificationUser {
   userId: { S: string };
-  email: { S: string };
+  discordId?: { S: string };
+  discordNotification?: { BOOL: boolean };
+  emailNotification?: { BOOL: boolean };
+  lineNotification?: { BOOL: boolean };
+  email?: { S: string };
+  lineId?: { S: string };
+}
+
+interface FailedNotification {
+  userId: string;
+  articleId: string;
+  type: string;
+  error: string;
 }
 
 // 環境變數配置
@@ -37,7 +51,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 0, // 更新公告數量
+  announcement: 1, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
@@ -75,6 +89,9 @@ const CONTENT_TYPES = {
   architecture: { name: '架構參考', emoji: '🏗️' },
   knowledge: { name: '知識中心', emoji: '📚' },
 };
+
+// 新增一個型別來定義允許的內容類型
+type ContentType = 'announcement' | 'news' | 'solutions' | 'architecture' | 'knowledge';
 
 // 標題格式化函數
 function formatTitle(title: string): string {
@@ -202,13 +219,13 @@ async function saveToDynamoDB(
       summary: summary
     };
 
-    await sendNotifications(contentData, type);
     await broadcastNewContent(contentId, type);
 
     return true;
   } catch (error) {
-    logger.error(`儲存 ${type} 內容時發生錯誤:`, error);
-    return false;
+    stats[type].failed++;
+    logger.error(`儲存 ${type} 失敗:`, error);
+    throw error;
   }
 }
 
@@ -556,31 +573,49 @@ async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
 }
 
 // 通知相關函數
-async function sendNotifications(contentData: ContentData, type: string): Promise<void> {
-  try {
-    const lineUsers = await getLineNotificationUsers();
-    if (lineUsers.length > 0 && process.env.LINE_CHANNEL_ACCESS_TOKEN) {
-      switch (type) {
-        case 'news':
-          await lineService.sendNewsNotification(contentData);
-          break;
-        case 'announcement':
-          await lineService.sendAnnouncementNotification(contentData);
-          break;
-        case 'knowledge':
-          await lineService.sendKnowledgeNotification(contentData);
-          break;
-        case 'solutions':
-          await lineService.sendSolutionNotification(contentData);
-          break;
-        case 'architecture':
-          await lineService.sendSolutionNotification(contentData);
-          break;
+async function sendNotifications(
+  contentType: ContentType,
+  article: ContentData,
+  users: NotificationUser[]
+): Promise<void> {
+  // ... 現有的通知邏輯 ...
+
+  // 新增 Discord 通知邏輯
+  const discordUsers = users.filter(user => 
+    user.discordNotification?.BOOL && user.discordId?.S
+  );
+
+  if (discordUsers.length > 0) {
+    try {
+      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[
+        contentType.toUpperCase() as keyof typeof DISCORD_MESSAGE_TEMPLATES.NOTIFICATION
+      ];
+
+      if (messageTemplate) {
+        const message = messageTemplate(
+          article.title,
+          `${article.summary}\n\n閱讀全文: ${article.link}`
+        );
+
+        await discordService.sendNotification(
+          DISCORD_CONFIG.WEBHOOK_URL,
+          contentType.toUpperCase() as 'ANNOUNCEMENT' | 'NEWS' | 'SYSTEM',
+          article.title,
+          `${article.summary}\n\n閱讀全文: ${article.link}`
+        );
+
+        stats[contentType].notifications += discordUsers.length;
+        logger.info(`成功發送 Discord 通知給 ${discordUsers.length} 位用戶`);
       }
-      logger.info(`成功發送 LINE ${type} 通知給 ${lineUsers.length} 位用戶`);
+    } catch (error) {
+      logger.error('發送 Discord 通知失敗:', error);
+      failedNotifications.push(...discordUsers.map(user => ({
+        userId: user.userId.S,
+        articleId: article.title,
+        type: 'discord',
+        error: error instanceof Error ? error.message : '未知錯誤'
+      })));
     }
-  } catch (error) {
-    logger.warn(`LINE ${type} 通知發送失敗:`, error);
   }
 }
 
@@ -648,15 +683,83 @@ async function addNotification(
   }
 }
 
+// 在檔案開頭新增 Discord webhook 檢查函數
+async function validateDiscordWebhook(webhookUrl: string): Promise<boolean> {
+  try {
+    const response = await fetch(webhookUrl);
+    return response.ok;
+  } catch (error) {
+    logger.error('檢查 Discord webhook 失敗:', error);
+    return false;
+  }
+}
+
+// 修改 broadcastNewContent 函數
 async function broadcastNewContent(contentId: string, type: string): Promise<void> {
   try {
-    const users = await getAllUserIds();
-    for (const userId of users) {
-      await addNotification(userId, contentId, type);
-      stats[type as keyof typeof stats].notifications++;
+    // 先驗證 webhook URL
+    if (!DISCORD_CONFIG.WEBHOOK_URL || 
+        !(await validateDiscordWebhook(DISCORD_CONFIG.WEBHOOK_URL))) {
+      logger.warn('Discord webhook 無效，跳過 Discord 通知');
+      return;
+    }
+
+    // 獲取啟用 Discord 通知的用戶
+    const users = await getDiscordNotificationUsers();
+    
+    if (!users || users.length === 0) {
+      logger.info('沒有啟用 Discord 通知的用戶');
+      return;
+    }
+
+    // 檢查 Discord 配置
+    if (!DISCORD_CONFIG.isConfigValid()) {
+      logger.error('Discord 配置無效，跳過通知發送');
+      return;
+    }
+
+    // 使用重試機制發送通知
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        const notificationType = mapTypeToNotificationType(type);
+        const success = await discordService.sendNotification(
+          DISCORD_CONFIG.WEBHOOK_URL,
+          notificationType,
+          `新的 ${CONTENT_TYPES[type as keyof typeof CONTENT_TYPES].name}`,
+          contentId
+        );
+
+        if (success) {
+          stats[type as keyof typeof stats].notifications += users.length;
+          logger.info(`成功發送 Discord 通知給 ${users.length} 位用戶`);
+          return;
+        }
+
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        logger.error(`Discord 通知發送失敗 (重試 ${retryCount + 1}/${maxRetries}):`, error);
+        retryCount++;
+        
+        if (retryCount === maxRetries) {
+          // 將失敗的通知加入重試佇列
+          failedNotifications.push(...users.map(user => ({
+            userId: user.userId.S,
+            articleId: contentId,
+            type: 'discord',
+            error: error instanceof Error ? error.message : '未知錯誤'
+          })));
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
   } catch (error) {
-    logger.error(`廣播新${type}通知時發生錯誤:`, error);
+    logger.error('廣播新內容時發生錯誤:', error);
+    throw error;
   }
 }
 
@@ -699,6 +802,51 @@ function logProgress(type: string, current: number, total: number, action: strin
   logger.info(`│ ${emoji} ${name} - ${action}${' '.repeat(boxWidth - emoji.length - name.length - action.length - 5)}│`);
   logger.info(`│ ${progressBar} ${percentage}% (${current}/${total})${' '.repeat(boxWidth - progressBar.length - percentage.toString().length - current.toString().length - total.toString().length - 9)}│`);
   logger.info(`└${line}┘`);
+}
+
+// 在檔案開頭添加映射函數
+function mapTypeToNotificationType(type: string): "ANNOUNCEMENT" | "NEWS" | "SYSTEM" {
+  const typeMap = {
+    announcement: "ANNOUNCEMENT",
+    news: "NEWS",
+    solutions: "SYSTEM",
+    architecture: "SYSTEM",
+    knowledge: "SYSTEM"
+  } as const;
+
+  return (typeMap[type as keyof typeof typeMap] || "SYSTEM");
+}
+
+// 新增獲取啟用 Discord 通知用戶的函數
+async function getDiscordNotificationUsers(): Promise<NotificationUser[]> {
+  try {
+    const params = {
+      TableName: "AWS_Blog_UserNotificationSettings",
+      FilterExpression: "discordNotification = :enabled",
+      ExpressionAttributeValues: {
+        ":enabled": { BOOL: true }
+      }
+    };
+
+    const data = await dbClient.send(new ScanCommand(params));
+    return (data.Items || []) as unknown as NotificationUser[];
+  } catch (error) {
+    logger.error('獲取 Discord 通知用戶失敗:', error);
+    return [];
+  }
+}
+
+// 修改主要的爬取函數
+async function scrapeContent(browser: puppeteer.Browser, type: ContentType, articles: ContentData[]) {
+  // 獲取啟用通知的用戶
+  const notificationUsers = await getDiscordNotificationUsers();
+
+  // 發送通知
+  if (notificationUsers.length > 0) {
+    for (const article of articles) {
+      await sendNotifications(type, article, notificationUsers);
+    }
+  }
 }
 
 // 修改主程序的日誌輸出

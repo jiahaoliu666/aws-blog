@@ -105,16 +105,12 @@ export default async function handler(
       UpdateExpression: `
         SET discordNotification = :discordNotification,
             discordId = :discordId,
-            updatedAt = :updatedAt,
-            lineNotification = if_not_exists(lineNotification, :defaultLineNotification),
-            emailNotification = if_not_exists(emailNotification, :defaultEmailNotification)
+            updatedAt = :updatedAt
       `,
       ExpressionAttributeValues: {
         ':discordNotification': { BOOL: true },
         ':discordId': { S: userData.id },
-        ':updatedAt': { S: new Date().toISOString() },
-        ':defaultLineNotification': { BOOL: false },
-        ':defaultEmailNotification': { BOOL: false }
+        ':updatedAt': { S: new Date().toISOString() }
       }
     };
 

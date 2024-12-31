@@ -458,6 +458,8 @@ async function sendNotifications(
         articleId: articleData.article_id.S,
         email: user.email.S,
         retryCount: 0,
+        type: 'email',
+        error: error instanceof Error ? error.message : '未知錯誤'
       });
     }
   }

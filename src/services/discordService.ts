@@ -57,8 +57,38 @@ export class DiscordService {
     title: string,
     content: string
   ): Promise<boolean> {
+    this.retryCount = 0; // 重置重試計數
+    return this.sendNotificationWithRetry(webhookUrl, type, title, content);
+  }
+
+  // 新增私有的重試方法
+  private async sendNotificationWithRetry(
+    webhookUrl: string,
+    type: 'ANNOUNCEMENT' | 'NEWS' | 'SYSTEM', 
+    title: string,
+    content: string,
+    attempt: number = 1
+  ): Promise<boolean> {
     try {
+      // 驗證 webhook URL
+      if (!webhookUrl || !webhookUrl.startsWith('https://discord.com/api/webhooks/')) {
+        logger.error('無效的 Discord Webhook URL');
+        return false;
+      }
+
+      // 先檢查 webhook 是否有效
+      const checkResponse = await fetch(webhookUrl);
+      if (!checkResponse.ok) {
+        logger.error('Discord webhook 不存在或已失效');
+        return false;
+      }
+
       const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
+      if (!messageTemplate) {
+        logger.error(`找不到對應的消息模板: ${type}`);
+        return false;
+      }
+
       const message = messageTemplate(title, content);
 
       const response = await fetch(webhookUrl, {
@@ -69,24 +99,52 @@ export class DiscordService {
         body: JSON.stringify(message)
       });
 
+      // 處理各種錯誤情況
       if (!response.ok) {
-        throw new Error('發送 Discord 通知失敗');
+        const errorData = await response.json();
+        
+        // 處理速率限制
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          if (retryAfter && attempt < DISCORD_CONFIG.RATE_LIMIT.MAX_RETRIES) {
+            await new Promise(resolve => 
+              setTimeout(resolve, parseInt(retryAfter) * 1000)
+            );
+            return this.sendNotificationWithRetry(
+              webhookUrl, 
+              type, 
+              title, 
+              content, 
+              attempt + 1
+            );
+          }
+        }
+
+        // 處理無效的 webhook
+        if (response.status === 404) {
+          logger.error('Discord webhook 不存在或已失效');
+          return false;
+        }
+
+        throw new Error(`Discord API 錯誤: ${errorData.message || '未知錯誤'}`);
       }
 
       return true;
     } catch (error) {
-      logger.error('發送 Discord 通知失敗:', error);
+      logger.error(`發送 Discord 通知失敗 (嘗試 ${attempt}/${DISCORD_CONFIG.RATE_LIMIT.MAX_RETRIES}):`, error);
       
-      // 重試機制
-      if (this.retryCount < DISCORD_CONFIG.RATE_LIMIT.MAX_RETRIES) {
-        this.retryCount++;
-        await new Promise(resolve => 
-          setTimeout(resolve, DISCORD_CONFIG.RATE_LIMIT.RETRY_DELAY)
+      if (attempt < DISCORD_CONFIG.RATE_LIMIT.MAX_RETRIES) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.sendNotificationWithRetry(
+          webhookUrl, 
+          type, 
+          title, 
+          content, 
+          attempt + 1
         );
-        return this.sendNotification(webhookUrl, type, title, content);
       }
       
-      this.retryCount = 0;
       return false;
     }
   }

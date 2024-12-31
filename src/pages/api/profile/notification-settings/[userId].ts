@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, GetItemCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '@/utils/logger';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
@@ -75,5 +75,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: '獲取設定失敗',
       error: error instanceof Error ? error.message : '未知錯誤'
     });
+  }
+
+  if (req.method === 'POST') {
+    const { userId, discordNotification } = req.body;
+
+    try {
+      if (discordNotification === false) {
+        const deleteParams = {
+          TableName: "AWS_Blog_UserNotificationSettings",
+          Key: {
+            userId: { S: userId }
+          }
+        };
+
+        const command = new DeleteItemCommand(deleteParams);
+        await dynamoClient.send(command);
+
+        logger.info('用戶通知設定已完全刪除:', {
+          userId,
+          action: 'DELETE'
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: '通知設定已刪除',
+          reloadRequired: true,
+          settings: {
+            emailNotification: false,
+            lineNotification: false,
+            discordNotification: false,
+            lineUserId: null,
+            lineId: null,
+            discordId: null
+          }
+        });
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      logger.error('刪除通知設定失敗:', error);
+      return res.status(500).json({
+        success: false,
+        message: '更新失敗，請稍後再試',
+        error: error.message || '未知錯誤'
+      });
+    }
   }
 } 

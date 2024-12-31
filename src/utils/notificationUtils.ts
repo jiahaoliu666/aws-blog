@@ -5,8 +5,10 @@ import { logger } from './logger';
 interface FailedNotification {
   userId: string;
   articleId: string;
-  email: string;
-  retryCount: number;
+  type: string;
+  error: string;
+  email?: string;
+  retryCount?: number;
 }
 
 export const failedNotifications: FailedNotification[] = [];
@@ -15,7 +17,8 @@ export async function processFailedNotifications(): Promise<void> {
   const maxRetries = 3;
   
   for (const notification of [...failedNotifications]) {
-    if (notification.retryCount >= maxRetries) {
+    const retryCount = notification.retryCount || 0;
+    if (retryCount >= maxRetries) {
       failedNotifications.splice(failedNotifications.indexOf(notification), 1);
       continue;
     }
@@ -24,7 +27,7 @@ export async function processFailedNotifications(): Promise<void> {
       // 處理失敗的通知
       failedNotifications.splice(failedNotifications.indexOf(notification), 1);
     } catch (error) {
-      notification.retryCount++;
+      notification.retryCount = retryCount + 1;
       logger.error('處理失敗的通知時發生錯誤:', error);
     }
   }
