@@ -61,76 +61,32 @@ export class DiscordService {
     type: DiscordNotificationType,
     title: string,
     content: string,
-    link: string
+    link: string,
+    discordId?: string
   ): Promise<boolean> {
     try {
-      // 驗證 webhook
-      const isValid = await this.validateWebhook(webhookUrl);
-      if (!isValid) {
-        logger.error('Discord webhook 無效，跳過發送');
-        return false;
+      // 1. 發送到文字頻道
+      const channelSuccess = await this.sendWebhookMessage(
+        webhookUrl,
+        type,
+        title,
+        content,
+        link
+      );
+
+      // 2. 如果有提供 discordId，也發送到私人收件匣
+      let dmSuccess = true;
+      if (discordId) {
+        dmSuccess = await this.sendDirectMessage(
+          discordId,
+          type,
+          title,
+          content,
+          link
+        );
       }
 
-      // 驗證 webhook URL 格式
-      if (!webhookUrl.match(/^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/)) {
-        logger.error('無效的 Discord Webhook URL 格式');
-        return false;
-      }
-
-      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
-      if (!messageTemplate) {
-        throw new Error(`找不到對應的消息模板: ${type}`);
-      }
-
-      const message = messageTemplate(title, content, link);
-      
-      // 添加重試機制
-      let retries = 0;
-      const maxRetries = 3;
-
-      while (retries < maxRetries) {
-        try {
-          const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(message)
-          });
-
-          if (response.ok) {
-            return true;
-          }
-
-          const errorData = await response.json();
-          
-          // 處理特定錯誤
-          if (response.status === 404) {
-            logger.error('Discord webhook 不存在或已失效');
-            return false;
-          }
-
-          if (response.status === 429) {
-            // 處理速率限制
-            const retryAfter = response.headers.get('Retry-After');
-            await new Promise(resolve => 
-              setTimeout(resolve, (parseInt(retryAfter || '1000')))
-            );
-            retries++;
-            continue;
-          }
-
-          throw new Error(`Discord API 錯誤: ${errorData.message || '未知錯誤'}`);
-        } catch (error) {
-          retries++;
-          if (retries === maxRetries) {
-            throw error;
-          }
-          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
-        }
-      }
-
-      return false;
+      return channelSuccess && dmSuccess;
     } catch (error) {
       logger.error('發送 Discord 通知失敗:', error);
       return false;
@@ -388,6 +344,109 @@ export class DiscordService {
       return response.ok;
     } catch (error) {
       logger.error('驗證 webhook 失敗:', error);
+      return false;
+    }
+  }
+
+  // 在 DiscordService 類中新增發送私人訊息的方法
+  public async sendDirectMessage(
+    discordId: string,
+    type: DiscordNotificationType,
+    title: string,
+    content: string,
+    link: string
+  ): Promise<boolean> {
+    try {
+      if (!DISCORD_CONFIG.BOT_TOKEN) {
+        throw new Error('Discord Bot Token 未設置');
+      }
+
+      // 1. 先建立 DM 頻道
+      const createDMResponse = await fetch(
+        `${DISCORD_CONFIG.API_ENDPOINT}/users/@me/channels`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            recipient_id: discordId
+          })
+        }
+      );
+
+      if (!createDMResponse.ok) {
+        throw new Error('無法建立私人訊息頻道');
+      }
+
+      const dmChannel = await createDMResponse.json();
+
+      // 2. 使用訊息模板
+      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
+      if (!messageTemplate) {
+        throw new Error(`找不到對應的消息模板: ${type}`);
+      }
+
+      const message = messageTemplate(title, content, link);
+
+      // 3. 發送訊息到 DM 頻道
+      const sendMessageResponse = await fetch(
+        `${DISCORD_CONFIG.API_ENDPOINT}/channels/${dmChannel.id}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(message)
+        }
+      );
+
+      if (!sendMessageResponse.ok) {
+        throw new Error('發送私人訊息失敗');
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('發送 Discord 私人訊息失敗:', error);
+      return false;
+    }
+  }
+
+  private async sendWebhookMessage(
+    webhookUrl: string,
+    type: DiscordNotificationType,
+    title: string,
+    content: string,
+    link: string
+  ): Promise<boolean> {
+    try {
+      // 驗證 webhook
+      const isValid = await this.validateWebhook(webhookUrl);
+      if (!isValid) {
+        logger.error('Discord webhook 無效，跳過發送');
+        return false;
+      }
+
+      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
+      if (!messageTemplate) {
+        throw new Error(`找不到對應的消息模板: ${type}`);
+      }
+
+      const message = messageTemplate(title, content, link);
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(message)
+      });
+
+      return response.ok;
+    } catch (error) {
+      logger.error('發送 Discord webhook 訊息失敗:', error);
       return false;
     }
   }

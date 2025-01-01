@@ -54,8 +54,8 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 3, // 更新公告數量
-  news: 0, // 更新新聞數量
+  announcement: 1, // 更新公告數量
+  news: 1, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
@@ -593,35 +593,37 @@ async function sendNotifications(
   users: NotificationUser[]
 ): Promise<void> {
   try {
-    // 篩選出啟用 Discord 通知的用戶
     const discordUsers = users.filter(user => 
-      user.discordNotification?.BOOL && user.webhookUrl?.S
+      user.discordNotification?.BOOL && 
+      user.webhookUrl?.S &&
+      user.discordId?.S
     );
     
     if (discordUsers.length > 0) {
       const notificationType = mapTypeToNotificationType(type);
-      const contentType = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
       
       for (const user of discordUsers) {
-        if (!user.webhookUrl?.S) continue;
+        if (!user.webhookUrl?.S || !user.discordId?.S) continue;
         
         try {
-          // 使用用戶特定的 webhook URL
           const success = await discordService.sendNotification(
             user.webhookUrl.S,
             notificationType,
             article.title,
-            `${article.summary}\n\n🔗 詳細內容：${article.link}`,
-            article.link
+            article.summary,
+            article.link,
+            user.discordId.S
           );
 
           if (success) {
-            stats[type as ContentType].notifications++;
+            stats[type].notifications++;
             logger.info(`成功發送 Discord 通知給用戶 ${user.userId.S}`);
           } else {
+            stats[type].notificationsFailed++;
             logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S})`);
           }
         } catch (error) {
+          stats[type].notificationsFailed++;
           logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S}):`, error);
           failedNotifications.push({
             userId: user.userId.S,

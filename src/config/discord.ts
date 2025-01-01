@@ -64,45 +64,40 @@ export const DISCORD_MESSAGE_TEMPLATES = {
     ANNOUNCEMENT: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `🔔 AWS 最新公告`,
-        description: `**文章標題：**${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x00b7ff,
-        timestamp: new Date().toISOString()
       }]
     }),
 
     NEWS: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `📰 AWS 技術新聞`,
-        description: `**文章標題：**${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0xff9900,
-        timestamp: new Date().toISOString()
       }]
     }),
 
     SOLUTIONS: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `💡 AWS 解決方案`,
-        description: `**文章標題：**${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x232f3e,
-        timestamp: new Date().toISOString()
       }]
     }),
 
     ARCHITECTURE: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `🏗️ AWS 架構參考`,
-        description: `**文章標題：**${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x527fff,
-        timestamp: new Date().toISOString()
       }]
     }),
 
     KNOWLEDGE: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `📚 AWS 知識中心`,
-        description: `**文章標題：**${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x3b873b,
-        timestamp: new Date().toISOString()
       }]
     })
   }
