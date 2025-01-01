@@ -174,7 +174,7 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-50">
       <Navbar />
       
       <motion.main 
@@ -183,44 +183,45 @@ const Home: React.FC = () => {
         animate="show"
         className="flex-grow"
       >
-        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+        {/* Hero Section */}
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden py-20 bg-gradient-to-br from-white to-blue-50">
           <motion.div 
             variants={gradientAnimation}
             animate="animate"
-            className="absolute inset-0 bg-grid-pattern opacity-5"
+            className="absolute inset-0 bg-grid-pattern opacity-[0.03]"
           />
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               {/* Hero Content - 左側 */}
               <motion.div 
                 variants={staggerContainer}
                 initial="hidden"
                 animate="show"
-                className="text-left space-y-8"
+                className="text-left space-y-10"
               >
                 <motion.h1 
                   variants={textVariant(0.2)}
-                  className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600"
+                  className="text-5xl sm:text-6xl md:text-7xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500"
                 >
                   歡迎來到 AWS Blog 365
                 </motion.h1>
                 
                 <motion.p 
                   variants={textVariant(0.4)}
-                  className="text-lg sm:text-xl text-gray-600 leading-relaxed"
+                  className="text-xl sm:text-2xl text-gray-600 leading-relaxed max-w-xl"
                 >
                   在這裡，您可以輕鬆獲取 AWS 最新資訊與技術文章，讓學習更有效率。
                 </motion.p>
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex gap-6 mt-10">
                   <Link 
                     href="/news" 
-                    className="px-8 py-4 rounded-xl text-base font-medium
-                      bg-blue-600 hover:bg-blue-700
+                    className="px-10 py-5 rounded-2xl text-lg font-medium
+                      bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600
                       text-white transition-all duration-300
-                      shadow-lg hover:shadow-blue-200/50
-                      transform hover:-translate-y-0.5"
+                      shadow-xl hover:shadow-blue-200
+                      transform hover:-translate-y-1"
                   >
                     開始使用
                   </Link>
@@ -230,20 +231,20 @@ const Home: React.FC = () => {
               {/* 最新文章區塊 - 右側 */}
               <motion.div
                 variants={fadeIn('left', 'spring', 0.7)}
-                className="relative h-[600px] rounded-2xl p-8
-                  bg-white/80 backdrop-blur-sm
-                  shadow-xl hover:shadow-2xl
+                className="relative h-[650px] rounded-3xl p-10
+                  bg-white/90 backdrop-blur-lg
+                  shadow-2xl hover:shadow-3xl
                   transition-all duration-500
-                  border border-gray-100"
+                  border border-gray-100/50"
               >
-                <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-inherit to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-inherit to-transparent"></div>
+                <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white/90 to-transparent z-10"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/90 to-transparent z-10"></div>
                 
-                <h2 className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 text-4xl font-bold mb-6">
+                <h2 className="text-4xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
                   最新文章
                 </h2>
 
-                <div className="space-y-4 overflow-hidden h-[calc(100%-4rem)]">
+                <div className="space-y-4 overflow-hidden h-[calc(100%-6rem)]">
                   {loading ? (
                     Array(6).fill(0).map((_, index) => (
                       <div key={index} className="animate-pulse rounded-xl p-6 bg-white/90 backdrop-blur-sm">
@@ -330,16 +331,16 @@ const Home: React.FC = () => {
         </section>
 
         {/* Features Section */}
-        <section className="py-24 bg-gradient-to-br from-white to-gray-50 relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+        <section className="py-32 bg-white relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+            <div className="text-center mb-20">
+              <h2 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-blue-600">
                 文章分類
               </h2>
-              <div className="h-1 w-24 mx-auto mt-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
+              <div className="h-1.5 w-32 mx-auto mt-8 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {features.map((feature) => (
                 <motion.div
                   key={feature.title}
@@ -347,12 +348,12 @@ const Home: React.FC = () => {
                   initial="rest"
                   whileHover="hover"
                   whileTap="tap"
-                  className="relative rounded-2xl p-8
-                    bg-white
+                  className="relative rounded-3xl p-10
+                    bg-gradient-to-br from-white to-gray-50
                     transition-all duration-300
-                    shadow-lg hover:shadow-xl
+                    shadow-xl hover:shadow-2xl
                     border border-gray-100
-                    transform hover:-translate-y-1"
+                    transform hover:-translate-y-2"
                 >
                   <Link href={feature.link} className="block h-full">
                     <div className="space-y-4">
@@ -403,32 +404,32 @@ const Home: React.FC = () => {
         </section>
 
         {/* Advantages Section */}
-        <section className="py-32 bg-gradient-to-br from-blue-50 to-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-40 bg-gradient-to-br from-blue-50 to-white">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
             <motion.div 
               variants={fadeIn('up', 'spring', 0.7)}
-              className="text-center space-y-20"
+              className="text-center space-y-24"
             >
               <div>
-                <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+                <h2 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-blue-600">
                   為什麼選擇此平台
                 </h2>
-                <div className="h-1 w-24 mx-auto mt-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
+                <div className="h-1.5 w-32 mx-auto mt-8 rounded-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-14">
                 {advantages.map((advantage, index) => (
                   <motion.div 
                     key={advantage.title}
                     variants={enhancedCardHover}
                     initial="rest"
                     whileHover="hover"
-                    className="p-10 rounded-2xl
+                    className="p-12 rounded-3xl
                       bg-white
                       transition-all duration-300
-                      shadow-lg hover:shadow-xl
+                      shadow-xl hover:shadow-2xl
                       border border-gray-100
-                      transform hover:-translate-y-2"
+                      transform hover:-translate-y-3"
                   >
                     <div className={`
                       w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6
