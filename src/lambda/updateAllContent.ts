@@ -56,7 +56,7 @@ dotenv.config({ path: ".env.local" });
 const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
-  solutions: 0, // 更新解決方案數量
+  solutions: 5, // 更新解決方案數量
   architecture: 0, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
@@ -666,13 +666,19 @@ async function getLineNotificationUsers(): Promise<NotificationUser[]> {
 async function getAllUserIds(): Promise<string[]> {
   const params = {
     TableName: "AWS_Blog_UserProfiles",
-    ProjectionExpression: "userId",
+    FilterExpression: "attribute_exists(userId) AND (attribute_not_exists(is_deleted) OR is_deleted = :false)",
+    ExpressionAttributeValues: {
+      ":false": { BOOL: false }
+    },
+    ProjectionExpression: "userId"
   };
 
   try {
     const command = new ScanCommand(params);
     const response = await dbClient.send(command);
-    return response.Items?.map((item) => item.userId.S as string) || [];
+    const userIds = response.Items?.map((item) => item.userId.S as string) || [];
+    logger.info(`成功獲取 ${userIds.length} 個活躍用戶`);
+    return userIds;
   } catch (error) {
     logger.error("獲取用戶 ID 時發生錯誤:", error);
     return [];
@@ -687,17 +693,23 @@ async function addNotification(
   const params = {
     TableName: "AWS_Blog_UserNotifications",
     Item: {
+      notification_id: { S: uuidv4() },  // 新增唯一識別碼
       userId: { S: userId },
       article_id: { S: contentId },
       read: { BOOL: false },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
-      category: { S: category }
+      category: { S: category },
+      is_deleted: { BOOL: false }  // 新增刪除標記
     }
   };
 
   try {
     await dbClient.send(new PutItemCommand(params));
-    logger.info(`成功新增通知：\n   👤 用戶ID：${userId}\n   📄 文章ID：${contentId}\n   📑 分類：${category}`);
+    logger.info(`成功新增通知：
+   👤 用戶ID：${userId}
+   📄 文章ID：${contentId}
+   📑 分類：${category}
+   🆔 通知ID：${params.Item.notification_id.S}`);
   } catch (error) {
     logger.error("新增通知失敗:", error);
     throw error;
@@ -727,9 +739,24 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
     const notificationType = mapTypeToNotificationType(type);
     const { title, summary, link } = content;
 
-    const users = await getDiscordNotificationUsers();
+    // 獲取所有用戶 ID
+    const allUserIds = await getAllUserIds();
     
-    for (const user of users) {
+    // 為每個用戶新增通知記錄
+    for (const userId of allUserIds) {
+      try {
+        await addNotification(userId, contentId, type);
+        logger.info(`成功新增通知記錄：用戶 ${userId}, 內容 ${contentId}`);
+      } catch (error) {
+        logger.error(`新增通知記錄失敗 (用戶 ID: ${userId}):`, error);
+      }
+    }
+
+    // 獲取啟用 Discord 通知的用戶
+    const discordUsers = await getDiscordNotificationUsers();
+    
+    // 發送 Discord 通知
+    for (const user of discordUsers) {
       if (!user.webhookUrl?.S) continue;
       
       try {
@@ -738,7 +765,8 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
           notificationType,
           title,
           summary,
-          link
+          link,
+          user.discordId?.S
         );
 
         if (success) {
@@ -752,7 +780,6 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
         stats[type].notificationsFailed++;
         logger.error(`發送 Discord 通知時發生錯誤 (用戶 ID: ${user.userId.S}):`, error);
         
-        // 將失敗的通知加入重試佇列
         failedNotifications.push({
           userId: user.userId.S,
           articleId: contentId,
