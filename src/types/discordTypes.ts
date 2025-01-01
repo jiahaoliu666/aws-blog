@@ -1,3 +1,5 @@
+import { DISCORD_MESSAGE_TEMPLATES } from '@/config/discord';
+
 export interface DiscordUser {
   id: string;
   username: string;
@@ -14,9 +16,11 @@ export interface DiscordToken {
   scope: string;
 }
 
+export type DiscordNotificationType = keyof typeof DISCORD_MESSAGE_TEMPLATES.NOTIFICATION;
+
 export interface DiscordWebhook {
   id: string;
-  type: number;
+  type: DiscordNotificationType;
   name: string;
   avatar: string | null;
   channel_id: string;

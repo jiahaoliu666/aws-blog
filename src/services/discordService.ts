@@ -1,6 +1,7 @@
 import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '@/config/discord';
 import { logger } from '@/utils/logger';
 import { GetItemCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DiscordNotificationType } from '@/types/discordTypes';
 
 interface DiscordUser {
   id: string;
@@ -57,12 +58,13 @@ export class DiscordService {
   // 發送 Discord 通知
   public async sendNotification(
     webhookUrl: string,
-    type: 'ANNOUNCEMENT' | 'NEWS' | 'SYSTEM',
+    type: DiscordNotificationType,
     title: string,
-    content: string
+    content: string,
+    link: string
   ): Promise<boolean> {
     try {
-      // 先驗證 webhook
+      // 驗證 webhook
       const isValid = await this.validateWebhook(webhookUrl);
       if (!isValid) {
         logger.error('Discord webhook 無效，跳過發送');
@@ -80,7 +82,7 @@ export class DiscordService {
         throw new Error(`找不到對應的消息模板: ${type}`);
       }
 
-      const message = messageTemplate(title, content);
+      const message = messageTemplate(title, content, link);
       
       // 添加重試機制
       let retries = 0;
@@ -141,6 +143,7 @@ export class DiscordService {
     type: 'ANNOUNCEMENT' | 'NEWS' | 'SYSTEM', 
     title: string,
     content: string,
+    link: string,
     attempt: number = 1
   ): Promise<boolean> {
     try {
@@ -157,13 +160,13 @@ export class DiscordService {
         return false;
       }
 
-      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
+      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type as keyof typeof DISCORD_MESSAGE_TEMPLATES.NOTIFICATION];
       if (!messageTemplate) {
         logger.error(`找不到對應的消息模板: ${type}`);
         return false;
       }
 
-      const message = messageTemplate(title, content);
+      const message = messageTemplate(title, content, link);
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -189,6 +192,7 @@ export class DiscordService {
               type, 
               title, 
               content, 
+              link, 
               attempt + 1
             );
           }
@@ -215,6 +219,7 @@ export class DiscordService {
           type, 
           title, 
           content, 
+          link, 
           attempt + 1
         );
       }
@@ -335,12 +340,12 @@ export class DiscordService {
 
   public async sendNotificationToUser(
     userId: string,
-    type: 'ANNOUNCEMENT' | 'NEWS' | 'SYSTEM',
+    type: DiscordNotificationType,
     title: string,
-    content: string
+    content: string,
+    link: string
   ): Promise<boolean> {
     try {
-      // 獲取用戶的 webhook URL
       const params = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Key: {
@@ -357,8 +362,7 @@ export class DiscordService {
         return false;
       }
 
-      // 使用用戶特定的 webhook 發送通知
-      return await this.sendNotification(webhookUrl, type, title, content);
+      return await this.sendNotification(webhookUrl, type, title, content, link);
     } catch (error) {
       logger.error(`發送通知給用戶 ${userId} 失敗:`, error);
       return false;

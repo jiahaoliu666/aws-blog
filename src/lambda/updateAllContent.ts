@@ -3,7 +3,8 @@ import {
   DynamoDBClient,
   PutItemCommand,
   ScanCommand,
-  AttributeValue
+  AttributeValue,
+  GetItemCommand
 } from "@aws-sdk/client-dynamodb";
 import * as puppeteer from "puppeteer";
 import { v4 as uuidv4 } from "uuid";
@@ -13,6 +14,7 @@ import { lineService } from "../services/lineService.js";
 import { discordService } from "../services/discordService.js";
 import { sendEmailWithRetry, failedNotifications, processFailedNotifications } from "../utils/notificationUtils.js";
 import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '../config/discord';
+import { DiscordNotificationType } from '../types/discordTypes';
 
 // 通用介面定義
 interface BaseContent {
@@ -52,7 +54,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 1, // 更新公告數量
+  announcement: 3, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
@@ -609,7 +611,8 @@ async function sendNotifications(
             user.webhookUrl.S,
             notificationType,
             article.title,
-            `${article.summary}\n\n🔗 詳細內容：${article.link}`
+            `${article.summary}\n\n🔗 詳細內容：${article.link}`,
+            article.link
           );
 
           if (success) {
@@ -711,75 +714,83 @@ async function validateDiscordWebhook(webhookUrl: string): Promise<boolean> {
 }
 
 // 修改 broadcastNewContent 函數
-async function broadcastNewContent(contentId: string, type: string): Promise<void> {
+async function broadcastNewContent(contentId: string, type: ContentType): Promise<void> {
   try {
-    // 先驗證 webhook URL
-    if (!DISCORD_CONFIG.WEBHOOK_URL || 
-        !(await validateDiscordWebhook(DISCORD_CONFIG.WEBHOOK_URL))) {
-      logger.warn('Discord webhook 無效，跳過 Discord 通知');
+    const content = await getContentDetails(contentId, type);
+    if (!content || !content.title || !content.summary || !content.link) {
+      logger.error('內容資訊不完整，跳過通知發送');
       return;
     }
 
-    // 獲取啟用 Discord 通知的用戶
+    const notificationType = mapTypeToNotificationType(type);
+    const { title, summary, link } = content;
+
     const users = await getDiscordNotificationUsers();
     
-    if (!users || users.length === 0) {
-      logger.info('沒有啟用 Discord 通知的用戶');
-      return;
-    }
-
-    // 檢查 Discord 配置
-    if (!DISCORD_CONFIG.isConfigValid()) {
-      logger.error('Discord 配置無效，跳過通知發送');
-      return;
-    }
-
-    // 使用重試機制發送通知
-    let retryCount = 0;
-    const maxRetries = 3;
-
-    while (retryCount < maxRetries) {
+    for (const user of users) {
+      if (!user.webhookUrl?.S) continue;
+      
       try {
-        const notificationType = mapTypeToNotificationType(type);
         const success = await discordService.sendNotification(
-          DISCORD_CONFIG.WEBHOOK_URL,
+          user.webhookUrl.S,
           notificationType,
-          `新的 ${CONTENT_TYPES[type as keyof typeof CONTENT_TYPES].name}`,
-          contentId
+          title,
+          summary,
+          link
         );
 
         if (success) {
-          stats[type as ContentType].notifications += users.length;
-          logger.info(`成功發送 Discord 通知給 ${users.length} 位用戶`);
-          return;
+          stats[type].notifications++;
+          logger.info(`成功發送 Discord 通知給用戶 ${user.userId.S}`);
+        } else {
+          stats[type].notificationsFailed++;
+          logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S})`);
         }
-
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
-        logger.error(`Discord 通知發送失敗 (重試 ${retryCount + 1}/${maxRetries}):`, error);
-        retryCount++;
+        stats[type].notificationsFailed++;
+        logger.error(`發送 Discord 通知時發生錯誤 (用戶 ID: ${user.userId.S}):`, error);
         
-        if (retryCount === maxRetries) {
-          // 增加通知失敗計數
-          stats[type as ContentType].notificationsFailed++;
-          // 將失敗的通知加入重試佇列
-          failedNotifications.push(...users.map(user => ({
-            userId: user.userId.S,
-            articleId: contentId,
-            type: 'discord',
-            error: error instanceof Error ? error.message : '未知錯誤'
-          })));
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        // 將失敗的通知加入重試佇列
+        failedNotifications.push({
+          userId: user.userId.S,
+          articleId: contentId,
+          type: 'discord',
+          error: error instanceof Error ? error.message : '未知錯誤'
+        });
       }
     }
   } catch (error) {
-    // 增加通知失敗計數
-    stats[type as ContentType].notificationsFailed++;
     logger.error('廣播新內容時發生錯誤:', error);
     throw error;
+  }
+}
+
+// 新增輔助函數來獲取內容詳細資訊
+async function getContentDetails(contentId: string, type: ContentType) {
+  const tableName = `AWS_Blog_${type.charAt(0).toUpperCase() + type.slice(1)}`;
+  const params = {
+    TableName: tableName,
+    Key: {
+      article_id: { S: contentId }
+    }
+  };
+
+  try {
+    const command = new GetItemCommand(params);
+    const result = await dbClient.send(command);
+    
+    if (!result.Item) {
+      return null;
+    }
+
+    return {
+      title: result.Item.translated_title?.S || result.Item.title?.S,
+      summary: result.Item.summary?.S,
+      link: result.Item.link?.S
+    };
+  } catch (error) {
+    logger.error('獲取內容詳細資訊失敗:', error);
+    return null;
   }
 }
 
@@ -825,17 +836,17 @@ function logProgress(type: string, current: number, total: number, action: strin
   logger.info(`└${line}┘`);
 }
 
-// 在檔案開頭添加映射函數
-function mapTypeToNotificationType(type: string): "ANNOUNCEMENT" | "NEWS" | "SYSTEM" {
-  const typeMap = {
+// 修改映射函數
+function mapTypeToNotificationType(type: ContentType): DiscordNotificationType {
+  const typeMap: Record<ContentType, DiscordNotificationType> = {
     announcement: "ANNOUNCEMENT",
     news: "NEWS",
-    solutions: "SYSTEM",
-    architecture: "SYSTEM",
-    knowledge: "SYSTEM"
-  } as const;
+    solutions: "SOLUTIONS",
+    architecture: "ARCHITECTURE",
+    knowledge: "KNOWLEDGE"
+  };
 
-  return (typeMap[type as keyof typeof typeMap] || "SYSTEM");
+  return typeMap[type];
 }
 
 // 修改獲取 Discord 通知用戶的函數
