@@ -56,8 +56,8 @@ dotenv.config({ path: ".env.local" });
 const FETCH_COUNTS = {
   announcement: 1, // 更新公告數量
   news: 1, // 更新新聞數量
-  solutions: 5, // 更新解決方案數量
-  architecture: 0, // 更新架構數量
+  solutions: 4, // 更新解決方案數量
+  architecture: 4, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
 
@@ -693,13 +693,13 @@ async function addNotification(
   const params = {
     TableName: "AWS_Blog_UserNotifications",
     Item: {
-      notification_id: { S: uuidv4() },  // 新增唯一識別碼
+      notification_id: { S: uuidv4() },  // 使用 UUID 產生唯一的 notification_id
       userId: { S: userId },
       article_id: { S: contentId },
       read: { BOOL: false },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
       category: { S: category },
-      is_deleted: { BOOL: false }  // 新增刪除標記
+      is_deleted: { BOOL: false }
     }
   };
 
@@ -746,7 +746,7 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
     for (const userId of allUserIds) {
       try {
         await addNotification(userId, contentId, type);
-        logger.info(`成功新增通知記錄：用戶 ${userId}, 內容 ${contentId}`);
+        logger.info(`成功新增通知記錄：用戶 ${userId}, \n內容 ${contentId}`);
       } catch (error) {
         logger.error(`新增通知記錄失敗 (用戶 ID: ${userId}):`, error);
       }
