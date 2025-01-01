@@ -58,6 +58,8 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 
 解決要手動 export DISCORD_WEBHOOK_URL 才取的到值的問題，要自動抓取資料表的WEBHOOK
 
+Access Token 有效期為一週，需實作 refresh token 機制
+
 --------
 最後執行：
 全部改為響應式設計 
