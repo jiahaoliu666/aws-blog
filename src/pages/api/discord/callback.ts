@@ -71,8 +71,8 @@ export default async function handler(
     try {
       const testDmResult = await discordService.sendDirectMessage(
         userData.id,
-        'ANNOUNCEMENT',
-        '✨ Discord 通知測試',
+        'TEST',
+        '✨ Discord 通知功能已啟用',
         '歡迎使用 AWS Blog 365！\n\n您已成功開啟 Discord 通知功能。',
         process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
       );

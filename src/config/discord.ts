@@ -108,6 +108,14 @@ export const DISCORD_MESSAGE_TEMPLATES = {
         description: `**標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x3b873b,
       }]
+    }),
+
+    TEST: (title: string, content: string, link: string) => ({
+      embeds: [{
+        title: `✨ Discord 通知功能已啟用`,
+        description: `歡迎使用 AWS Blog 365，您的 Discord 通知功能已成功啟用！\n\n[->訪問 AWS Blog 365](${link})`,
+        color: 0x5865F2,
+      }]
     })
   }
 };
