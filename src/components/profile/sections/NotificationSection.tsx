@@ -14,7 +14,8 @@ import {
   faExclamationTriangle,
   faCopy,
   faTimes,
-  faCheck
+  faCheck,
+  faStar
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -1001,7 +1002,32 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                       />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Discord 通知</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 relative">
+                        Discord 通知
+                        <span className="relative group cursor-help">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 
+                            bg-gradient-to-r from-green-500 to-green-600 
+                            text-white text-xs font-bold rounded-full 
+                            shadow-sm hover:shadow-md
+                            transition-all duration-200">
+                            <FontAwesomeIcon icon={faStar} className="text-yellow-300 text-[10px]" />
+                            推薦使用
+                          </span>
+                          <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2
+                            w-max px-4 py-2.5 text-sm text-white 
+                            bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
+                            transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
+                            shadow-xl backdrop-blur-sm pointer-events-none z-50">
+                            <div className="flex items-center gap-2 whitespace-nowrap">
+                              <FontAwesomeIcon icon={faInfoCircle} className="text-green-400" />
+                              <span>此功能完全免費，推薦使用 Discord 接收通知！</span>
+                            </div>
+                            <div className="absolute top-1/2 -left-1 transform -translate-y-1/2
+                              w-2 h-2 bg-gray-800/95 rotate-45">
+                            </div>
+                          </div>
+                        </span>
+                      </h3>
                       <p className="text-sm text-gray-600">透過 Discord 接收即時通知</p>
                       
                       {/* 狀態標籤區域 */}
