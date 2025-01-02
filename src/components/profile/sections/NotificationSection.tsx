@@ -778,8 +778,40 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         toast.warning('您已開啟其他通知方式，請先關閉後再開始 Discord 驗證');
         return;
       }
-      await startDiscordAuth(userId);
+
+      // 開啟授權視窗並獲取其引用
+      const authWindow = await startDiscordAuth(userId);
+      
+      // 如果視窗開啟失敗，直接返回
+      if (!authWindow) {
+        return;
+      }
+
+      // 監聽視窗關閉事件
+      const checkWindow = setInterval(() => {
+        if (authWindow.closed) {
+          clearInterval(checkWindow);
+          // 如果視窗被關閉且尚未完成授權，重置狀態
+          setIsDiscordVerifying(false);
+        }
+      }, 500);
+
+      // 設置一個超時計時器，如果 30 秒內沒有收到回應，就重置狀態
+      const timeoutId = setTimeout(() => {
+        if (isDiscordVerifying) {
+          setIsDiscordVerifying(false);
+          clearInterval(checkWindow);
+          showToast('Discord 授權超時，請重試', 'error');
+        }
+      }, 30000);
+
+      // 清理函數
+      return () => {
+        clearInterval(checkWindow);
+        clearTimeout(timeoutId);
+      };
     } catch (error) {
+      setIsDiscordVerifying(false);
       showToast('Discord 授權失敗', 'error');
       console.error('Discord 授權失敗:', error);
     }

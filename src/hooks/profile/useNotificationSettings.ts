@@ -294,7 +294,7 @@ export const useNotificationSettings = (userId: string) => {
     return () => window.removeEventListener('message', handleDiscordAuthMessage);
   }, [isDiscordVerifying]);
 
-  const startDiscordAuth = async (userId: string) => {
+  const startDiscordAuth = async (userId: string): Promise<Window | null> => {
     try {
       const response = await fetch(
         `/api/discord/auth?userId=${encodeURIComponent(userId)}`,
@@ -324,13 +324,15 @@ export const useNotificationSettings = (userId: string) => {
         }
         
         setIsDiscordVerifying(true);
+        return authWindow;
       } else {
         throw new Error('未獲得有效的授權 URL');
       }
     } catch (error) {
       console.error('啟動 Discord 授權失敗:', error);
       showToast('Discord 授權失敗', 'error');
-      throw error;
+      setIsDiscordVerifying(false);
+      return null;
     }
   };
 
