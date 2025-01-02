@@ -18,7 +18,7 @@ export class EmailService {
     try {
       await rateLimiter.acquire();
 
-      const emailContent = notification.content;
+      const emailContent = notification.html;
       const params = {
         Source: process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
         Destination: {

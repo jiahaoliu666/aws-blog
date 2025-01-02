@@ -32,6 +32,8 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 
 進行中：
 
+根據代碼，當電子郵件通知切換按鈕為開啟狀態時 並點擊儲存設定按鈕會發生什麼事
+
 前端確保 email line discord 只能有一項
 
 通知介面要收到通知
@@ -168,5 +170,17 @@ src/pages/api/solutions/getFavorites.ts
 
 重新加載 .zshrc 文件
 source ~/.zshrc
+
+--------
+
+mail 相關
+src/components/profile/sections/NotificationSection.tsx
+src/services/notificationService.ts
+src/services/emailService.ts
+src/utils/notificationUtils.ts
+src/hooks/notifications/useEmailNotifications.ts
+src/hooks/profile/useProfileArticles.ts
+src/pages/api/notifications/sendEmail.ts
+src/types/emailTypes.ts
 
 --------

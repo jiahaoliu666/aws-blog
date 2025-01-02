@@ -134,14 +134,10 @@ export class NotificationService {
           await this.emailService.sendEmail({
             to: email,
             subject: "AWS 部落格新文章通知",
-            content: this.generateEmailContent({
+            html: this.generateEmailContent({
               translated_title: { S: title },
               summary: { S: summary }
-            }),
-            articleData: {
-              title,
-              content: summary
-            }
+            })
           });
         }
       }

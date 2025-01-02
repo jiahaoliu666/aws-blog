@@ -124,26 +124,26 @@ src/
 │   │   └── useFetchFavorite.ts // 獲取收藏 Hook
 │   │   └── useFavoriteFavorites.ts // 收藏文章 Hook
 │   ├── profile
-│   │   ├── index.ts                // 個人資料 Hook 入口
-│   │   ├── useProfileAvatar.ts     // 個人資料頭像 Hook
-│   │   ├── useProfileFeedback.ts   // 個人資料反饋 Hook
-│   │   ├── useProfileForm.ts       // 個人資料表單 Hook
-│   │   ├── useProfileActivity.ts   // 個人資料活動 Hook
-│   │   ├── useNotificationSettings.ts // 通知設置 Hook
-│   │   ├── useProfileLine.ts       // 個人資料 LINE  Hook
-│   │   ├── useProfilePreferences.ts // 個人資料偏好 Hook
-│   │   ├── useProfileCore.ts       // 個人資料核心 Hook
-│   │   ├── useProfileArticles.ts   // 個人資料文章 Hook
-│   │   ├── useProfilePassword.ts   // 個人資料密碼 Hook
-│   │   └── useProfileAccount.ts    // 個人資料帳戶 Hook
+│   │   ├── index.ts                // Hook 入口
+│   │   ├── useProfileCore.ts       // 核心 Hook
+│   │   ├── useProfileAvatar.ts     // 頭像 Hook
+│   │   ├── useProfileForm.ts       // 個人資訊表單 Hook
+│   │   ├── useProfilePassword.ts   // 修改密碼 Hook
+│   │   ├── useNotificationSettings.ts // 訂閱通知 Hooks
+│   │   ├── useProfilePreferences.ts // 偏好設定 Hook
+│   │   ├── useProfileArticles.ts   // 觀看紀錄 Hook
+│   │   ├── useProfileActivity.ts   // 活動日誌 Hook
+│   │   ├── useProfileFeedback.ts   // 意見反饋 Hook
+│   │   ├── useProfileAccount.ts    // 帳號管理 Hook
+│   │   └── useProfileLine.ts       // LINE  Hook
 │   ├── toast
 │   │   └── useToast.ts             //  Toast  Hook
-│   ├── useAuth.ts                  // 認證 Hook
+│   ├── notifications
+│   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
 │   ├── line
 │   │   ├── useLineVerification.ts  //  LINE 驗證 Hook
 │   │   └── index.ts                // LINE Hook 入口
-│   └── notifications
-│   │   └── useEmailNotifications.ts // 電子郵件通知 Hook
+│   ├── useAuth.ts                  // 認證 Hook
 │   └── useAppLogic.ts              // 應用邏輯 Hook
 ├── lambda----------------------------------------------------------- 爬文
 │   ├── fetchNews.ts                // 獲取新聞 Lambda 函數
@@ -171,8 +171,8 @@ src/
 │   │   │   └── Toast.tsx           // Toast 組件
 │   │   ├── Alert.tsx               // 警告組件
 │   │   ├── Footer.tsx              // 頁腳組件
-│   │   └── Notification.tsx        // 通知組件
-│   └── profile----------------------------------------------------------- 個人資料頁面
+│   │   └── Notification.tsx        // 通知組件 (鈴鐺圖示)
+│   └── profile----------------------------------------------------------- 個人資料頁面 (UI)
 │       ├── sections
 │       │   ├── ProfileSection.tsx  // 個人資訊
 │       │   ├── PasswordSection.tsx // 修改密碼
