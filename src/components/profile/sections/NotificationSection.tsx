@@ -611,7 +611,6 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     setSettings(prev => ({
       ...prev,
       emailNotification: newValue,
-      emailNotificationNotification: newValue
     }));
   };
 
@@ -937,7 +936,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                   </div>
                   <Switch
-                    checked={settings.emailNotificationNotification || settings.emailNotification}
+                    checked={settings.emailNotification}
                     onChange={handleEmailToggle}
                     disabled={isPageLoading}
                     sx={{

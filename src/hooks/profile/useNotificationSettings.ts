@@ -8,7 +8,6 @@ export const useNotificationSettings = (userId: string) => {
   const { showToast } = useToastContext();
   const [settings, setSettings] = useState({
     emailNotification: false,
-    emailNotificationNotification: false,
     lineNotification: false,
     discordNotification: false,
     lineId: null,
@@ -23,7 +22,6 @@ export const useNotificationSettings = (userId: string) => {
   const [showDiscordVerification, setShowDiscordVerification] = useState(false);
   const [tempSettings, setTempSettings] = useState({
     emailNotification: false,
-    emailNotificationNotification: false,
     lineNotification: false,
     discordNotification: false,
     lineId: null,
@@ -124,7 +122,6 @@ export const useNotificationSettings = (userId: string) => {
     const originalSettings = {
       ...settings,
       emailNotification: false,
-      emailNotificationNotification: false,
       lineNotification: settings.lineNotification ?? false,
       discordNotification: settings.discordNotification ?? false,
       lineId: settings.lineId ?? null,
@@ -147,8 +144,7 @@ export const useNotificationSettings = (userId: string) => {
     if (type === 'email') {
       setTempSettings(prev => ({
         ...prev,
-        emailNotification: value,
-        emailNotificationNotification: value
+        emailNotification: value
       }));
     } else {
       setTempSettings(prev => ({
@@ -203,8 +199,7 @@ export const useNotificationSettings = (userId: string) => {
       
       if (data.success) {
         const newSettings = {
-          ...settingsToUpdate,
-          emailNotificationNotification: tempSettings.emailNotification
+          ...settingsToUpdate
         };
         setSettings(newSettings);
         setTempSettings(newSettings);
@@ -231,7 +226,6 @@ export const useNotificationSettings = (userId: string) => {
       const originalSettings = {
         ...settings,
         emailNotification: settings.emailNotification ?? false,
-        emailNotificationNotification: settings.emailNotificationNotification ?? false,
         lineNotification: settings.lineNotification ?? false,
         discordNotification: settings.discordNotification ?? false,
         lineId: settings.lineId ?? null,
