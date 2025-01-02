@@ -601,11 +601,18 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   };
 
   const handleEmailToggle = () => {
-    // 檢查是否有其他通知已開啟
-    if (!settings.emailNotification && (settings.lineNotification || settings.discordNotification)) {
-      toast.warning('您已開啟其他通知方式，請先關閉後再開啟電子郵件通知');
+    // 檢查是否有未儲存的變更
+    if (hasChanges) {
+      showToast('請先儲存或取消目前的變更，再切換電子郵件通知設定', 'warning');
       return;
     }
+
+    // 檢查是否有其他通知已開啟
+    if (!settings.emailNotification && (settings.lineNotification || settings.discordNotification)) {
+      showToast('您已開啟其他通知方式，請先關閉後再開啟電子郵件通知', 'warning');
+      return;
+    }
+
     const newValue = !settings.emailNotification;
     handleToggle('email', newValue);
     setSettings(prev => ({
@@ -616,9 +623,15 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const handleLineToggle = async () => {
     try {
+      // 檢查是否有未儲存的變更
+      if (hasChanges) {
+        showToast('請先儲存或取消目前的變更，再切換 LINE 通知設定', 'warning');
+        return;
+      }
+
       // 檢查是否有其他通知已開啟
       if (!settings.lineNotification && (settings.emailNotification || settings.discordNotification)) {
-        toast.warning('您已開啟其他通知方式，請先關閉後再開啟 LINE 通知');
+        showToast('您已開啟其他通知方式，請先關閉後再開啟 LINE 通知', 'warning');
         return;
       }
 
@@ -637,7 +650,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       }
     } catch (error) {
       console.error('切換 LINE 通知失敗:', error);
-      toast.error('LINE 通知設定更新失敗，請稍後再試');
+      showToast('LINE 通知設定更新失敗，請稍後再試', 'error');
     }
   };
 
@@ -731,9 +744,15 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   };
 
   const handleDiscordSwitch = (checked: boolean) => {
+    // 檢查是否有未儲存的變更
+    if (hasChanges) {
+      showToast('請先儲存或取消目前的變更，再切換 Discord 通知設定', 'warning');
+      return;
+    }
+
     // 檢查是否有其他通知已開啟
     if (checked && (settings.emailNotification || settings.lineNotification)) {
-      toast.warning('您已開啟其他通知方式，請先關閉後再開啟 Discord 通知');
+      showToast('您已開啟其他通知方式，請先關閉後再開啟 Discord 通知', 'warning');
       return;
     }
 
@@ -841,6 +860,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       showToast('您已開啟其他通知方式，請先關閉後再開始 LINE 驗證', 'warning');
       return;
     }
+
     startVerification();
     setVerificationStep(VerificationStep.SCAN_QR);
     setCurrentStep(VerificationStep.SCAN_QR);
