@@ -57,36 +57,15 @@ export class DiscordService {
 
   // 發送 Discord 通知
   public async sendNotification(
-    webhookUrl: string,
+    discordId: string,
     type: DiscordNotificationType,
     title: string,
     content: string,
-    link: string,
-    discordId?: string
+    link: string
   ): Promise<boolean> {
     try {
-      // 1. 發送到文字頻道
-      const channelSuccess = await this.sendWebhookMessage(
-        webhookUrl,
-        type,
-        title,
-        content,
-        link
-      );
-
-      // 2. 如果有提供 discordId，也發送到私人收件匣
-      let dmSuccess = true;
-      if (discordId) {
-        dmSuccess = await this.sendDirectMessage(
-          discordId,
-          type,
-          title,
-          content,
-          link
-        );
-      }
-
-      return channelSuccess && dmSuccess;
+      // 直接發送私人訊息
+      return await this.sendDirectMessage(discordId, type, title, content, link);
     } catch (error) {
       logger.error('發送 Discord 通知失敗:', error);
       return false;
@@ -263,37 +242,6 @@ export class DiscordService {
     }
   }
 
-  public async createWebhookForUser(accessToken: string, channelId: string): Promise<string> {
-    try {
-      // 使用用戶的 access token 創建 webhook
-      const response = await fetch(
-        `${DISCORD_CONFIG.API_ENDPOINT}/channels/${DISCORD_CONFIG.NOTIFICATION_CHANNEL_ID}/webhooks`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: 'AWS Blog 365 Notifications',
-            avatar: 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/bot-avatar.png'
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`創建 webhook 失敗: ${error.message}`);
-      }
-
-      const webhook = await response.json();
-      return `https://discord.com/api/webhooks/${webhook.id}/${webhook.token}`;
-    } catch (error) {
-      logger.error('創建 Discord webhook 失敗:', error);
-      throw error;
-    }
-  }
-
   public async sendNotificationToUser(
     userId: string,
     type: DiscordNotificationType,
@@ -307,43 +255,20 @@ export class DiscordService {
         Key: {
           userId: { S: userId }
         },
-        ProjectionExpression: "webhookUrl"
+        ProjectionExpression: "discordId"
       };
 
       const result = await this.dbClient.send(new GetItemCommand(params));
-      const webhookUrl = result.Item?.webhookUrl?.S;
+      const discordId = result.Item?.discordId?.S;
 
-      if (!webhookUrl) {
-        logger.error(`用戶 ${userId} 沒有有效的 webhook URL`);
+      if (!discordId) {
+        logger.error(`用戶 ${userId} 沒有有效的 Discord ID`);
         return false;
       }
 
-      return await this.sendNotification(webhookUrl, type, title, content, link);
+      return await this.sendNotification(discordId, type, title, content, link);
     } catch (error) {
       logger.error(`發送通知給用戶 ${userId} 失敗:`, error);
-      return false;
-    }
-  }
-
-  public async validateWebhook(webhookUrl: string): Promise<boolean> {
-    try {
-      // 首先檢查 URL 格式
-      if (!webhookUrl.match(/^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/)) {
-        logger.error('無效的 Discord Webhook URL 格式');
-        return false;
-      }
-
-      // 發送測試請求
-      const response = await fetch(webhookUrl);
-      
-      if (response.status === 404) {
-        logger.error('Discord webhook 不存在或已失效');
-        return false;
-      }
-
-      return response.ok;
-    } catch (error) {
-      logger.error('驗證 webhook 失敗:', error);
       return false;
     }
   }
@@ -361,6 +286,8 @@ export class DiscordService {
         throw new Error('Discord Bot Token 未設置');
       }
 
+      logger.info(`嘗試發送私人訊息給用戶 ${discordId}`);
+
       // 1. 先建立 DM 頻道
       const createDMResponse = await fetch(
         `${DISCORD_CONFIG.API_ENDPOINT}/users/@me/channels`,
@@ -377,10 +304,13 @@ export class DiscordService {
       );
 
       if (!createDMResponse.ok) {
+        const error = await createDMResponse.json();
+        logger.error('建立 DM 頻道失敗:', error);
         throw new Error('無法建立私人訊息頻道');
       }
 
       const dmChannel = await createDMResponse.json();
+      logger.info(`成功建立 DM 頻道 ${dmChannel.id}`);
 
       // 2. 使用訊息模板
       const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
@@ -404,49 +334,15 @@ export class DiscordService {
       );
 
       if (!sendMessageResponse.ok) {
+        const error = await sendMessageResponse.json();
+        logger.error('發送訊息失敗:', error);
         throw new Error('發送私人訊息失敗');
       }
 
+      logger.info(`成功發送訊息給用戶 ${discordId}`);
       return true;
     } catch (error) {
       logger.error('發送 Discord 私人訊息失敗:', error);
-      return false;
-    }
-  }
-
-  private async sendWebhookMessage(
-    webhookUrl: string,
-    type: DiscordNotificationType,
-    title: string,
-    content: string,
-    link: string
-  ): Promise<boolean> {
-    try {
-      // 驗證 webhook
-      const isValid = await this.validateWebhook(webhookUrl);
-      if (!isValid) {
-        logger.error('Discord webhook 無效，跳過發送');
-        return false;
-      }
-
-      const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
-      if (!messageTemplate) {
-        throw new Error(`找不到對應的消息模板: ${type}`);
-      }
-
-      const message = messageTemplate(title, content, link);
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(message)
-      });
-
-      return response.ok;
-    } catch (error) {
-      logger.error('發送 Discord webhook 訊息失敗:', error);
       return false;
     }
   }

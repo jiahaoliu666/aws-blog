@@ -54,10 +54,10 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 1, // 更新公告數量
-  news: 1, // 更新新聞數量
-  solutions: 4, // 更新解決方案數量
-  architecture: 4, // 更新架構數量
+  announcement: 2, // 更新公告數量
+  news: 0, // 更新新聞數量
+  solutions: 0, // 更新解決方案數量
+  architecture: 0, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
 
@@ -595,7 +595,6 @@ async function sendNotifications(
   try {
     const discordUsers = users.filter(user => 
       user.discordNotification?.BOOL && 
-      user.webhookUrl?.S &&
       user.discordId?.S
     );
     
@@ -603,16 +602,15 @@ async function sendNotifications(
       const notificationType = mapTypeToNotificationType(type);
       
       for (const user of discordUsers) {
-        if (!user.webhookUrl?.S || !user.discordId?.S) continue;
+        if (!user.discordId?.S) continue;
         
         try {
           const success = await discordService.sendNotification(
-            user.webhookUrl.S,
+            user.discordId.S,
             notificationType,
             article.title,
             article.summary,
-            article.link,
-            user.discordId.S
+            article.link
           );
 
           if (success) {
@@ -757,16 +755,15 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
     
     // 發送 Discord 通知
     for (const user of discordUsers) {
-      if (!user.webhookUrl?.S) continue;
+      if (!user.discordId?.S) continue;
       
       try {
         const success = await discordService.sendNotification(
-          user.webhookUrl.S,
+          user.discordId.S,
           notificationType,
           title,
           summary,
-          link,
-          user.discordId?.S
+          link
         );
 
         if (success) {
@@ -887,7 +884,7 @@ async function getDiscordNotificationUsers(): Promise<NotificationUser[]> {
       ExpressionAttributeValues: {
         ":enabled": { BOOL: true }
       },
-      ProjectionExpression: "userId, discordId, discordNotification, webhookUrl"
+      ProjectionExpression: "userId, discordId, discordNotification"
     };
 
     const data = await dbClient.send(new ScanCommand(params));
@@ -897,19 +894,12 @@ async function getDiscordNotificationUsers(): Promise<NotificationUser[]> {
       return [];
     }
 
-    // 驗證每個用戶的 webhook URL
     const validUsers = data.Items.filter(item => {
-      const webhookUrl = item.webhookUrl?.S;
-      if (!webhookUrl) {
-        logger.warn(`用戶 ${item.userId.S} 缺少 webhook URL`);
+      const discordId = item.discordId?.S;
+      if (!discordId) {
+        logger.warn(`用戶 ${item.userId.S} 缺少 Discord ID`);
         return false;
       }
-      
-      if (!webhookUrl.match(/^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/)) {
-        logger.warn(`用戶 ${item.userId.S} 的 webhook URL 格式無效`);
-        return false;
-      }
-      
       return true;
     });
 

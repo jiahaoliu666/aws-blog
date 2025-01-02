@@ -18,22 +18,9 @@ export interface DiscordToken {
 
 export type DiscordNotificationType = keyof typeof DISCORD_MESSAGE_TEMPLATES.NOTIFICATION;
 
-export interface DiscordWebhook {
-  id: string;
-  type: DiscordNotificationType;
-  name: string;
-  avatar: string | null;
-  channel_id: string;
-  guild_id: string;
-  application_id: string | null;
-  token: string;
-  url: string;
-}
-
 export interface DiscordSettings {
   discordId: string;
   discordNotification: boolean;
-  webhookUrl?: string;
   updatedAt: string;
 }
 
@@ -41,5 +28,4 @@ export interface NotificationUser {
   userId: { S: string };
   discordId?: { S: string };
   discordNotification?: { BOOL: boolean };
-  webhookUrl?: { S: string };
 } 

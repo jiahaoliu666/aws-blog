@@ -64,7 +64,7 @@ export const DISCORD_MESSAGE_TEMPLATES = {
     ANNOUNCEMENT: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `🔔 AWS 最新公告`,
-        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x00b7ff,
       }]
     }),
@@ -72,7 +72,7 @@ export const DISCORD_MESSAGE_TEMPLATES = {
     NEWS: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `📰 AWS 技術新聞`,
-        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0xff9900,
       }]
     }),
@@ -80,7 +80,7 @@ export const DISCORD_MESSAGE_TEMPLATES = {
     SOLUTIONS: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `💡 AWS 解決方案`,
-        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x232f3e,
       }]
     }),
@@ -88,7 +88,7 @@ export const DISCORD_MESSAGE_TEMPLATES = {
     ARCHITECTURE: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `🏗️ AWS 架構參考`,
-        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x527fff,
       }]
     }),
@@ -96,7 +96,7 @@ export const DISCORD_MESSAGE_TEMPLATES = {
     KNOWLEDGE: (title: string, content: string, link: string) => ({
       embeds: [{
         title: `📚 AWS 知識中心`,
-        description: `**文章標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
+        description: `**標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
         color: 0x3b873b,
       }]
     })

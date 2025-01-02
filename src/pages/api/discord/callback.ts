@@ -20,43 +20,12 @@ export default async function handler(
     });
   }
 
-  // 在更新 DynamoDB 之前先檢查 userId
   if (typeof userId !== 'string') {
     throw new Error('無效的 userId');
   }
 
   try {
     logger.info('開始處理 Discord 回調:', { code, state: req.query.state });
-
-    // 先檢查現有的 webhooks
-    const webhooksResponse = await fetch(
-      `${DISCORD_CONFIG.API_ENDPOINT}/guilds/${DISCORD_CONFIG.GUILD_ID}/webhooks`,
-      {
-        headers: {
-          Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
-        },
-      }
-    );
-
-    if (!webhooksResponse.ok) {
-      throw new Error('無法獲取 webhooks 列表');
-    }
-
-    const webhooks = await webhooksResponse.json();
-    
-    // 如果已經達到限制，刪除最舊的 webhook
-    if (webhooks.length >= 15) {
-      const oldestWebhook = webhooks[0];
-      await fetch(
-        `${DISCORD_CONFIG.API_ENDPOINT}/webhooks/${oldestWebhook.id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bot ${DISCORD_CONFIG.BOT_TOKEN}`,
-          },
-        }
-      );
-    }
 
     // 繼續原有的 token 交換流程
     const tokenParams = new URLSearchParams({
@@ -97,30 +66,23 @@ export default async function handler(
 
     const userData = await userResponse.json();
 
-    // 在成功獲取用戶信息後，創建 webhook
-    const webhookUrl = await discordService.createWebhookForUser(
-      tokenData.access_token,
-      DISCORD_CONFIG.NOTIFICATION_CHANNEL_ID
-    );
-
-    // 更新用戶的 webhook 設定
+    // 更新用戶的 Discord 設定
     const updateParams = {
       TableName: "AWS_Blog_UserNotificationSettings",
       Key: {
         userId: { S: userId as string }
       },
-      UpdateExpression: "SET discordId = :did, discordNotification = :dn, webhookUrl = :wh, updatedAt = :ua",
+      UpdateExpression: "SET discordId = :did, discordNotification = :dn, updatedAt = :ua",
       ExpressionAttributeValues: {
         ":did": { S: userData.id },
         ":dn": { BOOL: true },
-        ":wh": { S: webhookUrl },
         ":ua": { S: new Date().toISOString() }
       }
     };
 
     try {
       await dynamoClient.send(new UpdateItemCommand(updateParams));
-      logger.info('成功更新用戶 Discord 設定和 webhook');
+      logger.info('成功更新用戶 Discord 設定');
     } catch (error) {
       logger.error('更新用戶 Discord 設定失敗:', error);
       throw error;
