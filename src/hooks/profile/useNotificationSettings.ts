@@ -155,13 +155,12 @@ export const useNotificationSettings = (userId: string) => {
     
     setTempSettings(newTempSettings);
     
-    // 檢查所有設定是否都與原始設定相同
-    const isEmailSame = newTempSettings.emailNotification === settings.emailNotification;
-    const isLineSame = newTempSettings.lineNotification === settings.lineNotification;
-    const isDiscordSame = newTempSettings.discordNotification === settings.discordNotification;
-    
-    // 只有當所有設定都與原始設定相同時，才將 hasChanges 設為 false
-    const hasChanged = !isEmailSame || !isLineSame || !isDiscordSame;
+    // 比較與初始設定的差異，而不是當前設定
+    const hasChanged = (
+      newTempSettings.emailNotification !== initialSettings.emailNotification ||
+      newTempSettings.lineNotification !== initialSettings.lineNotification ||
+      newTempSettings.discordNotification !== initialSettings.discordNotification
+    );
     
     setHasChanges(hasChanged);
     return true;
