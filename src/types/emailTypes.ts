@@ -6,8 +6,8 @@ export interface ArticleData {
 export interface EmailNotification {
   to: string;
   subject: string;
-  content: string;
-  articleData: ArticleData;
+  text?: string;
+  html?: string;
 }
 
 export interface NotificationSettings {

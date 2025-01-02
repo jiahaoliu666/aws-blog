@@ -2,6 +2,7 @@ import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '@/config/discord';
 import { logger } from '@/utils/logger';
 import { GetItemCommand, DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { DiscordNotificationType } from '@/types/discordTypes';
+import { failedNotifications } from '@/utils/notificationUtils';
 
 interface DiscordUser {
   id: string;
@@ -254,7 +255,8 @@ export class DiscordService {
   ): Promise<boolean> {
     try {
       if (!DISCORD_CONFIG.BOT_TOKEN) {
-        throw new Error('Discord Bot Token 未設置');
+        logger.error('Discord Bot Token 未設置');
+        return false;
       }
 
       logger.info(`嘗試發送私人訊息給用戶 ${discordId}`);
@@ -277,7 +279,19 @@ export class DiscordService {
       if (!createDMResponse.ok) {
         const error = await createDMResponse.json();
         logger.error('建立 DM 頻道失敗:', error);
-        throw new Error('無法建立私人訊息頻道');
+        
+        // 處理特定錯誤情況
+        if (createDMResponse.status === 401) {
+          logger.error('Discord Bot Token 無效或已過期');
+          return false;
+        }
+        
+        if (error.code === 50007) {
+          logger.error('無法發送私人訊息，用戶可能已關閉 DM 或封鎖機器人');
+          return false;
+        }
+        
+        throw new Error(`建立 DM 頻道失敗: ${error.message || '未知錯誤'}`);
       }
 
       const dmChannel = await createDMResponse.json();
@@ -286,7 +300,8 @@ export class DiscordService {
       // 2. 使用訊息模板
       const messageTemplate = DISCORD_MESSAGE_TEMPLATES.NOTIFICATION[type];
       if (!messageTemplate) {
-        throw new Error(`找不到對應的消息模板: ${type}`);
+        logger.error(`找不到對應的消息模板: ${type}`);
+        return false;
       }
 
       const message = messageTemplate(title, content, link);
@@ -307,6 +322,12 @@ export class DiscordService {
       if (!sendMessageResponse.ok) {
         const error = await sendMessageResponse.json();
         logger.error('發送訊息失敗:', error);
+        
+        if (sendMessageResponse.status === 401) {
+          logger.error('Discord Bot Token 無效或已過期');
+          return false;
+        }
+        
         throw new Error('發送私人訊息失敗');
       }
 
@@ -314,6 +335,15 @@ export class DiscordService {
       return true;
     } catch (error) {
       logger.error('發送 Discord 私人訊息失敗:', error);
+      
+      // 將失敗的通知加入重試佇列
+      failedNotifications.push({
+        userId: discordId,
+        articleId: link,
+        type: 'discord',
+        error: error instanceof Error ? error.message : '未知錯誤'
+      });
+      
       return false;
     }
   }

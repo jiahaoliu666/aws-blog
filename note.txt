@@ -177,3 +177,10 @@ src/pages/api/solutions/getFavorites.ts
 
 --------
 
+設置本地環境變數
+~/.zshrc 文件 ()
+
+重新加載 .zshrc 文件
+source ~/.zshrc
+
+--------

@@ -54,11 +54,11 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 2, // 更新公告數量
-  news: 0, // 更新新聞數量
-  solutions: 0, // 更新解決方案數量
+  announcement: 5, // 更新公告數量
+  news: 1, // 更新新聞數量
+  solutions: 6, // 更新解決方案數量
   architecture: 0, // 更新架構數量
-  knowledge: 0, // 更新知識中心數量
+  knowledge: 1, // 更新知識中心數量
 };
 
 const prompts = {
@@ -752,10 +752,14 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
 
     // 獲取啟用 Discord 通知的用戶
     const discordUsers = await getDiscordNotificationUsers();
+    logger.info(`找到 ${discordUsers.length} 個有效的 Discord 通知用戶`);
     
     // 發送 Discord 通知
     for (const user of discordUsers) {
-      if (!user.discordId?.S) continue;
+      if (!user.discordId?.S) {
+        logger.warn(`用戶 ${user.userId.S} 缺少 Discord ID，跳過通知`);
+        continue;
+      }
       
       try {
         const success = await discordService.sendNotification(
@@ -772,6 +776,14 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
         } else {
           stats[type].notificationsFailed++;
           logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S})`);
+          
+          // 將失敗的通知加入重試佇列
+          failedNotifications.push({
+            userId: user.userId.S,
+            articleId: contentId,
+            type: 'discord',
+            error: 'Discord 通知發送失敗'
+          });
         }
       } catch (error) {
         stats[type].notificationsFailed++;
@@ -785,6 +797,13 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
         });
       }
     }
+
+    // 處理失敗的通知
+    if (failedNotifications.length > 0) {
+      logger.info(`開始處理 ${failedNotifications.length} 個失敗的通知`);
+      await processFailedNotifications();
+    }
+
   } catch (error) {
     logger.error('廣播新內容時發生錯誤:', error);
     throw error;
@@ -903,7 +922,6 @@ async function getDiscordNotificationUsers(): Promise<NotificationUser[]> {
       return true;
     });
 
-    logger.info(`找到 ${validUsers.length} 個有效的 Discord 通知用戶`);
     return validUsers as unknown as NotificationUser[];
   } catch (error) {
     logger.error('獲取 Discord 通知用戶失敗:', error);
