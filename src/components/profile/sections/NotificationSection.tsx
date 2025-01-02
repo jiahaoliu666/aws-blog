@@ -601,11 +601,22 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   };
 
   const handleEmailToggle = () => {
+    // 檢查是否有其他通知已開啟
+    if (!settings.emailNotification && (settings.lineNotification || settings.discordNotification)) {
+      toast.warning('您已開啟其他通知方式，請先關閉後再開啟電子郵件通知');
+      return;
+    }
     handleToggle('emailNotification', !settings.emailNotification);
   };
 
   const handleLineToggle = async () => {
     try {
+      // 檢查是否有其他通知已開啟
+      if (!settings.lineNotification && (settings.emailNotification || settings.discordNotification)) {
+        toast.warning('您已開啟其他通知方式，請先關閉後再開啟 LINE 通知');
+        return;
+      }
+
       if (!settings.lineNotification) {
         const wasChanged = await handleToggle('lineNotification', true);
         if (wasChanged) {
@@ -715,6 +726,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   };
 
   const handleDiscordSwitch = (checked: boolean) => {
+    // 檢查是否有其他通知已開啟
+    if (checked && (settings.emailNotification || settings.lineNotification)) {
+      toast.warning('您已開啟其他通知方式，請先關閉後再開啟 Discord 通知');
+      return;
+    }
+
     if (!checked) {
       // 當要關閉 Discord 通知時，顯示確認對話框
       if (window.confirm('確定要關閉 Discord 通知嗎？這將會清除所有的通知設定。')) {
@@ -756,11 +773,27 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const handleDiscordAuth = async () => {
     try {
+      // 檢查是否有其他通知已開啟
+      if (settings.emailNotification || settings.lineNotification) {
+        toast.warning('您已開啟其他通知方式，請先關閉後再開始 Discord 驗證');
+        return;
+      }
       await startDiscordAuth(userId);
     } catch (error) {
       showToast('Discord 授權失敗', 'error');
       console.error('Discord 授權失敗:', error);
     }
+  };
+
+  const handleStartLineVerification = () => {
+    // 檢查是否有其他通知已開啟
+    if (settings.emailNotification || settings.discordNotification) {
+      toast.warning('您已開啟其他通知方式，請先關閉後再開始 LINE 驗證');
+      return;
+    }
+    startVerification();
+    setVerificationStep(VerificationStep.SCAN_QR);
+    setCurrentStep(VerificationStep.SCAN_QR);
   };
 
   return (
@@ -966,16 +999,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               </div>
 
               {/* LINE 驗證流程區域 */}
-              {!settings.lineId && (
+              {!settings.lineId && !settings.lineNotification && (
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 LINE 驗證才能啟用通知功能</p>
                     <button
-                      onClick={() => {
-                        startVerification();
-                        setVerificationStep(VerificationStep.SCAN_QR);
-                        setCurrentStep(VerificationStep.SCAN_QR);
-                      }}
+                      onClick={handleStartLineVerification}
                       className="bg-blue-600 text-white px-6 py-2.5 rounded-lg 
                         hover:bg-blue-700 active:bg-blue-800
                         transition-all duration-200 ease-in-out
