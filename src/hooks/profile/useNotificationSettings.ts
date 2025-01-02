@@ -6,6 +6,7 @@ export const useNotificationSettings = (userId: string) => {
   const { showToast } = useToastContext();
   const [settings, setSettings] = useState({
     emailNotification: false,
+    emailNotificationNotification: false,
     lineNotification: false,
     discordNotification: false,
     lineId: null,
@@ -20,6 +21,7 @@ export const useNotificationSettings = (userId: string) => {
   const [showDiscordVerification, setShowDiscordVerification] = useState(false);
   const [tempSettings, setTempSettings] = useState({
     emailNotification: false,
+    emailNotificationNotification: false,
     lineNotification: false,
     discordNotification: false,
     lineId: null,
@@ -117,8 +119,21 @@ export const useNotificationSettings = (userId: string) => {
   };
 
   const resetSettings = async () => {
-    setTempSettings(settings);
+    const originalSettings = {
+      ...settings,
+      emailNotification: false,
+      emailNotificationNotification: false,
+      lineNotification: settings.lineNotification ?? false,
+      discordNotification: settings.discordNotification ?? false,
+      lineId: settings.lineId ?? null,
+      lineUserId: settings.lineUserId ?? null,
+      discordId: settings.discordId ?? null
+    };
+    
+    setTempSettings(originalSettings);
+    setSettings(originalSettings);
     setHasChanges(false);
+    
     showToast('設定已重置', 'info');
   };
 
@@ -127,11 +142,19 @@ export const useNotificationSettings = (userId: string) => {
   };
 
   const handleSettingChange = async (type: string, value: boolean): Promise<boolean> => {
+    if (type === 'email') {
+      setTempSettings(prev => ({
+        ...prev,
+        emailNotification: value,
+        emailNotificationNotification: value
+      }));
+    } else {
+      setTempSettings(prev => ({
+        ...prev,
+        [`${type}Notification`]: value
+      }));
+    }
     setHasChanges(true);
-    setTempSettings(prev => ({
-      ...prev,
-      [`${type}Notification`]: value
-    }));
     return true;
   };
 
@@ -139,7 +162,6 @@ export const useNotificationSettings = (userId: string) => {
     try {
       setIsLoading(true);
       
-      // 如果 Discord 通知被關閉，直接發送請求刪除所有設定
       if (!tempSettings.discordNotification) {
         const response = await fetch('/api/profile/notification-settings', {
           method: 'POST',
@@ -155,7 +177,18 @@ export const useNotificationSettings = (userId: string) => {
         const data = await response.json();
         
         if (data.success) {
-          setSettings(data.settings);
+          const newSettings = {
+            ...data.settings,
+            emailNotification: data.settings.emailNotification ?? false,
+            emailNotificationNotification: data.settings.emailNotificationNotification ?? false,
+            lineNotification: data.settings.lineNotification ?? false,
+            discordNotification: data.settings.discordNotification ?? false,
+            lineId: data.settings.lineId ?? null,
+            lineUserId: data.settings.lineUserId ?? null,
+            discordId: data.settings.discordId ?? null
+          };
+          setSettings(newSettings);
+          setTempSettings(newSettings);
           setHasChanges(false);
           showToast('設定已更新', 'success');
           
@@ -175,7 +208,13 @@ export const useNotificationSettings = (userId: string) => {
       };
       
       await updateSettings(settingsToUpdate);
-      setSettings(settingsToUpdate);
+      const newSettings = {
+        ...settingsToUpdate,
+        emailNotification: settingsToUpdate.emailNotification ?? false,
+        emailNotificationNotification: settingsToUpdate.emailNotificationNotification ?? false
+      };
+      setSettings(newSettings);
+      setTempSettings(newSettings);
       setHasChanges(false);
 
       showToast('設定已更新', 'success');
@@ -189,7 +228,17 @@ export const useNotificationSettings = (userId: string) => {
     } catch (error) {
       showToast('儲存設定失敗', 'error');
       logger.error('儲存設定失敗:', error);
-      setTempSettings(settings);
+      const originalSettings = {
+        ...settings,
+        emailNotification: settings.emailNotification ?? false,
+        emailNotificationNotification: settings.emailNotificationNotification ?? false,
+        lineNotification: settings.lineNotification ?? false,
+        discordNotification: settings.discordNotification ?? false,
+        lineId: settings.lineId ?? null,
+        lineUserId: settings.lineUserId ?? null,
+        discordId: settings.discordId ?? null
+      };
+      setTempSettings(originalSettings);
       return false;
     } finally {
       setIsLoading(false);
@@ -276,7 +325,6 @@ export const useNotificationSettings = (userId: string) => {
           
           showToast('Discord 綁定成功', 'success');
           
-          // 延遲 1 秒後刷新頁面
           setTimeout(() => {
             window.location.reload();
           }, 1000);

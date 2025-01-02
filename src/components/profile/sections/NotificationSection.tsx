@@ -606,7 +606,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       toast.warning('您已開啟其他通知方式，請先關閉後再開啟電子郵件通知');
       return;
     }
-    handleToggle('emailNotification', !settings.emailNotification);
+    const newValue = !settings.emailNotification;
+    handleToggle('email', newValue);
+    setSettings(prev => ({
+      ...prev,
+      emailNotification: newValue,
+      emailNotificationNotification: newValue
+    }));
   };
 
   const handleLineToggle = async () => {
@@ -931,7 +937,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                   </div>
                   <Switch
-                    checked={settings.emailNotification}
+                    checked={settings.emailNotificationNotification || settings.emailNotification}
                     onChange={handleEmailToggle}
                     disabled={isPageLoading}
                     sx={{
@@ -946,8 +952,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                             backgroundColor: 'rgba(37, 99, 235, 0.04)',
                           },
                           '& + .MuiSwitch-track': {
-                            backgroundColor: '#2563eb',
-                            opacity: 0.5,
+                            backgroundColor: '#2563eb !important',
+                            opacity: '0.5 !important',
+                          },
+                          '&.Mui-disabled': {
+                            color: '#93c5fd',
                           },
                         },
                       },
