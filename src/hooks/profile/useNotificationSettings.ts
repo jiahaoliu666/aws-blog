@@ -172,6 +172,13 @@ export const useNotificationSettings = (userId: string) => {
         return false;
       }
 
+      // 檢查是否有任何通知設定被關閉
+      const hasDisabledNotification = (
+        (!tempSettings.emailNotification && settings.emailNotification) ||
+        (!tempSettings.discordNotification && settings.discordNotification) ||
+        (!tempSettings.lineNotification && settings.lineNotification)
+      );
+
       // 構建要更新的設定
       const settingsToUpdate = {
         userId,
@@ -202,7 +209,12 @@ export const useNotificationSettings = (userId: string) => {
         setSettings(newSettings);
         setTempSettings(newSettings);
         setHasChanges(false);
-        showToast('設定已更新', 'success');
+        
+        if (hasDisabledNotification) {
+          showToast('通知設定已關閉並刪除', 'success');
+        } else {
+          showToast('設定已更新', 'success');
+        }
         
         setTimeout(() => {
           window.location.reload();

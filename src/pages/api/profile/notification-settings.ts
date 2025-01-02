@@ -8,11 +8,12 @@ interface NotificationSettings {
   userId: { S: string };
   emailNotification: { BOOL: boolean };
   email?: { S: string };
-  discordNotification: { BOOL: boolean };
+  discordNotification?: { BOOL: boolean };
   discordId?: { S: string };
-  lineNotification: { BOOL: boolean };
+  lineNotification?: { BOOL: boolean };
   lineId?: { S: string };
   lineUserId?: { S: string };
+  updatedAt: { S: string };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -33,19 +34,76 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const existingSettings = await dynamoClient.send(new GetItemCommand(getParams));
 
+    // 獲取當前時間的 ISO 字符串
+    const timestamp = new Date().toISOString();
+
+    // 如果任何一個通知設定被關閉，則刪除整個設定記錄
+    if (existingSettings.Item && 
+        (!emailNotification && !discordNotification && !lineNotification)) {
+      const deleteParams = {
+        TableName: "AWS_Blog_UserNotificationSettings",
+        Key: {
+          userId: { S: userId }
+        }
+      };
+
+      await dynamoClient.send(new DeleteItemCommand(deleteParams));
+
+      logger.info('用戶通知設定已刪除:', {
+        userId,
+        action: 'DELETE',
+        deletedAt: timestamp
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: '通知設定已刪除',
+        settings: {
+          emailNotification: false,
+          email: undefined,
+          discordNotification: false,
+          discordId: undefined,
+          lineNotification: false,
+          lineId: undefined,
+          lineUserId: undefined,
+          updatedAt: timestamp
+        }
+      });
+    }
+
     // 構建新的設定
-    const newSettings: Record<string, AttributeValue> = {
+    let newSettings: Record<string, AttributeValue> = {
       userId: { S: userId },
-      emailNotification: { BOOL: !!emailNotification },
-      discordNotification: { BOOL: !!discordNotification },
-      lineNotification: { BOOL: !!lineNotification }
+      updatedAt: { S: timestamp }
     };
 
-    // 有條件地添加可選欄位
-    if (email) newSettings.email = { S: email };
-    if (discordId) newSettings.discordId = { S: discordId };
-    if (lineId) newSettings.lineId = { S: lineId };
-    if (lineUserId) newSettings.lineUserId = { S: lineUserId };
+    // 根據不同的通知類型設置對應的設定
+    if (emailNotification) {
+      // 如果開啟電子郵件通知，只保存電子郵件相關設定
+      newSettings = {
+        userId: { S: userId },
+        email: { S: email },
+        emailNotification: { BOOL: true },
+        updatedAt: { S: timestamp }
+      };
+    } else if (discordNotification) {
+      // 如果開啟 Discord 通知
+      newSettings = {
+        userId: { S: userId },
+        discordId: { S: discordId },
+        discordNotification: { BOOL: true },
+        updatedAt: { S: timestamp }
+      };
+    } else if (lineNotification) {
+      // 如果開啟 LINE 通知
+      newSettings = {
+        userId: { S: userId },
+        lineId: { S: lineId },
+        lineUserId: { S: lineUserId },
+        lineNotification: { BOOL: true },
+        updatedAt: { S: timestamp }
+      };
+    }
 
     // 更新設定
     const putParams = {
@@ -58,9 +116,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     logger.info('用戶通知設定已更新:', {
       userId,
       emailNotification,
-      discordNotification,
-      lineNotification,
-      action: 'UPDATE'
+      action: 'UPDATE',
+      updatedAt: timestamp
     });
 
     return res.status(200).json({
@@ -68,12 +125,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: '通知設定已更新',
       settings: {
         emailNotification: !!emailNotification,
-        email,
+        email: emailNotification ? email : undefined,
         discordNotification: !!discordNotification,
-        discordId,
+        discordId: discordNotification ? discordId : undefined,
         lineNotification: !!lineNotification,
-        lineId,
-        lineUserId
+        lineId: lineNotification ? lineId : undefined,
+        lineUserId: lineNotification ? lineUserId : undefined,
+        updatedAt: timestamp
       }
     });
 
