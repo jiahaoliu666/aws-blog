@@ -27,7 +27,7 @@ export const useNewsFavorites = () => {
 
     const toggleFavorite = async (article: ExtendedNews | FavoriteItem) => {
         if (!user) {
-            alert('請先登入才能收藏文章！');
+            alert('請先登入才能收藏！');
             return;
         }
 

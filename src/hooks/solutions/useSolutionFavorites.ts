@@ -26,7 +26,7 @@ export const useSolutionFavorites = () => {
 
     const toggleFavorite = async (solution: ExtendedSolution) => {
         if (!user) {
-            alert('請先登入才能收藏解決方案！');
+            alert('請先登入才能收藏！');
             return;
         }
 

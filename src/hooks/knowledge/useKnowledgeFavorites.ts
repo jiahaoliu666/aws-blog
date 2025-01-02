@@ -25,7 +25,7 @@ export const useKnowledgeFavorites = () => {
 
     const toggleFavorite = async (knowledge: ExtendedKnowledge) => {
         if (!user) {
-            alert('請先登入才能收藏知識！');
+            alert('請先登入才能收藏！');
             return;
         }
 

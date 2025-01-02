@@ -28,7 +28,7 @@ export const useAnnouncementFavorites = () => {
 
     const toggleFavorite = async (announcement: ExtendedAnnouncement | ExtendedNews | FavoriteItem) => {
         if (!user) {
-            alert('請先登入才能收藏公告！');
+            alert('請先登入才能收藏！');
             return;
         }
 

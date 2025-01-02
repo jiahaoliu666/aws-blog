@@ -72,7 +72,7 @@ const Card: React.FC<CardProps> = ({
 
     const handleToggleFavorite = async () => {
         if (!user) {
-            toast.error('請先登入才能收藏');
+            alert('請先登入才能收藏！');
             return;
         }
 

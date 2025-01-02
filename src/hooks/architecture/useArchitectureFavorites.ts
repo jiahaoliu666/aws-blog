@@ -26,7 +26,7 @@ export const useArchitectureFavorites = () => {
 
     const toggleFavorite = async (architecture: ExtendedArchitecture) => {
         if (!user) {
-            alert('請先登入才能收藏架構！');
+            alert('請先登入才能收藏！');
             return;
         }
 
