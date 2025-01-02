@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { logger } from '@/utils/logger';
 import { useToastContext } from '@/context/ToastContext';
+import { useAuthContext } from '@/context/AuthContext';
 
 export const useNotificationSettings = (userId: string) => {
+  const { user } = useAuthContext();
   const { showToast } = useToastContext();
   const [settings, setSettings] = useState({
     emailNotification: false,
@@ -162,68 +164,54 @@ export const useNotificationSettings = (userId: string) => {
     try {
       setIsLoading(true);
       
-      if (!tempSettings.discordNotification) {
-        const response = await fetch('/api/profile/notification-settings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId,
-            discordNotification: false
-          })
-        });
-
-        const data = await response.json();
-        
-        if (data.success) {
-          const newSettings = {
-            ...data.settings,
-            emailNotification: data.settings.emailNotification ?? false,
-            emailNotificationNotification: data.settings.emailNotificationNotification ?? false,
-            lineNotification: data.settings.lineNotification ?? false,
-            discordNotification: data.settings.discordNotification ?? false,
-            lineId: data.settings.lineId ?? null,
-            lineUserId: data.settings.lineUserId ?? null,
-            discordId: data.settings.discordId ?? null
-          };
-          setSettings(newSettings);
-          setTempSettings(newSettings);
-          setHasChanges(false);
-          showToast('設定已更新', 'success');
-          
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-          
-          return true;
-        } else {
-          throw new Error(data.message || '更新設定失敗');
-        }
+      // 從 AuthContext 獲取用戶電子郵件
+      const userEmail = user?.email || '';
+      
+      if (tempSettings.emailNotification && !userEmail) {
+        showToast('無法獲取用戶電子郵件', 'error');
+        return false;
       }
 
+      // 構建要更新的設定
       const settingsToUpdate = {
-        ...tempSettings,
-        discordId: tempSettings.discordNotification ? settings.discordId : null
+        userId,
+        emailNotification: tempSettings.emailNotification,
+        email: userEmail,
+        discordNotification: tempSettings.discordNotification,
+        discordId: tempSettings.discordNotification ? settings.discordId : null,
+        lineNotification: tempSettings.lineNotification,
+        lineId: tempSettings.lineId,
+        lineUserId: tempSettings.lineUserId
       };
-      
-      await updateSettings(settingsToUpdate);
-      const newSettings = {
-        ...settingsToUpdate,
-        emailNotification: settingsToUpdate.emailNotification ?? false,
-        emailNotificationNotification: settingsToUpdate.emailNotificationNotification ?? false
-      };
-      setSettings(newSettings);
-      setTempSettings(newSettings);
-      setHasChanges(false);
 
-      showToast('設定已更新', 'success');
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      const response = await fetch('/api/profile/notification-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settingsToUpdate)
+      });
 
-      return true;
+      const data = await response.json();
+      
+      if (data.success) {
+        const newSettings = {
+          ...settingsToUpdate,
+          emailNotificationNotification: tempSettings.emailNotification
+        };
+        setSettings(newSettings);
+        setTempSettings(newSettings);
+        setHasChanges(false);
+        showToast('設定已更新', 'success');
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+        
+        return true;
+      } else {
+        throw new Error(data.message || '更新設定失敗');
+      }
 
     } catch (error) {
       showToast('儲存設定失敗', 'error');
