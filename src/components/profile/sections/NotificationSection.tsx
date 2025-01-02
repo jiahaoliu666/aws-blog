@@ -778,10 +778,16 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
   const handleDiscordAuth = async () => {
     try {
+      // 檢查是否有未儲存的變更
+      if (hasChanges) {
+        showToast('請先儲存或取消目前的變更，再開始 Discord 驗證', 'warning');
+        return null;
+      }
+
       // 檢查是否有其他通知已開啟
       if (settings.emailNotification || settings.lineNotification) {
-        toast.warning('您已開啟其他通知方式，請先關閉後再開始 Discord 驗證');
-        return;
+        showToast('您已開啟其他通知方式，請先關閉後再開始 Discord 驗證', 'warning');
+        return null;
       }
 
       // 開啟授權視窗並獲取其引用
@@ -789,7 +795,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       
       // 如果視窗開啟失敗，直接返回
       if (!authWindow) {
-        return;
+        return null;
       }
 
       // 監聽視窗關閉事件
@@ -819,13 +825,20 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       setIsDiscordVerifying(false);
       showToast('Discord 授權失敗', 'error');
       console.error('Discord 授權失敗:', error);
+      return null;
     }
   };
 
   const handleStartLineVerification = () => {
+    // 檢查是否有未儲存的變更
+    if (hasChanges) {
+      showToast('請先儲存或取消目前的變更，再開始 LINE 驗證', 'warning');
+      return;
+    }
+    
     // 檢查是否有其他通知已開啟
     if (settings.emailNotification || settings.discordNotification) {
-      toast.warning('您已開啟其他通知方式，請先關閉後再開始 LINE 驗證');
+      showToast('您已開啟其他通知方式，請先關閉後再開始 LINE 驗證', 'warning');
       return;
     }
     startVerification();
