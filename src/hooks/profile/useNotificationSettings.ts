@@ -14,6 +14,14 @@ export const useNotificationSettings = (userId: string) => {
     lineUserId: null,
     discordId: null
   });
+  const [initialSettings, setInitialSettings] = useState({
+    emailNotification: false,
+    lineNotification: false,
+    discordNotification: false,
+    lineId: null,
+    lineUserId: null,
+    discordId: null
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showVerification, setShowVerification] = useState(false);
@@ -50,6 +58,9 @@ export const useNotificationSettings = (userId: string) => {
       if (data.success) {
         setSettings(data.settings);
         setTempSettings(data.settings);
+        if (isInitialLoad) {
+          setInitialSettings(data.settings);
+        }
         return data.settings;
       } else {
         throw new Error(data.message || '獲取設定失敗');
@@ -118,21 +129,9 @@ export const useNotificationSettings = (userId: string) => {
     }
   };
 
-  const resetSettings = async () => {
-    const originalSettings = {
-      ...settings,
-      emailNotification: false,
-      lineNotification: settings.lineNotification ?? false,
-      discordNotification: settings.discordNotification ?? false,
-      lineId: settings.lineId ?? null,
-      lineUserId: settings.lineUserId ?? null,
-      discordId: settings.discordId ?? null
-    };
-    
-    setTempSettings(originalSettings);
-    setSettings(originalSettings);
+  const resetSettings = () => {
+    setTempSettings(initialSettings);
     setHasChanges(false);
-    
     showToast('設定已重置', 'info');
   };
 
@@ -141,18 +140,30 @@ export const useNotificationSettings = (userId: string) => {
   };
 
   const handleSettingChange = async (type: string, value: boolean): Promise<boolean> => {
+    let newTempSettings;
     if (type === 'email') {
-      setTempSettings(prev => ({
-        ...prev,
+      newTempSettings = {
+        ...tempSettings,
         emailNotification: value
-      }));
+      };
     } else {
-      setTempSettings(prev => ({
-        ...prev,
+      newTempSettings = {
+        ...tempSettings,
         [`${type}Notification`]: value
-      }));
+      };
     }
-    setHasChanges(true);
+    
+    setTempSettings(newTempSettings);
+    
+    // 檢查所有設定是否都與原始設定相同
+    const isEmailSame = newTempSettings.emailNotification === settings.emailNotification;
+    const isLineSame = newTempSettings.lineNotification === settings.lineNotification;
+    const isDiscordSame = newTempSettings.discordNotification === settings.discordNotification;
+    
+    // 只有當所有設定都與原始設定相同時，才將 hasChanges 設為 false
+    const hasChanged = !isEmailSame || !isLineSame || !isDiscordSame;
+    
+    setHasChanges(hasChanged);
     return true;
   };
 
