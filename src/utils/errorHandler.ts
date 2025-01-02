@@ -58,8 +58,8 @@ export const errorHandler = {
       stack: error.stack
     });
 
-    if (error.code === 30007) {
-      throw new DiscordError('Discord webhook 已達上限', 'WEBHOOK_LIMIT');
+    if (error.code === 50007) {
+      throw new DiscordError('無法發送私人訊息，請確保您的隱私設定允許接收訊息', 'DM_FAILED');
     }
 
     if (error.status === 401) {
@@ -76,7 +76,7 @@ export const errorHandler = {
 
     throw new DiscordError(
       error.message || 'Discord 操作失敗',
-      'WEBHOOK_FAILED'
+      'INVALID_REQUEST'
     );
   }
 };

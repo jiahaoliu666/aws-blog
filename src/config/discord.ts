@@ -5,6 +5,7 @@ const requiredEnvVars = [
   'DISCORD_CLIENT_SECRET',
   'DISCORD_BOT_TOKEN',
   'DISCORD_GUILD_ID',
+  'DISCORD_AUTHORIZE_URL'
 ] as const;
 
 // 改為只在伺服器端檢查環境變數
@@ -20,14 +21,22 @@ export const DISCORD_CONFIG = {
   CLIENT_ID: process.env.DISCORD_CLIENT_ID || '',
   CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || '',
   BOT_TOKEN: process.env.DISCORD_BOT_TOKEN || '',
-  WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL || '',
+  get AUTHORIZE_URL() {
+    const baseUrl = 'https://discord.com/oauth2/authorize';
+    const params = new URLSearchParams({
+      client_id: this.CLIENT_ID,
+      response_type: 'code',
+      scope: 'identify',
+      redirect_uri: this.REDIRECT_URI
+    });
+    return `${baseUrl}?${params.toString()}`;
+  },
   get REDIRECT_URI() {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     return `${baseUrl}/api/discord/callback`;
   },
   API_ENDPOINT: 'https://discord.com/api/v10',
   GUILD_ID: process.env.DISCORD_GUILD_ID || '',
-  NOTIFICATION_CHANNEL_ID: process.env.DISCORD_NOTIFICATION_CHANNEL_ID || '',
   RATE_LIMIT: {
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000,
@@ -105,30 +114,24 @@ export const DISCORD_MESSAGE_TEMPLATES = {
 
 export const DISCORD_BOT_CONFIG = {
   PERMISSIONS: [
-    'SEND_MESSAGES',
-    'VIEW_CHANNELS',
-    'MANAGE_WEBHOOKS',
-    'READ_MESSAGE_HISTORY'
+    'ADMINISTRATOR'
   ],
   INTENTS: [
     'GUILDS',
     'GUILD_MESSAGES',
-    'DIRECT_MESSAGES'
+    'DIRECT_MESSAGES',
+    'MESSAGE_CONTENT'
   ]
 };
 
 export const DISCORD_ERRORS = {
   AUTH_FAILED: 'DISCORD_AUTH_FAILED',
   INVALID_TOKEN: 'INVALID_DISCORD_TOKEN',
-  WEBHOOK_FAILED: 'DISCORD_WEBHOOK_FAILED',
   USER_NOT_FOUND: 'DISCORD_USER_NOT_FOUND',
   INVALID_REQUEST: 'DISCORD_INVALID_REQUEST',
-  WEBHOOK_LIMIT: 'DISCORD_WEBHOOK_LIMIT'
+  DM_FAILED: 'DISCORD_DM_FAILED'
 } as const;
 
 export const DISCORD_SCOPES = [
-  'identify',
-  'email',
-  'guilds.join',
-  'webhook.incoming'
+  'identify'
 ] as const; 

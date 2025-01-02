@@ -294,28 +294,27 @@ export const useNotificationSettings = (userId: string) => {
     return () => window.removeEventListener('message', handleDiscordAuthMessage);
   }, [isDiscordVerifying]);
 
-  const startDiscordAuth = async () => {
+  const startDiscordAuth = async (userId: string) => {
     try {
-      if (!userId) {
-        throw new Error('缺少用戶 ID');
-      }
-
-      const response = await fetch('/api/discord/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId })
-      });
+      const response = await fetch(
+        `/api/discord/auth?userId=${encodeURIComponent(userId)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
       const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || 'Discord 授權失敗');
+
+      if (!response.ok) {
+        throw new Error(data.message || '獲取 Discord 授權 URL 失敗');
       }
 
-      if (data.authUrl) {
+      if (data.url) {
         const authWindow = window.open(
-          data.authUrl, 
+          data.url,
           'discord-auth',
           'width=800,height=600,location=yes,resizable=yes,scrollbars=yes,status=yes'
         );
@@ -323,11 +322,15 @@ export const useNotificationSettings = (userId: string) => {
         if (authWindow === null) {
           showToast('請允許開啟彈出視窗以完成 Discord 授權', 'warning');
         }
+        
+        setIsDiscordVerifying(true);
+      } else {
+        throw new Error('未獲得有效的授權 URL');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      console.error('啟動 Discord 授權失敗:', error);
       showToast('Discord 授權失敗', 'error');
-      logger.error('Discord 授權失敗:', errorMessage);
+      throw error;
     }
   };
 

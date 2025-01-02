@@ -1,6 +1,6 @@
 import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '@/config/discord';
 import { logger } from '@/utils/logger';
-import { GetItemCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { GetItemCommand, DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { DiscordNotificationType } from '@/types/discordTypes';
 
 interface DiscordUser {
@@ -213,35 +213,6 @@ export class DiscordService {
     }
   }
 
-  public async testWebhook(): Promise<boolean> {
-    try {
-      const testMessage = {
-        content: "測試 Discord Webhook 連接",
-        username: "AWS Blog 365",
-        avatar_url: "https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/bot-avatar.png"
-      };
-
-      const response = await fetch(DISCORD_CONFIG.WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(testMessage)
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        logger.error('Webhook 測試失敗:', error);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      logger.error('Webhook 測試過程發生錯誤:', error);
-      return false;
-    }
-  }
-
   public async sendNotificationToUser(
     userId: string,
     type: DiscordNotificationType,
@@ -345,6 +316,23 @@ export class DiscordService {
       logger.error('發送 Discord 私人訊息失敗:', error);
       return false;
     }
+  }
+
+  async getActiveDiscordUsers() {
+    const ddbClient = new DynamoDBClient({ region: 'ap-northeast-1' });
+    const command = new ScanCommand({
+      TableName: 'AWS_Blog_UserNotificationSettings',
+      FilterExpression: 'discordNotification = :dn',
+      ExpressionAttributeValues: {
+        ':dn': { BOOL: true }
+      }
+    });
+
+    const result = await ddbClient.send(command);
+    return (result.Items || []).map(item => ({
+      discordId: item.discordId.S || '',
+      userId: item.userId.S || ''
+    }));
   }
 }
 

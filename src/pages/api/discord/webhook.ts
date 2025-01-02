@@ -1,9 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { discordService } from '@/services/discordService';
 import { DISCORD_CONFIG } from '@/config/discord';
+import { discordService } from '@/services/discordService';
 import { logger } from '@/utils/logger';
-import { DISCORD_MESSAGE_TEMPLATES } from '@/config/discord';
-import { DiscordNotificationType } from '@/types/discordTypes';
+import { errorHandler } from '@/utils/errorHandler';
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,31 +13,33 @@ export default async function handler(
   }
 
   try {
-    const { type, title, content, link, userId } = req.body;
-    
-    // 確保 type 是有效的通知類型
-    const notificationType = type as DiscordNotificationType;
-    
-    if (!type || !title || !content || !link || !userId) {
+    const { notificationType, title, content, link } = req.body;
+
+    if (!notificationType || !title || !content || !link) {
       return res.status(400).json({ message: '缺少必要參數' });
     }
 
-    // 發送 Discord 通知
-    const success = await discordService.sendNotification(
-      DISCORD_CONFIG.WEBHOOK_URL,
-      notificationType,
-      title,
-      content,
-      link
-    );
-
-    if (!success) {
-      throw new Error('發送 Discord 通知失敗');
+    // 從 DynamoDB 獲取所有啟用通知的用戶
+    const users = await discordService.getActiveDiscordUsers();
+    
+    // 向每個用戶發送私人訊息
+    for (const user of users) {
+      try {
+        await discordService.sendDirectMessage(
+          user.discordId,
+          notificationType,
+          title,
+          content,
+          link
+        );
+      } catch (error) {
+        logger.error(`向用戶 ${user.discordId} 發送通知失敗:`, error);
+      }
     }
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ message: '通知發送成功' });
   } catch (error) {
-    logger.error('Discord Webhook 處理失敗:', error);
-    return res.status(500).json({ message: '伺服器錯誤' });
+    logger.error('發送 Discord 通知失敗:', error);
+    return res.status(500).json(errorHandler.handle(error));
   }
 } 

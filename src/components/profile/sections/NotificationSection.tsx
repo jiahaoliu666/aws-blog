@@ -753,6 +753,15 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     return () => window.removeEventListener('message', handleDiscordAuthMessage);
   }, [isDiscordVerifying]);
 
+  const handleDiscordAuth = async () => {
+    try {
+      await startDiscordAuth(userId);
+    } catch (error) {
+      showToast('Discord 授權失敗', 'error');
+      console.error('Discord 授權失敗:', error);
+    }
+  };
+
   return (
     <div className="w-full">
       {/* 如果正在進行驗證，顯示驗證介面 */}
@@ -1060,7 +1069,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
-                      onClick={startDiscordAuth}
+                      onClick={handleDiscordAuth}
                       className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
                         hover:bg-indigo-700 active:bg-indigo-800
                         transition-all duration-200 ease-in-out

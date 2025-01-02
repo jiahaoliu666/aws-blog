@@ -23,12 +23,14 @@ export class DiscordBotService {
         intents: [
           GatewayIntentBits.Guilds,
           GatewayIntentBits.GuildMessages,
-          GatewayIntentBits.DirectMessages
+          GatewayIntentBits.DirectMessages,
+          GatewayIntentBits.MessageContent
         ]
       });
 
       this.client.once('ready', () => {
         logger.info('Discord Bot 已啟動');
+        logger.info(`已登入為 ${this.client?.user?.tag}`);
       });
 
       this.client.on('error', (error) => {

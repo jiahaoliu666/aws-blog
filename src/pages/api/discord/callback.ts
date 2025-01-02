@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { DISCORD_CONFIG } from '@/config/discord';
+import { DISCORD_CONFIG, DISCORD_SCOPES } from '@/config/discord';
 import { logger } from '@/utils/logger';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { discordService } from '@/services/discordService';
@@ -34,6 +34,7 @@ export default async function handler(
       grant_type: 'authorization_code',
       code: code as string,
       redirect_uri: DISCORD_CONFIG.REDIRECT_URI,
+      scope: DISCORD_SCOPES.join(' ')
     });
 
     logger.debug('Token 請求參數:', tokenParams.toString());
@@ -66,6 +67,24 @@ export default async function handler(
 
     const userData = await userResponse.json();
 
+    // 驗證是否可以發送私人訊息
+    try {
+      const testDmResult = await discordService.sendDirectMessage(
+        userData.id,
+        'ANNOUNCEMENT',
+        '✨ Discord 通知測試',
+        '歡迎使用 AWS Blog 365！\n\n您已成功開啟 Discord 通知功能。',
+        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      );
+
+      if (!testDmResult) {
+        throw new Error('無法發送私人訊息，請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息。');
+      }
+    } catch (error) {
+      logger.error('測試發送私人訊息失敗:', error);
+      throw new Error('Discord 通知測試失敗，請確保您已開啟接收私人訊息的權限，並且沒有封鎖本服務的訊息。');
+    }
+
     // 更新用戶的 Discord 設定
     const updateParams = {
       TableName: "AWS_Blog_UserNotificationSettings",
@@ -80,223 +99,218 @@ export default async function handler(
       }
     };
 
-    try {
-      await dynamoClient.send(new UpdateItemCommand(updateParams));
-      logger.info('成功更新用戶 Discord 設定');
-    } catch (error) {
-      logger.error('更新用戶 Discord 設定失敗:', error);
-      throw error;
-    }
+    await dynamoClient.send(new UpdateItemCommand(updateParams));
 
-    // 構建授權成功的 HTML 回應
-    const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Discord 授權成功</title>
-      <script>
-        window.opener.postMessage({
-          type: 'DISCORD_AUTH_SUCCESS',
-          discord_id: '${userData.id}',
-          username: '${userData.username}',
-          discriminator: '${userData.discriminator}',
-          avatar: '${userData.avatar || ''}'
-        }, '*');
-        
-        // 倒數計時功能
-        let countdown = 5;
-        const timer = setInterval(() => {
-          countdown--;
-          document.getElementById('countdown').textContent = countdown;
-          if (countdown <= 0) {
-            clearInterval(timer);
-            window.close();
-            window.opener.location.reload();
+    // 返回成功 HTML 頁面
+    const successHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Discord 授權成功</title>
+        <script>
+          window.opener.postMessage({
+            type: 'DISCORD_AUTH_SUCCESS',
+            discord_id: '${userData.id}',
+            username: '${userData.username}',
+            discriminator: '${userData.discriminator}',
+            avatar: '${userData.avatar || ''}'
+          }, '*');
+          
+          // 倒數計時功能
+          let countdown = 5;
+          const timer = setInterval(() => {
+            countdown--;
+            document.getElementById('countdown').textContent = countdown;
+            if (countdown <= 0) {
+              clearInterval(timer);
+              window.close();
+            }
+          }, 1000);
+        </script>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f9fafb;
           }
-        }, 1000);
-      </script>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-          margin: 0;
-          background-color: #f9fafb;
-        }
-        .container {
-          background-color: white;
-          padding: 2rem;
-          border-radius: 1rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          text-align: center;
-          max-width: 90%;
-          width: 400px;
-        }
-        .icon {
-          font-size: 3rem;
-          color: #5865F2;
-          margin-bottom: 1rem;
-        }
-        .title {
-          color: #111827;
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-bottom: 0.5rem;
-        }
-        .message {
-          color: #6B7280;
-          font-size: 1rem;
-          margin-bottom: 1.5rem;
-        }
-        .countdown {
-          background-color: #5865F2;
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 9999px;
-          font-size: 0.875rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
+          .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
           }
-          50% {
-            opacity: .5;
+          .icon {
+            font-size: 3rem;
+            color: #5865F2;
+            margin-bottom: 1rem;
           }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="icon">✨</div>
-        <h1 class="title">Discord 授權成功</h1>
-        <p class="message">您的 Discord 帳號已成功連結</p>
-        <div class="countdown">
-          <span>視窗將在</span>
-          <span id="countdown" class="pulse">5</span>
-          <span>秒後關閉</span>
+          .title {
+            color: #111827;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+          }
+          .message {
+            color: #6B7280;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+          }
+          .countdown {
+            background-color: #5865F2;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+          .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: .5;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon">✨</div>
+          <h1 class="title">Discord 授權成功</h1>
+          <p class="message">已成功連結，請至您的 Discord 帳號查看訊息！</p>
+          <div class="countdown">
+            <span>視窗將在</span>
+            <span id="countdown" class="pulse">5</span>
+            <span>秒後關閉</span>
+          </div>
         </div>
-      </div>
-    </body>
-    </html>
+      </body>
+      </html>
     `;
 
-    return res.status(200).send(html);
-
+    return res.status(200).send(successHtml);
   } catch (error) {
     logger.error('Discord 回調處理失敗:', error);
+    
+    // 返回錯誤 HTML 頁面
     const errorMessage = error instanceof Error ? error.message : '授權過程發生錯誤';
     const errorHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Discord 授權失敗</title>
-      <script>
-        window.opener.postMessage({
-          type: 'DISCORD_AUTH_ERROR',
-          error: '${errorMessage}'
-        }, '*');
-        
-        let countdown = 5;
-        const timer = setInterval(() => {
-          countdown--;
-          document.getElementById('countdown').textContent = countdown;
-          if (countdown <= 0) {
-            clearInterval(timer);
-            window.close();
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Discord 授權失敗</title>
+        <script>
+          window.opener.postMessage({
+            type: 'DISCORD_AUTH_ERROR',
+            error: '${errorMessage}'
+          }, '*');
+          
+          let countdown = 5;
+          const timer = setInterval(() => {
+            countdown--;
+            document.getElementById('countdown').textContent = countdown;
+            if (countdown <= 0) {
+              clearInterval(timer);
+              window.close();
+            }
+          }, 1000);
+        </script>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f9fafb;
           }
-        }, 1000);
-      </script>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-          margin: 0;
-          background-color: #f9fafb;
-        }
-        .container {
-          background-color: white;
-          padding: 2rem;
-          border-radius: 1rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          text-align: center;
-          max-width: 90%;
-          width: 400px;
-        }
-        .icon {
-          font-size: 3rem;
-          color: #EF4444;
-          margin-bottom: 1rem;
-        }
-        .title {
-          color: #111827;
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-bottom: 0.5rem;
-        }
-        .message {
-          color: #6B7280;
-          font-size: 1rem;
-          margin-bottom: 1.5rem;
-        }
-        .error-text {
-          color: #EF4444;
-          font-size: 0.875rem;
-          margin-bottom: 1.5rem;
-          padding: 0.75rem;
-          background-color: #FEE2E2;
-          border-radius: 0.5rem;
-        }
-        .countdown {
-          background-color: #6B7280;
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 9999px;
-          font-size: 0.875rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
+          .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
           }
-          50% {
-            opacity: .5;
+          .icon {
+            font-size: 3rem;
+            color: #EF4444;
+            margin-bottom: 1rem;
           }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="icon">❌</div>
-        <h1 class="title">Discord 授權失敗</h1>
-        <p class="message">很抱歉，授權過程發生錯誤</p>
-        <div class="error-text">${errorMessage}</div>
-        <div class="countdown">
-          <span>視窗將在</span>
-          <span id="countdown" class="pulse">5</span>
-          <span>秒後關閉</span>
+          .title {
+            color: #111827;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+          }
+          .message {
+            color: #6B7280;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+          }
+          .error-text {
+            color: #EF4444;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background-color: #FEE2E2;
+            border-radius: 0.5rem;
+          }
+          .countdown {
+            background-color: #6B7280;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+          .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: .5;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon">❌</div>
+          <h1 class="title">Discord 授權失敗</h1>
+          <p class="message">很抱歉，授權過程發生錯誤</p>
+          <div class="error-text">${errorMessage}</div>
+          <div class="countdown">
+            <span>視窗將在</span>
+            <span id="countdown" class="pulse">5</span>
+            <span>秒後關閉</span>
+          </div>
         </div>
-      </div>
-    </body>
-    </html>
+      </body>
+      </html>
     `;
+    
     return res.status(500).send(errorHtml);
   }
 } 
