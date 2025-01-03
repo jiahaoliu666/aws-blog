@@ -720,6 +720,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         toast.success('驗證成功');
         setVerificationStep(VerificationStep.COMPLETED);
         await reloadSettings();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         toast.error(result.message || '驗證失敗');
       }
