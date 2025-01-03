@@ -90,7 +90,7 @@ src/hooks/favorite/useFavoritePageLogic.ts
 
 --------
 
-discord 通知功能
+discord 通知
 src/lambda/updateAllContent.ts
 src/services/discordService.ts
 src/config/discord.ts
@@ -185,7 +185,7 @@ source ~/.zshrc
 
 --------
 
-mail 相關
+mail 通知
 src/pages/api/profile/notification-settings.ts
 src/components/profile/sections/NotificationSection.tsx
 src/services/notificationService.ts
@@ -197,5 +197,23 @@ src/pages/api/notifications/sendEmail.ts
 src/types/emailTypes.ts
 src/hooks/useAuth.ts
 src/hooks/profile/useNotificationSettings.ts
+
+--------
+
+line 通知
+src/templates/lineTemplates.ts
+src/utils/lineUtils.ts
+src/config/line.ts
+src/services/lineService.ts
+src/services/lineVerification.ts
+src/hooks/line/index.ts
+src/hooks/line/useLineVerification.ts
+src/hooks/profile/useProfileLine.ts
+src/hooks/profile/useNotificationSettings.ts
+src/pages/api/line/webhook.ts
+src/pages/api/line/message.ts
+src/pages/api/line/verification-status.ts
+src/pages/api/line/verify-code.ts
+src/types/lineTypes.ts
 
 --------

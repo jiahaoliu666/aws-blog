@@ -658,6 +658,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const [progress, setProgress] = useState<VerificationProgress>(VERIFICATION_PROGRESS.INITIAL);
 
   const handleStepChange = (newStep: VerificationStep) => {
+    // 如果當前步驟是驗證碼確認，且要切換到其他步驟，則清空驗證碼
+    if (currentStep === VerificationStep.VERIFY_CODE && newStep !== VerificationStep.VERIFY_CODE) {
+      setVerificationCode('');
+    }
+
     setCurrentStep(newStep);
     switch (newStep) {
       case VerificationStep.SCAN_QR:
@@ -866,6 +871,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     setCurrentStep(VerificationStep.SCAN_QR);
   };
 
+  const handleCancelVerification = () => {
+    setVerificationCode(''); // 清空驗證碼
+    cancelVerification();
+  };
+
   return (
     <div className="w-full">
       {/* 如果正在進行驗證，顯示驗證介面 */}
@@ -887,7 +897,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             {currentStep === VerificationStep.SCAN_QR && (
               <QRCodeStep 
                 onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)} 
-                onCopyLineId={handleCopyLineId}  // 使用新的處理函數
+                onCopyLineId={handleCopyLineId}
               />
             )}
             
@@ -922,7 +932,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
           {/* 取消按鈕 - 調整樣式讓它更明顯 */}
           <button
-            onClick={cancelVerification}
+            onClick={handleCancelVerification}
             className="absolute top-0 right-0 p-2 rounded-full
                        hover:bg-gray-100 text-gray-500 hover:text-gray-700
                        transition-all duration-200 flex items-center gap-2"

@@ -210,10 +210,10 @@ src/
 │   └── lineService.ts              // LINE 服務
 ├── config----------------------------------------------------------- 配置
 │   ├── email.ts                    // 電子郵件配置
-│   └── line.ts                     // LINE 配置
+│   ├── line.ts                     // LINE 配置
 │   ├── discord.ts                  // Discord 配置
 │   ├── aws.ts                      // AWS 配置
-│   ├── constants.ts                // 常量配置
+│   └── constants.ts                // 常量配置
 ├── utils----------------------------------------------------------- 工具
 │   ├── notificationUtils.ts        // 通知工具函數
 │   ├── rateLimiter.ts              // 限流工具
