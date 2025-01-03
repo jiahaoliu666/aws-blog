@@ -54,7 +54,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 2, // 更新公告數量
+  announcement: 6, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
@@ -791,7 +791,7 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
             <div style="background-color: #232f3e; padding: 20px; border-radius: 8px 8px 0 0;">
               <div style="display: flex; align-items: center;">
                 <img src="https://d1.awsstatic.com/logos/aws-logo-lockups/poweredbyaws/PB_AWS_logo_RGB_stacked_REV_SQ.91cd4af40773cbfbd15577a3c2b8a346fe3e8fa2.png" alt="AWS Logo" style="width: 40px; height: auto; margin-right: 10px;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">AWS 部落格${CONTENT_TYPES[type].name}通知</h1>
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">AWS ${CONTENT_TYPES[type].name}</h1>
               </div>
             </div>
 
@@ -819,8 +819,8 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
                           padding: 12px 30px; 
                           border-radius: 4px; 
                           font-weight: bold;
-                          transition: background-color 0.3s ease;">
-                  立即閱讀全文
+                          transition: all 0.3s ease;">
+                  閱讀全文 <span style="margin-left: 5px; display: inline-block; transition: transform 0.3s ease;">→</span>
                 </a>
               </div>
             </div>
@@ -839,7 +839,7 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
 
         await sendEmailWithRetry({
           to: user.email.S,
-          subject: `【AWS Blog 365】${CONTENT_TYPES[type].name}通知 - ${title.substring(0, 50)}${title.length > 50 ? '...' : ''}`,
+          subject: `【AWS Blog 365】${CONTENT_TYPES[type].name} - ${title.substring(0, 50)}${title.length > 50 ? '...' : ''}`,
           html: emailContent
         });
 
