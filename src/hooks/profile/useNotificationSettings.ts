@@ -131,6 +131,7 @@ export const useNotificationSettings = (userId: string) => {
 
   const resetSettings = () => {
     setTempSettings(initialSettings);
+    setSettings(initialSettings);
     setHasChanges(false);
     showToast('設定已重置', 'info');
   };
@@ -154,6 +155,25 @@ export const useNotificationSettings = (userId: string) => {
     }
     
     setTempSettings(newTempSettings);
+    
+    // 如果是關閉 LINE 通知，立即更新 settings 狀態
+    if (type === 'lineNotification' && !value) {
+      setSettings(prev => ({
+        ...prev,
+        lineNotification: false,
+        lineNotificationNotification: false
+      }));
+      
+      setTempSettings(prev => ({
+        ...prev,
+        lineNotification: false,
+        lineNotificationNotification: false
+      }));
+
+      // 設置 hasChanges 為 true 以顯示取消按鈕
+      setHasChanges(true);
+      return true;
+    }
     
     // 比較與初始設定的差異，而不是當前設定
     const hasChanged = (
