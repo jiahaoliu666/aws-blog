@@ -148,13 +148,19 @@ export class LineService implements LineServiceInterface {
 
   constructor() {
     const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+    const secret = process.env.LINE_CHANNEL_SECRET;
     
     // 在開發環境中允許沒有 token
-    if (!token && process.env.NODE_ENV === 'production') {
-      throw new Error('LINE Channel Access Token is not set');
+    if (!token || !secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('LINE Channel Access Token 或 Channel Secret 未設定');
+      } else {
+        logger.warn('開發環境：LINE API 憑證未設定，部分功能將被禁用');
+      }
     }
     
     this.channelAccessToken = token || '';
+    this.apiUrl = 'https://api.line.me/v2/bot';
     this.client = {
       broadcast: async (message: any) => {
         const response = await fetch(`${this.apiUrl}/message/broadcast`, {
@@ -212,6 +218,11 @@ export class LineService implements LineServiceInterface {
 
   private async pushMessage(to: string, message: LineMessage): Promise<void> {
     try {
+      // 檢查是否有有效的 token
+      if (!this.channelAccessToken) {
+        throw new Error('LINE Channel Access Token 未設定');
+      }
+
       const response = await fetch(`${this.apiUrl}/message/push`, {
         method: 'POST',
         headers: {
@@ -271,6 +282,12 @@ export class LineService implements LineServiceInterface {
 
   async sendMessage(lineId: string, message: string | LineMessage): Promise<boolean> {
     try {
+      // 檢查是否有有效的 token
+      if (!this.channelAccessToken) {
+        logger.warn('LINE Channel Access Token 未設定，無法發送訊息');
+        return false;
+      }
+
       const messageObj = typeof message === 'string' ? { type: 'text' as const, text: message } : message;
       await this.pushMessage(lineId, messageObj);
       return true;
@@ -354,7 +371,7 @@ export class LineService implements LineServiceInterface {
           expiryTime,
           currentTime: Date.now()
         });
-        return { success: false, message: '驗證碼��過期' };
+        return { success: false, message: '驗證碼已過期' };
       }
 
       // 更新驗證狀態

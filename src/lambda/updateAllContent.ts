@@ -15,6 +15,7 @@ import { discordService } from "../services/discordService.js";
 import { sendEmailWithRetry, failedNotifications, processFailedNotifications } from "../utils/notificationUtils.js";
 import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '../config/discord';
 import { DiscordNotificationType } from '../types/discordTypes';
+import { ArticleData, LineMessage, LineWebhookEvent, LineApiResponse, VerificationResponse } from '../types/lineTypes';
 
 // 通用介面定義
 interface BaseContent {
@@ -54,7 +55,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 6, // 更新公告數量
+  announcement: 2, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
@@ -642,7 +643,7 @@ async function sendNotifications(
 async function getLineNotificationUsers(): Promise<NotificationUser[]> {
   const params = {
     TableName: "AWS_Blog_UserNotificationSettings",
-    FilterExpression: "lineNotification = :true",
+    FilterExpression: "lineNotification = :true AND attribute_exists(lineId)",
     ExpressionAttributeValues: {
       ":true": { BOOL: true },
     },
@@ -653,7 +654,8 @@ async function getLineNotificationUsers(): Promise<NotificationUser[]> {
     const response = await dbClient.send(command);
     return (response.Items || []).map(item => ({
       userId: { S: item.userId.S || '' },
-      email: { S: item.email.S || '' }
+      lineId: { S: item.lineId.S || '' },
+      lineNotification: { BOOL: true }
     }));
   } catch (error) {
     logger.error("獲取 Line 通知用戶時發生錯誤:", error);
@@ -770,6 +772,102 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
         logger.info(`成功新增通知記錄：用戶 ${userId}, \n內容 ${contentId}`);
       } catch (error) {
         logger.error(`新增通知記錄失敗 (用戶 ID: ${userId}):`, error);
+      }
+    }
+
+    // 獲取啟用 LINE 通知的用戶
+    const lineUsers = await getLineNotificationUsers();
+    logger.info(`找到 ${lineUsers.length} 個有效的 LINE 通知用戶`);
+
+    // 檢查 LINE 環境變數
+    if (!process.env.LINE_CHANNEL_ACCESS_TOKEN || !process.env.LINE_CHANNEL_SECRET) {
+      logger.warn('缺少 LINE API 設定，跳過 LINE 通知發送');
+      stats[type].skipped++;
+    } else {
+      // 發送 LINE 通知
+      for (const user of lineUsers) {
+        if (!user.lineId?.S) {
+          logger.warn(`用戶 ${user.userId.S} 缺少 LINE ID，跳過通知`);
+          continue;
+        }
+
+        try {
+          const message: LineMessage = {
+            type: 'flex',
+            altText: `AWS ${CONTENT_TYPES[type].name}: ${title}`,
+            contents: {
+              type: 'bubble',
+              header: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                  {
+                    type: 'text',
+                    text: `${CONTENT_TYPES[type].emoji} AWS ${CONTENT_TYPES[type].name}`,
+                    weight: 'bold',
+                    size: 'xl',
+                    color: '#1a73e8'
+                  }
+                ],
+                backgroundColor: '#f8f9fa',
+                paddingAll: '20px'
+              },
+              body: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                  {
+                    type: 'text',
+                    text: title,
+                    weight: 'bold',
+                    size: 'md',
+                    wrap: true
+                  },
+                  {
+                    type: 'text',
+                    text: summary,
+                    size: 'sm',
+                    color: '#666666',
+                    margin: 'md',
+                    wrap: true
+                  }
+                ],
+                paddingAll: '20px'
+              },
+              footer: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                  {
+                    type: 'button',
+                    action: {
+                      type: 'uri',
+                      label: '立即閱讀',
+                      uri: link
+                    },
+                    style: 'primary',
+                    color: '#1a73e8'
+                  }
+                ],
+                paddingAll: '20px'
+              }
+            }
+          };
+
+          await lineService.sendMessage(user.lineId.S, message);
+          stats[type].notifications++;
+          logger.info(`成功發送 LINE 通知給用戶 ${user.userId.S}`);
+        } catch (error) {
+          stats[type].notificationsFailed++;
+          logger.error(`發送 LINE 通知失敗 (用戶 ID: ${user.userId.S}):`, error);
+          
+          failedNotifications.push({
+            userId: user.userId.S,
+            articleId: contentId,
+            type: 'line',
+            error: error instanceof Error ? error.message : '未知錯誤'
+          });
+        }
       }
     }
 
