@@ -643,7 +643,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         }
       } else {
         if (settings.lineId) {
-          if (window.confirm('確定關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
+          if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
             await handleToggle('lineNotification', false);
           }
         }
