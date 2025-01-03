@@ -55,7 +55,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 2, // 更新公告數量
+  announcement: 0, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
@@ -82,18 +82,56 @@ type StatsType = {
     inserted: number;
     skipped: number;
     failed: number;
-    notifications: number;
-    notificationsFailed: number;
+    notifications: {
+      discord: number;
+      email: number;
+      line: number;
+    };
+    notificationsFailed: {
+      discord: number;
+      email: number;
+      line: number;
+    };
   }
 };
 
 // 修改 stats 的宣告
 const stats: StatsType = {
-  announcement: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
-  news: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
-  solutions: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
-  architecture: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 },
-  knowledge: { inserted: 0, skipped: 0, failed: 0, notifications: 0, notificationsFailed: 0 }
+  announcement: { 
+    inserted: 0, 
+    skipped: 0, 
+    failed: 0, 
+    notifications: { discord: 0, email: 0, line: 0 }, 
+    notificationsFailed: { discord: 0, email: 0, line: 0 } 
+  },
+  news: { 
+    inserted: 0, 
+    skipped: 0, 
+    failed: 0, 
+    notifications: { discord: 0, email: 0, line: 0 }, 
+    notificationsFailed: { discord: 0, email: 0, line: 0 } 
+  },
+  solutions: { 
+    inserted: 0, 
+    skipped: 0, 
+    failed: 0, 
+    notifications: { discord: 0, email: 0, line: 0 }, 
+    notificationsFailed: { discord: 0, email: 0, line: 0 } 
+  },
+  architecture: { 
+    inserted: 0, 
+    skipped: 0, 
+    failed: 0, 
+    notifications: { discord: 0, email: 0, line: 0 }, 
+    notificationsFailed: { discord: 0, email: 0, line: 0 } 
+  },
+  knowledge: { 
+    inserted: 0, 
+    skipped: 0, 
+    failed: 0, 
+    notifications: { discord: 0, email: 0, line: 0 }, 
+    notificationsFailed: { discord: 0, email: 0, line: 0 } 
+  }
 };
 
 // 在檔案開頭新增這些常量
@@ -615,14 +653,14 @@ async function sendNotifications(
           );
 
           if (success) {
-            stats[type].notifications++;
+            stats[type].notifications.discord++;
             logger.info(`成功發送 Discord 通知給用戶 ${user.userId.S}`);
           } else {
-            stats[type].notificationsFailed++;
+            stats[type].notificationsFailed.discord++;
             logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S})`);
           }
         } catch (error) {
-          stats[type].notificationsFailed++;
+          stats[type].notificationsFailed.discord++;
           logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S}):`, error);
           failedNotifications.push({
             userId: user.userId.S,
@@ -797,20 +835,38 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
             altText: `AWS ${CONTENT_TYPES[type].name}: ${title}`,
             contents: {
               type: 'bubble',
+              size: 'giga',
               header: {
                 type: 'box',
                 layout: 'vertical',
                 contents: [
                   {
-                    type: 'text',
-                    text: `${CONTENT_TYPES[type].emoji} AWS ${CONTENT_TYPES[type].name}`,
-                    weight: 'bold',
-                    size: 'xl',
-                    color: '#1a73e8'
+                    type: 'box',
+                    layout: 'horizontal',
+                    contents: [
+                      {
+                        type: 'text',
+                        text: CONTENT_TYPES[type].emoji,
+                        size: 'xxl',
+                        flex: 1
+                      },
+                      {
+                        type: 'text',
+                        text: `AWS ${CONTENT_TYPES[type].name}`,
+                        weight: 'bold',
+                        size: 'xl',
+                        color: '#ffffff',
+                        flex: 5
+                      }
+                    ],
+                    alignItems: 'center',
+                    spacing: 'md'
                   }
                 ],
-                backgroundColor: '#f8f9fa',
-                paddingAll: '20px'
+                backgroundColor: '#232F3E',
+                paddingAll: '20px',
+                paddingTop: '22px',
+                paddingBottom: '22px'
               },
               body: {
                 type: 'box',
@@ -820,19 +876,26 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
                     type: 'text',
                     text: title,
                     weight: 'bold',
-                    size: 'md',
-                    wrap: true
+                    size: 'lg',
+                    wrap: true,
+                    color: '#232F3E'
+                  },
+                  {
+                    type: 'separator',
+                    margin: 'xl',
+                    color: '#FF9900'
                   },
                   {
                     type: 'text',
                     text: summary,
-                    size: 'sm',
+                    size: 'md',
                     color: '#666666',
-                    margin: 'md',
+                    margin: 'lg',
                     wrap: true
                   }
                 ],
-                paddingAll: '20px'
+                paddingAll: '20px',
+                backgroundColor: '#FFFFFF'
               },
               footer: {
                 type: 'box',
@@ -842,23 +905,47 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
                     type: 'button',
                     action: {
                       type: 'uri',
-                      label: '閱讀全文',
+                      label: '閱讀全文 →',
                       uri: link
                     },
                     style: 'primary',
-                    color: '#1a73e8'
+                    color: '#FF9900',
+                    height: 'sm'
+                  },
+                  {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                      {
+                        type: 'text',
+                        text: 'AWS Blog 365',
+                        size: 'xs',
+                        color: '#aaaaaa',
+                        align: 'center'
+                      }
+                    ],
+                    margin: 'sm'
                   }
                 ],
-                paddingAll: '20px'
+                paddingAll: '20px',
+                backgroundColor: '#f5f5f5'
+              },
+              styles: {
+                header: {
+                  separator: false
+                },
+                footer: {
+                  separator: true
+                }
               }
             }
           };
 
           await lineService.sendMessage(user.lineId.S, message);
-          stats[type].notifications++;
+          stats[type].notifications.line++;
           logger.info(`成功發送 LINE 通知給用戶 ${user.userId.S}`);
         } catch (error) {
-          stats[type].notificationsFailed++;
+          stats[type].notificationsFailed.line++;
           logger.error(`發送 LINE 通知失敗 (用戶 ID: ${user.userId.S}):`, error);
           
           failedNotifications.push({
@@ -941,10 +1028,10 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
           html: emailContent
         });
 
-        stats[type].notifications++;
+        stats[type].notifications.email++;
         logger.info(`成功發送電子郵件通知給用戶 ${user.userId.S}`);
       } catch (error) {
-        stats[type].notificationsFailed++;
+        stats[type].notificationsFailed.email++;
         logger.error(`發送電子郵件通知失敗 (用戶 ID: ${user.userId.S}):`, error);
         
         failedNotifications.push({
@@ -978,10 +1065,10 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
         );
 
         if (success) {
-          stats[type].notifications++;
+          stats[type].notifications.discord++;
           logger.info(`成功發送 Discord 通知給用戶 ${user.userId.S}`);
         } else {
-          stats[type].notificationsFailed++;
+          stats[type].notificationsFailed.discord++;
           logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S})`);
           
           failedNotifications.push({
@@ -992,7 +1079,7 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
           });
         }
       } catch (error) {
-        stats[type].notificationsFailed++;
+        stats[type].notificationsFailed.discord++;
         logger.error(`發送 Discord 通知時發生錯誤 (用戶 ID: ${user.userId.S}):`, error);
         
         failedNotifications.push({
@@ -1046,9 +1133,17 @@ async function getContentDetails(contentId: string, type: ContentType) {
 }
 
 // 修改日誌輸出格式
-function logUpdateResult(type: string, result: { inserted: number, skipped: number, failed: number, notifications: number, notificationsFailed: number }) {
+function logUpdateResult(type: string, result: StatsType[keyof StatsType]) {
   const { name, emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
   const total = result.inserted + result.skipped + result.failed;
+  const totalNotifications = 
+    result.notifications.discord + 
+    result.notifications.email + 
+    result.notifications.line;
+  const totalNotificationsFailed = 
+    result.notificationsFailed.discord + 
+    result.notificationsFailed.email + 
+    result.notificationsFailed.line;
   
   const boxWidth = 62;
   const line = '─'.repeat(boxWidth - 2);
@@ -1059,13 +1154,15 @@ function logUpdateResult(type: string, result: { inserted: number, skipped: numb
   logger.info(`│ ✨ 新增內容：${result.inserted}${' '.repeat(boxWidth - 13 - result.inserted.toString().length)}`);
   logger.info(`│ ⏭️  跳過內容：${result.skipped}${' '.repeat(boxWidth - 13 - result.skipped.toString().length)}`);
   logger.info(`│ ❌ 失敗內容：${result.failed}${' '.repeat(boxWidth - 13 - result.failed.toString().length)}`);
-  logger.info(`│ 👥 通知數量：${result.notifications}${' '.repeat(boxWidth - 13 - result.notifications.toString().length)}`);
-  logger.info(`│ 📊 通知失敗：${result.notificationsFailed}${' '.repeat(boxWidth - 13 - result.notificationsFailed.toString().length)}`);
+  logger.info(`│ 📱 Line 通知：${result.notifications.line}${' '.repeat(boxWidth - 13 - result.notifications.line.toString().length)}`);
+  logger.info(`│ 📧 Email 通知：${result.notifications.email}${' '.repeat(boxWidth - 14 - result.notifications.email.toString().length)}`);
+  logger.info(`│ 🎮 Discord 通知：${result.notifications.discord}${' '.repeat(boxWidth - 15 - result.notifications.discord.toString().length)}`);
+  logger.info(`│ 📊 通知失敗：${totalNotificationsFailed}${' '.repeat(boxWidth - 13 - totalNotificationsFailed.toString().length)}`);
   logger.info(`│ 📊 處理總數：${total}${' '.repeat(boxWidth - 13 - total.toString().length)}`);
   logger.info(`└${line}┘`);
 
-  if (result.failed > 0 || result.notificationsFailed > 0) {
-    const warningMsg = `⚠️  注意：${formatTitle(name)}有 ${result.failed} 筆內容處理失敗，${result.notificationsFailed} 筆通知發送失敗`;
+  if (result.failed > 0 || totalNotificationsFailed > 0) {
+    const warningMsg = `⚠️  注意：${formatTitle(name)}有 ${result.failed} 筆內容處理失敗，${totalNotificationsFailed} 筆通知發送失敗`;
     logger.warn(`┌${line}┐`);
     logger.warn(`│ ${warningMsg}${' '.repeat(boxWidth - warningMsg.length - 3)}│`);
     logger.warn(`└${line}┘`);
@@ -1200,19 +1297,27 @@ export async function updateAllContent(): Promise<void> {
     const totalInserted = Object.values(stats).reduce((sum, count) => sum + count.inserted, 0);
     const totalSkipped = Object.values(stats).reduce((sum, count) => sum + count.skipped, 0);
     const totalFailed = Object.values(stats).reduce((sum, count) => sum + count.failed, 0);
-    const totalNotifications = Object.values(stats).reduce((sum, count) => sum + count.notifications, 0);
-    const totalNotificationsFailed = Object.values(stats).reduce((sum, count) => sum + count.notificationsFailed, 0);
+    const totalLineNotifications = Object.values(stats).reduce((sum, count) => sum + count.notifications.line, 0);
+    const totalEmailNotifications = Object.values(stats).reduce((sum, count) => sum + count.notifications.email, 0);
+    const totalDiscordNotifications = Object.values(stats).reduce((sum, count) => sum + count.notifications.discord, 0);
+    const totalLineNotificationsFailed = Object.values(stats).reduce((sum, count) => sum + count.notificationsFailed.line, 0);
+    const totalEmailNotificationsFailed = Object.values(stats).reduce((sum, count) => sum + count.notificationsFailed.email, 0);
+    const totalDiscordNotificationsFailed = Object.values(stats).reduce((sum, count) => sum + count.notificationsFailed.discord, 0);
     
     logger.info(`│ ✨ 總更新數量：${totalInserted}${' '.repeat(boxWidth - 13 - totalInserted.toString().length)}│`);
     logger.info(`│ ⏭️  總跳過數量：${totalSkipped}${' '.repeat(boxWidth - 13 - totalSkipped.toString().length)}│`);
     logger.info(`│ ❌ 總失敗數量：${totalFailed}${' '.repeat(boxWidth - 13 - totalFailed.toString().length)}│`);
-    logger.info(`│ 👥 總通知數量：${totalNotifications}${' '.repeat(boxWidth - 13 - totalNotifications.toString().length)}│`);
-    logger.info(`│ 🕒 通知失敗總數：${totalNotificationsFailed}${' '.repeat(boxWidth - 15 - totalNotificationsFailed.toString().length)}│`);
+    logger.info(`│ 📱 Line 通知總數：${totalLineNotifications}${' '.repeat(boxWidth - 16 - totalLineNotifications.toString().length)}│`);
+    logger.info(`│ 📧 Email 通知總數：${totalEmailNotifications}${' '.repeat(boxWidth - 17 - totalEmailNotifications.toString().length)}│`);
+    logger.info(`│ 🎮 Discord 通知總數：${totalDiscordNotifications}${' '.repeat(boxWidth - 18 - totalDiscordNotifications.toString().length)}│`);
+    logger.info(`│ 📱 Line 通知失敗：${totalLineNotificationsFailed}${' '.repeat(boxWidth - 16 - totalLineNotificationsFailed.toString().length)}│`);
+    logger.info(`│ 📧 Email 通知失敗：${totalEmailNotificationsFailed}${' '.repeat(boxWidth - 17 - totalEmailNotificationsFailed.toString().length)}│`);
+    logger.info(`│ 🎮 Discord 通知失敗：${totalDiscordNotificationsFailed}${' '.repeat(boxWidth - 18 - totalDiscordNotificationsFailed.toString().length)}│`);
     logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(boxWidth - 14 - duration.toString().length)}│`);
     logger.info(`└${line}┘`);
 
-    if (totalFailed > 0 || totalNotificationsFailed > 0) {
-      const warningMsg = `⚠️  注意：總共有 ${totalFailed} 筆內容處理失敗，${totalNotificationsFailed} 筆通知發送失敗`;
+    if (totalFailed > 0 || totalLineNotificationsFailed > 0 || totalEmailNotificationsFailed > 0 || totalDiscordNotificationsFailed > 0) {
+      const warningMsg = `⚠️  注意：總共有 ${totalFailed} 筆內容處理失敗，${totalLineNotificationsFailed} 筆 Line 通知發送失敗，${totalEmailNotificationsFailed} 筆 Email 通知發送失敗，${totalDiscordNotificationsFailed} 筆 Discord 通知發送失敗`;
       logger.warn(`┌${line}┐`);
       logger.warn(`│ ${warningMsg}${' '.repeat(boxWidth - warningMsg.length - 3)}│`);
       logger.warn(`└${line}┘`);
