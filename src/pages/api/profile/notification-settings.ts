@@ -37,22 +37,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 獲取當前時間的 ISO 字符串
     const timestamp = new Date().toISOString();
 
-    // 如果任何一個通知設定被關閉，則刪除整個設定記錄
+    // 如果任何一個通知設定被關閉，則刪除相關記錄
     if (existingSettings.Item && 
         (!emailNotification && !discordNotification && !lineNotification)) {
-      const deleteParams = {
+      
+      // 1. 刪除 AWS_Blog_UserNotificationSettings 表的記錄
+      const deleteNotificationParams = {
         TableName: "AWS_Blog_UserNotificationSettings",
         Key: {
           userId: { S: userId }
         }
       };
 
-      await dynamoClient.send(new DeleteItemCommand(deleteParams));
+      // 2. 刪除 AWS_Blog_LineVerifications 表的記錄
+      const deleteVerificationParams = {
+        TableName: "AWS_Blog_LineVerifications",
+        Key: {
+          userId: { S: userId }
+        }
+      };
 
-      logger.info('用戶通知設定已刪除:', {
+      // 使用 Promise.all 同時執行兩個刪除操作
+      await Promise.all([
+        dynamoClient.send(new DeleteItemCommand(deleteNotificationParams)),
+        dynamoClient.send(new DeleteItemCommand(deleteVerificationParams))
+      ]);
+
+      logger.info('用戶通知設定和驗證記錄已刪除:', {
         userId,
         action: 'DELETE',
-        deletedAt: timestamp
+        deletedAt: timestamp,
+        tables: ['AWS_Blog_UserNotificationSettings', 'AWS_Blog_LineVerifications']
       });
 
       return res.status(200).json({
@@ -136,7 +151,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error) {
-    logger.error('更新通知設定失敗:', error);
+    logger.error('更新通知設定失敗:', {
+      error: error instanceof Error ? error.message : '未知錯誤',
+      userId,
+      tables: ['AWS_Blog_UserNotificationSettings', 'AWS_Blog_LineVerifications']
+    });
+    
     return res.status(500).json({
       success: false,
       message: '更新失敗，請稍後再試',
