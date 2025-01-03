@@ -57,7 +57,7 @@ dotenv.config({ path: ".env.local" });
 const FETCH_COUNTS = {
   announcement: 0, // 更新公告數量
   news: 0, // 更新新聞數量
-  solutions: 0, // 更新解決方案數量
+  solutions: 1, // 更新解決方案數量
   architecture: 0, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
@@ -136,11 +136,11 @@ const stats: StatsType = {
 
 // 在檔案開頭新增這些常量
 const CONTENT_TYPES = {
-  announcement: { name: '最新公告', emoji: '📢' },
-  news: { name: '最新新聞', emoji: '📰' },
-  solutions: { name: '解決方案', emoji: '💡' },
-  architecture: { name: '架構參考', emoji: '🏗️' },
-  knowledge: { name: '知識中心', emoji: '📚' }
+  announcement: { name: '最新公告', emoji: '📢', color: '#FF9900' },
+  news: { name: '最新新聞', emoji: '📰', color: '#527FFF' },
+  solutions: { name: '解決方案', emoji: '💡', color: '#7AA116' },
+  architecture: { name: '架構參考', emoji: '🏗️', color: '#EC7211' },
+  knowledge: { name: '知識中心', emoji: '📚', color: '#D13212' }
 };
 
 // 新增一個型別來定義允許的內容類型
@@ -1304,16 +1304,16 @@ export async function updateAllContent(): Promise<void> {
     const totalEmailNotificationsFailed = Object.values(stats).reduce((sum, count) => sum + count.notificationsFailed.email, 0);
     const totalDiscordNotificationsFailed = Object.values(stats).reduce((sum, count) => sum + count.notificationsFailed.discord, 0);
     
-    logger.info(`│ ✨ 總更新數量：${totalInserted}${' '.repeat(boxWidth - 13 - totalInserted.toString().length)}│`);
-    logger.info(`│ ⏭️  總跳過數量：${totalSkipped}${' '.repeat(boxWidth - 13 - totalSkipped.toString().length)}│`);
-    logger.info(`│ ❌ 總失敗數量：${totalFailed}${' '.repeat(boxWidth - 13 - totalFailed.toString().length)}│`);
-    logger.info(`│ 📱 Line 通知總數：${totalLineNotifications}${' '.repeat(boxWidth - 16 - totalLineNotifications.toString().length)}│`);
-    logger.info(`│ 📧 Email 通知總數：${totalEmailNotifications}${' '.repeat(boxWidth - 17 - totalEmailNotifications.toString().length)}│`);
-    logger.info(`│ 🎮 Discord 通知總數：${totalDiscordNotifications}${' '.repeat(boxWidth - 18 - totalDiscordNotifications.toString().length)}│`);
-    logger.info(`│ 📱 Line 通知失敗：${totalLineNotificationsFailed}${' '.repeat(boxWidth - 16 - totalLineNotificationsFailed.toString().length)}│`);
-    logger.info(`│ 📧 Email 通知失敗：${totalEmailNotificationsFailed}${' '.repeat(boxWidth - 17 - totalEmailNotificationsFailed.toString().length)}│`);
-    logger.info(`│ 🎮 Discord 通知失敗：${totalDiscordNotificationsFailed}${' '.repeat(boxWidth - 18 - totalDiscordNotificationsFailed.toString().length)}│`);
-    logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(boxWidth - 14 - duration.toString().length)}│`);
+    logger.info(`│ ✨ 總更新數量：${totalInserted}${' '.repeat(boxWidth - 13 - totalInserted.toString().length)}`);
+    logger.info(`│ ⏭️  總跳過數量：${totalSkipped}${' '.repeat(boxWidth - 13 - totalSkipped.toString().length)}`);
+    logger.info(`│ ❌ 總失敗數量：${totalFailed}${' '.repeat(boxWidth - 13 - totalFailed.toString().length)}`);
+    logger.info(`│ 📱 Line 通知總數：${totalLineNotifications}${' '.repeat(boxWidth - 16 - totalLineNotifications.toString().length)}`);
+    logger.info(`│ 📧 Email 通知總數：${totalEmailNotifications}${' '.repeat(boxWidth - 17 - totalEmailNotifications.toString().length)}`);
+    logger.info(`│ 🎮 Discord 通知總數：${totalDiscordNotifications}${' '.repeat(boxWidth - 18 - totalDiscordNotifications.toString().length)}`);
+    logger.info(`│ 📱 Line 通知失敗：${totalLineNotificationsFailed}${' '.repeat(boxWidth - 16 - totalLineNotificationsFailed.toString().length)}`);
+    logger.info(`│ 📧 Email 通知失敗：${totalEmailNotificationsFailed}${' '.repeat(boxWidth - 17 - totalEmailNotificationsFailed.toString().length)}`);
+    logger.info(`│ 🎮 Discord 通知失敗：${totalDiscordNotificationsFailed}${' '.repeat(boxWidth - 18 - totalDiscordNotificationsFailed.toString().length)}`);
+    logger.info(`│ 🕒 執行時間：${duration} 秒${' '.repeat(boxWidth - 14 - duration.toString().length)}`);
     logger.info(`└${line}┘`);
 
     if (totalFailed > 0 || totalLineNotificationsFailed > 0 || totalEmailNotificationsFailed > 0 || totalDiscordNotificationsFailed > 0) {

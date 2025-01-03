@@ -92,7 +92,7 @@ export const DISCORD_MESSAGE_TEMPLATES = {
       embeds: [{
         title: `💡 AWS 解決方案`,
         description: `**標題：**\n${title}\n\n**總結：**\n${content}\n\n[->閱讀全文](${link})`,
-        color: 0x232f3e,
+        color: 0x7AA116,
       }]
     }),
 
