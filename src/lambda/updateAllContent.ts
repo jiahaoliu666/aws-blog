@@ -57,7 +57,7 @@ dotenv.config({ path: ".env.local" });
 const FETCH_COUNTS = {
   announcement: 0, // 更新公告數量
   news: 0, // 更新新聞數量
-  solutions: 2, // 更新解決方案數量
+  solutions: 3, // 更新解決方案數量
   architecture: 0, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
@@ -704,10 +704,7 @@ async function getLineNotificationUsers(): Promise<NotificationUser[]> {
 async function getAllUserIds(): Promise<string[]> {
   const params = {
     TableName: "AWS_Blog_UserProfiles",
-    FilterExpression: "attribute_exists(userId) AND (attribute_not_exists(is_deleted) OR is_deleted = :false)",
-    ExpressionAttributeValues: {
-      ":false": { BOOL: false }
-    },
+    FilterExpression: "attribute_exists(userId)",
     ProjectionExpression: "userId"
   };
 
@@ -731,13 +728,11 @@ async function addNotification(
   const params = {
     TableName: "AWS_Blog_UserNotifications",
     Item: {
-      notification_id: { S: uuidv4() },  // 使用 UUID 產生唯一的 notification_id
       userId: { S: userId },
       article_id: { S: contentId },
       read: { BOOL: false },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
-      category: { S: category === 'solutions' ? 'solution' : category },
-      is_deleted: { BOOL: false }
+      category: { S: category === 'solutions' ? 'solution' : category }
     }
   };
 
@@ -746,8 +741,7 @@ async function addNotification(
     logger.info(`成功新增通知：
    👤 用戶ID：${userId}
    📄 文章ID：${contentId}
-   📑 分類：${category}
-   🆔 通知ID：${params.Item.notification_id.S}`);
+   📑 分類：${category}`);
   } catch (error) {
     logger.error("新增通知失敗:", error);
     throw error;
