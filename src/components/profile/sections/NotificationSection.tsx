@@ -766,7 +766,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
     if (!checked) {
       // 當要關閉 Discord 通知時，顯示確認對話框
-      if (window.confirm('確定要關閉 Discord 通知嗎？這將會清除所有的通知設定。')) {
+      if (window.confirm('確定要關閉 Discord 通知嗎？這將會清除您的驗證狀態。')) {
         handleDiscordToggle(checked);
       }
     } else {
