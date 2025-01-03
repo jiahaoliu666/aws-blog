@@ -78,11 +78,11 @@ export default async function handler(
       );
 
       if (!testDmResult) {
-        throw new Error('無法發送私人訊息，請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息。');
+        throw new Error('無法發送私人訊息，請確保您的 Discord 隱私設定允許接收私人訊息，且未封鎖機器人。');
       }
     } catch (error) {
       logger.error('測試發送私人訊息失敗:', error);
-      throw new Error('Discord 通知測試失敗，請確保您已開啟接收私人訊息的權限，並且沒有封鎖本服務的訊息。');
+      throw new Error('Discord 通知測試失敗，請確保您已開啟接收私人訊息的權限。如果問題持續存在，請檢查是否已封鎖機器人。');
     }
 
     // 更新用戶的 Discord 設定
