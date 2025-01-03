@@ -51,6 +51,16 @@ export const useLineVerification = () => {
         throw new Error(data.message || '驗證失敗');
       }
 
+      if (data.success) {
+        toast.success('驗證成功！', {
+          onClose: () => {
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
+          }
+        });
+      }
+
       return data;
     } catch (error) {
       logger.error('驗證碼驗證失敗:', error);

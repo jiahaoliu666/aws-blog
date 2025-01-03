@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           await lineServiceInstance.replyMessage(event.replyToken, [{
             type: 'text',
-            text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您以在網站的個人設定頁面找到您的用戶ID。'
+            text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您可以在網站的個人設定頁面找到您的用戶ID。'
           }]);
           continue;
         } catch (error) {
@@ -144,7 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                   contents: [
                                     {
                                       type: 'text',
-                                      text: '👤 LINE ID',
+                                      text: '👤 用戶 ID',
                                       color: '#8C8C8C',
                                       size: 'sm'
                                     },
@@ -155,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                       contents: [
                                         {
                                           type: 'text',
-                                          text: lineId,
+                                          text: messageText,
                                           size: 'sm',
                                           color: '#333333',
                                           flex: 5,
