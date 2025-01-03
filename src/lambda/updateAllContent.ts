@@ -54,11 +54,11 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 5, // 更新公告數量
-  news: 1, // 更新新聞數量
-  solutions: 6, // 更新解決方案數量
+  announcement: 1, // 更新公告數量
+  news: 0, // 更新新聞數量
+  solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
-  knowledge: 1, // 更新知識中心數量
+  knowledge: 0, // 更新知識中心數量
 };
 
 const prompts = {
@@ -725,6 +725,29 @@ async function validateDiscordWebhook(webhookUrl: string): Promise<boolean> {
   }
 }
 
+async function getEmailNotificationUsers(): Promise<NotificationUser[]> {
+  const params = {
+    TableName: "AWS_Blog_UserNotificationSettings",
+    FilterExpression: "emailNotification = :true",
+    ExpressionAttributeValues: {
+      ":true": { BOOL: true },
+    },
+  };
+
+  try {
+    const command = new ScanCommand(params);
+    const response = await dbClient.send(command);
+    return (response.Items || []).map(item => ({
+      userId: { S: item.userId.S || '' },
+      email: { S: item.email.S || '' },
+      emailNotification: { BOOL: true }
+    }));
+  } catch (error) {
+    logger.error("獲取電子郵件通知用戶時發生錯誤:", error);
+    return [];
+  }
+}
+
 // 修改 broadcastNewContent 函數
 async function broadcastNewContent(contentId: string, type: ContentType): Promise<void> {
   try {
@@ -747,6 +770,57 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
         logger.info(`成功新增通知記錄：用戶 ${userId}, \n內容 ${contentId}`);
       } catch (error) {
         logger.error(`新增通知記錄失敗 (用戶 ID: ${userId}):`, error);
+      }
+    }
+
+    // 獲取啟用電子郵件通知的用戶
+    const emailUsers = await getEmailNotificationUsers();
+    logger.info(`找到 ${emailUsers.length} 個有效的電子郵件通知用戶`);
+
+    // 發送電子郵件通知
+    for (const user of emailUsers) {
+      if (!user.email?.S) {
+        logger.warn(`用戶 ${user.userId.S} 缺少電子郵件地址，跳過通知`);
+        continue;
+      }
+
+      try {
+        const emailContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2c5282;">AWS 部落格新文章通知</h2>
+            <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px;">
+              <h3 style="color: #4a5568;">${title}</h3>
+              <p style="color: #718096;">${summary}</p>
+              <a href="${link}" 
+                 style="display: inline-block; padding: 10px 20px; 
+                        background-color: #4299e1; color: white; 
+                        text-decoration: none; border-radius: 5px; 
+                        margin-top: 15px;">
+                閱讀全文
+              </a>
+            </div>
+          </div>
+        `;
+
+        await sendEmailWithRetry({
+          to: user.email.S,
+          subject: `AWS 部落格新${CONTENT_TYPES[type].name}通知`,
+          html: emailContent
+        });
+
+        stats[type].notifications++;
+        logger.info(`成功發送電子郵件通知給用戶 ${user.userId.S}`);
+      } catch (error) {
+        stats[type].notificationsFailed++;
+        logger.error(`發送電子郵件通知失敗 (用戶 ID: ${user.userId.S}):`, error);
+        
+        failedNotifications.push({
+          userId: user.userId.S,
+          articleId: contentId,
+          type: 'email',
+          error: error instanceof Error ? error.message : '未知錯誤',
+          email: user.email.S
+        });
       }
     }
 
@@ -777,7 +851,6 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
           stats[type].notificationsFailed++;
           logger.error(`發送 Discord 通知失敗 (用戶 ID: ${user.userId.S})`);
           
-          // 將失敗的通知加入重試佇列
           failedNotifications.push({
             userId: user.userId.S,
             articleId: contentId,
