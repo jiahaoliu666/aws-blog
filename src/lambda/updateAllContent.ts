@@ -54,7 +54,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 1, // 更新公告數量
+  announcement: 2, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
@@ -786,25 +786,60 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
 
       try {
         const emailContent = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2c5282;">AWS 部落格新文章通知</h2>
-            <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px;">
-              <h3 style="color: #4a5568;">${title}</h3>
-              <p style="color: #718096;">${summary}</p>
-              <a href="${link}" 
-                 style="display: inline-block; padding: 10px 20px; 
-                        background-color: #4299e1; color: white; 
-                        text-decoration: none; border-radius: 5px; 
-                        margin-top: 15px;">
-                閱讀全文
-              </a>
+          <div style="font-family: 'Microsoft JhengHei', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+            <!-- 頁首 -->
+            <div style="background-color: #232f3e; padding: 20px; border-radius: 8px 8px 0 0;">
+              <div style="display: flex; align-items: center;">
+                <img src="https://d1.awsstatic.com/logos/aws-logo-lockups/poweredbyaws/PB_AWS_logo_RGB_stacked_REV_SQ.91cd4af40773cbfbd15577a3c2b8a346fe3e8fa2.png" alt="AWS Logo" style="width: 40px; height: auto; margin-right: 10px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">AWS 部落格${CONTENT_TYPES[type].name}通知</h1>
+              </div>
+            </div>
+
+            <!-- 內容區 -->
+            <div style="padding: 30px;">
+              <!-- 文章標題 -->
+              <h2 style="color: #232f3e; font-size: 20px; margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid #ff9900; padding-bottom: 10px;">
+                ${title}
+              </h2>
+
+              <!-- 摘要區塊 -->
+              <div style="background-color: #f8f9fa; border-left: 4px solid #ff9900; padding: 15px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+                <p style="color: #444444; margin: 0; line-height: 1.6;">
+                  ${summary}
+                </p>
+              </div>
+
+              <!-- 閱讀按鈕 -->
+              <div style="text-align: center; margin-top: 30px;">
+                <a href="${link}" 
+                   style="display: inline-block; 
+                          background-color: #ff9900; 
+                          color: #232f3e; 
+                          text-decoration: none; 
+                          padding: 12px 30px; 
+                          border-radius: 4px; 
+                          font-weight: bold;
+                          transition: background-color 0.3s ease;">
+                  立即閱讀全文
+                </a>
+              </div>
+            </div>
+
+            <!-- 頁尾 -->
+            <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #eee;">
+              <p style="color: #666; margin: 0; font-size: 14px;">
+                此為系統自動發送的通知郵件，請勿直接回覆
+              </p>
+              <p style="color: #666; margin: 10px 0 0 0; font-size: 12px;">
+                © ${new Date().getFullYear()} AWS Blog. All rights reserved.
+              </p>
             </div>
           </div>
         `;
 
         await sendEmailWithRetry({
           to: user.email.S,
-          subject: `AWS 部落格新${CONTENT_TYPES[type].name}通知`,
+          subject: `【AWS Blog 365】${CONTENT_TYPES[type].name}通知 - ${title.substring(0, 50)}${title.length > 50 ? '...' : ''}`,
           html: emailContent
         });
 
