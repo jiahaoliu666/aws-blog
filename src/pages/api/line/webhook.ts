@@ -59,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           // 檢查輸入的是否為有效的 Cognito User ID
           const params = {
-            TableName: 'AWS_Blog_UserNotificationSettings',
+            TableName: 'AWS_Blog_UserProfiles',
             Key: {
               userId: { S: messageText }
             }
@@ -68,9 +68,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const command = new GetItemCommand(params);
           const response = await dynamoClient.send(command);
 
-          // 如果找到對應的用戶ID
+          logger.info('查詢用戶資料:', {
+            userId: messageText,
+            tableName: 'AWS_Blog_UserProfiles',
+            hasRecord: !!response.Item,
+            timestamp: new Date().toISOString()
+          });
+
+          // 如果找到對應的用戶記錄
           if (response.Item) {
-            // 生成驗證碼並儲存
+            // 生成驗證碼並儲存到 AWS_Blog_UserNotificationSettings
             const { lineId, verificationCode } = await lineServiceInstance.handleVerificationCommand({
               lineUserId: event.source.userId!,
               userId: messageText
@@ -274,7 +281,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             logger.info('已發送驗證資訊', { lineId, verificationCode });
           } else {
-            // 如果找不到對應的用戶ID
+            // 找不到用戶記錄時的回應
             await lineServiceInstance.replyMessage(event.replyToken, [{
               type: 'text',
               text: '無效的用戶ID，請確認您輸入的是正確的用戶ID。\n您可以在網站的個人設定頁面找到您的用戶ID。'

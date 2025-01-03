@@ -116,6 +116,8 @@ src/styles/globals.css
 src/utils/animations.ts
 
 --------
+安裝ngrok
+brew install ngrok
 
 # 啟動 ngrok，轉發本地 3000 端口
 ngrok http 3000
@@ -216,4 +218,6 @@ src/pages/api/line/verification-status.ts
 src/pages/api/line/verify-code.ts
 src/types/lineTypes.ts
 
+
+https://8b9f-2407-4b00-1c0b-85b5-14c2-5d67-3889-5001.ngrok-free.app/api/line/webhook
 --------
