@@ -1086,7 +1086,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
               {/* LINE 驗證流程區域 */}
               {!settings.lineId && !settings.lineNotification && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 LINE 驗證才能啟用通知功能</p>
                     <button
@@ -1120,6 +1120,36 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                       <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 relative">
                         Discord 通知
                         <span className="relative group cursor-help">
+                          <FontAwesomeIcon 
+                            icon={faInfoCircle} 
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                          />
+                          <div className="absolute left-1/2 top-full transform -translate-x-1/2 mt-2
+                            w-80 p-4 text-sm text-white 
+                            bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
+                            transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
+                            shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
+                            <div className="space-y-2">
+                              <p className="font-semibold mb-2">Discord 綁定流程：</p>
+                              <ol className="list-decimal list-inside space-y-1.5">
+                                <li>點擊「使用 Discord 登入」按鈕</li>
+                                <li>在彈出視窗中登入您的 Discord 帳號</li>
+                                <li>授權 AWS Blog 365 存取您的基本資料</li>
+                                <li>允許接收來自 Bot 的私人訊息</li>
+                                <li>完成後會收到一則測試訊息</li>
+                              </ol>
+                              <div className="mt-3 pt-2 border-t border-gray-700">
+                                <p className="text-gray-300 text-xs">
+                                  注意：請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息
+                                </p>
+                              </div>
+                            </div>
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1
+                              w-2 h-2 bg-gray-800/95 rotate-45">
+                            </div>
+                          </div>
+                        </span>
+                        <span className="relative group cursor-help">
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 
                             bg-gradient-to-r from-green-500 to-green-600 
                             text-white text-xs font-bold rounded-full 
@@ -1132,7 +1162,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                             w-max px-4 py-2.5 text-sm text-white 
                             bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
                             transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
-                            shadow-xl backdrop-blur-sm pointer-events-none z-50">
+                            shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
                             <div className="flex items-center gap-2 whitespace-nowrap">
                               <FontAwesomeIcon icon={faInfoCircle} className="text-green-400" />
                               <span>此功能完全免費，推薦使用 Discord 接收通知！</span>
@@ -1206,7 +1236,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
               {/* Discord 驗證流程區域 - 只在未綁定且未啟用通知時顯示 */}
               {!settings.discordId && !settings.discordNotification && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
