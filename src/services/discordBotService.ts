@@ -82,6 +82,46 @@ export class DiscordBotService {
       throw error;
     }
   }
+
+  public async checkFriendshipStatus(userId: string): Promise<boolean> {
+    if (!this.client) {
+      await this.initClient();
+    }
+
+    try {
+      // 嘗試獲取與用戶的 DM 頻道
+      const user = await this.client?.users.fetch(userId);
+      if (!user) {
+        return false;
+      }
+
+      const dmChannel = await user.createDM();
+      return !!dmChannel;
+    } catch (error) {
+      logger.error('檢查好友狀態失敗:', error);
+      return false;
+    }
+  }
+
+  public async addFriend(userId: string): Promise<boolean> {
+    if (!this.client) {
+      await this.initClient();
+    }
+
+    try {
+      const user = await this.client?.users.fetch(userId);
+      if (!user) {
+        return false;
+      }
+
+      // 創建 DM 頻道
+      await user.createDM();
+      return true;
+    } catch (error) {
+      logger.error('添加好友失敗:', error);
+      return false;
+    }
+  }
 }
 
 export const discordBotService = DiscordBotService.getInstance(); 

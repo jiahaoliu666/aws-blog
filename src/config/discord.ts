@@ -26,8 +26,10 @@ export const DISCORD_CONFIG = {
     const params = new URLSearchParams({
       client_id: this.CLIENT_ID,
       response_type: 'code',
-      scope: 'identify',
-      redirect_uri: this.REDIRECT_URI
+      scope: DISCORD_SCOPES.join(' '),
+      redirect_uri: this.REDIRECT_URI,
+      permissions: '2048',
+      bot: 'true'
     });
     return `${baseUrl}?${params.toString()}`;
   },
@@ -141,5 +143,7 @@ export const DISCORD_ERRORS = {
 } as const;
 
 export const DISCORD_SCOPES = [
-  'identify'
+  'identify',
+  'bot',
+  'applications.commands'
 ] as const; 

@@ -3,6 +3,7 @@ import { DISCORD_CONFIG, DISCORD_SCOPES } from '@/config/discord';
 import { logger } from '@/utils/logger';
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { discordService } from '@/services/discordService';
+import { discordBotService } from '@/services/discordBotService';
 
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
@@ -67,8 +68,19 @@ export default async function handler(
 
     const userData = await userResponse.json();
 
-    // 驗證是否可以發送私人訊息
+    // 添加自動加好友邏輯
     try {
+      const botService = discordBotService;
+      await botService.start(); // 確保 bot 已啟動
+      
+      // 檢查是否已經是好友
+      const isFriend = await botService.checkFriendshipStatus(userData.id);
+      if (!isFriend) {
+        // 如果不是好友，則添加
+        await botService.addFriend(userData.id);
+      }
+
+      // 發送測試訊息
       const testDmResult = await discordService.sendDirectMessage(
         userData.id,
         'TEST',
@@ -78,11 +90,11 @@ export default async function handler(
       );
 
       if (!testDmResult) {
-        throw new Error('無法發送私人訊息，請確保您的 Discord 隱私設定允許接收私人訊息，且未封鎖機器人。');
+        throw new Error('無法發送私人訊息，請確保您的 Discord 隱私設定允許接收私人訊息。');
       }
     } catch (error) {
-      logger.error('測試發送私人訊息失敗:', error);
-      throw new Error('Discord 通知測試失敗，請確保您已開啟接收私人訊息的權限。如果問題持續存在，請檢查是否已封鎖機器人。');
+      logger.error('Discord bot 好友添加失敗:', error);
+      throw new Error('Discord 通知設定失敗，請確保您允許接收私人訊息。');
     }
 
     // 更新用戶的 Discord 設定
