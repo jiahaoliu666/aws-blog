@@ -1144,7 +1144,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                                 <p className="text-gray-300 text-xs">
                                   注意：
                                   <br/>1. 請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息。
-                                  <br/>2. 因 Discord 的設計機制，機器人和使用者必須共同存在於至少一個伺服器中，否則無法收到訊息。
+                                  <br/>2. 因 Discord 的安全機制，機器人和使用者必須共同存在於至少一個伺服器中，否則無法收到訊息。
                                 </p>
                               </div>
                             </div>
