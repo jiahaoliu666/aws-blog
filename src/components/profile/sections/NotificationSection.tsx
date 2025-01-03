@@ -1132,15 +1132,19 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                             <div className="space-y-2">
                               <p className="font-semibold mb-2">Discord 綁定流程：</p>
                               <ol className="list-decimal list-inside space-y-1.5">
+                                <li>在 Discord 應用程式的「+」號按鈕建立一個伺服器</li>
+                                <li>選擇「建立自己的」來創建全新伺服器</li>
                                 <li>點擊「使用 Discord 登入」按鈕</li>
                                 <li>在彈出視窗中登入您的 Discord 帳號</li>
-                                <li>授權 AWS Blog 365 存取您的基本資料</li>
-                                <li>允許接收來自 Bot 的私人訊息</li>
-                                <li>完成後會收到一則測試訊息</li>
+                                <li>在您的 Discord 帳號中加入此伺服器</li>
+                                <li>允許 AWS Blog 365 Bot 向您發送訊息</li>
+                                <li>完成後將會收到一則測試訊息！</li>
                               </ol>
                               <div className="mt-3 pt-2 border-t border-gray-700">
                                 <p className="text-gray-300 text-xs">
-                                  注意：請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息
+                                  注意：
+                                  <br/>1. 請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息。
+                                  <br/>2. 因 Discord 的設計機制，機器人和使用者必須共同存在於至少一個伺服器中，否則無法收到訊息。
                                 </p>
                               </div>
                             </div>
