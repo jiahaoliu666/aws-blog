@@ -57,7 +57,7 @@ dotenv.config({ path: ".env.local" });
 const FETCH_COUNTS = {
   announcement: 0, // 更新公告數量
   news: 0, // 更新新聞數量
-  solutions: 1, // 更新解決方案數量
+  solutions: 2, // 更新解決方案數量
   architecture: 0, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
@@ -736,7 +736,7 @@ async function addNotification(
       article_id: { S: contentId },
       read: { BOOL: false },
       created_at: { N: String(Math.floor(Date.now() / 1000)) },
-      category: { S: category },
+      category: { S: category === 'solutions' ? 'solution' : category },
       is_deleted: { BOOL: false }
     }
   };
