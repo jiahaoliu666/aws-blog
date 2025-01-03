@@ -842,7 +842,7 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
                     type: 'button',
                     action: {
                       type: 'uri',
-                      label: '立即閱讀',
+                      label: '閱讀全文',
                       uri: link
                     },
                     style: 'primary',
