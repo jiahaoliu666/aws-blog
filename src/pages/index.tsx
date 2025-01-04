@@ -248,15 +248,19 @@ const Home: React.FC = () => {
               {/* 最新文章區塊 - 右側 */}
               <motion.div
                 variants={fadeIn('left', 'spring', 0.7)}
-                className="relative h-[600px] rounded-2xl p-8
-                  bg-white/95 backdrop-blur-lg
-                  shadow-[0_8px_30px_rgb(0,0,0,0.08)]
-                  hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-                  transition-all duration-500
-                  border border-gray-100/50"
+                className="relative h-[600px] rounded-[16px] p-8
+                  bg-gradient-to-br from-white to-blue-50/30
+                  shadow-[0_8px_32px_rgba(0,0,0,0.08)]
+                  hover:shadow-[0_16px_48px_rgba(0,0,0,0.12)]
+                  transition-all duration-500 ease-in-out
+                  border border-gray-100/50
+                  mx-4 my-8 sm:mx-6 sm:my-10
+                  backdrop-blur-xl
+                  hover:scale-[1.02]
+                  transform-gpu"
               >
-                <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white/95 to-transparent z-10"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/95 to-transparent z-10"></div>
+                <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white/95 to-transparent z-10 rounded-t-[16px]"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/95 to-transparent z-10 rounded-b-[16px]"></div>
                 
                 <h2 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
                   最新文章
