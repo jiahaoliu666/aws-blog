@@ -95,38 +95,48 @@ const getTypeStyles = (type: string) => {
   switch (type) {
     case 'feature':
       return {
-        bg: 'bg-blue-50',
+        bg: 'bg-blue-50/80',
         text: 'text-blue-700',
         border: 'border-blue-200',
-        label: '新功能'
+        iconBg: 'bg-blue-100',
+        label: '新功能',
+        timeline: 'bg-blue-200'
       };
     case 'fix':
       return {
-        bg: 'bg-red-50',
+        bg: 'bg-red-50/80',
         text: 'text-red-700',
         border: 'border-red-200',
-        label: '錯誤修復'
+        iconBg: 'bg-red-100',
+        label: '錯誤修復',
+        timeline: 'bg-red-200'
       };
     case 'improvement':
       return {
-        bg: 'bg-green-50',
+        bg: 'bg-green-50/80',
         text: 'text-green-700',
         border: 'border-green-200',
-        label: '效能優化'
+        iconBg: 'bg-green-100',
+        label: '效能優化',
+        timeline: 'bg-green-200'
       };
     case 'security':
       return {
-        bg: 'bg-yellow-50',
+        bg: 'bg-yellow-50/80',
         text: 'text-yellow-700',
         border: 'border-yellow-200',
-        label: '安全性更新'
+        iconBg: 'bg-yellow-100',
+        label: '安全性更新',
+        timeline: 'bg-yellow-200'
       };
     default:
       return {
-        bg: 'bg-gray-50',
+        bg: 'bg-gray-50/80',
         text: 'text-gray-700',
         border: 'border-gray-200',
-        label: '其他更新'
+        iconBg: 'bg-gray-100',
+        label: '其他更新',
+        timeline: 'bg-gray-200'
       };
   }
 };
@@ -143,25 +153,25 @@ const HistoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           {/* 頁面標題 */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-xl bg-white shadow-md">
+          <div className="mb-12">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-4 rounded-2xl bg-white shadow-lg shadow-blue-100 transform hover:scale-105 transition-transform duration-200">
                 <FontAwesomeIcon 
                   icon={faHistory} 
-                  className="text-2xl text-blue-500" 
+                  className="text-3xl text-blue-500" 
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   版本歷史
                 </h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-base text-gray-600">
                   追蹤系統更新與改進記錄
                 </p>
               </div>
@@ -169,7 +179,7 @@ const HistoryPage = () => {
           </div>
 
           {/* 版本時間軸 */}
-          <div className="relative space-y-8">
+          <div className="relative space-y-10">
             {versionHistory.map((version, index) => {
               const typeStyles = getTypeStyles(version.type);
               
@@ -177,49 +187,52 @@ const HistoryPage = () => {
                 <div key={version.version} className="relative">
                   {/* 連接線 */}
                   {index !== versionHistory.length - 1 && (
-                    <div className="absolute left-6 top-14 bottom-0 w-0.5 bg-gray-200" />
+                    <div className={`absolute left-6 top-16 bottom-0 w-1 ${typeStyles.timeline} rounded-full opacity-50`} />
                   )}
                   
-                  <BaseCard className="relative bg-white">
-                    <div className="p-6">
+                  <BaseCard className="relative bg-white border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-2xl overflow-hidden">
+                    <div className={`absolute top-0 left-0 w-1 h-full ${typeStyles.timeline}`} />
+                    <div className="p-8">
                       {/* 版本資訊 */}
-                      <div className="flex items-start gap-4">
+                      <div className="flex items-start gap-6">
                         <div className={`
-                          w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0
-                          ${typeStyles.bg} ${typeStyles.text}
+                          w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0
+                          ${typeStyles.iconBg} ${typeStyles.text}
+                          transform hover:scale-110 transition-transform duration-200
+                          shadow-inner
                         `}>
-                          <FontAwesomeIcon icon={getTypeIcon(version.type)} className="text-xl" />
+                          <FontAwesomeIcon icon={getTypeIcon(version.type)} className="text-2xl" />
                         </div>
                         
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                          <div className="flex items-center gap-4 flex-wrap mb-3">
+                            <h2 className="text-xl font-bold text-gray-900">
                               版本 {version.version}
                             </h2>
                             <span className={`
-                              px-2.5 py-1 rounded-full text-xs font-medium
+                              px-4 py-1.5 rounded-full text-sm font-semibold
                               ${typeStyles.bg} ${typeStyles.text} ${typeStyles.border}
-                              border
+                              border shadow-sm
                             `}>
                               {typeStyles.label}
                             </span>
-                            <time className="text-sm text-gray-500">
+                            <time className="text-sm text-gray-500 font-medium">
                               {version.date}
                             </time>
                           </div>
                           
-                          <h3 className="text-base font-medium mt-2 text-gray-800">
+                          <h3 className="text-lg font-semibold mt-3 text-gray-800">
                             {version.title}
                           </h3>
                           
-                          <ul className="mt-4 space-y-2 text-gray-600">
+                          <ul className="mt-5 space-y-3 text-gray-600">
                             {version.description.map((item, i) => (
-                              <li key={i} className="flex items-start gap-2">
+                              <li key={i} className="flex items-start gap-3 group">
                                 <FontAwesomeIcon 
                                   icon={faCodeBranch} 
-                                  className="mt-1 text-sm text-gray-400" 
+                                  className="mt-1 text-sm text-gray-400 group-hover:text-blue-500 transition-colors duration-200" 
                                 />
-                                <span className="text-sm">{item}</span>
+                                <span className="text-sm leading-relaxed">{item}</span>
                               </li>
                             ))}
                           </ul>

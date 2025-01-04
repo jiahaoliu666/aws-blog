@@ -31,6 +31,8 @@ src/
 │   │   └── index.tsx               // 收藏文章頁面
 │   ├── profile
 │   │   └── index.tsx               // 個人資料頁面
+│   ├── history
+│   │   └── index.tsx               // 版本歷史頁面
 │   ├── auth
 │   │   ├── login.tsx               // 登入頁面
 │   │   ├── register.tsx            // 註冊頁面
