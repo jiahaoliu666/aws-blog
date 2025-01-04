@@ -1124,7 +1124,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                             icon={faInfoCircle} 
                             className="text-gray-400 hover:text-gray-600 transition-colors"
                           />
-                          <div className="absolute left-1/2 top-full transform -translate-x-1/2 mt-2
+                          <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 -mb-2
                             w-80 p-4 text-sm text-white 
                             bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
                             transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
@@ -1148,7 +1148,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                                 </p>
                               </div>
                             </div>
-                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1
+                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1
                               w-2 h-2 bg-gray-800/95 rotate-45">
                             </div>
                           </div>
