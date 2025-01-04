@@ -25,53 +25,24 @@ interface VersionHistory {
 const versionHistory: VersionHistory[] = [
   {
     version: '1.0.0',
-    date: '2024-03-20',
+    date: '2025-01-04',
     type: 'feature',
     title: '初始版本發布',
     description: [
-      '建立基礎網站架構',
-      '實作用戶認證系統',
-      '新增最新公告、新聞、解決方案、架構參考、知識中心等功能',
-      '支援文章收藏功能',
-      '整合 LINE 通知功能',
-      '支援多語言切換 (繁體中文/英文)',
-      '實作個人化設定'
-    ]
-  },
-  {
-    version: '1.0.1',
-    date: '2024-03-21',
-    type: 'fix',
-    title: '錯誤修復更新',
-    description: [
-      '修復通知系統延遲問題',
-      '修正文章收藏同步問題',
-      '改善登入流程的穩定性',
-      '修復部分 UI 顯示問題'
-    ]
-  },
-  {
-    version: '1.0.2',
-    date: '2024-03-22',
-    type: 'improvement',
-    title: '效能優化更新',
-    description: [
-      '優化頁面載入速度',
-      '改善搜尋功能效能',
-      '優化資料庫查詢效率',
-      '改善使用者介面回應速度'
-    ]
-  },
-  {
-    version: '1.0.3',
-    date: '2024-03-23',
-    type: 'security',
-    title: '安全性更新',
-    description: [
-      '強化密碼安全性要求',
-      '更新認證機制',
-      '增加 API 請求限制',
-      '改善資料加密方式'
+      '【網站架構】建立基礎網站結構',
+      '【用戶認證】註冊、登入、忘記密碼功能',
+      '【文章分類】最新公告、最新新聞、解決方案、架構參考、知識中心',
+      '【收藏文章】實現跨類別收藏功能，支援收藏列表管理與快速檢索分類',
+      '【個人化設定】個人資料編輯、密碼修改、偏好設定（語言、通知等）',
+      '【電子郵件整合】實現電子郵件驗證、訂閱服務與即時推送功能',
+      '【LINE整合】支援LINE驗證、訂閱服務與即時推送功能',
+      '【Discord整合】實現OAuth授權登入與Bot互動功能（通知推送）',
+      '【多語言支援】提供繁體中文/英文即時切換功能',
+      '【活動日誌】記錄用戶瀏覽與操作行為，支援日誌檢索與過濾',
+      '【意見反饋】意見反饋提交表單介面',
+      '【自動更新】建置定期爬蟲機制，實現內容自動更新',
+      '【搜尋功能】提供高效全文檢索與多條件篩選',
+      '【AWS服務整合】整合Cognito身份驗證、S3儲存、DynamoDB資料庫等',
     ]
   }
 ];
@@ -153,10 +124,10 @@ const HistoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-12">
+      <main className="flex-grow container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           {/* 頁面標題 */}
           <div className="mb-12">
@@ -179,7 +150,7 @@ const HistoryPage = () => {
           </div>
 
           {/* 版本時間軸 */}
-          <div className="relative space-y-10">
+          <div className="relative space-y-10 mb-8">
             {versionHistory.map((version, index) => {
               const typeStyles = getTypeStyles(version.type);
               

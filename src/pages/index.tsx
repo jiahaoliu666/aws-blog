@@ -171,17 +171,17 @@ const Home: React.FC = () => {
     {
       icon: faChartLine,
       title: '即時更新',
-      description: '自動同步 AWS 官方資訊，第一時間掌握最新動態與更新資訊。'
+      description: '自動同步 AWS 官方資訊，第一時間掌握最新動態與更新資訊'
     },
     {
       icon: faShieldAlt,
       title: '即時通知',
-      description: '支援電子郵件、LINE、Discord 等，讓您重要資訊不漏接。'
+      description: '支援電子郵件、LINE、Discord 等，讓您重要資訊不漏接'
     },
     {
       icon: faRocket,
       title: 'AI 輔助',
-      description: '透過 AI 智能摘要文章重點，快速理解內容、節省您寶貴時間。'
+      description: '透過 AI 智能摘要文章重點，快速理解內容、節省您寶貴時間'
     }
   ];
 
