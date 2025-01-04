@@ -271,7 +271,7 @@ const Home: React.FC = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="transition-transform duration-1000 ease-in-out"
+                    <div className="transition-transform duration-1000 ease-in-out space-y-4"
                          style={{
                            transform: `translateY(-${currentArticleIndex * 100}px)`,
                          }}
@@ -285,12 +285,13 @@ const Home: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: index * 0.1 }}
                           className="group rounded-xl p-5
-                            bg-white/50 backdrop-blur-sm
+                            bg-white backdrop-blur-sm
                             transform transition-all duration-300
-                            hover:bg-white hover:scale-[1.01]
-                            hover:shadow-md
-                            border border-gray-100/50 hover:border-gray-200
-                            cursor-pointer"
+                            hover:bg-white/95 hover:scale-[1.02]
+                            shadow-sm hover:shadow-lg
+                            border-2 border-gray-200 hover:border-blue-200
+                            cursor-pointer
+                            mx-1"
                         >
                           <div className="flex items-start gap-3">
                             <div className="flex-1 min-w-0">
@@ -332,7 +333,8 @@ const Home: React.FC = () => {
                                 rel="noopener noreferrer"
                                 className="text-sm font-medium line-clamp-2 
                                   text-gray-900 group-hover:text-blue-600 
-                                  transition-colors duration-300"
+                                  transition-colors duration-300
+                                  hover:underline decoration-blue-600 decoration-2"
                               >
                                 {article.title}
                               </a>
