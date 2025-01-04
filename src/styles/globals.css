@@ -101,12 +101,13 @@
 .dark-search input {
   color: #ffffff !important;
   background-color: #1a1a1a !important;
-  border-color: #2D3748 !important;
+  border-color: #ffffff !important;
+  border-width: 1px !important;
 }
 
 .dark-search input:focus {
-  border-color: #4299E1 !important;
-  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2) !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
   outline: none !important;
 }
 
