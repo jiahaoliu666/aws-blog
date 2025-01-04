@@ -40,7 +40,7 @@ const Footer: React.FC = () => {
                 <li>
                   <a href="https://docs.aws.amazon.com/" target="_blank" rel="noopener noreferrer"
                      className="text-gray-400 hover:text-white text-sm transition duration-300">
-                    AWS 文件
+                    AWS 官方文檔
                   </a>
                 </li>
               </ul>
