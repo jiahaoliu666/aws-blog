@@ -116,7 +116,7 @@ const SolutionPage: React.FC = () => {
                 />
 
                 <div className={`mt-2 grid ${gridView ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid-cols-1"} max-w-full`}>
-                    {currentSolutions.length > 0 ? (
+                    {currentSolutions && currentSolutions.length > 0 ? (
                         currentSolutions.map((solution: ExtendedSolution, index: number) => {
                             const isFavorited = favorites.some((fav: ExtendedSolution) => fav.article_id === solution.article_id);
                             return (
@@ -139,12 +139,14 @@ const SolutionPage: React.FC = () => {
                     )}
                 </div>
 
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                    show={currentSolutions.length > 0}
-                />
+                {currentSolutions && currentSolutions.length > 0 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        show={true}
+                    />
+                )}
             </div>
             <Footer />
         </div>

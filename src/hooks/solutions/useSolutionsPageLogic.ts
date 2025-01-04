@@ -55,7 +55,21 @@ function useSolutionsPageLogic() {
     }, [fetchedSolutions, favorites, language]);
 
     useEffect(() => {
-        let updatedSolutions = showFavorites ? favorites : filteredSolutions;
+        let updatedSolutions = showFavorites ? [...favorites] : [...filteredSolutions];
+
+        if (showFavorites && (!favorites || favorites.length === 0)) {
+            setCurrentSolutions([]);
+            setCurrentPage(1);
+            setTotalPages(0);
+            return;
+        }
+
+        if (!updatedSolutions || updatedSolutions.length === 0) {
+            setCurrentSolutions([]);
+            setCurrentPage(1);
+            setTotalPages(0);
+            return;
+        }
 
         if (startDate || endDate) {
             updatedSolutions = updatedSolutions.filter(solution => {
@@ -64,6 +78,13 @@ function useSolutionsPageLogic() {
                 const end = endDate ? new Date(endDate) : null;
                 return dateFromInfo && (!start || dateFromInfo >= start) && (!end || dateFromInfo <= end);
             });
+        }
+
+        if (updatedSolutions.length === 0) {
+            setCurrentSolutions([]);
+            setCurrentPage(1);
+            setTotalPages(0);
+            return;
         }
 
         updatedSolutions.sort((a, b) => {
@@ -79,8 +100,8 @@ function useSolutionsPageLogic() {
         const newCurrentSolutions = updatedSolutions.slice(startIndex, startIndex + 12);
         setCurrentSolutions(newCurrentSolutions);
 
-        if (currentPage > newTotalPages && newTotalPages > 0) {
-            setCurrentPage(newTotalPages);
+        if (currentPage > newTotalPages) {
+            setCurrentPage(1);
         }
     }, [filteredSolutions, showFavorites, startDate, endDate, sortOrder, currentPage, favorites]);
 

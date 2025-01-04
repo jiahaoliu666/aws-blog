@@ -12,13 +12,17 @@ export const useSolutionFavorites = () => {
 
     useEffect(() => {
         const fetchFavorites = async () => {
-            if (user) {
-                try {
-                    const response = await axios.get(`/api/solutions/getFavorites?userId=${user.sub}`);
-                    setFavorites(response.data.items || []);
-                } catch (error) {
-                    console.error('獲取收藏解決方案失敗:', error);
-                }
+            if (!user) {
+                setFavorites([]);
+                return;
+            }
+
+            try {
+                const response = await axios.get(`/api/solutions/getFavorites?userId=${user.sub}`);
+                setFavorites(response.data.items || []);
+            } catch (error) {
+                console.error('獲取收藏解決方案失敗:', error);
+                setFavorites([]);
             }
         };
         fetchFavorites();
@@ -61,6 +65,10 @@ export const useSolutionFavorites = () => {
     };
 
     const removeFavorite = async (solution: ExtendedSolution) => {
+        if (!user) {
+            return;
+        }
+
         try {
             const response = await fetch('/api/solution/removeFavorite', {
                 method: 'POST',
@@ -68,7 +76,8 @@ export const useSolutionFavorites = () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    articleId: solution.article_id
+                    articleId: solution.article_id,
+                    userId: user.sub
                 })
             });
 
