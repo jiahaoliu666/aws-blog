@@ -80,6 +80,23 @@ const Home: React.FC = () => {
   // 主要功能區塊
   const features = [
     {
+      icon: faBullhorn,
+      title: '最新公告',
+      description: '重要公告與服務更新通知',
+      link: '/announcement',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      className: `
+        group relative rounded-2xl p-8
+        bg-white backdrop-blur-lg
+        border border-gray-100/50
+        transition-all duration-300 ease-out
+        hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
+        hover:-translate-y-1
+        hover:border-purple-100/50
+      `
+    },
+    {
       icon: faNewspaper,
       title: '最新新聞',
       description: '即時更新 AWS 新功能與服務資訊',
@@ -94,23 +111,6 @@ const Home: React.FC = () => {
         hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
         hover:-translate-y-1
         hover:border-blue-100/50
-      `
-    },
-    {
-      icon: faBullhorn,
-      title: '最新公告',
-      description: '重要公告與系統維護通知',
-      link: '/announcement',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      className: `
-        group relative rounded-2xl p-8
-        bg-white backdrop-blur-lg
-        border border-gray-100/50
-        transition-all duration-300 ease-out
-        hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-        hover:-translate-y-1
-        hover:border-purple-100/50
       `
     },
     {
@@ -171,17 +171,17 @@ const Home: React.FC = () => {
     {
       icon: faChartLine,
       title: '即時更新',
-      description: '自動同步 AWS 官方最新資訊'
+      description: '自動同步 AWS 官方資訊，第一時間掌握最新動態與更新資訊。'
     },
     {
       icon: faShieldAlt,
-      title: '多重通知',
-      description: '支援 LINE、Discord 等多種通知方式'
+      title: '即時通知',
+      description: '支援電子郵件、LINE、Discord 等，讓您重要資訊不漏接。'
     },
     {
       icon: faRocket,
       title: 'AI 輔助',
-      description: '文章自動總結與關鍵重點提取'
+      description: '透過 AI 智能摘要文章重點，快速理解內容、節省您寶貴時間。'
     }
   ];
 
@@ -223,7 +223,7 @@ const Home: React.FC = () => {
                   variants={textVariant(0.4)}
                   className="text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl"
                 >
-                  在這裡，您可以輕鬆獲取 AWS 最新資訊與技術文章，讓學習更有效率。
+                  在這裡，透過一站式平台輕鬆獲取 AWS 最新資訊與技術文章，幫助您更快掌握雲端核心知識！
                 </motion.p>
 
                 <div className="flex gap-4 mt-8">
