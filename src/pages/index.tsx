@@ -87,13 +87,13 @@ const Home: React.FC = () => {
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       className: `
-        group relative rounded-2xl p-8
-        bg-white backdrop-blur-lg
-        border border-gray-100/50
-        transition-all duration-300 ease-out
+        group p-8 sm:p-10 rounded-2xl
+        bg-white
+        transition-all duration-300
+        shadow-[0_4px_20px_rgb(0,0,0,0.05)]
         hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-        hover:-translate-y-1
-        hover:border-purple-100/50
+        border border-gray-100
+        transform hover:-translate-y-1
       `
     },
     {
@@ -104,13 +104,13 @@ const Home: React.FC = () => {
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       className: `
-        group relative rounded-2xl p-8
-        bg-white backdrop-blur-lg
-        border border-gray-100/50
-        transition-all duration-300 ease-out
+        group p-8 sm:p-10 rounded-2xl
+        bg-white
+        transition-all duration-300
+        shadow-[0_4px_20px_rgb(0,0,0,0.05)]
         hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-        hover:-translate-y-1
-        hover:border-blue-100/50
+        border border-gray-100
+        transform hover:-translate-y-1
       `
     },
     {
@@ -121,13 +121,13 @@ const Home: React.FC = () => {
       color: 'text-amber-600',
       bgColor: 'bg-amber-50',
       className: `
-        group relative rounded-2xl p-8
-        bg-white backdrop-blur-lg
-        border border-gray-100/50
-        transition-all duration-300 ease-out
+        group p-8 sm:p-10 rounded-2xl
+        bg-white
+        transition-all duration-300
+        shadow-[0_4px_20px_rgb(0,0,0,0.05)]
         hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-        hover:-translate-y-1
-        hover:border-amber-100/50
+        border border-gray-100
+        transform hover:-translate-y-1
       `
     },
     {
@@ -138,13 +138,13 @@ const Home: React.FC = () => {
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
       className: `
-        group relative rounded-2xl p-8
-        bg-white backdrop-blur-lg
-        border border-gray-100/50
-        transition-all duration-300 ease-out
+        group p-8 sm:p-10 rounded-2xl
+        bg-white
+        transition-all duration-300
+        shadow-[0_4px_20px_rgb(0,0,0,0.05)]
         hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-        hover:-translate-y-1
-        hover:border-emerald-100/50
+        border border-gray-100
+        transform hover:-translate-y-1
       `
     },
     {
@@ -155,13 +155,13 @@ const Home: React.FC = () => {
       color: 'text-rose-600',
       bgColor: 'bg-rose-50',
       className: `
-        group relative rounded-2xl p-8
-        bg-white backdrop-blur-lg
-        border border-gray-100/50
-        transition-all duration-300 ease-out
+        group p-8 sm:p-10 rounded-2xl
+        bg-white
+        transition-all duration-300
+        shadow-[0_4px_20px_rgb(0,0,0,0.05)]
         hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
-        hover:-translate-y-1
-        hover:border-rose-100/50
+        border border-gray-100
+        transform hover:-translate-y-1
       `
     }
   ];
