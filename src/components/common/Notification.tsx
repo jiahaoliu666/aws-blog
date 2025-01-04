@@ -64,6 +64,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
   const [totalCount, setTotalCount] = useState<number>(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [categoryCounts, setCategoryCounts] = useState<{[key: string]: number}>({});
 
   useEffect(() => {
     const fetchNewArticles = async () => {
@@ -99,6 +100,16 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             return dateB - dateA;
           });
           setNewNotifications(sortedNotifications);
+
+          // 計算每個類別的文章數量
+          const counts = sortedNotifications.reduce((acc: {[key: string]: number}, notification: NotificationItem) => {
+            const category = notification.category || 'all';
+            acc[category] = (acc[category] || 0) + 1;
+            acc['all'] = (acc['all'] || 0) + 1;
+            return acc;
+          }, {});
+          setCategoryCounts(counts);
+
           const unreadCount = sortedNotifications.filter(
             (notification: NotificationItem) => !notification.read
           ).length;
@@ -240,7 +251,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
             )}
           </span>
           <span className="text-sm font-normal text-gray-500">
-            · 總共 {totalCount || 0} 則
+            · 總共 {selectedCategory ? categoryCounts[selectedCategory] || 0 : totalCount} 則
           </span>
         </h2>
         <div className="flex items-center gap-2">
@@ -270,13 +281,18 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
                       setSelectedCategory(key);
                       setShowMenu(false);
                     }}
-                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm
+                    className={`w-full flex items-center justify-between px-4 py-2 text-sm
                       ${selectedCategory === key 
                         ? 'bg-blue-50 text-blue-700' 
                         : 'text-gray-700 hover:bg-gray-50'}`}
                   >
-                    <Icon className="w-4 h-4" />
-                    {label}
+                    <span className="flex items-center gap-2">
+                      <Icon className="w-4 h-4" />
+                      {label}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {categoryCounts[key] || 0}
+                    </span>
                   </button>
                 ))}
               </div>
