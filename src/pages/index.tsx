@@ -248,7 +248,7 @@ const Home: React.FC = () => {
               {/* 最新文章區塊 - 右側 */}
               <motion.div
                 variants={fadeIn('left', 'spring', 0.7)}
-                className="relative h-[600px] rounded-[16px] p-8
+                className="relative h-[600px] rounded-[16px] p-6 pt-6
                   bg-gradient-to-br from-white to-blue-50/30
                   shadow-[0_8px_32px_rgba(0,0,0,0.08)]
                   hover:shadow-[0_16px_48px_rgba(0,0,0,0.12)]
@@ -262,11 +262,13 @@ const Home: React.FC = () => {
                 <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white/95 to-transparent z-10 rounded-t-[16px]"></div>
                 <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/95 to-transparent z-10 rounded-b-[16px]"></div>
                 
-                <h2 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
+                <h2 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
                   最新文章
                 </h2>
+                
+                <div className="w-full h-[1px] bg-gray-200 mb-4"></div>
 
-                <div className="space-y-3 overflow-hidden h-[calc(100%-5rem)]">
+                <div className="space-y-3 overflow-hidden h-[calc(100%-6rem)]">
                   {loading ? (
                     Array(6).fill(0).map((_, index) => (
                       <div key={index} className="animate-pulse rounded-xl p-5 bg-white/90 backdrop-blur-sm">
