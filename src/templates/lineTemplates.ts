@@ -131,7 +131,7 @@ export const createVerificationSuccessTemplate = () => ({
         },
         {
           type: 'text',
-          text: '您已成功開啟 LINE 通知功能',
+          text: '您已成功開啟 LINE 通知功能！',
           margin: 'md',
           size: 'md'
         }

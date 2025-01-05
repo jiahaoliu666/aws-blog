@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Client } from '@line/bot-sdk';
 import { lineConfig } from '@/config/line';
 import { verifyLineSignature } from '@/utils/lineUtils';
-import { DynamoDBClient, GetItemCommand, PutItemCommand, QueryCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, GetItemCommand, PutItemCommand, QueryCommand, UpdateItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '@/utils/logger';
 import { LineService } from '@/services/lineService';
 
@@ -57,6 +57,93 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const messageText = event.message.text.trim();
         
         try {
+          // 檢查是否為驗證碼
+          const verificationCodePattern = /^[0-9A-Z]{6}$/;
+          if (verificationCodePattern.test(messageText)) {
+            // 使用 Scan 操作查詢未驗證的記錄
+            const scanParams = {
+              TableName: "AWS_Blog_LineVerifications",
+              FilterExpression: "verificationCode = :code AND isVerified = :isVerified",
+              ExpressionAttributeValues: {
+                ":code": { S: messageText },
+                ":isVerified": { BOOL: false }
+              }
+            };
+
+            const scanCommand = new ScanCommand(scanParams);
+            const scanResponse = await dynamoClient.send(scanCommand);
+
+            if (scanResponse.Items && scanResponse.Items.length > 0) {
+              const verificationRecord = scanResponse.Items[0];
+              const userId = verificationRecord.userId.S;
+              const expiryTime = Number(verificationRecord.verificationExpiry.N || 0);
+
+              // 檢查驗證碼是否過期
+              if (Date.now() <= expiryTime) {
+                // 更新驗證狀態
+                const updateParams = {
+                  TableName: "AWS_Blog_LineVerifications",
+                  Key: {
+                    userId: { S: userId || '' }
+                  },
+                  UpdateExpression: "SET isVerified = :verified, verificationStatus = :status, updatedAt = :now",
+                  ExpressionAttributeValues: {
+                    ":verified": { BOOL: true },
+                    ":status": { S: "VERIFIED" },
+                    ":now": { S: new Date().toISOString() }
+                  }
+                };
+
+                await dynamoClient.send(new UpdateItemCommand(updateParams));
+
+                // 更新用戶通知設定
+                const notificationParams = {
+                  TableName: "AWS_Blog_UserNotificationSettings",
+                  Item: {
+                    userId: { S: userId || '' },
+                    lineId: { S: event.source.userId || '' },
+                    lineNotification: { BOOL: true },
+                    updatedAt: { S: new Date().toISOString() }
+                  }
+                };
+
+                await dynamoClient.send(new PutItemCommand(notificationParams));
+
+                // 發送驗證成功訊息
+                await lineServiceInstance.replyMessage(event.replyToken, [{
+                  type: 'flex',
+                  altText: '驗證成功',
+                  contents: {
+                    type: 'bubble',
+                    body: {
+                      type: 'box',
+                      layout: 'vertical',
+                      contents: [
+                        {
+                          type: 'text',
+                          text: '✅ 驗證成功',
+                          weight: 'bold',
+                          size: 'xl',
+                          color: '#1DB446'
+                        },
+                        {
+                          type: 'text',
+                          text: '您已成功開啟 LINE 通知功能！',
+                          margin: 'md',
+                          size: 'md',
+                          color: '#333333'
+                        }
+                      ]
+                    }
+                  }
+                }]);
+
+                continue;
+              }
+            }
+          }
+
+          // 如果不是驗證碼，繼續原有的檢查輸入是否為有效的 Cognito User ID 的邏輯
           // 檢查輸入的是否為有效的 Cognito User ID
           const params = {
             TableName: 'AWS_Blog_UserProfiles',

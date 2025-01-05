@@ -93,6 +93,7 @@ src/
 │   │   │   ├── verification-status.ts // 獲取驗證狀態 API
 │   │   │   ├── message.ts          // 發送 LINE 消息 API
 │   │   │   └── webhook.ts          // LINE Webhook API
+│   │   │   └── generate-code.ts    // 生成 LINE 驗證碼 API
 │   │   └── discord 
 │   │       └── callback.ts         // Discord 授權回調 API
 │   │       └── auth.ts             // Discord 授權 API
