@@ -86,9 +86,9 @@ const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
                   <a href={article.link} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`block bg-white rounded-xl border border-gray-100 
-                      transition-all duration-300 hover:shadow-lg hover:border-blue-100
-                      ${isGridView ? 'p-5' : 'p-6'}`}
+                    className={`block bg-white rounded-xl border-2 border-gray-200 
+                      transition-all duration-300 hover:shadow-xl hover:border-blue-300
+                      ${isGridView ? 'p-6' : 'p-7'} shadow-md hover:-translate-y-0.5`}
                   >
                     <div className="flex gap-5">
                       <div className="flex-1 min-w-0">
