@@ -7,11 +7,15 @@ import {
   faTimes,
   faSpinner,
   faExclamationTriangle,
-  faInfoCircle
+  faInfoCircle,
+  faEnvelope,
+  faBell
 } from '@fortawesome/free-solid-svg-icons';
+import { faLine, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { FormData } from '@/types/profileTypes';
 import { useToastContext } from '@/context/ToastContext';
 import { useAuthContext } from '@/context/AuthContext';
+import { useNotificationSettings } from '@/hooks/profile/useNotificationSettings';
 import { SectionTitle } from '../common/SectionTitle';
 import { Card } from '../common/Card';
 import { userApi } from '@/api/user';
@@ -37,6 +41,11 @@ interface ProfileSectionProps {
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   setIsEditable: React.Dispatch<React.SetStateAction<{ username: boolean }>>;
   handleEditClick: (field: string) => void;
+  notificationSettings?: {
+    discordNotification: boolean;
+    emailNotification: boolean;
+    lineNotification: boolean;
+  };
 }
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({
@@ -49,7 +58,8 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   handleCancelChanges,
   isLoading,
   tempAvatar,
-  handleEditClick
+  handleEditClick,
+  notificationSettings: propNotificationSettings
 }) => {
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(
     'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'
@@ -57,6 +67,16 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   const { showToast } = useToastContext();
   const { user, updateUser } = useAuthContext();
   const [profileData, setProfileData] = useState<{ registrationDate?: string }>({});
+  
+  // 使用 useNotificationSettings hook 獲取通知設定
+  const { settings: hookNotificationSettings } = useNotificationSettings(user?.sub || '');
+
+  // 合併 props 和 hook 的通知設定，優先使用 props 的設定
+  const notificationSettings = {
+    discordNotification: propNotificationSettings?.discordNotification ?? hookNotificationSettings?.discordNotification ?? false,
+    emailNotification: propNotificationSettings?.emailNotification ?? hookNotificationSettings?.emailNotification ?? false,
+    lineNotification: propNotificationSettings?.lineNotification ?? hookNotificationSettings?.lineNotification ?? false
+  };
 
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
@@ -133,6 +153,53 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
       console.error('日期格式化錯誤:', error);
       return '未知日期';
     }
+  };
+
+  // 計算通知訂閱狀態
+  const getSubscriptionStatus = () => {
+    const { discordNotification, emailNotification, lineNotification } = notificationSettings;
+    const activeServices = [];
+
+    if (discordNotification) activeServices.push(
+      <span key="discord" className="inline-flex items-center gap-1">
+        <FontAwesomeIcon icon={faDiscord} className="text-indigo-500" />
+        Discord
+      </span>
+    );
+    if (emailNotification) activeServices.push(
+      <span key="email" className="inline-flex items-center gap-1">
+        <FontAwesomeIcon icon={faEnvelope} className="text-blue-500" />
+        Email
+      </span>
+    );
+    if (lineNotification) activeServices.push(
+      <span key="line" className="inline-flex items-center gap-1">
+        <FontAwesomeIcon icon={faLine} className="text-green-500" />
+        LINE
+      </span>
+    );
+
+    if (activeServices.length === 0) {
+      return (
+        <span className="inline-flex items-center gap-1 text-gray-500">
+          <FontAwesomeIcon icon={faBell} className="text-gray-400" />
+          尚未訂閱
+        </span>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-3">
+        {activeServices.map((service, index) => (
+          <React.Fragment key={index}>
+            {service}
+            {index < activeServices.length - 1 && (
+              <span className="text-gray-300">•</span>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -275,6 +342,14 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                   <span className="text-gray-900 pl-2">
                     {formatDate(profileData.registrationDate)}
                   </span>
+                </div>
+
+                {/* 通知訂閱 */}
+                <div className="grid grid-cols-[80px_1fr] items-center">
+                  <label className="text-sm font-medium text-gray-700">通知訂閱：</label>
+                  <div className="pl-2">
+                    {getSubscriptionStatus()}
+                  </div>
                 </div>
               </div>
             </div>

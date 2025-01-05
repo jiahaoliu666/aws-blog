@@ -236,7 +236,7 @@ export const useNotificationSettings = (userId: string) => {
         setHasChanges(false);
         
         if (hasDisabledNotification) {
-          showToast('通知設定已關閉並刪除', 'success');
+          showToast('通知設定已關閉', 'success');
         } else {
           showToast('設定已更新', 'success');
         }
