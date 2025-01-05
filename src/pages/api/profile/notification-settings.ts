@@ -24,6 +24,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { userId, emailNotification, email, discordNotification, lineNotification, lineId, lineUserId, discordId } = req.body;
 
   try {
+    // 檢查是否有多個通知方式同時開啟
+    const enabledNotifications = [
+      emailNotification,
+      discordNotification,
+      lineNotification
+    ].filter(Boolean).length;
+
+    if (enabledNotifications > 1) {
+      return res.status(400).json({
+        success: false,
+        message: '系統僅支援單一通知接收方式，請關閉其他通知方式後儲存設定。'
+      });
+    }
+
     // 檢查是否已存在設定
     const getParams = {
       TableName: "AWS_Blog_UserNotificationSettings",

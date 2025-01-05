@@ -903,6 +903,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     setLocalSettings(prev => {
       const newSettings = { ...prev };
       
+      // 檢查是否有未儲存的 LINE 設定變更
+      if (type !== 'line' && 
+          prev.lineNotification !== settings.lineNotification) {
+        toast.warning('請先儲存或取消目前的變更，再開始電子郵件驗證');
+        return prev;
+      }
+
       // 檢查是否有其他通知已開啟
       const otherNotificationsEnabled = Object.entries(newSettings)
         .filter(([key]) => key !== `${type}Notification`)
@@ -917,7 +924,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       newSettings[`${type}Notification`] = !newSettings[`${type}Notification`];
       return newSettings;
     });
-  }, []);
+  }, [settings]);
 
   // 儲存設定
   const handleSave = async () => {

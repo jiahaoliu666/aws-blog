@@ -142,6 +142,21 @@ export const useNotificationSettings = (userId: string) => {
 
   const handleSettingChange = async (type: string, value: boolean): Promise<boolean> => {
     let newTempSettings;
+    
+    // 檢查是否會導致多個通知方式同時開啟
+    if (value) {  // 只在嘗試開啟時檢查
+      const otherNotificationsEnabled = (
+        (type !== 'email' && tempSettings.emailNotification) ||
+        (type !== 'line' && tempSettings.lineNotification) ||
+        (type !== 'discord' && tempSettings.discordNotification)
+      );
+
+      if (otherNotificationsEnabled) {
+        showToast('系統僅支援單一通知接收方式，請關閉其他通知方式後儲存設定。', 'warning');
+        return false;
+      }
+    }
+
     if (type === 'email') {
       newTempSettings = {
         ...tempSettings,
@@ -170,7 +185,6 @@ export const useNotificationSettings = (userId: string) => {
         lineNotificationNotification: false
       }));
 
-      // 設置 hasChanges 為 true 以顯示取消按鈕
       setHasChanges(true);
       return true;
     }
@@ -195,6 +209,18 @@ export const useNotificationSettings = (userId: string) => {
       
       if (tempSettings.emailNotification && !userEmail) {
         showToast('無法獲取用戶電子郵件', 'error');
+        return false;
+      }
+
+      // 再次檢查是否有多個通知方式同時開啟
+      const enabledNotifications = [
+        tempSettings.emailNotification,
+        tempSettings.lineNotification,
+        tempSettings.discordNotification
+      ].filter(Boolean).length;
+
+      if (enabledNotifications > 1) {
+        showToast('系統僅支援單一通知接收方式，請關閉其他通知方式後儲存設定。', 'warning');
         return false;
       }
 
