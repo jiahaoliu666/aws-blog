@@ -40,6 +40,12 @@ interface FeedbackSectionProps {
   resetFeedbackForm: () => void;
 }
 
+interface ValidationErrors {
+  title: string;
+  category: string;
+  content: string;
+}
+
 const FeedbackSection: React.FC<FeedbackSectionProps> = ({ 
   feedback: initialFeedback,
   feedbackMessage: initialFeedbackMessage,
@@ -55,6 +61,12 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
   const categories = ['使用體驗', '系統錯誤', '功能建議', '其他'];
   const { showToast } = useToastContext();
   const [hasChanges, setHasChanges] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({
+    title: '',
+    category: '',
+    content: ''
+  });
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
 
   useEffect(() => {
     const hasAnyChanges = 
@@ -85,6 +97,24 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
     const isContentEmpty = !initialFeedback.content.trim();
     
     return isTitleEmpty || isCategoryEmpty || isContentEmpty || initialIsSubmitting;
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      title: !initialFeedback.title.trim() ? '請輸入反饋標題' : '',
+      category: !initialFeedback.category.trim() ? '請選擇最符合的反饋分類' : '',
+      content: !initialFeedback.content.trim() ? '請輸入您的意見或建議' : ''
+    };
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error !== '');
+  };
+
+  const handleSubmit = () => {
+    setIsFormSubmitted(true);
+    if (validateForm()) {
+      onSubmit();
+    }
   };
 
   return (
@@ -135,16 +165,31 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                 </div>
               </div>
               
-              <input
-                type="text"
-                value={initialFeedback.title}
-                onChange={(e) => setParentFeedback((prev: Feedback) => ({
-                  ...prev,
-                  title: e.target.value
-                }))}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="請輸入標題"
-              />
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={initialFeedback.title}
+                  onChange={(e) => {
+                    setParentFeedback((prev: Feedback) => ({
+                      ...prev,
+                      title: e.target.value
+                    }));
+                    if (isFormSubmitted) {
+                      setErrors(prev => ({
+                        ...prev,
+                        title: e.target.value.trim() ? '' : '請輸入反饋標題'
+                      }));
+                    }
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg transition-colors duration-200
+                    ${errors.title ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 
+                    'border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
+                  placeholder="請輸入標題"
+                />
+                {errors.title && (
+                  <p className="text-red-500 text-sm">{errors.title}</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -162,25 +207,39 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setParentFeedback((prev: Feedback) => ({ 
-                      ...prev, 
-                      category 
-                    }))}
-                    className={`
-                      p-4 rounded-xl transition-all duration-200
-                      ${initialFeedback.category === category
-                        ? 'bg-blue-50 border-2 border-blue-500 text-blue-700'
-                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent text-gray-700'
-                      }
-                    `}
-                  >
-                    {category}
-                  </button>
-                ))}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => {
+                        setParentFeedback((prev: Feedback) => ({ 
+                          ...prev, 
+                          category 
+                        }));
+                        if (isFormSubmitted) {
+                          setErrors(prev => ({
+                            ...prev,
+                            category: ''
+                          }));
+                        }
+                      }}
+                      className={`
+                        p-4 rounded-xl transition-all duration-200
+                        ${initialFeedback.category === category
+                          ? 'bg-blue-50 border-2 border-blue-500 text-blue-700'
+                          : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent text-gray-700'
+                        }
+                        ${errors.category ? 'border-red-500' : ''}
+                      `}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+                {errors.category && (
+                  <p className="text-red-500 text-sm">{errors.category}</p>
+                )}
               </div>
             </div>
           </div>
@@ -199,7 +258,7 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                 </div>
               </div>
               
-              <div className="relative">
+              <div className="relative space-y-2">
                 <textarea
                   value={initialFeedback.content}
                   onChange={(e) => {
@@ -208,13 +267,23 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                         ...prev, 
                         content: e.target.value 
                       }));
+                      if (isFormSubmitted) {
+                        setErrors(prev => ({
+                          ...prev,
+                          content: e.target.value.trim() ? '' : '請輸入您的意見或建議'
+                        }));
+                      }
                     }
                   }}
                   placeholder="請描述您的意見或建議..."
-                  className="w-full h-40 p-4 bg-gray-50 border-2 border-gray-200 rounded-xl 
-                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className={`w-full h-40 p-4 bg-gray-50 border-2 rounded-xl resize-none transition-colors duration-200
+                    ${errors.content ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 
+                    'border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
                   maxLength={500}
                 />
+                {errors.content && (
+                  <p className="text-red-500 text-sm">{errors.content}</p>
+                )}
                 <div className="absolute bottom-2 right-2 text-sm text-gray-500">
                   {initialFeedback.content.length}/500
                 </div>
@@ -302,20 +371,14 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
               )}
               
               <button
-                onClick={() => {
-                  if (isSubmitDisabled()) {
-                    showToast('請填寫所有必要欄位', 'error');
-                    return;
-                  }
-                  onSubmit();
-                }}
-                disabled={isSubmitDisabled()}
+                onClick={handleSubmit}
+                disabled={initialIsSubmitting}
                 className={`
                   px-6 py-3
                   rounded-xl
                   flex items-center gap-2
                   transition-all duration-200
-                  ${isSubmitDisabled()
+                  ${initialIsSubmitting
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
                   }

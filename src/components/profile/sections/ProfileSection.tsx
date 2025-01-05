@@ -346,7 +346,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 
                 {/* 通知訂閱 */}
                 <div className="grid grid-cols-[80px_1fr] items-center">
-                  <label className="text-sm font-medium text-gray-700">通知訂閱：</label>
+                  <label className="text-sm font-medium text-gray-700">通知方式：</label>
                   <div className="pl-2">
                     {getSubscriptionStatus()}
                   </div>
