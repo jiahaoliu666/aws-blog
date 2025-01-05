@@ -371,7 +371,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             // 找不到用戶記錄時的回應
             await lineServiceInstance.replyMessage(event.replyToken, [{
               type: 'text',
-              text: '無效的用戶ID，請確認您輸入的是正確的用戶ID。\n您可以在網站的個人設定頁面找到您的用戶ID。'
+              text: '您好，感謝您的訊息！目前此帳號為自動回覆系統，我們無法提供即時的人工回覆。'
             }]);
           }
         } catch (error) {
