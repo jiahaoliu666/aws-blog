@@ -20,6 +20,9 @@ const Footer: React.FC = () => {
                 提供最新的 AWS 相關資訊、技術文章與解決方案，
                 幫助您更好地運用 AWS 服務。
               </p>
+              <p className="text-gray-400 text-sm mt-2">
+                ※此網站完全免費，且無任何盈利目的。
+              </p>
             </div>
 
             {/* 快速連結 */}
