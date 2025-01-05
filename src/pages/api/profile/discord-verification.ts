@@ -2,6 +2,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { discordService } from '@/services/discordService';
 import { updateUserDiscordSettings } from '@/services/userService';
 import { logger } from '@/utils/logger';
+import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
+
+const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,6 +19,24 @@ export default async function handler(
 
     if (!userId || !discordId) {
       return res.status(400).json({ message: '缺少必要參數' });
+    }
+
+    // 檢查用戶的通知設定
+    const getParams = {
+      TableName: "AWS_Blog_UserNotificationSettings",
+      Key: {
+        userId: { S: userId }
+      }
+    };
+
+    const userSettings = await dynamoClient.send(new GetItemCommand(getParams));
+
+    // 檢查是否已開啟電子郵件通知
+    if (userSettings.Item?.emailNotification?.BOOL) {
+      return res.status(400).json({ 
+        success: false,
+        message: '您已開啟電子郵件通知，請先關閉後再進行 Discord 驗證'
+      });
     }
 
     // 1. 驗證 Discord ID

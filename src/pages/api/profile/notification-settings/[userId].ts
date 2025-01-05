@@ -33,6 +33,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const command = new GetItemCommand(params);
     const result = await dynamoClient.send(command);
 
+    if (req.method === 'POST') {
+      if (result.Item?.emailNotification?.BOOL) {
+        return res.status(400).json({
+          success: false,
+          message: '您已開啟電子郵件通知，請先關閉後再進行 LINE 驗證'
+        });
+      }
+    }
+
     logger.info('資料庫回應:', result.Item);
 
     if (!result.Item) {

@@ -1,4 +1,4 @@
-import React, { useState, Dispatch, SetStateAction, useEffect } from 'react';
+import React, { useState, Dispatch, SetStateAction, useEffect, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faEnvelope, 
@@ -530,6 +530,11 @@ const DiscordVerificationStep: React.FC<{
   );
 };
 
+interface VerificationResult {
+  success: boolean;
+  message?: string;
+}
+
 const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   isLoading: propIsLoading,
   isVerifying,
@@ -560,166 +565,218 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuthContext();
+  const toast = useToastContext();
+
+  // 保留原有的狀態管理
   const {
     settings,
     setSettings,
     isLoading: settingsLoading,
     showVerification,
     startVerification,
-    hasChanges,
-    handleSettingChange: handleToggle,
-    saveSettings,
-    resetSettings,
     handleSendUserId,
     handleVerifyCode,
-    reloadSettings,
     cancelVerification,
     isDiscordVerifying,
     setIsDiscordVerifying,
     showDiscordVerification,
     setShowDiscordVerification,
-    startDiscordVerification,
-    cancelDiscordVerification,
     handleDiscordVerificationComplete,
-    handleDiscordToggle,
-    startDiscordAuth
+    startDiscordAuth,
   } = useNotificationSettings(userId);
 
-  const isPageLoading = propIsLoading || settingsLoading;
+  // 新增本地狀態來追蹤設定變更
+  const [localSettings, setLocalSettings] = useState({
+    emailNotification: settings?.emailNotification || false,
+    lineNotification: settings?.lineNotification || false,
+    discordNotification: settings?.discordNotification || false,
+  });
 
-  const handleSave = async () => {
-    if (!hasChanges) {
-      return;
+  // 當 settings 變化時更新本地狀態
+  useEffect(() => {
+    if (settings) {
+      setLocalSettings({
+        emailNotification: settings.emailNotification || false,
+        lineNotification: settings.lineNotification || false,
+        discordNotification: settings.discordNotification || false,
+      });
     }
+  }, [settings]);
+
+  // 追蹤是否有未儲存的變更
+  const hasUnsavedChanges = useMemo(() => {
+    if (!settings) return false;
     
-    const success = await saveSettings();
-    if (success) {
-      // Toast 通知會由 useNotificationSettings 處理
-      // 頁面刷新也會由 hook 處理
-      return;
+    return (
+      localSettings.emailNotification !== settings.emailNotification ||
+      localSettings.lineNotification !== settings.lineNotification ||
+      localSettings.discordNotification !== settings.discordNotification
+    );
+  }, [localSettings, settings]);
+
+  // 重置為初始狀態
+  const handleReset = useCallback(() => {
+    if (settings) {
+      setLocalSettings({
+        emailNotification: settings.emailNotification || false,
+        lineNotification: settings.lineNotification || false,
+        discordNotification: settings.discordNotification || false,
+      });
+      toast.info('已重置所有設定');
     }
-  };
+  }, [settings]);
 
-  const handleEmailToggle = () => {
-    // 檢查是否有未儲存的變更
-    if (hasChanges) {
-      showToast('請先儲存或取消目前的變更，再切換電子郵件通知設定', 'warning');
-      return;
-    }
-
-    // 檢查是否有其他通知已開啟
-    if (!settings.emailNotification && (settings.lineNotification || settings.discordNotification)) {
-      showToast('您已開啟其他通知方式，請先關閉後再開啟電子郵件通知', 'warning');
-      return;
-    }
-
-    const newValue = !settings.emailNotification;
-    handleToggle('email', newValue);
-    setSettings(prev => ({
-      ...prev,
-      emailNotification: newValue,
-    }));
-  };
-
-  const handleLineToggle = async () => {
-    try {
-      // 檢查是否有未儲存的變更
-      if (hasChanges) {
-        showToast('請先儲存或取消目前的變更，再切換 LINE 通知設定', 'warning');
-        return;
-      }
-
+  // 處理切換按鈕
+  const handleToggle = useCallback((type: 'email' | 'line' | 'discord') => {
+    setLocalSettings(prev => {
+      const newSettings = { ...prev };
+      
       // 檢查是否有其他通知已開啟
-      if (!settings.lineNotification && (settings.emailNotification || settings.discordNotification)) {
-        showToast('您已開啟其他通知方式，請先關閉後再開啟 LINE 通知', 'warning');
-        return;
+      const otherNotificationsEnabled = Object.entries(newSettings)
+        .filter(([key]) => key !== `${type}Notification`)
+        .some(([_, value]) => value);
+
+      // 如果要開啟新的通知，且已有其他通知開啟
+      if (!newSettings[`${type}Notification`] && otherNotificationsEnabled) {
+        toast.warning('您已開啟其他通知方式，請先關閉後再開啟新的通知');
+        return prev;
       }
 
-      if (!settings.lineNotification) {
-        const wasChanged = await handleToggle('lineNotification', true);
-        if (wasChanged) {
-          setVerificationStep(VerificationStep.SCAN_QR);
-          setProgress(VERIFICATION_PROGRESS.INITIAL);
-        }
+      newSettings[`${type}Notification`] = !newSettings[`${type}Notification`];
+      return newSettings;
+    });
+  }, []);
+
+  // 儲存設定
+  const handleSave = async () => {
+    if (!hasUnsavedChanges) {
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      // 確保有 userId
+      if (!userId) {
+        throw new Error('使用者 ID 不存在');
+      }
+
+      // 根據選擇的通知類型構建請求資料
+      let requestData = {
+        userId,
+        emailNotification: localSettings.emailNotification,
+        email: formData.email,
+        discordNotification: localSettings.discordNotification,
+        discordId: settings.discordId,
+        lineNotification: localSettings.lineNotification,
+        lineId: settings.lineId,
+        lineUserId: settings.lineUserId
+      };
+
+      const response = await fetch('/api/profile/notification-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('儲存設定失敗:', errorData);
+        throw new Error(errorData?.error || '儲存設定失敗');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // 更新全局設定狀態
+        setSettings(prev => ({
+          ...prev,
+          email: data.settings.emailNotification,
+          line: data.settings.lineNotification,
+          discordNotification: data.settings.discordNotification,
+          lineId: data.settings.lineId,
+          lineUserId: data.settings.lineUserId,
+          discordId: data.settings.discordId,
+        }));
+
+        toast.success('設定已成功儲存');
+        
+        // 延遲 1 秒後重整頁面，讓使用者能看到成功訊息
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        if (settings.lineId) {
-          if (window.confirm('確定要關閉 LINE 通知嗎？這將會清除您的驗證狀態。')) {
-            await handleToggle('lineNotification', false);
-          }
-        }
+        throw new Error(data.message || '儲存設定失敗');
       }
     } catch (error) {
-      console.error('切換 LINE 通知失敗:', error);
-      showToast('LINE 通知設定更新失敗，請稍後再試', 'error');
+      console.error('儲存設定失敗:', error);
+      toast.error(error instanceof Error ? error.message : '儲存設定失敗，請稍後再試');
+      
+      // 儲存失敗時重置為初始狀態
+      handleReset();
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  // 更新 Switch 組件的處理函數
+  const handleEmailToggle = () => handleToggle('email');
+  const handleLineToggle = () => handleToggle('line');
+  const handleDiscordToggle = () => handleToggle('discord');
+
+  // 驗證相關狀態
   const [currentStep, setCurrentStep] = useState(verificationStep);
   const [progress, setProgress] = useState<VerificationProgress>(VERIFICATION_PROGRESS.INITIAL);
 
   const handleStepChange = (newStep: VerificationStep) => {
-    // 如果當前步驟是驗證碼確認，且要切換到其他步驟，則清空驗證碼
-    if (currentStep === VerificationStep.VERIFY_CODE && newStep !== VerificationStep.VERIFY_CODE) {
-      setVerificationCode('');
-    }
-
     setCurrentStep(newStep);
-    switch (newStep) {
-      case VerificationStep.SCAN_QR:
-        setProgress(VERIFICATION_PROGRESS.SCAN_QR);
-        break;
-      case VerificationStep.ADD_FRIEND:
-        setProgress(VERIFICATION_PROGRESS.ADD_FRIEND);
-        break;
-      case VerificationStep.SEND_ID:
-        setProgress(VERIFICATION_PROGRESS.SEND_ID);
-        break;
-      case VerificationStep.VERIFY_CODE:
-        setProgress(VERIFICATION_PROGRESS.VERIFY_CODE);
-        break;
-      default:
-        setProgress(VERIFICATION_PROGRESS.INITIAL);
-    }
     setVerificationStep(newStep);
   };
 
-  const {
-    verificationState: lineVerificationState,
-    handleVerifyCode: lineHandleVerifyCode
-  } = useLineVerification();
-
-  const handleRetry = async () => {
-    if (lineVerificationState.retryCount >= LINE_RETRY_COUNT) {
-      toast.error('已達最大重試數，請後再試');
+  const handleStartLineVerification = () => {
+    if (hasUnsavedChanges) {
+      toast.warning('請先儲存或取消目前的變更，再開始 LINE 驗證');
       return;
     }
 
-    await lineHandleVerifyCode(verificationCode, userId);
+    // 檢查是否已開啟電子郵件通知
+    if (settings?.emailNotification) {
+      toast.warning('您已開啟電子郵件通知，請先關閉後再進行 LINE 驗證');
+      return;
+    }
+    
+    startVerification();
+    setVerificationStep(VerificationStep.SCAN_QR);
+    setCurrentStep(VerificationStep.SCAN_QR);
   };
 
-  useEffect(() => {
-    console.log('當前設定狀態:', settings);
-    console.log('載入狀態:', settingsLoading);
-  }, [settings, settingsLoading]);
-
-  const toast = useToastContext();
+  const handleCopyLineId = () => {
+    try {
+      navigator.clipboard.writeText('@601feiwz');
+      toast.success('已複製 LINE ID');
+    } catch (error) {
+      toast.error('複製失敗，請手動複製');
+    }
+  };
 
   const onVerify = async () => {
     try {
       setIsLoading(true);
-
-      // 驗證碼格式檢查
+      
       if (!verificationCode || verificationCode.length !== 6) {
         toast.error('請輸入6位數驗證碼');
         return;
       }
 
-      const result = await lineHandleVerifyCode(verificationCode, userId);
+      // 先將結果轉換為 unknown，再轉換為 VerificationResult
+      const result = (await handleVerifyCode(verificationCode)) as unknown as VerificationResult;
       
       if (result.success) {
         toast.success('驗證成功');
         setVerificationStep(VerificationStep.COMPLETED);
-        await reloadSettings();
         setTimeout(() => {
           window.location.reload();
         }, 1000);
@@ -727,156 +784,45 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         toast.error(result.message || '驗證失敗');
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '驗證失敗');
+      toast.error('驗證失敗，請稍後再試');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const LINE_OFFICIAL_ID = '@601feiwz'; // 可以移到配置文件中
-
-  const handleCopyLineId = () => {
-    try {
-      navigator.clipboard.writeText(LINE_OFFICIAL_ID);
-      toast.success('已複製 LINE ID ', {
-        position: 'top-right',
-        duration: 3000
-      });
-    } catch (error) {
-      toast.error('複製失敗，請手動複製', {
-        position: 'top-right',
-        duration: 3000
-      });
-      console.error('複製 LINE ID 失敗:', error);
-    }
-  };
-
-  const handleDiscordSwitch = (checked: boolean) => {
-    // 檢查是否有未儲存的變更
-    if (hasChanges) {
-      showToast('請先儲存或取消目前的變更，再切換 Discord 通知設定', 'warning');
-      return;
-    }
-
-    // 檢查是否有其他通知已開啟
-    if (checked && (settings.emailNotification || settings.lineNotification)) {
-      showToast('您已開啟其他通知方式，請先關閉後再開啟 Discord 通知', 'warning');
-      return;
-    }
-
-    if (!checked) {
-      // 當要關閉 Discord 通知時，顯示確認對話框
-      if (window.confirm('確定要關閉 Discord 通知嗎？這將會清除您的驗證狀態。')) {
-        handleDiscordToggle(checked);
-      }
-    } else {
-      handleDiscordToggle(checked);
-    }
-  };
-
-  const { showToast } = useToastContext();
-
-  useEffect(() => {
-    const handleDiscordAuthMessage = (event: MessageEvent) => {
-      if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
-        if (isDiscordVerifying) {
-          setSettings(prev => ({
-            ...prev,
-            discordId: event.data.discord_id,
-            discordNotification: true
-          }));
-          setShowDiscordVerification(false);
-          setIsDiscordVerifying(false);
-          
-          // Toast 通知和頁面刷新會由 useNotificationSettings 處理
-        }
-      } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
-        if (isDiscordVerifying) {
-          showToast(event.data.error || 'Discord 綁定失敗', 'error');
-          setIsDiscordVerifying(false);
-          logger.error('Discord 授權失敗:', event.data.error);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleDiscordAuthMessage);
-    return () => window.removeEventListener('message', handleDiscordAuthMessage);
-  }, [isDiscordVerifying]);
-
   const handleDiscordAuth = async () => {
+    if (hasUnsavedChanges) {
+      toast.warning('請先儲存或取消目前的變更，再開始 Discord 驗證');
+      return;
+    }
+
+    // 檢查是否已開啟電子郵件通知
+    if (settings?.emailNotification) {
+      toast.warning('您已開啟電子郵件通知，請先關閉後再進行 Discord 驗證');
+      return;
+    }
+
     try {
-      // 檢查是否有未儲存的變更
-      if (hasChanges) {
-        showToast('請先儲存或取消目前的變更，再開始 Discord 驗證', 'warning');
-        return null;
-      }
-
-      // 檢查是否有其他通知已開啟
-      if (settings.emailNotification || settings.lineNotification) {
-        showToast('您已開啟其他通知方式，請先關閉後再開始 Discord 驗證', 'warning');
-        return null;
-      }
-
-      // 開啟授權視窗並獲取其引用
       const authWindow = await startDiscordAuth(userId);
-      
-      // 如果視窗開啟失敗，直接返回
       if (!authWindow) {
-        return null;
+        toast.error('開啟 Discord 授權視窗失敗');
+        return;
       }
-
-      // 監聽視窗關閉事件
-      const checkWindow = setInterval(() => {
-        if (authWindow.closed) {
-          clearInterval(checkWindow);
-          // 如果視窗被關閉且尚未完成授權，重置狀態
-          setIsDiscordVerifying(false);
-        }
-      }, 500);
-
-      // 設置一個超時計時器，如果 30 秒內沒有收到回應，就重置狀態
-      const timeoutId = setTimeout(() => {
-        if (isDiscordVerifying) {
-          setIsDiscordVerifying(false);
-          clearInterval(checkWindow);
-          showToast('Discord 授權超時，請重試', 'error');
-        }
-      }, 30000);
-
-      // 清理函數
-      return () => {
-        clearInterval(checkWindow);
-        clearTimeout(timeoutId);
-      };
     } catch (error) {
-      setIsDiscordVerifying(false);
-      showToast('Discord 授權失敗', 'error');
-      console.error('Discord 授權失敗:', error);
-      return null;
+      toast.error('Discord 授權失敗');
     }
   };
 
-  const handleStartLineVerification = () => {
-    // 檢查是否有未儲存的變更
-    if (hasChanges) {
-      showToast('請先儲存或取消目前的變更，再開始 LINE 驗證', 'warning');
-      return;
-    }
-    
-    // 檢查是否有其他通知已開啟
-    if (settings.emailNotification || settings.discordNotification) {
-      showToast('您已開啟其他通知方式，請先關閉後再開始 LINE 驗證', 'warning');
-      return;
-    }
-
-    startVerification();
-    setVerificationStep(VerificationStep.SCAN_QR);
-    setCurrentStep(VerificationStep.SCAN_QR);
-  };
-
+  // 修正取消驗證的函數名稱
   const handleCancelVerification = () => {
-    setVerificationCode(''); // 清空驗證碼
+    setVerificationCode('');
     cancelVerification();
+  };
+
+  // 修正 Discord 取消驗證的函數名稱
+  const handleCancelDiscordVerification = () => {
+    setShowDiscordVerification(false);
+    setIsDiscordVerifying(false);
   };
 
   return (
@@ -982,9 +928,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                   </div>
                   <Switch
-                    checked={settings.emailNotification}
+                    checked={localSettings.emailNotification}
                     onChange={handleEmailToggle}
-                    disabled={isPageLoading}
+                    disabled={isLoading || !formData.email}
                     sx={{
                       '& .MuiSwitch-switchBase': {
                         color: '#9ca3af',
@@ -1052,9 +998,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     </div>
                   </div>
                   <Switch
-                    checked={settings.lineNotification}
+                    checked={localSettings.lineNotification}
                     onChange={handleLineToggle}
-                    disabled={!settings.lineId}
+                    disabled={isLoading || !settings.lineId}
                     sx={{
                       '& .MuiSwitch-switchBase': {
                         color: '#9ca3af',
@@ -1206,9 +1152,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                   
                   {/* Discord 通知開關 */}
                   <Switch
-                    checked={settings.discordNotification}
-                    onChange={(_, checked) => handleDiscordSwitch(checked)}
-                    disabled={!settings.discordId}
+                    checked={localSettings.discordNotification}
+                    onChange={handleDiscordToggle}
+                    disabled={isLoading || !settings.discordId}
                     sx={{
                       '& .MuiSwitch-switchBase': {
                         color: '#9ca3af',
@@ -1263,9 +1209,9 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
           {/* 儲存按鈕區域 */}
           <div className="flex justify-end mt-6 gap-3">
-            {hasChanges && (
+            {hasUnsavedChanges && (
               <button
-                onClick={resetSettings}
+                onClick={handleReset}
                 className="px-6 py-2.5 rounded-lg text-gray-700 border border-gray-200
                   hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300
                   transition-all duration-200
@@ -1277,11 +1223,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             )}
             
             <button
-              onClick={saveSettings}
-              disabled={isSaving || !hasChanges}
+              onClick={handleSave}
+              disabled={isSaving || !hasUnsavedChanges}
               className={`
                 px-6 py-2.5 rounded-lg flex items-center gap-2
-                ${isSaving || !hasChanges 
+                ${isSaving || !hasUnsavedChanges 
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }
@@ -1307,7 +1253,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       {showDiscordVerification && (
         <DiscordVerificationStep
           onVerify={handleDiscordVerificationComplete}
-          onCancel={cancelDiscordVerification}
+          onCancel={handleCancelDiscordVerification}
           isLoading={isLoading}
         />
       )}
