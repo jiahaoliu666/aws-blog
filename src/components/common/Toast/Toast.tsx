@@ -42,10 +42,10 @@ const Toast: React.FC<ToastProps> = ({
   const getToastStyles = () => {
     const baseStyles = "fixed px-6 py-4 rounded-2xl shadow-lg z-50 flex items-start gap-4 max-w-md w-full transition-all duration-300 border";
     const positionStyles = {
-      'top': "top-6 left-1/2 -translate-x-1/2",
+      'top': "top-24 left-1/2 -translate-x-1/2",
       'bottom': "bottom-6 left-1/2 -translate-x-1/2",
-      'top-right': "top-6 right-6",
-      'top-left': "top-6 left-6",
+      'top-right': "top-24 right-6",
+      'top-left': "top-24 left-6",
       'bottom-right': "bottom-6 right-6",
       'bottom-left': "bottom-6 left-6"
     };
