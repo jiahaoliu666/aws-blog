@@ -1,5 +1,6 @@
 import React, { useState, Dispatch, SetStateAction, useEffect, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { 
   faEnvelope, 
   faGlobe,
@@ -15,7 +16,8 @@ import {
   faCopy,
   faTimes,
   faCheck,
-  faStar
+  faStar,
+  faClock
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -30,6 +32,7 @@ import { useToastContext } from '@/context/ToastContext';
 import { SectionTitle } from '../common/SectionTitle';
 import { Card } from '../common/Card';
 import { logger } from '@/utils/logger';
+import { Dialog } from '@mui/material';
 
 interface NotificationSettings {
   line: boolean;
@@ -89,7 +92,6 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
   const steps = [
     { step: VerificationStep.SCAN_QR, label: '掃描 QR Code', icon: faQrcode },
     { step: VerificationStep.ADD_FRIEND, label: '加入好友', icon: faUserPlus },
-    { step: VerificationStep.SEND_ID, label: '發送 ID', icon: faPaperPlane },
     { step: VerificationStep.VERIFY_CODE, label: '驗證確認', icon: faShield }
   ];
 
@@ -112,7 +114,7 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
       {steps.map(({ step, label, icon }, index) => (
         <div 
           key={step}
-          className="relative flex flex-col items-center w-1/4"
+          className="relative flex flex-col items-center w-1/3"
         >
           {/* 圓形指示器 */}
           <div className={`
@@ -265,67 +267,124 @@ const SendIdStep: React.FC<StepProps & {
   onCopyUserId,
   onSendId,
   isLoading 
-}) => (
-  <div className="text-center">
-    <div className="bg-white p-8 rounded-xl mb-6">
-      <FontAwesomeIcon icon={faPaperPlane} className="text-5xl text-green-500 mb-4" />
-      <h3 className="text-xl font-semibold mb-3">發送您的用戶 ID</h3>
-      <p className="text-gray-600 mb-6">請將以下 ID 複製發送給官方帳號</p>
-      
-      {/* 優化後的 ID 複製區域 */}
-      <div className="flex items-center justify-center gap-2 mb-6">
-        <div className="relative group">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-3 pr-12
-                        font-mono text-lg text-gray-700 select-all">
-            {userId}
-          </div>
-          <button
-            onClick={onCopyUserId}
-            className="absolute right-2 top-1/2 -translate-y-1/2
-                     p-2 rounded-md hover:bg-gray-100 
-                     text-gray-500 hover:text-gray-700
-                     transition-all duration-200"
-            title="複製 ID"
-          >
-            <FontAwesomeIcon icon={faCopy} className="text-lg" />
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 
-                           bg-gray-800 text-white text-xs py-1 px-2 rounded 
-                           opacity-0 group-hover:opacity-100 transition-opacity">
-              複製
-            </span>
-          </button>
-        </div>
+}) => {
+  const [verificationCode, setVerificationCode] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateVerificationCode = async () => {
+    try {
+      setIsGenerating(true);
+      const response = await fetch('/api/line/generate-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setVerificationCode(data.verificationCode);
+      } else {
+        toast.error(data.message || '生成驗證碼失敗');
+      }
+    } catch (error) {
+      toast.error('生成驗證碼失敗，請稍後再試');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <div className="bg-white p-8 rounded-xl mb-6">
+        <FontAwesomeIcon icon={faPaperPlane} className="text-5xl text-green-500 mb-4" />
+        <h3 className="text-xl font-semibold mb-3">驗證碼</h3>
+        
+        {!verificationCode ? (
+          <>
+            <p className="text-gray-600 mb-6">點擊下方按鈕生成驗證碼</p>
+            <button
+              onClick={generateVerificationCode}
+              disabled={isGenerating}
+              className={`
+                px-6 py-3 rounded-lg text-white
+                ${isGenerating ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}
+                transition-colors duration-200
+                flex items-center gap-2 mx-auto
+              `}
+            >
+              {isGenerating ? (
+                <>
+                  <span className="animate-spin">⌛</span>
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faShield} />
+                  生成驗證碼
+                </>
+              )}
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-gray-600 mb-4">請將此驗證碼輸入至 LINE 官方帳號</p>
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="relative group">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-3 pr-12
+                              font-mono text-2xl text-gray-700 tracking-wider select-all">
+                  {verificationCode}
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(verificationCode);
+                    toast.success('已複製驗證碼');
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2
+                           p-2 rounded-md hover:bg-gray-100 
+                           text-gray-500 hover:text-gray-700
+                           transition-all duration-200"
+                  title="複製驗證碼"
+                >
+                  <FontAwesomeIcon icon={faCopy} className="text-lg" />
+                </button>
+              </div>
+            </div>
+            <div className="text-sm text-gray-500 flex items-center justify-center gap-2 mb-4">
+              <FontAwesomeIcon icon={faInfoCircle} />
+              <span>驗證碼將在 5 分鐘後失效</span>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* 提示訊息 */}
-      <div className="text-sm text-gray-500 flex items-center justify-center gap-2 mb-4">
-        <FontAwesomeIcon icon={faInfoCircle} />
-        <span>點擊右側按鈕即可複製 ID</span>
-      </div>
-    </div>
-
-    <div className="flex justify-center gap-4">
-      <button
-        onClick={onBack}
-        disabled={isLoading}
-        className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg 
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={onBack}
+          disabled={isGenerating}
+          className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg 
                    hover:bg-gray-200 transition-colors"
-      >
-        返回
-      </button>
-      <button
-        onClick={onNext}
-        disabled={isLoading}
-        className="bg-green-500 text-white px-6 py-2.5 rounded-lg 
-                   hover:bg-green-600 transition-colors 
-                   flex items-center gap-2"
-      >
-        <span>下一步</span>
-        <FontAwesomeIcon icon={faArrowRight} />
-      </button>
+        >
+          返回
+        </button>
+        <button
+          onClick={onNext}
+          disabled={isGenerating || !verificationCode}
+          className={`
+            bg-green-500 text-white px-6 py-2.5 rounded-lg 
+            hover:bg-green-600 transition-colors 
+            flex items-center gap-2
+            ${(isGenerating || !verificationCode) ? 'opacity-50 cursor-not-allowed' : ''}
+          `}
+        >
+          <span>下一步</span>
+          <FontAwesomeIcon icon={faArrowRight} />
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const VerifyCodeStep: React.FC<{
   verificationCode: string;
@@ -333,59 +392,272 @@ const VerifyCodeStep: React.FC<{
   onBack: () => void;
   onVerify: () => void;
   isLoading: boolean;
-}> = ({ verificationCode, setVerificationCode, onBack, onVerify, isLoading }) => (
-  <div className="text-center">
-    <div className="bg-white p-8 rounded-xl mb-6">
-      <FontAwesomeIcon icon={faShield} className="text-5xl text-green-500 mb-4" />
-      <h3 className="text-xl font-semibold mb-3">輸入驗證碼</h3>
-      <p className="text-gray-600 mb-4">請輸入官方帳號傳給您的驗證碼</p>
-      <input
-        type="text"
-        value={verificationCode}
-        onChange={(e) => setVerificationCode(e.target.value)}
-        placeholder="輸入驗證碼"
-        className="w-48 px-4 py-2 border border-gray-200 rounded-lg text-center text-xl tracking-wider mb-4"
-        maxLength={6}
-      />
-      <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
-        <FontAwesomeIcon icon={faInfoCircle} />
-        <span>驗證碼將在 10 分鐘後失效</span>
+  userId: string;
+  onCancel: () => void;
+}> = ({ 
+  verificationCode, 
+  setVerificationCode, 
+  onBack, 
+  onVerify, 
+  isLoading, 
+  userId,
+  onCancel 
+}) => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string>('');
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [dialogType, setDialogType] = useState<'back' | 'cancel'>('back');
+
+  // 添加輪詢機制檢查驗證狀態
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    
+    if (generatedCode) {
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/line/verification-status?userId=${userId}`);
+          const data = await response.json();
+          
+          if (data.success && data.isVerified) {
+            // 清除輪詢
+            clearInterval(pollInterval);
+            // 顯示成功訊息
+            toast.success('LINE 驗證成功！');
+            // 重新載入頁面
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          }
+        } catch (error) {
+          logger.error('檢查驗證狀態失敗:', error);
+        }
+      }, 3000); // 每 3 秒檢查一次
+    }
+
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [generatedCode, userId]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const generateVerificationCode = async () => {
+    try {
+      setIsGenerating(true);
+      setGeneratedCode('');
+      setTimeLeft(0);
+
+      const response = await fetch('/api/line/generate-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setGeneratedCode(data.verificationCode);
+        const remainingTime = Math.floor((data.expiryTime - Date.now()) / 1000);
+        setTimeLeft(remainingTime);
+        toast.success('已生成新的驗證碼');
+      } else {
+        toast.error(data.message || '生成驗證碼失敗');
+      }
+    } catch (error) {
+      toast.error('生成驗證碼失敗，請稍後再試');
+      logger.error('生成驗證碼失敗:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    if (timeLeft === 0 && generatedCode) {
+      setGeneratedCode('');
+    }
+  }, [timeLeft, generatedCode]);
+
+  const handleBack = () => {
+    if (generatedCode) {
+      setDialogType('back');
+      setShowConfirmDialog(true);
+    } else {
+      onBack();
+    }
+  };
+
+  const handleCancelVerification = () => {
+    if (generatedCode) {
+      setDialogType('cancel');
+      setShowConfirmDialog(true);
+    } else {
+      onCancel();
+    }
+  };
+
+  const handleConfirmAction = () => {
+    setShowConfirmDialog(false);
+    setGeneratedCode('');
+    setTimeLeft(0);
+    if (dialogType === 'back') {
+      onBack();
+    } else {
+      onCancel();
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto text-center">
+      <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
+        <div className="flex flex-col items-center justify-center">
+          <div className="mb-6 text-center">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <FontAwesomeIcon icon={faShield} className="text-2xl text-green-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">驗證確認</h3>
+            <p className="text-gray-600">
+              {!generatedCode ? '請點擊下方按鈕生成驗證碼' : '請將驗證碼輸入至 LINE 官方帳號'}
+            </p>
+          </div>
+
+          <div className="w-full max-w-md">
+            {!generatedCode ? (
+              <button
+                onClick={generateVerificationCode}
+                disabled={isGenerating}
+                className={`
+                  max-w-[280px] mx-auto bg-green-500 text-white px-6 py-3.5 rounded-xl
+                  text-base font-medium
+                  hover:bg-green-600 active:bg-green-700
+                  transition-all duration-300 
+                  shadow-sm hover:shadow
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                  flex items-center justify-center gap-2
+                `}
+              >
+                {isGenerating ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="animate-spin">⌛</span>
+                    <span>生成驗證碼中...</span>
+                  </span>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faShield} className="text-lg" />
+                    <span>生成驗證碼</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 relative">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2
+                              bg-green-500 text-white px-4 py-1 rounded-full text-sm">
+                  驗證碼
+                </div>
+                
+                <div className="mt-2 mb-4">
+                  <div className="text-4xl font-mono font-bold text-gray-800 tracking-[0.5em]
+                                flex items-center justify-center gap-4 relative group">
+                    {generatedCode}
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedCode);
+                        toast.success('已複製驗證碼');
+                      }}
+                      className="ml-2 p-2 text-gray-400 
+                               hover:text-gray-600 transition-colors rounded-lg
+                               hover:bg-gray-100 group-hover:opacity-100
+                               focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                      title="複製驗證碼"
+                    >
+                      <FontAwesomeIcon icon={faCopy} />
+                    </button>
+                  </div>
+                </div>
+
+                {timeLeft > 0 && (
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <FontAwesomeIcon icon={faClock} className="text-green-500" />
+                    <span className="font-mono">
+                      剩餘時間：{formatTime(timeLeft)}
+                    </span>
+                  </div>
+                )}
+                
+                {timeLeft === 0 && (
+                  <div className="text-red-500 text-sm mt-2">
+                    驗證碼已過期，請重新生成
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-    <div className="flex justify-center gap-4">
-      <button
-        onClick={onBack}
-        className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-colors"
+
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={handleBack}
+          className="px-6 py-2.5 rounded-lg text-gray-700 bg-gray-100
+                   hover:bg-gray-200 active:bg-gray-300
+                   transition-all duration-200
+                   flex items-center gap-2
+                   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+        >
+          返回上一步
+        </button>
+      </div>
+
+      <Dialog
+        open={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        maxWidth="xs"
+        fullWidth
       >
-        返回
-      </button>
-      <button
-        onClick={onVerify}
-        disabled={isLoading || !verificationCode || verificationCode.length !== 6}
-        className={`
-          bg-green-500 text-white px-6 py-2.5 rounded-lg 
-          hover:bg-green-600 transition-colors 
-          flex items-center gap-2
-          ${isLoading || !verificationCode || verificationCode.length !== 6 
-            ? 'opacity-50 cursor-not-allowed' 
-            : ''}
-        `}
-      >
-        {isLoading ? (
-          <>
-            <span className="animate-spin">⌛</span>
-            驗證中...
-          </>
-        ) : (
-          <>
-            <span>驗證</span>
-            <FontAwesomeIcon icon={faCheckCircle} />
-          </>
-        )}
-      </button>
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            確認返回
+          </h3>
+          <p className="text-gray-600 mb-6">
+            返回後需要重新發送驗證碼才能繼續流程，確定要返回嗎？
+          </p>
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => setShowConfirmDialog(false)}
+              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleConfirmAction}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              確認
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
-  </div>
-);
+  );
+};
 
 const VerificationProgress = ({ step, status }: { step: VerificationStep; status: VerificationStatus }) => {
   const steps = [
@@ -853,18 +1125,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             {currentStep === VerificationStep.ADD_FRIEND && (
               <AddFriendStep 
                 onBack={() => handleStepChange(VerificationStep.SCAN_QR)}
-                onNext={() => handleStepChange(VerificationStep.SEND_ID)}
-              />
-            )}
-            
-            {currentStep === VerificationStep.SEND_ID && (
-              <SendIdStep 
-                userId={userId}
-                onCopyUserId={onCopyUserId}
-                onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
                 onNext={() => handleStepChange(VerificationStep.VERIFY_CODE)}
-                onSendId={(lineId: string) => handleSendUserId(lineId)}
-                isLoading={isLoading}
               />
             )}
             
@@ -872,9 +1133,11 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               <VerifyCodeStep 
                 verificationCode={verificationCode}
                 setVerificationCode={setVerificationCode}
-                onBack={() => handleStepChange(VerificationStep.SEND_ID)}
+                onBack={() => handleStepChange(VerificationStep.ADD_FRIEND)}
                 onVerify={onVerify}
                 isLoading={isLoading}
+                userId={userId}
+                onCancel={handleCancelVerification}
               />
             )}
           </div>

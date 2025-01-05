@@ -89,10 +89,8 @@ export enum VerificationStep {
   COMPLETE = 'COMPLETE',
   COMPLETED = 'COMPLETED',
   ADD_FRIEND = 'ADD_FRIEND',
-  INPUT_LINE_ID = 'INPUT_LINE_ID',
   VERIFY_CODE = 'VERIFY_CODE',
-  SCAN_QR = 'SCAN_QR',
-  SEND_ID = 'SEND_ID'
+  SCAN_QR = 'SCAN_QR'
 }
 
 export enum VerificationStatus {
@@ -211,13 +209,8 @@ export const VERIFICATION_STEPS: VerificationStepInfo[] = [
   },
   {
     number: 3,
-    title: '輸入驗證',
-    description: '輸入 LINE ID 與驗證碼'
-  },
-  {
-    number: 4,
-    title: '完成驗證',
-    description: '驗證完成並啟用通知'
+    title: '驗證確認',
+    description: '輸入驗證碼完成驗證'
   }
 ];
 
@@ -252,9 +245,8 @@ export interface LineVerificationHistory {
 
 export const VERIFICATION_PROGRESS = {
   INITIAL: 0,
-  SCAN_QR: 25,
-  ADD_FRIEND: 50,
-  SEND_ID: 75,
+  SCAN_QR: 33,
+  ADD_FRIEND: 66,
   VERIFY_CODE: 100
 } as const;
 

@@ -48,10 +48,19 @@ export const useLineVerification = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        toast.error(data.message || '驗證失敗，請重試');
         throw new Error(data.message || '驗證失敗');
       }
 
       if (data.success) {
+        setVerificationState(prev => ({
+          ...prev,
+          step: VerificationStep.COMPLETED,
+          status: VerificationStatus.SUCCESS,
+          isVerified: true,
+          message: '驗證成功！'
+        }));
+
         toast.success('驗證成功！', {
           onClose: () => {
             setTimeout(() => {
@@ -64,6 +73,11 @@ export const useLineVerification = () => {
       return data;
     } catch (error) {
       logger.error('驗證碼驗證失敗:', error);
+      setVerificationState(prev => ({
+        ...prev,
+        status: VerificationStatus.ERROR,
+        message: error instanceof Error ? error.message : '驗證失敗，請重試'
+      }));
       throw error;
     }
   };
