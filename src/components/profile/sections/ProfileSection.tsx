@@ -169,7 +169,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     if (emailNotification) activeServices.push(
       <span key="email" className="inline-flex items-center gap-1">
         <FontAwesomeIcon icon={faEnvelope} className="text-blue-500" />
-        Email
+        電子郵件
       </span>
     );
     if (lineNotification) activeServices.push(
