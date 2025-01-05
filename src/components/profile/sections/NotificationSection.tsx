@@ -77,8 +77,8 @@ interface NotificationSectionProps {
   settings: {
     discordId: string | null;
     discordNotification: boolean;
-    line: boolean;
-    email: boolean;
+    lineNotification: boolean;
+    emailNotification: boolean;
     lineId: string | null;
   };
 }
@@ -1065,6 +1065,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
   const handleDiscordAuth = async () => {
     if (hasUnsavedChanges) {
       toast.warning('請先儲存或取消目前的變更，再開始 Discord 驗證');
+      return;
+    }
+
+    // 檢查是否已開啟 LINE 通知
+    if (settings?.lineNotification || propSettings?.lineNotification) {
+      toast.warning('您已開啟 LINE 通知，請先關閉後再進行 Discord 驗證');
       return;
     }
 
