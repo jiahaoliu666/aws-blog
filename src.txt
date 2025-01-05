@@ -78,7 +78,6 @@ src/
 │   │   │   ├── recent-log.ts       // 獲取最近日誌 API
 │   │   │   ├── notification-settings
 │   │   │   │   ├── [userId].ts     // 用戶通知設置 API
-│   │   │   │   └── index.ts        // 通知設置主 API
 │   │   │   ├── sendFeedback.ts     // 發送反饋 API
 │   │   │   ├── account
 │   │   │   │   └── delete.ts       // 刪除帳戶 API
