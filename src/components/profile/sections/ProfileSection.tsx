@@ -276,14 +276,6 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                     {formatDate(profileData.registrationDate)}
                   </span>
                 </div>
-
-                {/* 用戶 ID */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <label className="text-sm font-medium text-gray-700">用戶 ID：</label>
-                  <span className="text-gray-900  pl-2">
-                    {user?.sub || '未知'}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
