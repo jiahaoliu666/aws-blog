@@ -55,7 +55,7 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 5, // 更新公告數量
+  announcement: 4, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
@@ -965,55 +965,83 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
 
       try {
         const emailContent = `
-          <div style="font-family: 'Microsoft JhengHei', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-            <!-- 頁首 -->
-            <div style="background-color: #232f3e; padding: 20px; border-radius: 8px 8px 0 0;">
-              <div style="display: flex; align-items: center;">
-                <img src="https://d1.awsstatic.com/logos/aws-logo-lockups/poweredbyaws/PB_AWS_logo_RGB_stacked_REV_SQ.91cd4af40773cbfbd15577a3c2b8a346fe3e8fa2.png" alt="AWS Logo" style="width: 40px; height: auto; margin-right: 10px;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">AWS ${CONTENT_TYPES[type].name}</h1>
-              </div>
-            </div>
+          <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+          <html xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+              <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+              <title>AWS Blog 365 通知</title>
+            </head>
+            <body style="margin: 0; padding: 0;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-family: Arial, sans-serif;">
+                <!-- 外層容器 -->
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                      
+                      <!-- 標題區域 -->
+                      <tr>
+                        <td align="center" style="padding: 30px 40px 20px 40px; background-color: #232F3E; border-radius: 8px 8px 0 0;">
+                          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                              <td style="color: #FFFFFF; font-size: 24px; font-weight: bold; text-align: center;">
+                                ${title}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
 
-            <!-- 內容區 -->
-            <div style="padding: 30px;">
-              <!-- 文章標題 -->
-              <h2 style="color: #232f3e; font-size: 20px; margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid #ff9900; padding-bottom: 10px;">
-                ${title}
-              </h2>
+                      <!-- 內容區域 -->
+                      <tr>
+                        <td style="padding: 30px 40px;">
+                          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                              <td style="padding: 20px; background-color: #f8f9fa; border-radius: 8px; color: #444444; font-size: 16px; line-height: 24px;">
+                                ${summary}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
 
-              <!-- 摘要區塊 -->
-              <div style="background-color: #f8f9fa; border-left: 4px solid #ff9900; padding: 15px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
-                <p style="color: #444444; margin: 0; line-height: 1.6;">
-                  ${summary}
-                </p>
-              </div>
+                      <!-- 按鈕區域 -->
+                      <tr>
+                        <td align="center" style="padding: 0 40px 30px 40px;">
+                          <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td align="center" bgcolor="#FF9900" style="border-radius: 4px;">
+                                <a href="${link}" 
+                                   target="_blank"
+                                   style="display: inline-block; padding: 12px 30px; font-size: 16px; color: #232F3E; text-decoration: none; font-weight: bold;">
+                                  閱讀全文 →
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
 
-              <!-- 閱讀按鈕 -->
-              <div style="text-align: center; margin-top: 30px;">
-                <a href="${link}" 
-                   style="display: inline-block; 
-                          background-color: #ff9900; 
-                          color: #232f3e; 
-                          text-decoration: none; 
-                          padding: 12px 30px; 
-                          border-radius: 4px; 
-                          font-weight: bold;
-                          transition: all 0.3s ease;">
-                  閱讀全文 <span style="margin-left: 5px; display: inline-block; transition: transform 0.3s ease;">→</span>
-                </a>
-              </div>
-            </div>
+                      <!-- 頁尾區域 -->
+                      <tr>
+                        <td style="padding: 20px 40px 30px 40px; background-color: #f8f9fa; border-radius: 0 0 8px 8px;">
+                          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                              <td align="center" style="color: #666666; font-size: 14px; line-height: 20px;">
+                                <p style="margin: 0;">此為系統自動發送的通知郵件，請勿直接回覆</p>
+                                <p style="margin: 10px 0 0 0;">© ${new Date().getFullYear()} AWS Blog 365. All rights reserved.</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
 
-            <!-- 頁尾 -->
-            <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #eee;">
-              <p style="color: #666; margin: 0; font-size: 14px;">
-                此為系統自動發送的通知郵件，請勿直接回覆
-              </p>
-              <p style="color: #666; margin: 10px 0 0 0; font-size: 12px;">
-                © ${new Date().getFullYear()} AWS Blog. All rights reserved.
-              </p>
-            </div>
-          </div>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
         `;
 
         await sendEmailWithRetry({
