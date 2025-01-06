@@ -29,6 +29,7 @@ const Home: React.FC = () => {
     date: number;
     category: string;
     link: string;
+    summary: string;
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
@@ -42,16 +43,11 @@ const Home: React.FC = () => {
     const fetchLatestArticles = async () => {
       try {
         setLoading(true);
-        // 使用 guest 作為訪客 ID 來獲取公開文章
-        const response = await fetch('/api/notifications?userId=guest&limit=6');
+        const response = await fetch('/api/latest-articles');
         if (response.ok) {
           const data = await response.json();
-          if (data && Array.isArray(data.notifications)) {
-            // 確保按時間排序
-            const sortedArticles = data.notifications.sort((a: any, b: any) => {
-              return new Date(b.date).getTime() - new Date(a.date).getTime();
-            });
-            setLatestArticles(sortedArticles);
+          if (data && Array.isArray(data.articles)) {
+            setLatestArticles(data.articles);
           }
         }
       } catch (error) {

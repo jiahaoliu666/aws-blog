@@ -55,10 +55,10 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 4, // 更新公告數量
+  announcement: 0, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
-  architecture: 0, // 更新架構數量
+  architecture: 5, // 更新架構數量
   knowledge: 0, // 更新知識中心數量
 };
 
