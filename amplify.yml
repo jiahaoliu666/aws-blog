@@ -4,55 +4,28 @@ applications:
       phases:
         preBuild:
           commands:
-            # 檢查 Node.js 環境
             - node -v
             - nvm use 18
-            
-            # 安裝依賴
             - npm ci
-            
-            # 環境變數處理
             - touch .env.production
             - echo "NODE_ENV=production" >> .env.production
-            
-            # AWS 相關環境變數
             - env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production
-            
-            # Cognito 環境變數
             - env | grep -e NEXT_PUBLIC_COGNITO_ >> .env.production
-            
-            # DynamoDB 環境變數
             - env | grep -e DYNAMODB_ >> .env.production
-            
-            # S3 環境變數
             - env | grep -e USER_UPLOADS_BUCKET -e AWS_BLOG_FEEDBACK_BUCKET >> .env.production
-            
-            # Email 相關環境變數
             - env | grep -e GMAIL_ -e SES_ -e NEXT_PUBLIC_SES_ >> .env.production
-            
-            # Line 相關環境變數
             - env | grep -e NEXT_PUBLIC_LINE_ >> .env.production
-            
-            # Discord 相關環境變數
             - env | grep -e DISCORD_ >> .env.production
-            
-            # 驗證環境變數
-            - if [ ! -s .env.production ]; then echo "錯誤：環境變數文件為空" && exit 1; fi
-            
-            # AWS 服務驗證
+            - if [ ! -s .env.production ]; then echo "Error: env file is empty" && exit 1; fi
             - aws secretsmanager get-secret-value --secret-id /aws-blog/credentials --query SecretString --output text
             - aws s3 ls s3://$USER_UPLOADS_BUCKET
             - aws dynamodb describe-table --table-name $DYNAMODB_ANNOUNCEMENT_TABLE
             - aws ses get-send-quota
-
         build:
           commands:
             - npm run build
-            
-            # 建置驗證
             - if [ ! -d ".next" ]; then exit 1; fi
             - if [ ! -f ".next/BUILD_ID" ]; then exit 1; fi
-
       artifacts:
         baseDirectory: .next
         files:
