@@ -31,7 +31,7 @@ const createUserProfile = async (userId: string) => {
     };
 
     await dynamoClient.send(new PutItemCommand(params));
-    logger.info('成功建立用���資料', { userId, registrationDate });
+    logger.info('成功建立用戶資料', { userId, registrationDate });
   } catch (error) {
     logger.error('建立用戶資料失敗', { error, userId });
     throw new Error('建立用戶資料失敗');
