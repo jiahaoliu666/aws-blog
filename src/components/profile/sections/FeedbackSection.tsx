@@ -301,7 +301,7 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                     <FontAwesomeIcon icon={faUpload} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">附件上傳</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">附件上傳 (可選)</h3>
                     <p className="text-sm text-gray-600">可上傳相關的截圖或文件（最多3個）</p>
                   </div>
                 </div>
@@ -373,14 +373,14 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({
                 
                 <button
                   onClick={handleSubmit}
-                  disabled={initialIsSubmitting}
+                  disabled={initialIsSubmitting || isSubmitDisabled()}
                   className={`
                     px-6 py-3
                     rounded-xl
                     flex items-center gap-2
                     transition-all duration-200
-                    ${initialIsSubmitting
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ${initialIsSubmitting || isSubmitDisabled()
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
                       : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
                     }
                   `}
