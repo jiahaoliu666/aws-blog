@@ -75,7 +75,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await emailService.sendEmail({
       to: email,
       subject: '【AWS Blog 365】帳號刪除通知',
-      content: emailContent,
+      html: emailContent,
+      text: emailContent,
       articleData: {
         title: '【AWS Blog 365】帳號刪除通知',
         content: emailContent

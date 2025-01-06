@@ -21,7 +21,7 @@ import FeedbackSection from './sections/FeedbackSection';
 import ActivityLogSection from './sections/ActivityLogSection';
 import HistorySection from './sections/HistorySection';
 import { VerificationStep, VerificationStatus, VerificationState, VERIFICATION_PROGRESS } from '@/types/lineTypes';
-import { FormData } from '@/types/profileTypes';
+import { FormData as ProfileFormData, NotificationSettings } from '@/types/profileTypes';
 import { ToastProvider } from '@/context/ToastContext';
 import AccountSection from './sections/AccountSection';
 import { useProfileAccount } from '@/hooks/profile';
@@ -49,14 +49,17 @@ interface ProfileUIProps {
   setVerificationState: Dispatch<SetStateAction<VerificationState>>;
 }
 
-interface NotificationSettings {
-  all?: boolean;
-  line: boolean;
-  browser: boolean;
-  mobile: boolean;
-  push: boolean;
-  email: boolean;
-  lineUserId?: string;
+interface NotificationFormData {
+  username: string;
+  email: string;
+  notifications: {
+    email: boolean;
+    line: boolean;
+  };
+}
+
+interface ExtendedNotificationSettings extends NotificationSettings {
+  lineId: string | null;
 }
 
 interface LocalSettings {
@@ -65,7 +68,7 @@ interface LocalSettings {
   autoSummarize: boolean;
   viewMode: 'grid' | 'list' | 'compact';
   notifications: boolean;
-  notificationPreferences: NotificationSettings;
+  notificationPreferences: ExtendedNotificationSettings;
   privacy: 'private' | 'public';
 }
 
@@ -79,13 +82,21 @@ interface ActivityLog {
   status?: string;
 }
 
-const defaultNotificationPreferences: NotificationSettings = {
+interface Settings {
+  lineNotification: boolean;
+  emailNotification: boolean;
+  discordNotification: boolean;
+  lineId: string | null;
+  discordId: string | null;
+}
+
+const defaultNotificationPreferences: ExtendedNotificationSettings = {
+  email: false,
   line: false,
+  push: false,
   browser: false,
   mobile: false,
-  all: false,
-  push: false,
-  email: false
+  lineId: null
 };
 
 const defaultSettings: LocalSettings = {
@@ -96,6 +107,14 @@ const defaultSettings: LocalSettings = {
   notifications: true,
   notificationPreferences: defaultNotificationPreferences,
   privacy: 'private'
+};
+
+const initialSettings: Settings = {
+  lineNotification: false,
+  emailNotification: false,
+  discordNotification: false,
+  lineId: null,
+  discordId: null
 };
 
 const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, passwordMessage, setIsEditable, verificationState, setVerificationState }) => {
@@ -117,9 +136,9 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   // 將所有的 hooks 移到頂部
   const core = useProfileCore({ user: currentUser });
   const form = useProfileForm({ user: currentUser, updateUser: core.updateUser }) as unknown as { 
-    formData: FormData, 
+    formData: ProfileFormData, 
     handleChange: (e: any) => void,
-    setFormData: React.Dispatch<React.SetStateAction<FormData>>,
+    setFormData: React.Dispatch<React.SetStateAction<ProfileFormData>>,
     isEditable: { username: boolean },
     localUsername: string,
     setLocalUsername: (username: string) => void,
@@ -367,7 +386,7 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
   }
 
   const handleNotificationChange = async (
-    type: 'line' | 'email' | 'browser' | 'mobile' | 'push',
+    type: 'push' | 'email' | 'line' | 'browser' | 'mobile',
     forceValue?: boolean
   ) => {
     if (!currentUser?.userId) {
@@ -431,6 +450,33 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
     }
   };
 
+  const handleFormSubmit = async (data: ProfileFormData) => {
+    try {
+      // 處理表單提交
+      const formattedData = {
+        ...data,
+        notifications: {
+          email: data.notifications.email,
+          line: data.notifications.line,
+          push: false,
+          browser: false,
+          mobile: false
+        }
+      };
+      // ... existing code ...
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
+  };
+
+  const convertFormDataToRecord = (formData: ProfileFormData): Record<string, unknown> => {
+    return {
+      username: formData.username,
+      email: formData.email,
+      notifications: formData.notifications
+    };
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -484,19 +530,19 @@ const ProfileUI: React.FC<ProfileUIProps> = ({ user: propUser, uploadMessage, pa
               settings={{
                 discordId: null,
                 discordNotification: false,
-                line: settings.line ?? false,
-                email: settings.email ?? false,
+                lineNotification: settings.line ?? false,
+                emailNotification: settings.email ?? false,
                 lineId: settings.lineId ?? null
               }}
               isLoading={notificationsLoading}
               isVerifying={isLoading}
               saveAllSettings={handleSaveNotificationSettings}
               notificationSettings={{
-                line: settings.line ?? false,
                 email: settings.email ?? false,
-                lineId: settings.lineId ?? null,
+                line: settings.line ?? false,
+                lineId: settings.lineId ?? null
               }}
-              formData={form.formData}
+              formData={convertFormDataToRecord(form.formData)}
               handleNotificationChange={handleNotificationChange}
               verificationCode={verificationCode}
               setVerificationCode={setVerificationCode}

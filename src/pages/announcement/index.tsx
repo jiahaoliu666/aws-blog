@@ -126,7 +126,6 @@ const AnnouncementPage: React.FC = () => {
                                 <Card
                                     key={announcement.article_id}
                                     article={announcement}
-                                    index={index}
                                     gridView={gridView}
                                     toggleFavorite={(article) => toggleFavorite(article as ExtendedAnnouncement | ExtendedNews | FavoriteItem)}
                                     language={language}

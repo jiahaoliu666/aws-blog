@@ -123,7 +123,6 @@ const SolutionPage: React.FC = () => {
                                 <Card
                                     key={solution.article_id}
                                     article={solution}
-                                    index={index}
                                     gridView={gridView}
                                     toggleFavorite={(article) => toggleFavorite(article as ExtendedSolution)}
                                     language={language}

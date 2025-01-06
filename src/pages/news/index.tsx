@@ -158,9 +158,8 @@ const NewsPage: React.FC = () => {
                                 <Card
                                     key={article.article_id}
                                     article={article}
-                                    index={index}
                                     gridView={gridView}
-                                    toggleFavorite={(article) => toggleFavorite(article as ExtendedNews | FavoriteItem)}
+                                    toggleFavorite={(article) => toggleFavorite(article as ExtendedNews)}
                                     language={language}
                                     showSummaries={showSummaries}
                                     isFavorited={isFavorited}

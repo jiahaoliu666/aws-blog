@@ -7,7 +7,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { logger } from '@/utils/logger';
 
 export function useAuth() {
-  const { user, registerUser, loginUser, logoutUser, error, clearError } = useAuthContext();
+  const { user, registerUser, logoutUser, error, clearError } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { showToast } = useToastContext();
@@ -22,9 +22,7 @@ export function useAuth() {
       });
 
       if (response?.ok) {
-        // 保存用戶電子郵件到 localStorage
         localStorage.setItem('userEmail', email);
-        
         router.push('/');
         showToast('登入成功', 'success');
       } else {
@@ -38,5 +36,5 @@ export function useAuth() {
     }
   };
 
-  return { user, registerUser, loginUser: login, logoutUser, error, clearError, isLoading };
+  return { user, registerUser, login, logoutUser, error, clearError, isLoading };
 }

@@ -157,7 +157,6 @@ const FavoritePage: React.FC = () => {
                             <Card
                                 key={item.article_id}
                                 article={item}
-                                index={index}
                                 gridView={gridView}
                                 language={language}
                                 showSummaries={showSummaries}

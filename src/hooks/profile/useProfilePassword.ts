@@ -36,8 +36,8 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
   const cognitoClient = new CognitoIdentityProviderClient({
     region: 'ap-northeast-1',
     credentials: {
-      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || '',
     },
   });
 
@@ -68,7 +68,7 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
   };
 
   const handleChangePassword = async () => {
-    if (!user?.sub) {
+    if (!user?.sub || !user?.accessToken) {
       showToast('使用者資訊無效', 'error');
       return;
     }
@@ -109,7 +109,7 @@ export const useProfilePassword = ({ user, handleLogout, addActivityLog }: UsePr
       const changePasswordCommand = new ChangePasswordCommand({
         PreviousPassword: oldPassword,
         ProposedPassword: newPassword,
-        AccessToken: user?.accessToken!,
+        AccessToken: user.accessToken,
       });
 
       await cognitoClient.send(changePasswordCommand);

@@ -80,18 +80,14 @@ const handleApiError = (error: AxiosError) => {
   throw error;
 };
 
-// 首先定義介面
-interface DeleteAccountParams {
-  password: string;
-  user: {
-    sub: string;
-    userId: string;
-    email: string;
-  };
+interface UpdateUserData {
+  isNewUser?: boolean;
+  userId: string;
+  [key: string]: unknown;
 }
 
 export const userApi = {
-  updateUser: async (data: any) => {
+  updateUser: async (data: UpdateUserData) => {
     try {
       // 如果是新用戶註冊，先建立 DynamoDB 資料
       if (data.isNewUser) {

@@ -123,7 +123,6 @@ const KnowledgePage: React.FC = () => {
                                 <Card
                                     key={article.article_id}
                                     article={article}
-                                    index={index}
                                     gridView={gridView}
                                     toggleFavorite={(article) => toggleFavorite(article as ExtendedKnowledge)}
                                     language={language}

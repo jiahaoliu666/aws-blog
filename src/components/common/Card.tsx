@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ExtendedNews } from '@/types/newsType';
 import { FavoriteItem } from '@/types/favoriteTypes';
 import { useAuthContext } from '@/context/AuthContext';
@@ -13,7 +13,6 @@ import { ExtendedArchitecture } from '@/types/architectureType';
 interface CardProps {
     children?: React.ReactNode;
     article: ExtendedNews | FavoriteItem | ExtendedAnnouncement | ExtendedSolution | ExtendedKnowledge | ExtendedArchitecture;
-    index: number;
     gridView: boolean;
     language: string;
     showSummaries: boolean;
@@ -26,7 +25,6 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({
     article,
-    index,
     gridView,
     language,
     showSummaries,
@@ -37,27 +35,23 @@ const Card: React.FC<CardProps> = ({
     children,
     className = '',
 }) => {
-    if (!article || !article.title || !article.article_id) {
-        return null;
-    }
-
     const [isSummaryVisible, setIsSummaryVisible] = useState<boolean>(showSummaries);
+    const [isClient, setIsClient] = useState(false);
+    const [displayTitle, setDisplayTitle] = useState(article.title);
+    const [displayDescription, setDisplayDescription] = useState(article.description);
+
     const { user } = useAuthContext();
     const { logRecentArticle } = useProfileArticles({ user });
     const { isDarkMode } = useTheme();
     const toast = useToastContext();
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsSummaryVisible(showSummaries);
-    }, [showSummaries]);
 
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    const [displayTitle, setDisplayTitle] = useState(article.title);
-    const [displayDescription, setDisplayDescription] = useState(article.description);
+    useEffect(() => {
+        setIsSummaryVisible(showSummaries);
+    }, [showSummaries]);
 
     useEffect(() => {
         if (isClient) {
@@ -66,7 +60,11 @@ const Card: React.FC<CardProps> = ({
         }
     }, [language, article, isClient]);
 
-    const buttonClass = `px-3 py-2 text-sm rounded transition-colors duration-300 focus:outline-none ${
+    if (!article || !article.title || !article.article_id) {
+        return null;
+    }
+
+    const buttonClass = `px-3 py-2 text-sm rounded transition-colors duration-300 ${
         isFavorited ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'
     }`;
 
@@ -78,11 +76,10 @@ const Card: React.FC<CardProps> = ({
 
         try {
             await toggleFavorite(article);
-        } catch (error: any) {
+        } catch (error) {
             console.error('收藏操作失敗:', error);
-            if (error.response) {
-                console.log('錯誤響應:', error.response);
-                toast.error(`收藏操作失敗: ${error.response.data.message || '未知錯誤'}`);
+            if (error instanceof Error) {
+                toast.error(`收藏操作失敗: ${error.message || '未知錯誤'}`);
             } else {
                 toast.error('收藏操作失敗，請稍後再試');
             }

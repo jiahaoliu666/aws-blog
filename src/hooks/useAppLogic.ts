@@ -24,7 +24,7 @@ export const useAppLogic = () => {
     console.log('onDateFilterChange:', { startDate, endDate });
 
     const filtered = favorites.filter(article => {
-      const articleDate = new Date(article.info);
+      const articleDate = new Date(article.info || article.created_at);
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
       return (!start || articleDate >= start) && (!end || articleDate <= end);

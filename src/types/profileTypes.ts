@@ -40,6 +40,9 @@ export interface Settings {
 export interface NotificationSettings {
   email: boolean;
   line: boolean;
+  push: boolean;
+  browser: boolean;
+  mobile: boolean;
 }
 
 export interface Feedback {

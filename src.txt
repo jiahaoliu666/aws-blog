@@ -217,6 +217,7 @@ src/
 │   ├── discord.ts                  // Discord 配置
 │   ├── aws.ts                      // AWS 配置
 │   └── constants.ts                // 常量配置
+│   └── aws-config.ts               // AWS 配置
 ├── utils----------------------------------------------------------- 工具
 │   ├── notificationUtils.ts        // 通知工具函數
 │   ├── rateLimiter.ts              // 限流工具
@@ -232,6 +233,7 @@ src/
 │   ├── cacheUtils.ts               // 緩存工具
 │   └── retryUtils.ts               // 重試工具
 │   └── animations.ts               // 動畫工具
+│   └── awsConfig.ts                // AWS 配置工具
 ├── libs----------------------------------------------------------- 庫
 │   └── dynamodb.ts                 // DynamoDB 庫
 ├── styles----------------------------------------------------------- 樣式

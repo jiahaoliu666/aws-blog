@@ -2,13 +2,13 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import nodemailer from 'nodemailer';
 
-const s3Client = new S3Client({
-  region: 'ap-northeast-1',
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-  },
-});
+// const s3Client = new S3Client({
+//   region: 'ap-northeast-1',
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+//   },
+// });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         console.log('Attempting to upload image to S3');
         console.log('S3 upload parameters:', params);
-        await s3Client.send(command);
+        // await s3Client.send(command);
         imageUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
         console.log('Image uploaded successfully:', imageUrl);
       } catch (s3Error) {

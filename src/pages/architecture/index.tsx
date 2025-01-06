@@ -123,7 +123,6 @@ const ArchitecturePage: React.FC = () => {
                                 <Card
                                     key={architecture.article_id}
                                     article={architecture}
-                                    index={index}
                                     gridView={gridView}
                                     toggleFavorite={(article) => toggleFavorite(article as ExtendedArchitecture)}
                                     language={language}
