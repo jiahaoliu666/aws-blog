@@ -1,12 +1,14 @@
 --------
 
+先了解當前使用哪些的服務、閱讀amplify官方文檔
 
+統一使用Amplif架構？
 
+當使用AWS Amplify Gen 2建立專案時，主要的檔案結構該修改為何？
 
+遵循 amplify gen 2 最佳實踐
 
-
-
-
+s3 cognito dynamodb lambda
 
 --------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
