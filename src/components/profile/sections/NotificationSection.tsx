@@ -514,7 +514,7 @@ const VerifyCodeStep: React.FC<{
     setVerificationCode('');
     handleResetVerification();
     setVerificationStep(VerificationStep.INITIAL);
-    toast.warning('Lie 授權已取消');
+    toast.warning('LINE 驗證已取消');
   };
 
   const handleConfirmAction = () => {
@@ -1448,22 +1448,48 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                                   <FontAwesomeIcon icon={faDiscord} className="text-indigo-400" />
                                   Discord 綁定流程
                                 </p>
-                                <span className="text-xs text-indigo-400">請依序完成以下步驟</span>
+                                <span className="text-xs text-indigo-400">請選擇以下其中一種方式</span>
                               </div>
-                              <ol className="list-decimal list-inside space-y-1.5">
-                                <li>在 Discord 應用程式的「+」號按鈕建立一個伺服器</li>
-                                <li>選擇「建立自己的」來創建全新伺服器</li>
-                                <li>點擊「使用 Discord 登入」按鈕</li>
-                                <li>在彈出視窗中登入您的 Discord 帳號</li>
-                                <li>在您的 Discord 帳號中加入此伺服器</li>
-                                <li>允許 AWS Blog 365 Bot 向您發送訊息</li>
-                                <li>完成後將會收到一則測試訊息！</li>
-                              </ol>
+                              <div className="space-y-4">
+                                {/* 已有伺服器的流程 */}
+                                <div className="p-3 bg-gray-700/50 rounded-lg">
+                                  <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                    一、已有 Discord 伺服器用戶
+                                  </h4>
+                                  <ol className="list-decimal list-inside space-y-1.5 text-sm">
+                                    <li>點擊「使用 Discord 登入」</li>
+                                    <li>在彈出視窗中，登入您的 Discord 帳號</li>
+                                    <li>選擇您擁有管理員權限的伺服器</li>
+                                    <li>授權 AWS Blog 365 Bot 加入伺服器</li>
+                                    <li>設定完成後，即可收到測試通知！</li>
+                                  </ol>
+                                </div>
+
+                                {/* 分隔線 */}
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-px bg-gray-700"></div>
+                                  <span className="text-gray-500 text-sm">或是</span>
+                                  <div className="flex-1 h-px bg-gray-700"></div>
+                                </div>
+
+                                {/* 新建伺服器的流程 */}
+                                <div className="p-3 bg-gray-700/50 rounded-lg">
+                                  <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                    二、建立新 Discord 伺服器用戶
+                                  </h4>
+                                  <ol className="list-decimal list-inside space-y-1.5 text-sm">
+                                    <li>點擊 Discord 應用程式的「+」號來建立伺服器</li>
+                                    <li>選擇「建立自己的」來創建新伺服器</li>
+                                    <li>接著按照上述「已有伺服器用戶」的步驟，完成登入與授權流程</li>
+                                  </ol>
+                                </div>
+                              </div>
                               <div className="mt-3 pt-2 border-t border-gray-700">
                                 <p className="text-gray-300 text-xs">
                                   注意：
                                   <br/>1. 請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息。
                                   <br/>2. 因 Discord 的安全機制，機器人和使用者必須共同存在於至少一個伺服器中，否則無法收到訊息。
+                                  <br/>3. 如果選擇使用現有伺服器，您必須具有該伺服器的管理員權限。
                                 </p>
                               </div>
                             </div>
