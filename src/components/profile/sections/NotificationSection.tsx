@@ -1021,6 +1021,12 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
       return;
     }
 
+    // 檢查是否已開啟 Discord 通知
+    if (settings?.discordNotification || localSettings.discordNotification) {
+      toast.warning('您已開啟其他通知方式，請先關閉後再開啟新的通知');
+      return;
+    }
+
     // 檢查是否已開啟電子郵件通知
     if (settings?.emailNotification) {
       toast.warning('您已開啟電子郵件通知，請先關閉後再進行 LINE 驗證');
@@ -1077,7 +1083,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
     // 檢查是否已開啟 LINE 通知
     if (settings?.lineNotification || propSettings?.lineNotification) {
-      toast.warning('您已開啟 LINE 通知，請先關閉後再進行 Discord 驗證');
+      toast.warning('您已開啟其他通知方式，請先關閉後再開啟新的通知');
       return;
     }
 
