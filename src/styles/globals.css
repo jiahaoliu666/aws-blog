@@ -118,3 +118,53 @@
 .dark-search svg {
   color: #ffffff !important;
 }
+
+/* Discord 授權 Toast 樣式 */
+.discord-auth-toast {
+  max-width: 500px !important;
+  min-width: 300px !important;
+  white-space: pre-line !important;
+  line-height: 1.5 !important;
+  padding: 16px !important;
+  background-color: #ffffff !important;
+  border-left: 4px solid #5865F2 !important;
+  color: #2f3136 !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 8px !important;
+}
+
+.discord-auth-toast::before {
+  content: '🎮';
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+/* Discord 授權成功動畫 */
+@keyframes discord-success-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.discord-success-icon {
+  animation: discord-success-bounce 1s ease infinite;
+}
+
+/* Discord 授權頁面淡入動畫 */
+@keyframes discord-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.discord-auth-container {
+  animation: discord-fade-in 0.5s ease-out;
+}
