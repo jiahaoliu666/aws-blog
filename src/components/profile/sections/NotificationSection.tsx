@@ -16,8 +16,10 @@ import {
   faCopy,
   faTimes,
   faCheck,
-  faStar,
-  faClock
+  faThumbsUp,
+  faClock,
+  faLink,
+  faHandshake
 } from '@fortawesome/free-solid-svg-icons';
 import { faLine, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { Switch } from '@mui/material';
@@ -1427,17 +1429,27 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                       <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 relative">
                         Discord 通知
                         <span className="relative group cursor-help">
-                          <FontAwesomeIcon 
-                            icon={faInfoCircle} 
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                          />
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 border border-indigo-200
+                            hover:bg-indigo-100 transition-colors">
+                            <FontAwesomeIcon 
+                              icon={faDiscord}
+                              className="text-indigo-500 text-sm"
+                            />
+                            <span className="text-xs text-indigo-700 font-medium">綁定教學</span>
+                          </div>
                           <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 -mb-2
                             w-80 p-4 text-sm text-white 
                             bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
                             transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
                             shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
                             <div className="space-y-2">
-                              <p className="font-semibold mb-2">Discord 綁定流程：</p>
+                              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
+                                <p className="font-semibold flex items-center gap-2">
+                                  <FontAwesomeIcon icon={faDiscord} className="text-indigo-400" />
+                                  Discord 綁定流程
+                                </p>
+                                <span className="text-xs text-indigo-400">請依序完成以下步驟</span>
+                              </div>
                               <ol className="list-decimal list-inside space-y-1.5">
                                 <li>在 Discord 應用程式的「+」號按鈕建立一個伺服器</li>
                                 <li>選擇「建立自己的」來創建全新伺服器</li>
@@ -1460,14 +1472,17 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                             </div>
                           </div>
                         </span>
-                        <span className="relative group cursor-help">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 
-                            bg-gradient-to-r from-green-500 to-green-600 
-                            text-white text-xs font-bold rounded-full 
-                            shadow-sm hover:shadow-md
-                            transition-all duration-200">
-                            <FontAwesomeIcon icon={faStar} className="text-yellow-300 text-[10px]" />
-                            推薦使用
+                        <span className="relative group cursor-help ml-1">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5
+                            bg-gradient-to-r from-blue-500 to-indigo-600
+                            text-white text-xs font-bold rounded-full
+                            shadow-sm hover:shadow-md hover:scale-105
+                            transition-all duration-200 transform">
+                            <FontAwesomeIcon 
+                              icon={faThumbsUp} 
+                              className="text-white text-[11px] animate-pulse"
+                            />
+                            推薦
                           </span>
                           <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2
                             w-max px-4 py-2.5 text-sm text-white 
@@ -1475,8 +1490,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                             transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
                             shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
                             <div className="flex items-center gap-2 whitespace-nowrap">
-                              <FontAwesomeIcon icon={faInfoCircle} className="text-green-400" />
-                              <span>此功能完全免費，推薦使用 Discord 接收通知！</span>
+                              <FontAwesomeIcon icon={faThumbsUp} className="text-blue-400" />
+                              <span>完全免費！推薦使用 Discord 接收通知</span>
                             </div>
                             <div className="absolute top-1/2 -left-1 transform -translate-y-1/2
                               w-2 h-2 bg-gray-800/95 rotate-45">
