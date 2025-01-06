@@ -4,113 +4,54 @@ applications:
       phases:
         preBuild:
           commands:
-            # Node.js 版本檢查
-            - echo "檢查 Node.js 版本..."
-            - if ! command -v nvm &> /dev/null; then echo "錯誤：找不到 nvm" && exit 1; fi
-            - nvm use 18 || (echo "錯誤：無法切換到 Node.js 18" && exit 1)
+            # 檢查 Node.js 環境
             - node -v
-            - echo "Node.js 版本檢查完成"
-
-            # 必要環境變數檢查
-            - echo "檢查必要環境變數..."
-            - |
-              required_vars=(
-                "AWS_REGION"
-                "NEXT_PUBLIC_AWS_REGION"
-                "NEXT_PUBLIC_COGNITO_CLIENT_ID"
-                "NEXT_PUBLIC_COGNITO_USER_POOL_ID"
-                "DYNAMODB_ANNOUNCEMENT_TABLE"
-                "DYNAMODB_SOLUTIONS_TABLE"
-                "DYNAMODB_ARCHITECTURE_TABLE"
-                "DYNAMODB_NEWS_TABLE"
-                "DYNAMODB_KNOWLEDGE_TABLE"
-                "USER_UPLOADS_BUCKET"
-                "AWS_BLOG_FEEDBACK_BUCKET"
-                "SES_SENDER_EMAIL"
-                "NEXT_PUBLIC_SES_SENDER_EMAIL"
-              )
-              for var in "${required_vars[@]}"; do
-                if [ -z "${!var}" ]; then
-                  echo "錯誤：缺少必要環境變數 $var"
-                  exit 1
-                fi
-              done
-            - echo "環境變數檢查完成"
-
-            # AWS 權限驗證
-            - echo "驗證 AWS 權限..."
-            - |
-              # 驗證 Secrets Manager 權限
-              aws secretsmanager get-secret-value --secret-id /aws-blog/credentials --query SecretString --output text > /dev/null || (echo "錯誤：無法訪問 Secrets Manager" && exit 1)
-              
-              # 驗證 S3 權限
-              aws s3 ls s3://$USER_UPLOADS_BUCKET > /dev/null || (echo "錯誤：無法訪問 S3 bucket" && exit 1)
-              
-              # 驗證 DynamoDB 權限
-              aws dynamodb describe-table --table-name $DYNAMODB_ANNOUNCEMENT_TABLE > /dev/null || (echo "錯誤：無法訪問 DynamoDB" && exit 1)
-              
-              # 驗證 SES 權限
-              aws ses get-send-quota > /dev/null || (echo "錯誤：無法訪問 SES" && exit 1)
-            - echo "AWS 權限驗證完成"
-
+            - nvm use 18
+            
             # 安裝依賴
-            - echo "安裝專案依賴..."
-            - npm ci || (echo "錯誤：npm ci 失敗" && exit 1)
-            - echo "依賴安裝完成"
-
+            - npm ci
+            
             # 環境變數處理
-            - echo "開始處理環境變數..."
             - touch .env.production
             - echo "NODE_ENV=production" >> .env.production
             
             # AWS 相關環境變數
-            - echo "處理 AWS 相關環境變數..."
-            - env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production || echo "警告：未找到 AWS 環境變數"
+            - env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production
             
             # Cognito 環境變數
-            - env | grep -e NEXT_PUBLIC_COGNITO_ >> .env.production || echo "警告：未找到 Cognito 環境變數"
+            - env | grep -e NEXT_PUBLIC_COGNITO_ >> .env.production
             
             # DynamoDB 環境變數
-            - env | grep -e DYNAMODB_ >> .env.production || echo "警告：未找到 DynamoDB 環境變數"
+            - env | grep -e DYNAMODB_ >> .env.production
             
             # S3 環境變數
-            - env | grep -e USER_UPLOADS_BUCKET -e AWS_BLOG_FEEDBACK_BUCKET >> .env.production || echo "警告：未找到 S3 環境變數"
+            - env | grep -e USER_UPLOADS_BUCKET -e AWS_BLOG_FEEDBACK_BUCKET >> .env.production
             
             # Email 相關環境變數
-            - env | grep -e GMAIL_ -e SES_ -e NEXT_PUBLIC_SES_ >> .env.production || echo "警告：未找到 Email 相關環境變數"
+            - env | grep -e GMAIL_ -e SES_ -e NEXT_PUBLIC_SES_ >> .env.production
             
             # Line 相關環境變數
-            - env | grep -e NEXT_PUBLIC_LINE_ >> .env.production || echo "警告：未找到 Line 相關環境變數"
+            - env | grep -e NEXT_PUBLIC_LINE_ >> .env.production
             
             # Discord 相關環境變數
-            - env | grep -e DISCORD_ >> .env.production || echo "警告：未找到 Discord 相關環境變數"
+            - env | grep -e DISCORD_ >> .env.production
             
-            # 其他 NEXT_PUBLIC 環境變數
-            - env | grep -e NEXT_PUBLIC_ >> .env.production || echo "警告：未找到其他 NEXT_PUBLIC 環境變數"
+            # 驗證環境變數
+            - if [ ! -s .env.production ]; then echo "錯誤：環境變數文件為空" && exit 1; fi
             
-            # 驗證環境變數文件
-            - echo "驗證 .env.production 文件..."
-            - if [ ! -s .env.production ]; then echo "錯誤：.env.production 文件為空" && exit 1; fi
-            - echo "環境變數處理完成"
+            # AWS 服務驗證
+            - aws secretsmanager get-secret-value --secret-id /aws-blog/credentials --query SecretString --output text
+            - aws s3 ls s3://$USER_UPLOADS_BUCKET
+            - aws dynamodb describe-table --table-name $DYNAMODB_ANNOUNCEMENT_TABLE
+            - aws ses get-send-quota
 
         build:
           commands:
-            - echo "開始建置程序..."
-            - npm run build || (echo "錯誤：建置失敗" && exit 1)
+            - npm run build
             
-            # 建置後驗證
-            - echo "執行建置後驗證..."
-            - |
-              if [ ! -d ".next" ]; then
-                echo "錯誤：找不到 .next 目錄"
-                exit 1
-              fi
-            - |
-              if [ ! -f ".next/BUILD_ID" ]; then
-                echo "錯誤：找不到 BUILD_ID 文件"
-                exit 1
-              fi
-            - echo "建置完成並通過驗證"
+            # 建置驗證
+            - if [ ! -d ".next" ]; then exit 1; fi
+            - if [ ! -f ".next/BUILD_ID" ]; then exit 1; fi
 
       artifacts:
         baseDirectory: .next
