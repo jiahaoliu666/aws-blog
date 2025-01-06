@@ -17,6 +17,22 @@ const nextConfig = {
     NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME:
       process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME,
   },
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+  },
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+        ],
+      },
+    ];
+  },
   onDemandEntries: {
     webpack(config, { dev }) {
       if (dev) {
