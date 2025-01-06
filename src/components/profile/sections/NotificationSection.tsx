@@ -394,6 +394,8 @@ const VerifyCodeStep: React.FC<{
   isLoading: boolean;
   userId: string;
   onCancel: () => void;
+  setVerificationStep: (step: VerificationStep) => void;
+  handleResetVerification: () => Promise<void>;
 }> = ({ 
   verificationCode, 
   setVerificationCode, 
@@ -401,7 +403,9 @@ const VerifyCodeStep: React.FC<{
   onVerify, 
   isLoading, 
   userId,
-  onCancel 
+  onCancel,
+  setVerificationStep,
+  handleResetVerification 
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>('');
@@ -505,12 +509,10 @@ const VerifyCodeStep: React.FC<{
   };
 
   const handleCancelVerification = () => {
-    if (generatedCode) {
-      setDialogType('cancel');
-      setShowConfirmDialog(true);
-    } else {
-      onCancel();
-    }
+    setVerificationCode('');
+    handleResetVerification();
+    setVerificationStep(VerificationStep.INITIAL);
+    toast.warning('Lie 授權已取消');
   };
 
   const handleConfirmAction = () => {
@@ -903,9 +905,18 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     setLocalSettings(prev => {
       const newSettings = { ...prev };
       
-      // 檢查是否有未儲存的 LINE 設定變更
+      // 檢查是否有未儲存的 Discord 設定變更，且當前操作涉及驗證流程
+      if (type === 'email' && 
+          prev.discordNotification !== settings.discordNotification &&
+          !prev.emailNotification) { // 只在要開啟電子郵件通知時檢查
+        toast.warning('請先儲存或取消目前的變更，再開始電子郵件驗證');
+        return prev;
+      }
+
+      // 檢查是否有未儲存的 LINE 設定變更，且當前操作涉及驗證流程
       if (type !== 'line' && 
-          prev.lineNotification !== settings.lineNotification) {
+          prev.lineNotification !== settings.lineNotification &&
+          !prev[`${type}Notification`]) { // 只在要開啟新通知時檢查
         toast.warning('請先儲存或取消目前的變更，再開始電子郵件驗證');
         return prev;
       }
@@ -921,6 +932,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
         return prev;
       }
 
+      // 允許切換開關狀態
       newSettings[`${type}Notification`] = !newSettings[`${type}Notification`];
       return newSettings;
     });
@@ -1075,6 +1087,29 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
   };
 
+  // 在 NotificationSectionUI 組件內部新增狀態追蹤
+  const [discordAuthWindow, setDiscordAuthWindow] = useState<Window | null>(null);
+  const [discordAuthStatus, setDiscordAuthStatus] = useState<'initial' | 'authorizing' | 'completed' | 'cancelled'>('initial');
+
+  // 監聽 Discord 授權視窗狀態
+  useEffect(() => {
+    if (discordAuthWindow) {
+      const checkWindow = setInterval(() => {
+        if (discordAuthWindow.closed) {
+          clearInterval(checkWindow);
+          // 如果視窗被關閉且狀態仍在授權中，表示用戶取消操作
+          if (discordAuthStatus === 'authorizing') {
+            setDiscordAuthStatus('cancelled');
+            setIsDiscordVerifying(false);
+            toast.warning('Discord 授權已取消');
+          }
+        }
+      }, 500);
+
+      return () => clearInterval(checkWindow);
+    }
+  }, [discordAuthWindow, discordAuthStatus]);
+
   const handleDiscordAuth = async () => {
     if (hasUnsavedChanges) {
       toast.warning('請先儲存或取消目前的變更，再開始 Discord 驗證');
@@ -1094,20 +1129,62 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     }
 
     try {
+      setDiscordAuthStatus('authorizing');
       const authWindow = await startDiscordAuth(userId);
+      
       if (!authWindow) {
+        setDiscordAuthStatus('cancelled');
         toast.error('開啟 Discord 授權視窗失敗');
         return;
       }
+      
+      setDiscordAuthWindow(authWindow);
     } catch (error) {
+      setDiscordAuthStatus('cancelled');
       toast.error('Discord 授權失敗');
     }
   };
 
+  // 修改 useEffect 中的 Discord 授權訊息處理
+  useEffect(() => {
+    const handleDiscordAuthMessage = (event: MessageEvent) => {
+      if (event.data.type === 'DISCORD_AUTH_SUCCESS') {
+        if (discordAuthStatus === 'authorizing') {
+          setSettings(prev => ({
+            ...prev,
+            discordId: event.data.discord_id,
+            discordNotification: true
+          }));
+          setDiscordAuthStatus('completed');
+          setShowDiscordVerification(false);
+          setIsDiscordVerifying(false);
+          
+          toast.success('Discord 綁定成功');
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      } else if (event.data.type === 'DISCORD_AUTH_ERROR') {
+        if (discordAuthStatus === 'authorizing') {
+          setDiscordAuthStatus('cancelled');
+          setIsDiscordVerifying(false);
+          toast.error(event.data.error || 'Discord 綁定失敗');
+          logger.error('Discord 授權失敗:', event.data.error);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleDiscordAuthMessage);
+    return () => window.removeEventListener('message', handleDiscordAuthMessage);
+  }, [discordAuthStatus]);
+
   // 修正取消驗證的函數名稱
   const handleCancelVerification = () => {
     setVerificationCode('');
-    cancelVerification();
+    handleResetVerification();
+    setVerificationStep(VerificationStep.INITIAL);
+    toast.warning('LINE 驗證已取消');
   };
 
   // 修正 Discord 取消驗證的函數名稱
@@ -1157,6 +1234,8 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                 isLoading={isLoading}
                 userId={userId}
                 onCancel={handleCancelVerification}
+                setVerificationStep={setVerificationStep}
+                handleResetVerification={handleResetVerification}
               />
             )}
           </div>
@@ -1473,15 +1552,30 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                     <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
                       onClick={handleDiscordAuth}
-                      className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
+                      className={`
+                        bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
                         hover:bg-indigo-700 active:bg-indigo-800
                         transition-all duration-200 ease-in-out
                         flex items-center gap-2 mx-auto
-                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                      disabled={isDiscordVerifying}
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        ${discordAuthStatus === 'authorizing' ? 'animate-pulse' : ''}
+                      `}
+                      disabled={discordAuthStatus === 'authorizing'}
                     >
                       <FontAwesomeIcon icon={faDiscord} />
-                      {isDiscordVerifying ? '授權中...' : '使用 Discord 登入'}
+                      {discordAuthStatus === 'authorizing' ? (
+                        <>
+                          <span className="animate-spin mr-2">⌛</span>
+                          授權中...
+                        </>
+                      ) : discordAuthStatus === 'completed' ? (
+                        '驗證完成'
+                      ) : discordAuthStatus === 'cancelled' ? (
+                        '使用 Discord 登入'
+                      ) : (
+                        '使用 Discord 登入'
+                      )}
                     </button>
                   </div>
                 </div>
