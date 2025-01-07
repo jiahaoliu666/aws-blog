@@ -4,43 +4,22 @@ import { fromIni } from '@aws-sdk/credential-providers';
 let cachedCredentials: any = null;
 
 export async function getAWSCredentials() {
-    if (cachedCredentials) {
-        return cachedCredentials;
-    }
-
     try {
         // 檢查是否在 Amplify 環境中
-        const isAmplifyEnv = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+        const isAmplifyEnv = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI || 
+                            process.env.AWS_EXECUTION_ENV?.includes('AWS_Amplify');
         
-        // 在 Amplify 環境中，使用容器憑證
         if (isAmplifyEnv) {
-            console.log('Running in Amplify environment, using container credentials');
-            return {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                sessionToken: process.env.AWS_SESSION_TOKEN
-            };
+            console.log('Running in Amplify environment');
+            return undefined; // 使用 IAM 角色
         }
 
-        // 在生產環境中使用環境變量
-        if (process.env.NODE_ENV === 'production' && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
-            console.log('Using AWS credentials from environment variables');
-            return {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                sessionToken: process.env.AWS_SESSION_TOKEN
-            };
-        }
+        // 在其他環境中
+        console.log('Using default credential provider chain');
+        return undefined; // 讓 AWS SDK 自動處理憑證
 
-        // 在本地開發時使用本地憑證
-        if (process.env.NODE_ENV === 'development') {
-            console.log('Using local AWS credentials from AWS CLI');
-            return fromIni();
-        }
-
-        throw new Error('No valid AWS credentials found');
     } catch (error: any) {
-        console.error('Error in getAWSCredentials:', error);
-        throw new Error(`無法獲取 AWS 憑證: ${error.message}`);
+        console.warn('Warning: AWS credentials not explicitly set, using default credential provider chain');
+        return undefined;
     }
 } 
