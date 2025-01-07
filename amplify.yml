@@ -17,13 +17,11 @@ frontend:
           node -v
           npm -v
         - |
-          # Verify required environment variables
           if [ -z "$CUSTOM_REGION" ] || [ -z "$NEXT_PUBLIC_COGNITO_CLIENT_ID" ] || [ -z "$NEXT_PUBLIC_COGNITO_USER_POOL_ID" ]; then
             echo "Error: Required environment variables are missing"
             exit 1
           fi
         - |
-          # Create or update .env.production
           cat << EOF > .env.production
           NODE_ENV=production
           CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
@@ -49,7 +47,11 @@ frontend:
     postBuild:
       commands:
         - echo "Running post-build checks..."
-        - if [ ! -d ".next" ]; then echo "Build failed: .next directory not found" && exit 1; fi
+        - |
+          if [ ! -d ".next" ]; then 
+            echo "Build failed: .next directory not found" 
+            exit 1
+          fi
         - echo "Build completed successfully"
   artifacts:
     baseDirectory: .next
