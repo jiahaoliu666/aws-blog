@@ -5,13 +5,14 @@ applications:
         preBuild:
           commands:
             - nvm use 18.18.2
-            - npm install -g npm@9.6.7
-            - npm install rimraf --global
+            - npm install -g npm@9.6.7 --force
+            - npm install rimraf --global --force
+            - npm cache clean --force
             - npm cache verify
             - rm -rf node_modules
             - rm -rf .next
-            - npm ci --legacy-peer-deps
-            - npm install next@14.2.15 --save --legacy-peer-deps
+            - npm ci --legacy-peer-deps --force
+            - npm install next@14.2.15 --save --legacy-peer-deps --force
             - touch .env.production
             - 'echo "NODE_ENV=production" >> .env.production'
             - 'env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production || true'
