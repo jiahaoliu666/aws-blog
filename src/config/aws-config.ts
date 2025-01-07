@@ -3,6 +3,14 @@ import { getAWSCredentials } from '../utils/awsConfig';
 
 const DEFAULT_REGION = 'ap-northeast-1';
 
+// 確保 AWS 配置已初始化
+const ensureAWSConfig = () => {
+    if (!AWS || !AWS.config) {
+        throw new Error('AWS SDK not properly initialized');
+    }
+    return AWS.config;
+};
+
 export async function configureAWS() {
     try {
         const credentials = await getAWSCredentials();
@@ -12,8 +20,9 @@ export async function configureAWS() {
             console.warn(`Region not set in environment variables, using default: ${DEFAULT_REGION}`);
         }
 
-        if (AWS && AWS.config) {
-            AWS.config.update({
+        try {
+            const config = ensureAWSConfig();
+            config.update({
                 region,
                 credentials: credentials || undefined,
                 maxRetries: 3,
@@ -24,15 +33,17 @@ export async function configureAWS() {
             });
             console.log('AWS configuration completed successfully with region:', region);
             return true;
-        } else {
-            throw new Error('AWS SDK not properly initialized');
+        } catch (configError) {
+            console.error('Error updating AWS config:', configError);
+            throw configError;
         }
     } catch (error) {
         console.error('Error configuring AWS:', error);
         console.log('Attempting to continue with default configuration...');
         
-        if (AWS && AWS.config) {
-            AWS.config.update({
+        try {
+            const config = ensureAWSConfig();
+            config.update({
                 region: DEFAULT_REGION,
                 maxRetries: 3,
                 httpOptions: {
@@ -40,19 +51,22 @@ export async function configureAWS() {
                     connectTimeout: 5000
                 }
             });
+            return false;
+        } catch (fallbackError) {
+            console.error('Failed to apply fallback configuration:', fallbackError);
+            return false;
         }
-        return false;
     }
 }
 
 export async function initializeAWSServices() {
-    const isConfigured = await configureAWS();
-    
     try {
+        const isConfigured = await configureAWS();
+        
         if (!AWS) {
             throw new Error('AWS SDK not available');
         }
-        
+
         const services = {
             s3: new AWS.S3(),
             dynamodb: new AWS.DynamoDB.DocumentClient(),
