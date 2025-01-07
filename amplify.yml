@@ -3,27 +3,42 @@ frontend:
   phases:
     preBuild:
       commands:
+        # 清除所有快取
+        - echo "Cleaning all caches..."
+        - npm cache clean --force
+        - rm -rf ~/.npm
+        - rm -rf ~/.cache
+        - rm -rf /tmp/*
+        - rm -rf .next
+        - rm -rf node_modules
+        # Node.js 環境設置
         - nvm install 18.18.2
         - nvm use 18.18.2
         - npm install -g npm@9.6.7
         - npm --version
         - node --version
+        # NPM 配置
         - npm config set engine-strict false
         - npm config set legacy-peer-deps true
-        - npm cache clean --force
-        - rm -rf node_modules
-        - rm -rf .next
-        - npm ci --legacy-peer-deps
+        - npm config set fetch-retry-maxtimeout 600000
+        - npm config set fetch-timeout 600000
+        # 安裝依賴
+        - echo "Installing dependencies..."
+        - npm ci --legacy-peer-deps --prefer-offline
         - |
           echo "Environment Setup:"
           node -v
           npm -v
+        # 環境變量檢查
         - |
+          echo "Checking required environment variables..."
           if [ -z "$CUSTOM_REGION" ] || [ -z "$NEXT_PUBLIC_COGNITO_CLIENT_ID" ] || [ -z "$NEXT_PUBLIC_COGNITO_USER_POOL_ID" ]; then
             echo "Error: Required environment variables are missing"
             exit 1
           fi
+        # 生成環境配置文件
         - |
+          echo "Generating .env.production..."
           cat << EOF > .env.production
           NODE_ENV=production
           CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
@@ -40,8 +55,11 @@ frontend:
           EOF
     build:
       commands:
-        - echo "Starting build process..."
-        - NODE_ENV=production NODE_OPTIONS='--max_old_space_size=4096' npm run build
+        - echo "Starting build process at $(date)"
+        - |
+          export NODE_OPTIONS="--max_old_space_size=4096"
+          export NODE_ENV=production
+          npm run build
         - echo "Build completed at $(date)"
     postBuild:
       commands:
@@ -51,12 +69,14 @@ frontend:
             echo "Build failed: .next directory not found" 
             exit 1
           fi
+        # 清理構建後的快取
+        - echo "Cleaning up build caches..."
+        - rm -rf /tmp/*
+        - rm -rf ~/.npm
         - echo "Build completed successfully"
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
   cache:
-    paths:
-      - node_modules/**/*
-      - .next/cache/**/* 
+    paths: []  # 禁用快取以確保每次都是全新構建 
