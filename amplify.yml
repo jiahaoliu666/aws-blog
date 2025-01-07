@@ -17,9 +17,16 @@ applications:
               if [ ! -f .env.production ]; then
                 echo "Creating .env.production file..."
                 touch .env.production
+                echo "NODE_ENV=production" >> .env.production
+                echo "AWS_REGION=$AWS_REGION" >> .env.production
+                echo "NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION" >> .env.production
+                echo "USER_UPLOADS_BUCKET=$USER_UPLOADS_BUCKET" >> .env.production
+                echo "AWS_BLOG_FEEDBACK_BUCKET=$AWS_BLOG_FEEDBACK_BUCKET" >> .env.production
+                echo "NEXT_PUBLIC_COGNITO_CLIENT_ID=$NEXT_PUBLIC_COGNITO_CLIENT_ID" >> .env.production
+                echo "NEXT_PUBLIC_COGNITO_USER_POOL_ID=$NEXT_PUBLIC_COGNITO_USER_POOL_ID" >> .env.production
               fi
             - |
-              echo "Checking required environment variables..."
+              echo "Verifying environment variables..."
               required_vars=(
                 "AWS_REGION"
                 "NEXT_PUBLIC_AWS_REGION"
@@ -28,37 +35,22 @@ applications:
                 "NEXT_PUBLIC_COGNITO_CLIENT_ID"
                 "NEXT_PUBLIC_COGNITO_USER_POOL_ID"
               )
+              missing_vars=()
               for var in "${required_vars[@]}"; do
                 if [ -z "${!var}" ]; then
-                  echo "Error: Required environment variable $var is not set"
-                  exit 1
+                  missing_vars+=("$var")
                 fi
               done
-            - 'echo "NODE_ENV=production" >> .env.production'
-            - 'env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production || true'
-            - 'env | grep -e NEXT_PUBLIC_COGNITO_ >> .env.production || true'
-            - 'env | grep -e DYNAMODB_ >> .env.production || true'
-            - 'env | grep -e USER_UPLOADS_BUCKET -e AWS_BLOG_FEEDBACK_BUCKET >> .env.production || true'
-            - 'env | grep -e GMAIL_ -e SES_ -e NEXT_PUBLIC_SES_ >> .env.production || true'
-            - 'env | grep -e NEXT_PUBLIC_LINE_ >> .env.production || true'
-            - 'env | grep -e DISCORD_ >> .env.production || true'
-            - 'if [ ! -s .env.production ]; then echo "Warning: env file is empty but continuing build"; fi'
+              if [ ${#missing_vars[@]} -ne 0 ]; then
+                echo "Error: The following required environment variables are not set:"
+                printf '%s\n' "${missing_vars[@]}"
+                echo "Please set these variables in the Amplify Console"
+                exit 1
+              fi
         build:
           commands:
-            - echo "Checking node and npm versions..."
-            - node --version
-            - npm --version
-            - NODE_OPTIONS="--max_old_space_size=4096" npm run build
-            - |
-              if [ ! -d ".next" ]; then 
-                echo "Error: .next directory not found after build"
-                exit 1
-              fi
-            - |
-              if [ ! -f ".next/BUILD_ID" ]; then
-                echo "Error: BUILD_ID file not found"
-                exit 1
-              fi
+            - echo "Building..."
+            - npm run build
       artifacts:
         baseDirectory: .next
         files:
