@@ -17,15 +17,26 @@ frontend:
           node -v
           npm -v
         - |
+          # Verify required environment variables
+          if [ -z "$CUSTOM_REGION" ] || [ -z "$NEXT_PUBLIC_COGNITO_CLIENT_ID" ] || [ -z "$NEXT_PUBLIC_COGNITO_USER_POOL_ID" ]; then
+            echo "Error: Required environment variables are missing"
+            exit 1
+          fi
+        - |
           # Create or update .env.production
           cat << EOF > .env.production
           NODE_ENV=production
-          AWS_REGION=${AWS_REGION:-ap-northeast-1}
-          NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1}
-          USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET:-aws-blog-avatar}
-          AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
-          NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID:-}
-          NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID:-}
+          CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
+          NEXT_PUBLIC_REGION=${NEXT_PUBLIC_REGION:-ap-northeast-1}
+          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET:-aws-blog-avatar}
+          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
+          NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID}
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
+          BLOG_ANNOUNCEMENT_TABLE=${BLOG_ANNOUNCEMENT_TABLE:-AWS_Blog_Announcement}
+          BLOG_SOLUTIONS_TABLE=${BLOG_SOLUTIONS_TABLE:-AWS_Blog_Solutions}
+          BLOG_ARCHITECTURE_TABLE=${BLOG_ARCHITECTURE_TABLE:-AWS_Blog_Architecture}
+          BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE:-AWS_Blog_News}
+          BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE:-AWS_Blog_Knowledge}
           EOF
         - |
           echo "Environment variables set in .env.production:"
@@ -34,8 +45,11 @@ frontend:
       commands:
         - echo "Starting build process..."
         - npm run build
+        - echo "Build completed at $(date)"
     postBuild:
       commands:
+        - echo "Running post-build checks..."
+        - if [ ! -d ".next" ]; then echo "Build failed: .next directory not found" && exit 1; fi
         - echo "Build completed successfully"
   artifacts:
     baseDirectory: .next

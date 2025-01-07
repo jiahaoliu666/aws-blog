@@ -7,6 +7,10 @@ dotenv.config();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  swcMinify: true,
   // 允許在缺少某些環境變量的情況下繼續構建
   onDemandEntries: {
     // 構建時的配置
@@ -23,6 +27,11 @@ const nextConfig = {
         tls: false,
       };
     }
+    // 優化構建
+    config.optimization = {
+      ...config.optimization,
+      minimize: true,
+    };
     return config;
   },
   // Amplify 特定配置
@@ -35,8 +44,8 @@ const nextConfig = {
   },
   // 環境變量配置
   env: {
-    AWS_REGION: process.env.AWS_REGION || 'ap-northeast-1',
-    NEXT_PUBLIC_AWS_REGION: process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-1'
+    CUSTOM_REGION: process.env.CUSTOM_REGION || 'ap-northeast-1',
+    NEXT_PUBLIC_REGION: process.env.NEXT_PUBLIC_REGION || 'ap-northeast-1'
   }
 };
 
