@@ -6,8 +6,8 @@ applications:
           commands:
             - nvm use 18
             - npm cache clean --force
-            - npm install --legacy-peer-deps --force
             - npm run clean
+            - npm install --legacy-peer-deps --force
             - touch .env.production
             - 'echo "NODE_ENV=production" >> .env.production'
             - 'env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production || true'
