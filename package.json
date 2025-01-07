@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-news": "NODE_OPTIONS='--loader ts-node/esm' ts-node --require tsconfig-paths/register src/lambda/updateNews.ts",
-    "fetch-news": "NODE_OPTIONS='--loader ts-node/esm' ts-node --require tsconfig-paths/register src/lambda/fetchNews.ts",
-    "update-all": "tsx src/lambda/updateAllContent.ts"
+    "update-news": "ts-node --require tsconfig-paths/register src/lambda/updateNews.ts",
+    "fetch-news": "ts-node --require tsconfig-paths/register src/lambda/fetchNews.ts",
+    "update-all": "ts-node src/lambda/updateAllContent.ts",
+    "clean": "rimraf .next && rimraf node_modules"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.5.1",
