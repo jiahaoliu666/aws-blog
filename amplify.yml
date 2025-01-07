@@ -3,32 +3,41 @@ frontend:
   phases:
     preBuild:
       commands:
-        # 清除所有快取
-        - echo "Cleaning all caches..."
-        - npm cache clean --force
-        - rm -rf ~/.npm
-        - rm -rf ~/.cache
-        - rm -rf /tmp/*
-        - rm -rf .next
-        - rm -rf node_modules
-        # Node.js 環境設置
-        - nvm install 18.18.2
-        - nvm use 18.18.2
-        - npm install -g npm@9.6.7
-        - npm --version
-        - node --version
-        # NPM 配置
-        - npm config set engine-strict false
-        - npm config set legacy-peer-deps true
-        - npm config set fetch-retry-maxtimeout 600000
-        - npm config set fetch-timeout 600000
-        # 安裝依賴
-        - echo "Installing dependencies..."
-        - npm ci --legacy-peer-deps --prefer-offline
+        # 安全清除快取
         - |
-          echo "Environment Setup:"
-          node -v
-          npm -v
+          echo "Starting safe cache cleanup..."
+          if [ -d "node_modules" ]; then
+            echo "Removing node_modules..."
+            rm -rf node_modules
+          fi
+          if [ -d ".next" ]; then
+            echo "Removing .next directory..."
+            rm -rf .next
+          fi
+          if [ -d "~/.npm" ]; then
+            echo "Cleaning npm cache..."
+            npm cache clean --force || true
+          fi
+          echo "Cache cleanup completed"
+        # Node.js 環境設置
+        - |
+          echo "Setting up Node.js environment..."
+          nvm install 18.18.2
+          nvm use 18.18.2
+          npm install -g npm@9.6.7
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+        # NPM 配置
+        - |
+          echo "Configuring npm..."
+          npm config set engine-strict false
+          npm config set legacy-peer-deps true
+          npm config set fetch-retry-maxtimeout 600000
+          npm config set fetch-timeout 600000
+        # 安裝依賴
+        - |
+          echo "Installing dependencies..."
+          npm ci --legacy-peer-deps --no-audit || npm install --legacy-peer-deps --no-audit
         # 環境變量檢查
         - |
           echo "Checking required environment variables..."
@@ -55,28 +64,29 @@ frontend:
           EOF
     build:
       commands:
-        - echo "Starting build process at $(date)"
         - |
+          echo "Starting build process at $(date)"
           export NODE_OPTIONS="--max_old_space_size=4096"
           export NODE_ENV=production
-          npm run build
+          npm run build || {
+            echo "Build failed"
+            exit 1
+          }
         - echo "Build completed at $(date)"
     postBuild:
       commands:
-        - echo "Running post-build checks..."
         - |
+          echo "Running post-build checks..."
           if [ ! -d ".next" ]; then 
             echo "Build failed: .next directory not found" 
             exit 1
           fi
-        # 清理構建後的快取
-        - echo "Cleaning up build caches..."
-        - rm -rf /tmp/*
-        - rm -rf ~/.npm
         - echo "Build completed successfully"
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
   cache:
-    paths: []  # 禁用快取以確保每次都是全新構建 
+    paths:
+      - node_modules/**/*  # 保留 node_modules 快取以加快構建速度
+      - .next/cache/**/*   # 保留 Next.js 快取以提高效率 
