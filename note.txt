@@ -1,6 +1,8 @@
 
 
 --------
+「我有一個基於 Next.js 的前端專案，所有功能已在本地測試完成。現在希望將該專案部署到 AWS Amplify，專案設計不依賴任何Amplify後端資源，而是通過 AWS SDK（例如 Cognito 或 S3 等功能）在前端進行操作。請提供具體步驟，協助我在 AWS Amplify 上部署網站
+
 
 如何在aws amplify gen 2從0開始建立 next.js專案
 我會使用到
