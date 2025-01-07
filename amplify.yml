@@ -12,31 +12,30 @@ applications:
             - rm -rf node_modules
             - rm -rf .next
             - npm ci --legacy-peer-deps
-            - |
-              echo "Environment Variables Status:"
-              echo "AWS_REGION: ${AWS_REGION:-Not Set (using default: ap-northeast-1)}"
-              echo "NEXT_PUBLIC_AWS_REGION: ${NEXT_PUBLIC_AWS_REGION:-Not Set (using default: ap-northeast-1)}"
-              echo "USER_UPLOADS_BUCKET: ${USER_UPLOADS_BUCKET:-Not Set}"
-              echo "AWS_BLOG_FEEDBACK_BUCKET: ${AWS_BLOG_FEEDBACK_BUCKET:-Not Set}"
-              echo "NEXT_PUBLIC_COGNITO_CLIENT_ID: ${NEXT_PUBLIC_COGNITO_CLIENT_ID:-Not Set}"
-              echo "NEXT_PUBLIC_COGNITO_USER_POOL_ID: ${NEXT_PUBLIC_COGNITO_USER_POOL_ID:-Not Set}"
+            - 'echo "Environment Variables Status"'
+            - 'echo "AWS_REGION=${AWS_REGION:-Not Set (using default: ap-northeast-1)}"'
+            - 'echo "NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-Not Set (using default: ap-northeast-1)}"'
+            - 'echo "USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET:-Not Set}"'
+            - 'echo "AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET:-Not Set}"'
+            - 'echo "NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID:-Not Set}"'
+            - 'echo "NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID:-Not Set}"'
             - |
               if [ ! -f .env.production ]; then
-                echo "Creating .env.production file..."
+                echo "Creating .env.production file"
                 touch .env.production
-                echo "NODE_ENV=production" >> .env.production
+                echo "NODE_ENV=production" > .env.production
                 echo "AWS_REGION=${AWS_REGION:-ap-northeast-1}" >> .env.production
                 echo "NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1}" >> .env.production
               fi
         build:
           commands:
-            - echo "Starting build process..."
-            - echo "Node version: $(node -v)"
-            - echo "NPM version: $(npm -v)"
-            - NODE_OPTIONS="--max_old_space_size=4096" npm run build || (echo "Build failed but continuing..." && true)
+            - 'echo "Starting build process"'
+            - 'echo "Node version $(node -v)"'
+            - 'echo "NPM version $(npm -v)"'
+            - NODE_OPTIONS="--max_old_space_size=4096" npm run build || true
         postBuild:
           commands:
-            - echo "Build phase completed"
+            - 'echo "Build phase completed"'
       artifacts:
         baseDirectory: .next
         files:
