@@ -1,16 +1,20 @@
 import AWS from 'aws-sdk';
 import { getAWSCredentials } from '../utils/awsConfig';
 
+const DEFAULT_REGION = 'ap-northeast-1';
+
 export async function configureAWS() {
     try {
         const credentials = await getAWSCredentials();
         
-        if (!process.env.AWS_REGION) {
-            console.warn('AWS_REGION not set, defaulting to ap-northeast-1');
+        const region = process.env.AWS_REGION || process.env.NEXT_PUBLIC_AWS_REGION || DEFAULT_REGION;
+        
+        if (!process.env.AWS_REGION && !process.env.NEXT_PUBLIC_AWS_REGION) {
+            console.warn(`AWS Region not set in environment variables, using default: ${DEFAULT_REGION}`);
         }
         
         AWS.config.update({
-            region: process.env.AWS_REGION || 'ap-northeast-1',
+            region,
             credentials,
             maxRetries: 3,
             httpOptions: {
@@ -19,16 +23,25 @@ export async function configureAWS() {
             }
         });
         
-        console.log('AWS configuration completed successfully');
+        console.log('AWS configuration completed successfully with region:', region);
+        return true;
     } catch (error) {
         console.error('Error configuring AWS:', error);
-        throw error;
+        console.log('Attempting to continue with default configuration...');
+        AWS.config.update({
+            region: DEFAULT_REGION,
+            maxRetries: 3,
+            httpOptions: {
+                timeout: 5000,
+                connectTimeout: 5000
+            }
+        });
+        return false;
     }
 }
 
-// 初始化各種 AWS 服務的函數
 export async function initializeAWSServices() {
-    await configureAWS();
+    const isConfigured = await configureAWS();
     
     try {
         const services = {
@@ -37,10 +50,10 @@ export async function initializeAWSServices() {
             ses: new AWS.SES(),
         };
         
-        console.log('AWS services initialized successfully');
+        console.log(`AWS services initialized successfully${!isConfigured ? ' with default configuration' : ''}`);
         return services;
     } catch (error) {
         console.error('Error initializing AWS services:', error);
-        throw error;
+        throw new Error('Failed to initialize AWS services. Please check your configuration.');
     }
 } 

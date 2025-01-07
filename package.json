@@ -9,14 +9,14 @@
   "engineStrict": false,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "NODE_OPTIONS='--max_old_space_size=4096' NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1} next build",
     "start": "next start",
     "lint": "next lint",
     "update-news": "ts-node --require tsconfig-paths/register src/lambda/updateNews.ts",
     "fetch-news": "ts-node --require tsconfig-paths/register src/lambda/fetchNews.ts",
     "update-all": "ts-node src/lambda/updateAllContent.ts",
     "clean": "rimraf .next && rimraf node_modules",
-    "postinstall": "echo 'Skip postinstall'"
+    "postinstall": "echo 'Skipping postinstall'"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.5.1",

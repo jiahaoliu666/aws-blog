@@ -4,29 +4,39 @@ frontend:
     preBuild:
       commands:
         - nvm use 18.18.2
-        - npm install -g npm@9.6.7 --force
+        - npm install -g npm@9.6.7 --force --no-audit
         - npm config set engine-strict false
-        - npm install rimraf --global --force
+        - npm config set legacy-peer-deps true
+        - npm install rimraf --global --force --no-audit
         - npm cache clean --force
-        - npm cache verify
         - rm -rf node_modules
         - rm -rf .next
-        - npm ci --legacy-peer-deps --force
-        - echo "Node version $(node -v)"
-        - echo "NPM version $(npm -v)"
+        - npm ci --legacy-peer-deps --force --no-audit
         - |
-          if [ ! -f .env.production ]; then
-            touch .env.production
-            echo "NODE_ENV=production" > .env.production
-            echo "AWS_REGION=${AWS_REGION:-ap-northeast-1}" >> .env.production
-            echo "NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1}" >> .env.production
-          fi
+          echo "Environment Setup:"
+          node -v
+          npm -v
+        - |
+          # Create or update .env.production
+          cat << EOF > .env.production
+          NODE_ENV=production
+          AWS_REGION=${AWS_REGION:-ap-northeast-1}
+          NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1}
+          USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET:-aws-blog-avatar}
+          AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
+          NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID:-}
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID:-}
+          EOF
+        - |
+          echo "Environment variables set in .env.production:"
+          cat .env.production | grep -v '_ID\|_KEY\|_SECRET'
     build:
       commands:
-        - NODE_OPTIONS="--max_old_space_size=4096" npm run build
+        - echo "Starting build process..."
+        - npm run build
     postBuild:
       commands:
-        - echo "Build completed"
+        - echo "Build completed successfully"
   artifacts:
     baseDirectory: .next
     files:
