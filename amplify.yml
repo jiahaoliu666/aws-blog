@@ -28,15 +28,15 @@ frontend:
           NODE_ENV=production
           CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
           NEXT_PUBLIC_REGION=${NEXT_PUBLIC_REGION:-ap-northeast-1}
-          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET:-aws-blog-avatar}
-          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
+          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET:-blog-avatar-bucket}
+          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET:-blog-feedback-bucket}
           NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID}
           NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
-          BLOG_ANNOUNCEMENT_TABLE=${BLOG_ANNOUNCEMENT_TABLE:-AWS_Blog_Announcement}
-          BLOG_SOLUTIONS_TABLE=${BLOG_SOLUTIONS_TABLE:-AWS_Blog_Solutions}
-          BLOG_ARCHITECTURE_TABLE=${BLOG_ARCHITECTURE_TABLE:-AWS_Blog_Architecture}
-          BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE:-AWS_Blog_News}
-          BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE:-AWS_Blog_Knowledge}
+          BLOG_ANNOUNCEMENT_TABLE=${BLOG_ANNOUNCEMENT_TABLE:-Blog_Announcement}
+          BLOG_SOLUTIONS_TABLE=${BLOG_SOLUTIONS_TABLE:-Blog_Solutions}
+          BLOG_ARCHITECTURE_TABLE=${BLOG_ARCHITECTURE_TABLE:-Blog_Architecture}
+          BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE:-Blog_News}
+          BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE:-Blog_Knowledge}
           EOF
         - |
           echo "Environment variables set in .env.production:"

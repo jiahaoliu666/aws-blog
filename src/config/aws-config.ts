@@ -7,10 +7,10 @@ export async function configureAWS() {
     try {
         const credentials = await getAWSCredentials();
         
-        const region = process.env.AWS_REGION || process.env.NEXT_PUBLIC_AWS_REGION || DEFAULT_REGION;
+        const region = process.env.CUSTOM_REGION || process.env.NEXT_PUBLIC_REGION || DEFAULT_REGION;
         
-        if (!process.env.AWS_REGION && !process.env.NEXT_PUBLIC_AWS_REGION) {
-            console.warn(`AWS Region not set in environment variables, using default: ${DEFAULT_REGION}`);
+        if (!process.env.CUSTOM_REGION && !process.env.NEXT_PUBLIC_REGION) {
+            console.warn(`Region not set in environment variables, using default: ${DEFAULT_REGION}`);
         }
         
         AWS.config.update({
