@@ -4,13 +4,14 @@ frontend:
     preBuild:
       commands:
         - nvm use 18.18.2
-        - npm install -g npm@9.6.7
-        - npm install rimraf --global
+        - npm install -g npm@9.6.7 --force
+        - npm config set engine-strict false
+        - npm install rimraf --global --force
         - npm cache clean --force
         - npm cache verify
         - rm -rf node_modules
         - rm -rf .next
-        - npm ci --legacy-peer-deps
+        - npm ci --legacy-peer-deps --force
         - echo "Node version $(node -v)"
         - echo "NPM version $(npm -v)"
         - |
@@ -22,7 +23,7 @@ frontend:
           fi
     build:
       commands:
-        - npm run build
+        - NODE_OPTIONS="--max_old_space_size=4096" npm run build
     postBuild:
       commands:
         - echo "Build completed"

@@ -3,20 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=18.18.2",
-    "npm": ">=9.6.7"
+    "node": "18.18.2",
+    "npm": "9.6.7"
   },
   "engineStrict": false,
   "scripts": {
     "dev": "next dev",
-    "build": "NODE_OPTIONS='--max_old_space_size=4096' next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "update-news": "ts-node --require tsconfig-paths/register src/lambda/updateNews.ts",
     "fetch-news": "ts-node --require tsconfig-paths/register src/lambda/fetchNews.ts",
     "update-all": "ts-node src/lambda/updateAllContent.ts",
     "clean": "rimraf .next && rimraf node_modules",
-    "postinstall": "npm run build"
+    "postinstall": "echo 'Skip postinstall'"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.5.1",
