@@ -4,11 +4,10 @@ applications:
       phases:
         preBuild:
           commands:
-            - "node -v"
-            - "nvm install 18.18.0"
-            - "nvm use 18.18.0"
-            - "npm ci"
-            - "touch .env.production"
+            - npm cache clean --force
+            - rm -rf node_modules
+            - npm ci
+            - touch .env.production
             - 'echo "NODE_ENV=production" >> .env.production'
             - "env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production"
             - "env | grep -e NEXT_PUBLIC_COGNITO_ >> .env.production"
@@ -18,20 +17,17 @@ applications:
             - "env | grep -e NEXT_PUBLIC_LINE_ >> .env.production"
             - "env | grep -e DISCORD_ >> .env.production"
             - 'if [ ! -s .env.production ]; then echo "Error: env file is empty" && exit 1; fi'
-            - "aws secretsmanager get-secret-value --secret-id /aws-blog/credentials --query SecretString --output text"
-            - "aws s3 ls s3://$USER_UPLOADS_BUCKET"
-            - "aws dynamodb describe-table --table-name $DYNAMODB_ANNOUNCEMENT_TABLE"
-            - "aws ses get-send-quota"
         build:
           commands:
-            - "npm run build"
+            - npm run build
             - 'if [ ! -d ".next" ]; then exit 1; fi'
             - 'if [ ! -f ".next/BUILD_ID" ]; then exit 1; fi'
       artifacts:
         baseDirectory: .next
         files:
-          - "**/*"
+          - '**/*'
       cache:
         paths:
           - node_modules/**/*
+          - .next/cache/**/*
     appRoot: . 
