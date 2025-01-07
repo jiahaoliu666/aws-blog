@@ -13,7 +13,27 @@ applications:
             - rm -rf .next
             - npm ci --legacy-peer-deps --force
             - npm install next@14.2.15 --save --legacy-peer-deps --force
-            - touch .env.production
+            - |
+              if [ ! -f .env.production ]; then
+                echo "Creating .env.production file..."
+                touch .env.production
+              fi
+            - |
+              echo "Checking required environment variables..."
+              required_vars=(
+                "AWS_REGION"
+                "NEXT_PUBLIC_AWS_REGION"
+                "USER_UPLOADS_BUCKET"
+                "AWS_BLOG_FEEDBACK_BUCKET"
+                "NEXT_PUBLIC_COGNITO_CLIENT_ID"
+                "NEXT_PUBLIC_COGNITO_USER_POOL_ID"
+              )
+              for var in "${required_vars[@]}"; do
+                if [ -z "${!var}" ]; then
+                  echo "Error: Required environment variable $var is not set"
+                  exit 1
+                fi
+              done
             - 'echo "NODE_ENV=production" >> .env.production'
             - 'env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production || true'
             - 'env | grep -e NEXT_PUBLIC_COGNITO_ >> .env.production || true'
@@ -25,9 +45,20 @@ applications:
             - 'if [ ! -s .env.production ]; then echo "Warning: env file is empty but continuing build"; fi'
         build:
           commands:
+            - echo "Checking node and npm versions..."
+            - node --version
+            - npm --version
             - NODE_OPTIONS="--max_old_space_size=4096" npm run build
-            - 'if [ ! -d ".next" ]; then exit 1; fi'
-            - 'if [ ! -f ".next/BUILD_ID" ]; then exit 1; fi'
+            - |
+              if [ ! -d ".next" ]; then 
+                echo "Error: .next directory not found after build"
+                exit 1
+              fi
+            - |
+              if [ ! -f ".next/BUILD_ID" ]; then
+                echo "Error: BUILD_ID file not found"
+                exit 1
+              fi
       artifacts:
         baseDirectory: .next
         files:
