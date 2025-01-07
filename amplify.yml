@@ -5,9 +5,10 @@ applications:
         preBuild:
           commands:
             - nvm use 18
+            - npm install rimraf --global
             - npm cache clean --force
-            - npm run clean
             - npm install --legacy-peer-deps --force
+            - npm run clean
             - touch .env.production
             - 'echo "NODE_ENV=production" >> .env.production'
             - 'env | grep -e AWS_ -e NEXT_PUBLIC_AWS_ >> .env.production || true'
