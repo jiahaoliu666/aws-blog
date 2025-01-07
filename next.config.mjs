@@ -13,7 +13,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   experimental: {
-    optimizeCss: true,
     forceSwcTransforms: true,
   },
   typescript: {

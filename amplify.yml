@@ -15,15 +15,16 @@ frontend:
         - 'npm config set fetch-timeout 600000'
         - 'npm config set registry https://registry.npmjs.org/'
         - |
+          echo "Installing system dependencies for Puppeteer"
+          yum install -y chromium chromium-headless chromium-libs nss cups-libs atk at-spi2-atk libXcomposite libXdamage libXrandr mesa-libgbm alsa-lib pango cairo-gobject libudev || true
+        - |
           echo "Creating .npmrc file"
           cat > .npmrc << EOL
           legacy-peer-deps=true
           strict-ssl=false
+          puppeteer_skip_chromium_download=true
           EOL
-        - 'npm ci --prefer-offline --no-audit || npm install --no-audit'
-        - |
-          echo "Running lint setup"
-          npm run lint || true
+        - 'npm ci --prefer-offline --no-audit || npm install --legacy-peer-deps --no-audit'
         - |
           echo "Validating environment variables..."
           for var in CUSTOM_REGION NEXT_PUBLIC_COGNITO_CLIENT_ID NEXT_PUBLIC_COGNITO_USER_POOL_ID; do
@@ -87,5 +88,4 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - node_modules/.cache/**/*
-      - .next/cache/**/* 
+      - node_modules/.cache/**/* 
