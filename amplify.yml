@@ -11,40 +11,62 @@ frontend:
         - 'npm install -g npm@9.6.7'
         - 'npm config set engine-strict false'
         - 'npm config set legacy-peer-deps true'
-        - 'npm ci --legacy-peer-deps --no-audit || npm install --legacy-peer-deps --no-audit'
+        - 'npm config set fetch-retry-maxtimeout 600000'
+        - 'npm config set fetch-timeout 600000'
+        - 'npm config set registry https://registry.npmjs.org/'
         - |
-          if [ -z "$CUSTOM_REGION" ] || [ -z "$NEXT_PUBLIC_COGNITO_CLIENT_ID" ] || [ -z "$NEXT_PUBLIC_COGNITO_USER_POOL_ID" ]; then
-            echo "Error: Missing required environment variables"
-            exit 1
-          fi
+          echo "Creating .npmrc file"
+          cat > .npmrc << EOL
+          legacy-peer-deps=true
+          strict-ssl=false
+          EOL
+        - 'npm ci --prefer-offline --no-audit || npm install --no-audit'
         - |
-          cat > .env.production << 'EOL'
+          echo "Validating environment variables..."
+          for var in CUSTOM_REGION NEXT_PUBLIC_COGNITO_CLIENT_ID NEXT_PUBLIC_COGNITO_USER_POOL_ID; do
+            if [ -z "${!var}" ]; then
+              echo "Error: Required environment variable $var is not set"
+              exit 1
+            fi
+          done
+        - |
+          echo "Creating .env.production file"
+          cat > .env.production << EOL
           NODE_ENV=production
-          CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
-          NEXT_PUBLIC_REGION=${NEXT_PUBLIC_REGION:-ap-northeast-1}
-          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET:-aws-blog-avatar}
-          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
+          CUSTOM_REGION=${CUSTOM_REGION}
+          NEXT_PUBLIC_REGION=${NEXT_PUBLIC_REGION}
+          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET}
+          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET}
           NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID}
           NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
-          BLOG_ANNOUNCEMENT_TABLE=${BLOG_ANNOUNCEMENT_TABLE:-Blog_Announcement}
-          BLOG_SOLUTIONS_TABLE=${BLOG_SOLUTIONS_TABLE:-Blog_Solutions}
-          BLOG_ARCHITECTURE_TABLE=${BLOG_ARCHITECTURE_TABLE:-Blog_Architecture}
-          BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE:-Blog_News}
-          BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE:-Blog_Knowledge}
+          BLOG_ANNOUNCEMENT_TABLE=${BLOG_ANNOUNCEMENT_TABLE}
+          BLOG_SOLUTIONS_TABLE=${BLOG_SOLUTIONS_TABLE}
+          BLOG_ARCHITECTURE_TABLE=${BLOG_ARCHITECTURE_TABLE}
+          BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE}
+          BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE}
           EOL
     build:
       commands:
-        - 'echo "Starting build process"'
+        - |
+          echo "Starting build process with following environment:"
+          echo "NODE_ENV: $NODE_ENV"
+          echo "CUSTOM_REGION: $CUSTOM_REGION"
+          echo "NEXT_PUBLIC_REGION: $NEXT_PUBLIC_REGION"
         - 'export NODE_OPTIONS="--max_old_space_size=4096"'
         - 'export NODE_ENV=production'
         - 'export CI=true'
-        - 'npm run build'
+        - 'npm run build || { echo "Build failed"; cat .next/error.log; exit 1; }'
     postBuild:
       commands:
         - |
           if [ ! -d ".next" ]; then
             echo "Build failed: .next directory not found"
             exit 1
+          fi
+        - |
+          if [ -f ".next/error.log" ]; then
+            echo "Build warnings/errors found:"
+            cat .next/error.log
           fi
         - 'echo "Build completed successfully"'
   artifacts:
@@ -53,4 +75,5 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - node_modules/.cache/**/* 
+      - node_modules/.cache/**/*
+      - .next/cache/**/* 
