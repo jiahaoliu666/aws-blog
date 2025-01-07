@@ -1,5 +1,21 @@
+
+
 --------
 
+如何在aws amplify gen 2從0開始建立 next.js專案
+我會使用到
+AWS 服務連接到後端
+amplify Authentication
+amplify Storage
+amplify Data
+
+第三方服務
+OpenAI API
+discord
+line
+
+
+--------
 
 先了解當前使用哪些的服務、閱讀amplify官方文檔
 
