@@ -12,12 +12,15 @@ import '@/styles/globals.css';
 import '@/styles/toast.css';
 import { ThemeProvider } from '@/context/ThemeContext';
 import '@aws-amplify/ui-react/styles.css';
+import { configureAmplify } from '@/config/amplify-config';
 
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
+    configureAmplify();
+
     const handleStart = () => startLoading();
     const handleComplete = () => stopLoading();
 
