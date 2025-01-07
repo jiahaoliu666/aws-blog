@@ -3,59 +3,22 @@ frontend:
   phases:
     preBuild:
       commands:
-        # 基本環境設置
-        - echo "Setting up build environment..."
-        - nvm use 18.18.2 || nvm install 18.18.2
-        - echo "Node version: $(node -v)"
-        - echo "NPM version: $(npm -v)"
-        
-        # 安全地清理和準備目錄
+        - 'echo "Setting up build environment"'
+        - 'nvm use 18.18.2 || nvm install 18.18.2'
+        - 'echo "Node $(node -v) and NPM $(npm -v)"'
+        - 'rm -rf node_modules .next'
+        - 'npm cache clean --force'
+        - 'npm install -g npm@9.6.7'
+        - 'npm config set engine-strict false'
+        - 'npm config set legacy-peer-deps true'
+        - 'npm ci --legacy-peer-deps --no-audit || npm install --legacy-peer-deps --no-audit'
         - |
-          echo "Preparing build directories..."
-          [ -d "node_modules" ] && rm -rf node_modules
-          [ -d ".next" ] && rm -rf .next
-          [ -d "~/.npm" ] && rm -rf ~/.npm
-        
-        # 配置 npm
-        - |
-          echo "Configuring npm..."
-          npm config set engine-strict false
-          npm config set legacy-peer-deps true
-          npm config set fetch-retry-maxtimeout 600000
-          npm config set fetch-timeout 600000
-          npm config set prefer-offline false
-          npm config set progress false
-        
-        # 安裝全局依賴
-        - npm install -g npm@9.6.7
-        
-        # 安裝項目依賴
-        - |
-          echo "Installing project dependencies..."
-          if ! npm ci --legacy-peer-deps --no-audit; then
-            echo "npm ci failed, falling back to npm install..."
-            npm install --legacy-peer-deps --no-audit
+          if [ -z "$CUSTOM_REGION" ] || [ -z "$NEXT_PUBLIC_COGNITO_CLIENT_ID" ] || [ -z "$NEXT_PUBLIC_COGNITO_USER_POOL_ID" ]; then
+            echo "Error: Missing required environment variables"
+            exit 1
           fi
-        
-        # 驗證環境變量
         - |
-          echo "Validating environment variables..."
-          required_vars=(
-            "CUSTOM_REGION"
-            "NEXT_PUBLIC_COGNITO_CLIENT_ID"
-            "NEXT_PUBLIC_COGNITO_USER_POOL_ID"
-          )
-          for var in "${required_vars[@]}"; do
-            if [ -z "${!var}" ]; then
-              echo "Error: Required environment variable $var is not set"
-              exit 1
-            fi
-          done
-        
-        # 創建環境文件
-        - |
-          echo "Creating environment configuration..."
-          cat << EOF > .env.production
+          cat > .env.production << 'EOL'
           NODE_ENV=production
           CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
           NEXT_PUBLIC_REGION=${NEXT_PUBLIC_REGION:-ap-northeast-1}
@@ -68,47 +31,26 @@ frontend:
           BLOG_ARCHITECTURE_TABLE=${BLOG_ARCHITECTURE_TABLE:-Blog_Architecture}
           BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE:-Blog_News}
           BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE:-Blog_Knowledge}
-          EOF
-          
+          EOL
     build:
       commands:
-        # 執行構建
-        - |
-          echo "Starting production build at $(date)"
-          export NODE_OPTIONS="--max_old_space_size=4096"
-          export NODE_ENV=production
-          export CI=true
-          
-          if npm run build; then
-            echo "Build completed successfully at $(date)"
-          else
-            echo "Build failed"
-            exit 1
-          fi
-          
+        - 'echo "Starting build process"'
+        - 'export NODE_OPTIONS="--max_old_space_size=4096"'
+        - 'export NODE_ENV=production'
+        - 'export CI=true'
+        - 'npm run build'
     postBuild:
       commands:
-        # 驗證構建結果
         - |
-          echo "Validating build artifacts..."
           if [ ! -d ".next" ]; then
-            echo "Error: Build artifacts not found"
+            echo "Build failed: .next directory not found"
             exit 1
           fi
-          
-          if [ ! -f ".next/package.json" ]; then
-            echo "Warning: package.json not found in build output"
-          fi
-          
-          echo "Build validation completed"
-          echo "Deployment ready at $(date)"
-          
+        - 'echo "Build completed successfully"'
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
-  
-  # 最小化快取配置
   cache:
     paths:
       - node_modules/.cache/**/* 
