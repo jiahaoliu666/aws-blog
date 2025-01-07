@@ -9,6 +9,15 @@ export async function getAWSCredentials() {
     }
 
     try {
+        // 在生產環境中使用環境變量
+        if (process.env.NODE_ENV === 'production' && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+            console.log('Using AWS credentials from environment variables');
+            return {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            };
+        }
+
         // 在本地開發時使用本地憑證
         if (process.env.NODE_ENV === 'development') {
             console.log('Using local AWS credentials from AWS CLI');
