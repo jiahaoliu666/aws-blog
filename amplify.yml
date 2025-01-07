@@ -5,7 +5,8 @@ applications:
         preBuild:
           commands:
             - "node -v"
-            - "nvm use 18"
+            - "nvm install 18.18.0"
+            - "nvm use 18.18.0"
             - "npm ci"
             - "touch .env.production"
             - 'echo "NODE_ENV=production" >> .env.production'
