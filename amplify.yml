@@ -4,6 +4,7 @@ applications:
       phases:
         preBuild:
           commands:
+            - nvm use 18
             - npm cache clean --force
             - rm -rf node_modules
             - npm ci
