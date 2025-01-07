@@ -4,7 +4,7 @@ applications:
       phases:
         preBuild:
           commands:
-            - nvm use 18.17.1
+            - nvm use 18.18.2
             - npm install -g npm@9.6.7
             - npm install rimraf --global
             - npm cache verify
