@@ -3,51 +3,58 @@ frontend:
   phases:
     preBuild:
       commands:
-        # 安全清除快取
+        # 基本環境設置
+        - echo "Setting up build environment..."
+        - nvm use 18.18.2 || nvm install 18.18.2
+        - echo "Node version: $(node -v)"
+        - echo "NPM version: $(npm -v)"
+        
+        # 安全地清理和準備目錄
         - |
-          echo "Starting safe cache cleanup..."
-          if [ -d "node_modules" ]; then
-            echo "Removing node_modules..."
-            rm -rf node_modules
-          fi
-          if [ -d ".next" ]; then
-            echo "Removing .next directory..."
-            rm -rf .next
-          fi
-          if [ -d "~/.npm" ]; then
-            echo "Cleaning npm cache..."
-            npm cache clean --force || true
-          fi
-          echo "Cache cleanup completed"
-        # Node.js 環境設置
-        - |
-          echo "Setting up Node.js environment..."
-          nvm install 18.18.2
-          nvm use 18.18.2
-          npm install -g npm@9.6.7
-          echo "Node version: $(node -v)"
-          echo "NPM version: $(npm -v)"
-        # NPM 配置
+          echo "Preparing build directories..."
+          [ -d "node_modules" ] && rm -rf node_modules
+          [ -d ".next" ] && rm -rf .next
+          [ -d "~/.npm" ] && rm -rf ~/.npm
+        
+        # 配置 npm
         - |
           echo "Configuring npm..."
           npm config set engine-strict false
           npm config set legacy-peer-deps true
           npm config set fetch-retry-maxtimeout 600000
           npm config set fetch-timeout 600000
-        # 安裝依賴
+          npm config set prefer-offline false
+          npm config set progress false
+        
+        # 安裝全局依賴
+        - npm install -g npm@9.6.7
+        
+        # 安裝項目依賴
         - |
-          echo "Installing dependencies..."
-          npm ci --legacy-peer-deps --no-audit || npm install --legacy-peer-deps --no-audit
-        # 環境變量檢查
-        - |
-          echo "Checking required environment variables..."
-          if [ -z "$CUSTOM_REGION" ] || [ -z "$NEXT_PUBLIC_COGNITO_CLIENT_ID" ] || [ -z "$NEXT_PUBLIC_COGNITO_USER_POOL_ID" ]; then
-            echo "Error: Required environment variables are missing"
-            exit 1
+          echo "Installing project dependencies..."
+          if ! npm ci --legacy-peer-deps --no-audit; then
+            echo "npm ci failed, falling back to npm install..."
+            npm install --legacy-peer-deps --no-audit
           fi
-        # 生成環境配置文件
+        
+        # 驗證環境變量
         - |
-          echo "Generating .env.production..."
+          echo "Validating environment variables..."
+          required_vars=(
+            "CUSTOM_REGION"
+            "NEXT_PUBLIC_COGNITO_CLIENT_ID"
+            "NEXT_PUBLIC_COGNITO_USER_POOL_ID"
+          )
+          for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+              echo "Error: Required environment variable $var is not set"
+              exit 1
+            fi
+          done
+        
+        # 創建環境文件
+        - |
+          echo "Creating environment configuration..."
           cat << EOF > .env.production
           NODE_ENV=production
           CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
@@ -62,31 +69,46 @@ frontend:
           BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE:-Blog_News}
           BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE:-Blog_Knowledge}
           EOF
+          
     build:
       commands:
+        # 執行構建
         - |
-          echo "Starting build process at $(date)"
+          echo "Starting production build at $(date)"
           export NODE_OPTIONS="--max_old_space_size=4096"
           export NODE_ENV=production
-          npm run build || {
+          export CI=true
+          
+          if npm run build; then
+            echo "Build completed successfully at $(date)"
+          else
             echo "Build failed"
             exit 1
-          }
-        - echo "Build completed at $(date)"
+          fi
+          
     postBuild:
       commands:
+        # 驗證構建結果
         - |
-          echo "Running post-build checks..."
-          if [ ! -d ".next" ]; then 
-            echo "Build failed: .next directory not found" 
+          echo "Validating build artifacts..."
+          if [ ! -d ".next" ]; then
+            echo "Error: Build artifacts not found"
             exit 1
           fi
-        - echo "Build completed successfully"
+          
+          if [ ! -f ".next/package.json" ]; then
+            echo "Warning: package.json not found in build output"
+          fi
+          
+          echo "Build validation completed"
+          echo "Deployment ready at $(date)"
+          
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
+  
+  # 最小化快取配置
   cache:
     paths:
-      - node_modules/**/*  # 保留 node_modules 快取以加快構建速度
-      - .next/cache/**/*   # 保留 Next.js 快取以提高效率 
+      - node_modules/.cache/**/* 
