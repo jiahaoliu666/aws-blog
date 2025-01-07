@@ -11,6 +11,10 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   swcMinify: true,
+  experimental: {
+    optimizeCss: true,
+    legacyBrowsers: false,
+  },
   // 允許在缺少某些環境變量的情況下繼續構建
   onDemandEntries: {
     // 構建時的配置

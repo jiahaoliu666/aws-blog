@@ -3,15 +3,17 @@ frontend:
   phases:
     preBuild:
       commands:
+        - nvm install 18.18.2
         - nvm use 18.18.2
-        - npm install -g npm@9.6.7 --force --no-audit
+        - npm install -g npm@9.6.7
+        - npm --version
+        - node --version
         - npm config set engine-strict false
         - npm config set legacy-peer-deps true
-        - npm install rimraf --global --force --no-audit
         - npm cache clean --force
         - rm -rf node_modules
         - rm -rf .next
-        - npm ci --legacy-peer-deps --force --no-audit
+        - npm ci --legacy-peer-deps
         - |
           echo "Environment Setup:"
           node -v
@@ -39,7 +41,7 @@ frontend:
     build:
       commands:
         - echo "Starting build process..."
-        - NODE_OPTIONS='--max_old_space_size=4096' npm run build
+        - NODE_ENV=production NODE_OPTIONS='--max_old_space_size=4096' npm run build
         - echo "Build completed at $(date)"
     postBuild:
       commands:
