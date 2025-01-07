@@ -1,5 +1,35 @@
 
 
+
+--------
+基本配置：
+CUSTOM_REGION=ap-northeast-1
+NEXT_PUBLIC_REGION=ap-northeast-1
+NEXT_PUBLIC_COGNITO_CLIENT_ID=5ua9kmb59lmqks0echkc261dgh
+NEXT_PUBLIC_COGNITO_USER_POOL_ID=ap-northeast-1_SDMioGwSr
+存儲桶配置：
+BLOG_AVATAR_BUCKET=aws-blog-avatar
+BLOG_FEEDBACK_BUCKET=aws-blog-feedback
+DynamoDB 表配置：
+BLOG_ANNOUNCEMENT_TABLE=AWS_Blog_Announcement
+BLOG_SOLUTIONS_TABLE=AWS_Blog_Solutions
+BLOG_ARCHITECTURE_TABLE=AWS_Blog_Architecture
+BLOG_NEWS_TABLE=AWS_Blog_News
+BLOG_KNOWLEDGE_TABLE=AWS_Blog_Knowledge
+其他服務配置：
+GMAIL_USER=awsblogfeedback@gmail.com
+GMAIL_PASS=ueyoobbzsdlhioqo
+SES_SENDER_EMAIL=no-reply@awsblog365.com
+DISCORD_CLIENT_ID=1322182992575205426
+DISCORD_GUILD_ID=1322192137072148480
+DISCORD_NOTIFICATION_CHANNEL_ID=1322192332522520656
+DISCORD_REDIRECT_URI=https://awsblog365.com/api/discord/callback
+NEXT_PUBLIC_SES_SENDER_EMAIL=no-reply@awsblog365.com  
+NEXT_PUBLIC_DISCORD_CLIENT_ID=1322182992575205426     
+NEXT_PUBLIC_LINE_BASIC_ID=@601feiwz
+NEXT_PUBLIC_API_URL=https://awsblog365.com/
+NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME=AWS Blog 365
+NEXT_PUBLIC_LINE_QR_CODE_URL=https://line.me/R/ti/p/@601feiwz
 --------
 「我有一個基於 Next.js 的前端專案，所有功能已在本地測試完成。現在希望將該專案部署到 AWS Amplify，專案設計不依賴任何Amplify後端資源，而是通過 AWS SDK（例如 Cognito 或 S3 等功能）在前端進行操作。請提供具體步驟，協助我在 AWS Amplify 上部署網站
 

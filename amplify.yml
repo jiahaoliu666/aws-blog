@@ -26,8 +26,8 @@ frontend:
           NODE_ENV=production
           CUSTOM_REGION=${CUSTOM_REGION:-ap-northeast-1}
           NEXT_PUBLIC_REGION=${NEXT_PUBLIC_REGION:-ap-northeast-1}
-          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET:-blog-avatar-bucket}
-          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET:-blog-feedback-bucket}
+          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET:-aws-blog-avatar}
+          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
           NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID}
           NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
           BLOG_ANNOUNCEMENT_TABLE=${BLOG_ANNOUNCEMENT_TABLE:-Blog_Announcement}
@@ -36,13 +36,10 @@ frontend:
           BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE:-Blog_News}
           BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE:-Blog_Knowledge}
           EOF
-        - |
-          echo "Environment variables set in .env.production:"
-          cat .env.production | grep -v '_ID\|_KEY\|_SECRET'
     build:
       commands:
         - echo "Starting build process..."
-        - npm run build
+        - NODE_OPTIONS='--max_old_space_size=4096' npm run build
         - echo "Build completed at $(date)"
     postBuild:
       commands:

@@ -9,7 +9,7 @@
   "engineStrict": false,
   "scripts": {
     "dev": "next dev",
-    "build": "NODE_OPTIONS='--max_old_space_size=4096' NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1} next build",
+    "build": "NODE_OPTIONS='--max_old_space_size=4096' next build",
     "start": "next start",
     "lint": "next lint",
     "update-news": "ts-node --require tsconfig-paths/register src/lambda/updateNews.ts",
