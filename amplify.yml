@@ -1,47 +1,36 @@
 version: 1
-applications:
-  - frontend:
-      phases:
-        preBuild:
-          commands:
-            - nvm use 18.18.2
-            - npm install -g npm@9.6.7
-            - npm install rimraf --global
-            - npm cache clean --force
-            - npm cache verify
-            - rm -rf node_modules
-            - rm -rf .next
-            - npm ci --legacy-peer-deps
-            - 'echo "Environment Variables Status"'
-            - 'echo "AWS_REGION=${AWS_REGION:-Not Set (using default: ap-northeast-1)}"'
-            - 'echo "NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-Not Set (using default: ap-northeast-1)}"'
-            - 'echo "USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET:-Not Set}"'
-            - 'echo "AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET:-Not Set}"'
-            - 'echo "NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID:-Not Set}"'
-            - 'echo "NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID:-Not Set}"'
-            - |
-              if [ ! -f .env.production ]; then
-                echo "Creating .env.production file"
-                touch .env.production
-                echo "NODE_ENV=production" > .env.production
-                echo "AWS_REGION=${AWS_REGION:-ap-northeast-1}" >> .env.production
-                echo "NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1}" >> .env.production
-              fi
-        build:
-          commands:
-            - 'echo "Starting build process"'
-            - 'echo "Node version $(node -v)"'
-            - 'echo "NPM version $(npm -v)"'
-            - NODE_OPTIONS="--max_old_space_size=4096" npm run build || true
-        postBuild:
-          commands:
-            - 'echo "Build phase completed"'
-      artifacts:
-        baseDirectory: .next
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - node_modules/**/*
-          - .next/cache/**/*
-    appRoot: . 
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm use 18.18.2
+        - npm install -g npm@9.6.7
+        - npm install rimraf --global
+        - npm cache clean --force
+        - npm cache verify
+        - rm -rf node_modules
+        - rm -rf .next
+        - npm ci --legacy-peer-deps
+        - echo "Node version $(node -v)"
+        - echo "NPM version $(npm -v)"
+        - |
+          if [ ! -f .env.production ]; then
+            touch .env.production
+            echo "NODE_ENV=production" > .env.production
+            echo "AWS_REGION=${AWS_REGION:-ap-northeast-1}" >> .env.production
+            echo "NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-ap-northeast-1}" >> .env.production
+          fi
+    build:
+      commands:
+        - npm run build
+    postBuild:
+      commands:
+        - echo "Build completed"
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/* 

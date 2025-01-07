@@ -6,9 +6,10 @@
     "node": ">=18.18.2",
     "npm": ">=9.6.7"
   },
+  "engineStrict": false,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "NODE_OPTIONS='--max_old_space_size=4096' next build",
     "start": "next start",
     "lint": "next lint",
     "update-news": "ts-node --require tsconfig-paths/register src/lambda/updateNews.ts",
