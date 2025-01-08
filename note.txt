@@ -1,9 +1,5 @@
 
 
-當部署aws amplify 時要注入儲存在環境變數
-
-
-
 --------
 基本配置：
 CUSTOM_REGION=ap-northeast-1
