@@ -13,16 +13,24 @@
         {
             "Effect": "Allow",
             "Action": [
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+                "ssm:GetParametersByPath"
+            ],
+            "Resource": [
+                "arn:aws:ssm:ap-northeast-1:363455227654:parameter/amplify/shared/d9wn57zpaq1gh/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
                 "dynamodb:*",
                 "s3:*",
                 "ses:*",
                 "cognito-idp:*",
                 "translate:*",
                 "lambda:*",
-                "events:*",
-                "ssm:GetParameter",
-                "ssm:GetParameters",
-                "ssm:GetParametersByPath"
+                "events:*"
             ],
             "Resource": "*"
         },

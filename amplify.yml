@@ -15,9 +15,6 @@ frontend:
         - "npm config set fetch-timeout 600000"
         - "npm config set registry https://registry.npmjs.org/"
         - |
-          echo "Installing system dependencies"
-          yum install -y jq chromium chromium-headless chromium-libs nss cups-libs atk at-spi2-atk libXcomposite libXdamage libXrandr mesa-libgbm alsa-lib pango cairo-gobject libudev || true
-        - |
           echo "Creating .npmrc file"
           cat > .npmrc << EOL
           legacy-peer-deps=true
@@ -27,52 +24,36 @@ frontend:
         - "npm ci --prefer-offline --no-audit || npm install --legacy-peer-deps --no-audit"
         - |
           echo "Fetching parameters from SSM Parameter Store"
-          PARAMS=$(aws ssm get-parameters-by-path --path "/amplify/shared/d9wn57zpaq1gh/" --recursive --with-decryption --region ap-northeast-1 --query "Parameters[*].{Name:Name,Value:Value}")
-          for param in $(echo "$PARAMS" | jq -r '.[] | @base64'); do
-            _jq() {
-              echo ${param} | base64 --decode | jq -r ${1}
-            }
-            NAME=$(_jq '.Name' | sed 's/.*d9wn57zpaq1gh\///')
-            VALUE=$(_jq '.Value')
-            echo "Setting parameter: $NAME"
-            export $NAME="$VALUE"
-          done
-        - |
+          # 使用 AWS CLI 直接獲取參數
+          PARAMS=$(aws ssm get-parameters-by-path \
+            --path "/amplify/shared/d9wn57zpaq1gh/" \
+            --recursive \
+            --with-decryption \
+            --region ap-northeast-1 \
+            --output text \
+            --query "Parameters[].[Name,Value]")
+
+          # 創建 .env.production 文件
           echo "Creating .env.production file"
-          cat > .env.production << EOL
-          NODE_ENV=production
-          AWS_REGION=ap-northeast-1
-          NEXT_PUBLIC_AWS_REGION=ap-northeast-1
-          USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET:-aws-blog-avatar}
-          AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
-          NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID}
-          NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
-          DYNAMODB_ANNOUNCEMENT_TABLE=${DYNAMODB_ANNOUNCEMENT_TABLE:-AWS_Blog_Announcement}
-          DYNAMODB_SOLUTIONS_TABLE=${DYNAMODB_SOLUTIONS_TABLE:-AWS_Blog_Solutions}
-          DYNAMODB_ARCHITECTURE_TABLE=${DYNAMODB_ARCHITECTURE_TABLE:-AWS_Blog_Architecture}
-          DYNAMODB_NEWS_TABLE=${DYNAMODB_NEWS_TABLE:-AWS_Blog_News}
-          DYNAMODB_KNOWLEDGE_TABLE=${DYNAMODB_KNOWLEDGE_TABLE:-AWS_Blog_Knowledge}
-          GMAIL_USER=${GMAIL_USER}
-          GMAIL_PASS=${GMAIL_PASS}
-          SES_SENDER_EMAIL=${SES_SENDER_EMAIL}
-          NEXT_PUBLIC_SES_SENDER_EMAIL=${NEXT_PUBLIC_SES_SENDER_EMAIL}
-          NEXT_PUBLIC_LINE_BASIC_ID=${NEXT_PUBLIC_LINE_BASIC_ID}
-          NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-          NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME=${NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME}
-          NEXT_PUBLIC_LINE_QR_CODE_URL=${NEXT_PUBLIC_LINE_QR_CODE_URL}
-          DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
-          DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
-          DISCORD_NOTIFICATION_CHANNEL_ID=${DISCORD_NOTIFICATION_CHANNEL_ID}
-          DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
-          DISCORD_AUTHORIZE_URL=${DISCORD_AUTHORIZE_URL}
-          EOL
+          echo "NODE_ENV=production" > .env.production
+
+          # 處理參數並寫入 .env.production
+          echo "$PARAMS" | while read -r NAME VALUE; do
+            # 提取參數名稱（移除路徑前綴）
+            PARAM_NAME=$(echo "$NAME" | sed 's/.*d9wn57zpaq1gh\///')
+            echo "Setting parameter: $PARAM_NAME"
+            # 寫入環境變數到 .env.production
+            echo "$PARAM_NAME=$VALUE" >> .env.production
+          done
+
+          # 顯示環境變數（用於調試）
+          echo "Environment variables set:"
+          cat .env.production | grep -v "PASS\|KEY\|SECRET"
     build:
       commands:
         - |
           echo "Starting build process with following environment:"
           echo "NODE_ENV: $NODE_ENV"
-          echo "AWS_REGION: $AWS_REGION"
-          echo "NEXT_PUBLIC_AWS_REGION: $NEXT_PUBLIC_AWS_REGION"
         - 'export NODE_OPTIONS="--max_old_space_size=4096"'
         - "export NODE_ENV=production"
         - "export CI=true"
