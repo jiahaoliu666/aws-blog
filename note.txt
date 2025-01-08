@@ -1,62 +1,16 @@
 
 
---------
-基本配置：
-CUSTOM_REGION=ap-northeast-1
-NEXT_PUBLIC_REGION=ap-northeast-1
-NEXT_PUBLIC_COGNITO_CLIENT_ID=5ua9kmb59lmqks0echkc261dgh
-NEXT_PUBLIC_COGNITO_USER_POOL_ID=ap-northeast-1_SDMioGwSr
-存儲桶配置：
-BLOG_AVATAR_BUCKET=aws-blog-avatar
-BLOG_FEEDBACK_BUCKET=aws-blog-feedback
-DynamoDB 表配置：
-BLOG_ANNOUNCEMENT_TABLE=AWS_Blog_Announcement
-BLOG_SOLUTIONS_TABLE=AWS_Blog_Solutions
-BLOG_ARCHITECTURE_TABLE=AWS_Blog_Architecture
-BLOG_NEWS_TABLE=AWS_Blog_News
-BLOG_KNOWLEDGE_TABLE=AWS_Blog_Knowledge
-其他服務配置：
-GMAIL_USER=awsblogfeedback@gmail.com
-GMAIL_PASS=ueyoobbzsdlhioqo
-SES_SENDER_EMAIL=no-reply@awsblog365.com
-DISCORD_CLIENT_ID=1322182992575205426
-DISCORD_GUILD_ID=1322192137072148480
-DISCORD_NOTIFICATION_CHANNEL_ID=1322192332522520656
-DISCORD_REDIRECT_URI=https://awsblog365.com/api/discord/callback
-NEXT_PUBLIC_SES_SENDER_EMAIL=no-reply@awsblog365.com  
-NEXT_PUBLIC_DISCORD_CLIENT_ID=1322182992575205426     
-NEXT_PUBLIC_LINE_BASIC_ID=@601feiwz
-NEXT_PUBLIC_API_URL=https://awsblog365.com/
-NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME=AWS Blog 365
-NEXT_PUBLIC_LINE_QR_CODE_URL=https://line.me/R/ti/p/@601feiwz
---------
-「我有一個基於 Next.js 的前端專案，所有功能已在本地測試完成。現在希望將該專案部署到 AWS Amplify，專案設計不依賴任何Amplify後端資源，而是通過 AWS SDK（例如 Cognito 或 S3 等功能）在前端進行操作。請提供具體步驟，協助我在 AWS Amplify 上部署網站
 
+向官方line傳訊息沒有收到自動回覆 
 
-如何在aws amplify gen 2從0開始建立 next.js專案
-我會使用到
-AWS 服務連接到後端
-amplify Authentication
-amplify Storage
-amplify Data
-
-第三方服務
-OpenAI API
-discord
-line
-
+discord 訂閱
 
 --------
 
-先了解當前使用哪些的服務、閱讀amplify官方文檔
-
-統一使用Amplif架構？
-
-當使用AWS Amplify Gen 2建立專案時，主要的檔案結構該修改為何？
-
-遵循 amplify gen 2 最佳實踐
-
-s3 cognito dynamodb lambda
+git checkout main
+git checkout branch
+git pull origin main
+git checkout branch
 
 --------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
@@ -77,47 +31,27 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 
 讓介面更適合個人使用，著重於內容的可讀性和操作的便利性，同時保持簡潔的視覺效果
 
-將這些檔案合併成一個通用的處理器
-
 考慮到這些文件的邏輯完全相同，您可以考慮將共同的邏輯抽取到一個共用的函數中，
 只需傳入不同的表名作為參數，這樣可以減少代碼重複，提高維護性。
 
-根據當前代碼的模式製作 
-
 完成UI/UX 設計
-
-根據代碼，當在架構參考頁面中移除收藏的文章時會發生什麼事情
 
 --------
 
 進行中：
 
-把代碼都儲存到 Secrets Manager
+將頁面和元件調整為響應式設計，以適配不同螢幕尺寸（包括手機、平板和桌面）確保在這些設備上的布局和功能正常顯示，同時確保現有功能、樣式完全保持一致，且不影響現有的業務邏輯或功能運作
 
-把所有重複的佈局 樣式 統一 一致
+、手機版測試 
 
-把重複的代碼統一使用統一的變數 並優化整體代碼 優化重複性代碼
+移除所有console.log
 
 --------
 
 待執行：
 
-全部改為響應式設計、手機版測試
-
-上傳頭像會出現 Failed to fetch
-
-意見反饋附件無法上傳，無法上傳到S3
-
-移除所有console.log
-
---------
-最後執行：
-
-metaage郵箱 沒有收到 刪除帳號的通知
-把env環境變數儲存在secure manager
 使用 crontab（Linux/Mac）定期執行爬蟲
 
-移除刷新頁面右下角出現三角形的圖示 (應該只有測試環境會顯示、生產環境需測試)
 --------
 
 全部收藏
