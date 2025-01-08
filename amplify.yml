@@ -15,8 +15,8 @@ frontend:
         - "npm config set fetch-timeout 600000"
         - "npm config set registry https://registry.npmjs.org/"
         - |
-          echo "Installing system dependencies for Puppeteer"
-          yum install -y chromium chromium-headless chromium-libs nss cups-libs atk at-spi2-atk libXcomposite libXdamage libXrandr mesa-libgbm alsa-lib pango cairo-gobject libudev || true
+          echo "Installing system dependencies"
+          yum install -y jq chromium chromium-headless chromium-libs nss cups-libs atk at-spi2-atk libXcomposite libXdamage libXrandr mesa-libgbm alsa-lib pango cairo-gobject libudev || true
         - |
           echo "Creating .npmrc file"
           cat > .npmrc << EOL
@@ -41,17 +41,17 @@ frontend:
           echo "Creating .env.production file"
           cat > .env.production << EOL
           NODE_ENV=production
-          AWS_REGION=${AWS_REGION}
-          NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION}
-          USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET}
-          AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET}
+          AWS_REGION=ap-northeast-1
+          NEXT_PUBLIC_AWS_REGION=ap-northeast-1
+          USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET:-aws-blog-avatar}
+          AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET:-aws-blog-feedback}
           NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID}
           NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
-          DYNAMODB_ANNOUNCEMENT_TABLE=${DYNAMODB_ANNOUNCEMENT_TABLE}
-          DYNAMODB_SOLUTIONS_TABLE=${DYNAMODB_SOLUTIONS_TABLE}
-          DYNAMODB_ARCHITECTURE_TABLE=${DYNAMODB_ARCHITECTURE_TABLE}
-          DYNAMODB_NEWS_TABLE=${DYNAMODB_NEWS_TABLE}
-          DYNAMODB_KNOWLEDGE_TABLE=${DYNAMODB_KNOWLEDGE_TABLE}
+          DYNAMODB_ANNOUNCEMENT_TABLE=${DYNAMODB_ANNOUNCEMENT_TABLE:-AWS_Blog_Announcement}
+          DYNAMODB_SOLUTIONS_TABLE=${DYNAMODB_SOLUTIONS_TABLE:-AWS_Blog_Solutions}
+          DYNAMODB_ARCHITECTURE_TABLE=${DYNAMODB_ARCHITECTURE_TABLE:-AWS_Blog_Architecture}
+          DYNAMODB_NEWS_TABLE=${DYNAMODB_NEWS_TABLE:-AWS_Blog_News}
+          DYNAMODB_KNOWLEDGE_TABLE=${DYNAMODB_KNOWLEDGE_TABLE:-AWS_Blog_Knowledge}
           GMAIL_USER=${GMAIL_USER}
           GMAIL_PASS=${GMAIL_PASS}
           SES_SENDER_EMAIL=${SES_SENDER_EMAIL}
