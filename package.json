@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "18.18.2",
-    "npm": "9.6.7"
+    "node": ">=18.17.1",
+    "npm": ">=9.6.7"
   },
   "engineStrict": false,
   "scripts": {
@@ -15,7 +15,7 @@
     "update-news": "ts-node --require tsconfig-paths/register src/lambda/updateNews.ts",
     "fetch-news": "ts-node --require tsconfig-paths/register src/lambda/fetchNews.ts",
     "update-all": "ts-node src/lambda/updateAllContent.ts",
-    "clean": "rimraf .next && rimraf node_modules",
+    "clean": "rm -rf .next node_modules",
     "postinstall": "echo 'Skipping postinstall'"
   },
   "dependencies": {
@@ -55,6 +55,7 @@
     "framer-motion": "^11.15.0",
     "i18next": "^24.2.0",
     "ioredis": "^5.4.1",
+    "json-schema-to-ts": "^3.1.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.446.0",
     "next": "^14.2.15",
@@ -75,6 +76,7 @@
     "redis": "^4.7.0",
     "rimraf": "^5.0.0",
     "stream-browserify": "^3.0.0",
+    "ts-algebra": "^2.0.0",
     "util": "^0.12.5",
     "uuid": "^10.0.0",
     "winston": "^3.15.0"
@@ -113,5 +115,14 @@
     "typescript": "^5.4.2",
     "webpack": "^5.96.1"
   },
-  "type": "module"
+  "overrides": {
+    "@typescript-eslint/typescript-estree": "^8.19.1",
+    "@typescript-eslint/types": "^8.19.1",
+    "@typescript-eslint/parser": "^8.19.1",
+    "@typescript-eslint/eslint-plugin": "^8.19.1"
+  },
+  "type": "module",
+  "resolutions": {
+    "@typescript-eslint/*": "^8.19.1"
+  }
 }

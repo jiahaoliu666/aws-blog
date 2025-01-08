@@ -19,7 +19,10 @@
                 "cognito-idp:*",
                 "translate:*",
                 "lambda:*",
-                "events:*"
+                "events:*",
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+                "ssm:GetParametersByPath"
             ],
             "Resource": "*"
         },

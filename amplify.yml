@@ -4,16 +4,16 @@ frontend:
     preBuild:
       commands:
         - 'echo "Setting up build environment"'
-        - 'nvm use 18.18.2 || nvm install 18.18.2'
+        - "nvm use 18.18.2 || nvm install 18.18.2"
         - 'echo "Node $(node -v) and NPM $(npm -v)"'
-        - 'rm -rf node_modules .next'
-        - 'npm cache clean --force'
-        - 'npm install -g npm@9.6.7'
-        - 'npm config set engine-strict false'
-        - 'npm config set legacy-peer-deps true'
-        - 'npm config set fetch-retry-maxtimeout 600000'
-        - 'npm config set fetch-timeout 600000'
-        - 'npm config set registry https://registry.npmjs.org/'
+        - "rm -rf node_modules .next"
+        - "npm cache clean --force"
+        - "npm install -g npm@9.6.7"
+        - "npm config set engine-strict false"
+        - "npm config set legacy-peer-deps true"
+        - "npm config set fetch-retry-maxtimeout 600000"
+        - "npm config set fetch-timeout 600000"
+        - "npm config set registry https://registry.npmjs.org/"
         - |
           echo "Installing system dependencies for Puppeteer"
           yum install -y chromium chromium-headless chromium-libs nss cups-libs atk at-spi2-atk libXcomposite libXdamage libXrandr mesa-libgbm alsa-lib pango cairo-gobject libudev || true
@@ -24,41 +24,58 @@ frontend:
           strict-ssl=false
           puppeteer_skip_chromium_download=true
           EOL
-        - 'npm ci --prefer-offline --no-audit || npm install --legacy-peer-deps --no-audit'
+        - "npm ci --prefer-offline --no-audit || npm install --legacy-peer-deps --no-audit"
         - |
-          echo "Validating environment variables..."
-          for var in CUSTOM_REGION NEXT_PUBLIC_COGNITO_CLIENT_ID NEXT_PUBLIC_COGNITO_USER_POOL_ID; do
-            if [ -z "${!var}" ]; then
-              echo "Error: Required environment variable $var is not set"
-              exit 1
-            fi
+          echo "Fetching parameters from SSM Parameter Store"
+          PARAMS=$(aws ssm get-parameters-by-path --path "/amplify/shared/d9wn57zpaq1gh/" --recursive --with-decryption --region ap-northeast-1 --query "Parameters[*].{Name:Name,Value:Value}")
+          for param in $(echo "$PARAMS" | jq -r '.[] | @base64'); do
+            _jq() {
+              echo ${param} | base64 --decode | jq -r ${1}
+            }
+            NAME=$(_jq '.Name' | sed 's/.*d9wn57zpaq1gh\///')
+            VALUE=$(_jq '.Value')
+            echo "Setting parameter: $NAME"
+            export $NAME="$VALUE"
           done
         - |
           echo "Creating .env.production file"
           cat > .env.production << EOL
           NODE_ENV=production
-          CUSTOM_REGION=${CUSTOM_REGION}
-          NEXT_PUBLIC_REGION=${NEXT_PUBLIC_REGION}
-          BLOG_AVATAR_BUCKET=${BLOG_AVATAR_BUCKET}
-          BLOG_FEEDBACK_BUCKET=${BLOG_FEEDBACK_BUCKET}
+          AWS_REGION=${AWS_REGION}
+          NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION}
+          USER_UPLOADS_BUCKET=${USER_UPLOADS_BUCKET}
+          AWS_BLOG_FEEDBACK_BUCKET=${AWS_BLOG_FEEDBACK_BUCKET}
           NEXT_PUBLIC_COGNITO_CLIENT_ID=${NEXT_PUBLIC_COGNITO_CLIENT_ID}
           NEXT_PUBLIC_COGNITO_USER_POOL_ID=${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
-          BLOG_ANNOUNCEMENT_TABLE=${BLOG_ANNOUNCEMENT_TABLE}
-          BLOG_SOLUTIONS_TABLE=${BLOG_SOLUTIONS_TABLE}
-          BLOG_ARCHITECTURE_TABLE=${BLOG_ARCHITECTURE_TABLE}
-          BLOG_NEWS_TABLE=${BLOG_NEWS_TABLE}
-          BLOG_KNOWLEDGE_TABLE=${BLOG_KNOWLEDGE_TABLE}
+          DYNAMODB_ANNOUNCEMENT_TABLE=${DYNAMODB_ANNOUNCEMENT_TABLE}
+          DYNAMODB_SOLUTIONS_TABLE=${DYNAMODB_SOLUTIONS_TABLE}
+          DYNAMODB_ARCHITECTURE_TABLE=${DYNAMODB_ARCHITECTURE_TABLE}
+          DYNAMODB_NEWS_TABLE=${DYNAMODB_NEWS_TABLE}
+          DYNAMODB_KNOWLEDGE_TABLE=${DYNAMODB_KNOWLEDGE_TABLE}
+          GMAIL_USER=${GMAIL_USER}
+          GMAIL_PASS=${GMAIL_PASS}
+          SES_SENDER_EMAIL=${SES_SENDER_EMAIL}
+          NEXT_PUBLIC_SES_SENDER_EMAIL=${NEXT_PUBLIC_SES_SENDER_EMAIL}
+          NEXT_PUBLIC_LINE_BASIC_ID=${NEXT_PUBLIC_LINE_BASIC_ID}
+          NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+          NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME=${NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME}
+          NEXT_PUBLIC_LINE_QR_CODE_URL=${NEXT_PUBLIC_LINE_QR_CODE_URL}
+          DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+          DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+          DISCORD_NOTIFICATION_CHANNEL_ID=${DISCORD_NOTIFICATION_CHANNEL_ID}
+          DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+          DISCORD_AUTHORIZE_URL=${DISCORD_AUTHORIZE_URL}
           EOL
     build:
       commands:
         - |
           echo "Starting build process with following environment:"
           echo "NODE_ENV: $NODE_ENV"
-          echo "CUSTOM_REGION: $CUSTOM_REGION"
-          echo "NEXT_PUBLIC_REGION: $NEXT_PUBLIC_REGION"
+          echo "AWS_REGION: $AWS_REGION"
+          echo "NEXT_PUBLIC_AWS_REGION: $NEXT_PUBLIC_AWS_REGION"
         - 'export NODE_OPTIONS="--max_old_space_size=4096"'
-        - 'export NODE_ENV=production'
-        - 'export CI=true'
+        - "export NODE_ENV=production"
+        - "export CI=true"
         - |
           if npm run build; then
             echo "Build completed successfully"
@@ -85,7 +102,7 @@ frontend:
   artifacts:
     baseDirectory: .next
     files:
-      - '**/*'
+      - "**/*"
   cache:
     paths:
-      - node_modules/.cache/**/* 
+      - node_modules/.cache/**/*
