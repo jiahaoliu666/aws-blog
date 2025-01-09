@@ -40,14 +40,14 @@ const Toast: React.FC<ToastProps> = ({
   className
 }) => {
   const getToastStyles = () => {
-    const baseStyles = "fixed px-6 py-4 rounded-2xl shadow-lg z-50 flex items-start gap-4 max-w-md w-full transition-all duration-300 border";
+    const baseStyles = "fixed px-4 sm:px-6 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg z-50 flex items-start gap-3 sm:gap-4 w-[calc(100%-2rem)] sm:max-w-md transition-all duration-300 border break-words";
     const positionStyles = {
       'top': "top-24 left-1/2 -translate-x-1/2",
       'bottom': "bottom-6 left-1/2 -translate-x-1/2",
-      'top-right': "top-24 right-6",
-      'top-left': "top-24 left-6",
-      'bottom-right': "bottom-6 right-6",
-      'bottom-left': "bottom-6 left-6"
+      'top-right': "top-24 right-4 sm:right-6",
+      'top-left': "top-24 left-4 sm:left-6",
+      'bottom-right': "bottom-6 right-4 sm:right-6",
+      'bottom-left': "bottom-6 left-4 sm:left-6"
     };
     const typeStyles = {
       success: "bg-emerald-100 border-emerald-200 text-emerald-700 shadow-emerald-500/10",
@@ -100,20 +100,20 @@ const Toast: React.FC<ToastProps> = ({
   return (
     <div className={getToastStyles()}>
       {getIcon()}
-      <div className="flex-1">
-        <h4 className="font-semibold text-base leading-snug tracking-wide">{message}</h4>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium text-[15px] sm:text-[16px] leading-[1.3] tracking-[-0.2px] break-words">{message}</h4>
         {description && (
-          <p className="text-sm mt-1.5 opacity-90 leading-relaxed font-normal">{description}</p>
+          <p className="text-[13px] sm:text-[14px] mt-1.5 opacity-90 leading-[1.4] font-normal break-words">{description}</p>
         )}
       </div>
       {showProgress && (
-        <div className="absolute bottom-0 left-0 h-1 bg-black/5 dark:bg-white/10 w-full overflow-hidden rounded-b-2xl">
+        <div className="absolute bottom-0 left-0 h-[3px] sm:h-1 bg-black/5 dark:bg-white/10 w-full overflow-hidden rounded-b-xl sm:rounded-b-2xl">
           <div 
             className="h-full toast-progress rounded-r-full" 
             style={{
               width: `${progress}%`,
               backgroundColor: 'currentColor',
-              opacity: 0.15
+              opacity: 0.2
             }} 
           />
         </div>

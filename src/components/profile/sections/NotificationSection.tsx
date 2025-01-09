@@ -101,13 +101,13 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
   const currentStepIndex = steps.findIndex(s => s.step === currentStep);
 
   return (
-    <div className="flex justify-between relative">
+    <div className="flex justify-between relative mt-4 lg:mt-0">
       {/* 背景進度條 */}
-      <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-200" />
+      <div className="absolute top-5 lg:top-6 left-0 w-full h-0.5 bg-gray-200" />
       
       {/* 活動進度條 */}
       <div 
-        className="absolute top-6 left-0 h-0.5 bg-green-500 transition-all duration-300"
+        className="absolute top-5 lg:top-6 left-0 h-0.5 bg-green-500 transition-all duration-300"
         style={{ 
           width: `${(currentStepIndex / (steps.length - 1)) * 100}%`
         }} 
@@ -116,11 +116,11 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
       {steps.map(({ step, label, icon }, index) => (
         <div 
           key={step}
-          className="relative flex flex-col items-center w-1/3"
+          className="relative flex flex-col items-center lg:w-1/3 w-full px-2 lg:px-0"
         >
           {/* 圓形指示器 */}
           <div className={`
-            w-12 h-12 rounded-full flex items-center justify-center z-10
+            w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center z-10
             transition-all duration-300 ease-in-out
             ${currentStep === step 
               ? 'bg-green-500 text-white shadow-lg scale-110' 
@@ -129,12 +129,12 @@ const StepIndicators: React.FC<StepIndicatorsProps> = ({ currentStep, onStepClic
                 : 'bg-gray-100 text-gray-400'
             }
           `}>
-            <FontAwesomeIcon icon={icon} className="text-lg" />
+            <FontAwesomeIcon icon={icon} className="text-base lg:text-lg" />
           </div>
           
           {/* 標籤文字 */}
           <span className={`
-            text-sm mt-3 font-medium transition-colors duration-300
+            text-xs lg:text-sm mt-2 lg:mt-3 font-medium transition-colors duration-300 text-center
             ${currentStep === step ? 'text-green-600' : 'text-gray-500'}
           `}>
             {label}
@@ -153,41 +153,50 @@ interface StepProps {
 
 const QRCodeStep: React.FC<StepProps> = ({ onNext, onCopyLineId }) => (
   <div className="max-w-2xl mx-auto text-center">
-    <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
-      <div className="flex items-center justify-center gap-12">
+    <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg mb-4 sm:mb-6 border border-gray-100">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
         {/* QR Code 區塊 */}
-        <div className="text-center">
+        <div className="text-center w-full sm:w-auto">
           <div className="mb-4">
             <img 
               src="/Line-QR-Code.png" 
               alt="LINE QR Code" 
-              className="w-48 h-48"
+              className="w-36 h-36 sm:w-48 sm:h-48 mx-auto"
             />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">掃描 QR Code</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">掃描 QR Code</h3>
+          <p className="text-sm text-gray-600">
             開啟 LINE 應用程式
             <br />點擊「加入好友」後掃描
           </p>
         </div>
 
-        {/* 分隔線 */}
-        <div className="h-64 w-px bg-gray-200 relative">
+        {/* 分隔線 - 在手機版隱藏，平板以上顯示 */}
+        <div className="hidden sm:block h-64 w-px bg-gray-200 relative">
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
                         bg-white text-gray-400 px-2 text-sm">
             或
           </div>
         </div>
 
+        {/* 手機版的分隔線 */}
+        <div className="sm:hidden w-full py-4 relative">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                        bg-white text-gray-400 px-4 text-sm z-10">
+            或
+          </div>
+          <div className="w-full h-px bg-gray-200"></div>
+        </div>
+
         {/* LINE ID 搜尋區塊 */}
-        <div className="text-center">
+        <div className="text-center w-full sm:w-auto">
           <div className="mb-4">
-            <div className="w-48 h-48 flex items-center justify-center">
-              <div className="text-center">
-                <FontAwesomeIcon icon={faLine} className="text-5xl text-green-500 mb-4" />
+            <div className="w-full sm:w-48 h-36 sm:h-48 flex items-center justify-center">
+              <div className="text-center w-full px-4 sm:px-0">
+                <FontAwesomeIcon icon={faLine} className="text-4xl sm:text-5xl text-green-500 mb-4" />
                 <div className="relative group">
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-3 pr-12
-                                font-mono text-lg text-gray-700 select-all">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 sm:px-6 py-3 pr-12
+                                font-mono text-base sm:text-lg text-gray-700 select-all break-all">
                     @601feiwz
                   </div>
                   <button
@@ -199,18 +208,13 @@ const QRCodeStep: React.FC<StepProps> = ({ onNext, onCopyLineId }) => (
                     title="複製 LINE ID"
                   >
                     <FontAwesomeIcon icon={faCopy} className="text-lg" />
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 
-                                   bg-gray-800 text-white text-xs py-1 px-2 rounded 
-                                   opacity-0 group-hover:opacity-100 transition-opacity">
-                      複製
-                    </span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">搜尋 LINE ID</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">搜尋 LINE ID</h3>
+          <p className="text-sm text-gray-600">
             開啟 LINE 應用程式
             <br />搜尋 ID 加好友
           </p>
@@ -220,9 +224,9 @@ const QRCodeStep: React.FC<StepProps> = ({ onNext, onCopyLineId }) => (
 
     <button
       onClick={onNext}
-      className="bg-green-500 text-white px-8 py-3 rounded-xl hover:bg-green-600 
+      className="bg-green-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:bg-green-600 
                  transition-all duration-300 shadow-md hover:shadow-lg transform 
-                 hover:-translate-y-0.5 flex items-center gap-2 mx-auto"
+                 hover:-translate-y-0.5 flex items-center gap-2 mx-auto text-sm sm:text-base"
     >
       <span>下一步</span>
       <FontAwesomeIcon icon={faArrowRight} className="text-sm" />
@@ -299,65 +303,95 @@ const SendIdStep: React.FC<StepProps & {
 
   return (
     <div className="text-center">
-      <div className="bg-white p-8 rounded-xl mb-6">
+      <div className="bg-white p-8 rounded-xl mb-6 relative">
         <FontAwesomeIcon icon={faPaperPlane} className="text-5xl text-green-500 mb-4" />
         <h3 className="text-xl font-semibold mb-3">驗證碼</h3>
         
         {!verificationCode ? (
-          <>
-            <p className="text-gray-600 mb-6">點擊下方按鈕生成驗證碼</p>
+          <div className="flex flex-col items-center">
+            <p className="text-gray-600 mb-6">請點擊下方按鈕生成驗證碼</p>
+            <div className="flex justify-center items-center gap-4">
+              <button
+                onClick={onBack}
+                disabled={isGenerating}
+                className="px-6 py-3 rounded-lg text-gray-700 bg-gray-100
+                         hover:bg-gray-200 active:bg-gray-300
+                         transition-all duration-200
+                         flex items-center gap-2
+                         focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              >
+                返回上一步
+              </button>
+              <button
+                onClick={generateVerificationCode}
+                disabled={isGenerating}
+                className={`
+                  px-6 py-3 rounded-lg text-white
+                  ${isGenerating ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600'}
+                  transition-colors duration-200
+                  flex items-center justify-center gap-2
+                `}
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="animate-spin">⌛</span>
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faShield} />
+                    生成驗證碼
+                  </>
+                )}
+              </button>
+            </div>
+            
             <button
-              onClick={generateVerificationCode}
+              onClick={onBack}
               disabled={isGenerating}
-              className={`
-                px-6 py-3 rounded-lg text-white
-                ${isGenerating ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}
-                transition-colors duration-200
-                flex items-center gap-2 mx-auto
-              `}
+              className="w-full max-w-[280px] px-6 py-2.5 rounded-lg text-gray-700 bg-gray-100
+                       hover:bg-gray-200 active:bg-gray-300
+                       transition-all duration-200
+                       flex items-center justify-center gap-2
+                       focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
-              {isGenerating ? (
-                <>
-                  <span className="animate-spin">⌛</span>
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <FontAwesomeIcon icon={faShield} />
-                  生成驗證碼
-                </>
-              )}
+              返回上一步
             </button>
-          </>
+          </div>
         ) : (
-          <>
-            <p className="text-gray-600 mb-4">請將此驗證碼輸入至 LINE 官方帳號</p>
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="relative group">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-3 pr-12
-                              font-mono text-2xl text-gray-700 tracking-wider select-all">
-                  {verificationCode}
+          <div className="w-full max-w-md mx-auto">
+            <div className="relative mb-8">
+              <div className="text-center">
+                <div className="inline-block bg-green-500 text-white px-4 py-1 rounded-full text-sm mb-4">
+                  驗證碼
                 </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(verificationCode);
-                    toast.success('已複製驗證碼');
-                  }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2
-                           p-2 rounded-md hover:bg-gray-100 
-                           text-gray-500 hover:text-gray-700
-                           transition-all duration-200"
-                  title="複製驗證碼"
-                >
-                  <FontAwesomeIcon icon={faCopy} className="text-lg" />
-                </button>
+              </div>
+              
+              <div className="relative">
+                <div className="flex items-center justify-center">
+                  <div className="relative group w-full">
+                    <div className="bg-white px-4 py-3 rounded-lg border border-gray-200
+                                  font-mono text-2xl sm:text-3xl tracking-[0.5em]
+                                  text-gray-800 select-all max-w-full overflow-x-auto text-center">
+                      {verificationCode}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(verificationCode);
+                        toast.success('已複製驗證碼');
+                      }}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2
+                               p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg
+                               hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                      title="複製驗證碼"
+                    >
+                      <FontAwesomeIcon icon={faCopy} className="text-lg" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="text-sm text-gray-500 flex items-center justify-center gap-2 mb-4">
-              <FontAwesomeIcon icon={faInfoCircle} />
-              <span>驗證碼將在 5 分鐘後失效</span>
-            </div>
-          </>
+          </div>
         )}
       </div>
 
@@ -365,24 +399,29 @@ const SendIdStep: React.FC<StepProps & {
         <button
           onClick={onBack}
           disabled={isGenerating}
-          className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg 
-                   hover:bg-gray-200 transition-colors"
+          className="px-6 py-2.5 rounded-lg text-gray-700 bg-gray-100
+                   hover:bg-gray-200 active:bg-gray-300
+                   transition-all duration-200
+                   flex items-center gap-2
+                   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
         >
-          返回
+          返回上一步
         </button>
-        <button
-          onClick={onNext}
-          disabled={isGenerating || !verificationCode}
-          className={`
-            bg-green-500 text-white px-6 py-2.5 rounded-lg 
-            hover:bg-green-600 transition-colors 
-            flex items-center gap-2
-            ${(isGenerating || !verificationCode) ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
-        >
-          <span>下一步</span>
-          <FontAwesomeIcon icon={faArrowRight} />
-        </button>
+        {verificationCode && (
+          <button
+            onClick={onNext}
+            disabled={isGenerating}
+            className={`
+              bg-green-500 text-white px-6 py-2.5 rounded-lg 
+              hover:bg-green-600 transition-colors 
+              flex items-center gap-2
+              ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}
+            `}
+          >
+            <span>下一步</span>
+            <FontAwesomeIcon icon={faArrowRight} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -415,7 +454,24 @@ const VerifyCodeStep: React.FC<{
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [dialogType, setDialogType] = useState<'back' | 'cancel'>('back');
 
-  // 添加輪詢機制檢查驗證狀態
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // 倒數計時器
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  // 驗證狀態輪詢
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
     
@@ -426,11 +482,8 @@ const VerifyCodeStep: React.FC<{
           const data = await response.json();
           
           if (data.success && data.isVerified) {
-            // 清除輪詢
             clearInterval(pollInterval);
-            // 顯示成功訊息
             toast.success('LINE 驗證成功！');
-            // 重新載入頁面
             setTimeout(() => {
               window.location.reload();
             }, 1500);
@@ -438,7 +491,7 @@ const VerifyCodeStep: React.FC<{
         } catch (error) {
           logger.error('檢查驗證狀態失敗:', error);
         }
-      }, 3000); // 每 3 秒檢查一次
+      }, 3000);
     }
 
     return () => {
@@ -447,16 +500,6 @@ const VerifyCodeStep: React.FC<{
       }
     };
   }, [generatedCode, userId]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [timeLeft]);
 
   const generateVerificationCode = async () => {
     try {
@@ -489,18 +532,6 @@ const VerifyCodeStep: React.FC<{
     }
   };
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  useEffect(() => {
-    if (timeLeft === 0 && generatedCode) {
-      setGeneratedCode('');
-    }
-  }, [timeLeft, generatedCode]);
-
   const handleBack = () => {
     if (generatedCode) {
       setDialogType('back');
@@ -530,7 +561,7 @@ const VerifyCodeStep: React.FC<{
 
   return (
     <div className="max-w-2xl mx-auto text-center">
-      <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
         <div className="flex flex-col items-center justify-center">
           <div className="mb-6 text-center">
             <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4 mx-auto">
@@ -571,63 +602,55 @@ const VerifyCodeStep: React.FC<{
                 )}
               </button>
             ) : (
-              <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 relative">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2
-                              bg-green-500 text-white px-4 py-1 rounded-full text-sm">
-                  驗證碼
-                </div>
-                
-                <div className="mt-2 mb-4">
-                  <div className="text-4xl font-mono font-bold text-gray-800 tracking-[0.5em]
-                                flex items-center justify-center gap-4 relative group">
-                    {generatedCode}
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(generatedCode);
-                        toast.success('已複製驗證碼');
-                      }}
-                      className="ml-2 p-2 text-gray-400 
-                               hover:text-gray-600 transition-colors rounded-lg
-                               hover:bg-gray-100 group-hover:opacity-100
-                               focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                      title="複製驗證碼"
-                    >
-                      <FontAwesomeIcon icon={faCopy} />
-                    </button>
+              <div className="w-full max-w-md mx-auto">
+                <div className="relative mb-8">
+                  <div className="text-center">
+                    <div className="inline-block bg-green-500 text-white px-4 py-1 rounded-full text-sm mb-4">
+                      驗證碼
+                    </div>
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="flex items-center justify-center">
+                      <div className="relative group w-full">
+                        <div className="bg-white px-4 py-3 rounded-lg border border-gray-200
+                                    font-mono text-2xl sm:text-3xl tracking-[0.5em]
+                                    text-gray-800 select-all max-w-full overflow-x-auto text-center">
+                          {generatedCode}
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedCode);
+                            toast.success('已複製驗證碼');
+                          }}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2
+                                   p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg
+                                   hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                          title="複製驗證碼"
+                        >
+                          <FontAwesomeIcon icon={faCopy} className="text-lg" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {timeLeft > 0 && (
-                  <div className="flex items-center justify-center gap-2 text-sm">
-                    <FontAwesomeIcon icon={faClock} className="text-green-500" />
-                    <span className="font-mono">
-                      剩餘時間：{formatTime(timeLeft)}
-                    </span>
-                  </div>
-                )}
-                
-                {timeLeft === 0 && (
-                  <div className="text-red-500 text-sm mt-2">
-                    驗證碼已過期，請重新生成
-                  </div>
-                )}
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={handleBack}
+                    className="px-6 py-2.5 rounded-lg text-gray-700 bg-gray-100
+                             hover:bg-gray-200 active:bg-gray-300
+                             transition-all duration-200
+                             flex items-center gap-2
+                             focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  >
+                    返回上一步
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      <div className="flex justify-center gap-4">
-        <button
-          onClick={handleBack}
-          className="px-6 py-2.5 rounded-lg text-gray-700 bg-gray-100
-                   hover:bg-gray-200 active:bg-gray-300
-                   transition-all duration-200
-                   flex items-center gap-2
-                   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-        >
-          返回上一步
-        </button>
       </div>
 
       <Dialog
@@ -1199,20 +1222,24 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
     <div className="w-full">
       {/* 如果正在進行驗證，顯示驗證介面 */}
       {showVerification ? (
-        <div className="mb-8 relative">
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800">LINE 驗證</h2>
-            <p className="text-gray-600">請依照以下步驟完成 LINE 驗證</p>
+        <div className="mb-6 sm:mb-8 relative">
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">LINE 驗證</h2>
+            <p className="text-sm sm:text-base text-gray-600">請依照以下步驟完成 LINE 驗證</p>
           </div>
 
           {/* 步驟指示器 */}
-          <StepIndicators 
-            currentStep={currentStep} 
-            onStepClick={handleStepChange} 
-          />
+          <div className="w-full overflow-x-auto lg:overflow-visible pb-4 lg:pb-0">
+            <div className="min-w-[320px] lg:min-w-0 px-4 lg:px-0">
+              <StepIndicators 
+                currentStep={currentStep} 
+                onStepClick={handleStepChange} 
+              />
+            </div>
+          </div>
 
           {/* 驗證步驟內容 */}
-          <div className="mt-8">
+          <div className="mt-6 lg:mt-8">
             {currentStep === VerificationStep.SCAN_QR && (
               <QRCodeStep 
                 onNext={() => handleStepChange(VerificationStep.ADD_FRIEND)} 
@@ -1242,7 +1269,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
             )}
           </div>
 
-          {/* 取消按鈕 - 調整樣式讓它更明顯 */}
+          {/* 取消按鈕 */}
           <button
             onClick={handleCancelVerification}
             className="absolute top-0 right-0 p-2 rounded-full
@@ -1255,104 +1282,105 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
           </button>
         </div>
       ) : (
-        // 原有的通知設定介面
         <>
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <SectionTitle 
               title="通知設定"
               description="選擇您習慣的接收方式 (僅限一種)"
             />
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* 電子郵件通知卡片 */}
             <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-4 sm:gap-6">
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                       <FontAwesomeIcon 
                         icon={faEnvelope} 
-                        className="text-xl text-blue-500"
+                        className="text-lg sm:text-xl text-blue-500"
                       />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">電子郵件通知</h3>
-                      <p className="text-sm text-gray-600">透過 Mail 接收即時通知</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-50 
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-800">電子郵件通知</h3>
+                      <p className="text-xs sm:text-sm text-gray-600">透過 Mail 接收即時通知</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 
                           text-blue-700 text-xs font-medium rounded-full border border-blue-200
                           shadow-sm shadow-blue-100/50">
                           <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                           已綁定
                         </span>
-                        <span className="text-xs text-gray-500">{formData.email}</span>
+                        <span className="text-xs text-gray-500 break-all truncate">{formData.email}</span>
                       </div>
                     </div>
                   </div>
-                  <Switch
-                    checked={localSettings.emailNotification}
-                    onChange={handleEmailToggle}
-                    disabled={isLoading || !formData.email}
-                    sx={{
-                      '& .MuiSwitch-switchBase': {
-                        color: '#9ca3af',
-                        '&:hover': {
-                          backgroundColor: 'rgba(37, 99, 235, 0.04)',
-                        },
-                        '&.Mui-checked': {
-                          color: '#2563eb',
+                  <div className="flex-shrink-0">
+                    <Switch
+                      checked={localSettings.emailNotification}
+                      onChange={handleEmailToggle}
+                      disabled={isLoading || !formData.email}
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          color: '#9ca3af',
                           '&:hover': {
                             backgroundColor: 'rgba(37, 99, 235, 0.04)',
                           },
-                          '& + .MuiSwitch-track': {
-                            backgroundColor: '#2563eb !important',
-                            opacity: '0.5 !important',
-                          },
-                          '&.Mui-disabled': {
-                            color: '#93c5fd',
+                          '&.Mui-checked': {
+                            color: '#2563eb',
+                            '&:hover': {
+                              backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                            },
+                            '& + .MuiSwitch-track': {
+                              backgroundColor: '#2563eb !important',
+                              opacity: '0.5 !important',
+                            },
+                            '&.Mui-disabled': {
+                              color: '#93c5fd',
+                            },
                           },
                         },
-                      },
-                      '& .MuiSwitch-track': {
-                        backgroundColor: '#d1d5db',
-                        opacity: 0.3,
-                      },
-                    }}
-                  />
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#d1d5db',
+                          opacity: 0.3,
+                        },
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </Card>
 
             {/* LINE 通知卡片 */}
             <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-4 sm:gap-6">
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
                       <FontAwesomeIcon 
                         icon={faLine} 
-                        className="text-xl text-green-500"
+                        className="text-lg sm:text-xl text-green-500"
                       />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">LINE 通知</h3>
-                      <p className="text-sm text-gray-600">透過 LINE 接收即時通知</p>
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-800">LINE 通知</h3>
+                      <p className="text-xs sm:text-sm text-gray-600">透過 LINE 接收即時通知</p>
                       {settings.lineId ? (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 
                             text-green-700 text-xs font-medium rounded-full border border-green-200
                             shadow-sm shadow-green-100/50">
                             <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                             已綁定
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 break-all truncate">
                             LINE ID: {settings.lineId}
                           </span>
                         </div>
                       ) : (
                         <div className="mt-2 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-50 
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 
                             text-gray-500 text-xs font-medium rounded-full border border-gray-200">
                             未綁定
                           </span>
@@ -1360,50 +1388,52 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                       )}
                     </div>
                   </div>
-                  <Switch
-                    checked={localSettings.lineNotification}
-                    onChange={handleLineToggle}
-                    disabled={isLoading || !settings.lineId}
-                    sx={{
-                      '& .MuiSwitch-switchBase': {
-                        color: '#9ca3af',
-                        '&:hover': {
-                          backgroundColor: 'rgba(37, 99, 235, 0.04)',
-                        },
-                        '&.Mui-checked': {
-                          color: '#2563eb',
+                  <div className="flex-shrink-0">
+                    <Switch
+                      checked={localSettings.lineNotification}
+                      onChange={handleLineToggle}
+                      disabled={isLoading || !settings.lineId}
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          color: '#9ca3af',
                           '&:hover': {
                             backgroundColor: 'rgba(37, 99, 235, 0.04)',
                           },
-                          '& + .MuiSwitch-track': {
-                            backgroundColor: '#2563eb',
-                            opacity: 0.5,
+                          '&.Mui-checked': {
+                            color: '#2563eb',
+                            '&:hover': {
+                              backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                            },
+                            '& + .MuiSwitch-track': {
+                              backgroundColor: '#2563eb',
+                              opacity: 0.5,
+                            },
+                          },
+                          '&.Mui-disabled': {
+                            color: '#e5e7eb',
                           },
                         },
-                        '&.Mui-disabled': {
-                          color: '#e5e7eb',
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#d1d5db',
+                          opacity: 0.3,
                         },
-                      },
-                      '& .MuiSwitch-track': {
-                        backgroundColor: '#d1d5db',
-                        opacity: 0.3,
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* LINE 驗證流程區域 */}
               {!settings.lineId && !settings.lineNotification && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
+                <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
                   <div className="text-center">
-                    <p className="text-gray-600 mb-4">需要先完成 LINE 驗證才能啟用通知功能</p>
+                    <p className="text-sm text-gray-600 mb-4">需要先完成 LINE 驗證才能啟用通知功能</p>
                     <button
                       onClick={handleStartLineVerification}
-                      className="bg-blue-600 text-white px-6 py-2.5 rounded-lg 
+                      className="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg 
                         hover:bg-blue-700 active:bg-blue-800
                         transition-all duration-200 ease-in-out
-                        flex items-center gap-2 mx-auto
+                        flex items-center gap-2 mx-auto text-sm sm:text-base
                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                       <FontAwesomeIcon icon={faLine} />
@@ -1416,188 +1446,187 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
 
             {/* Discord 通知卡片 */}
             <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-4 sm:gap-6">
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
                       <FontAwesomeIcon 
                         icon={faDiscord} 
-                        className="text-xl text-indigo-500"
+                        className="text-lg sm:text-xl text-indigo-500"
                       />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 relative">
-                        Discord 通知
-                        <span className="relative group cursor-help">
-                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 border border-indigo-200
-                            hover:bg-indigo-100 transition-colors">
-                            <FontAwesomeIcon 
-                              icon={faDiscord}
-                              className="text-indigo-500 text-sm"
-                            />
-                            <span className="text-xs text-indigo-700 font-medium">綁定教學</span>
-                          </div>
-                          <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 -mb-2
-                            w-80 p-4 text-sm text-white 
-                            bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
-                            transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
-                            shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
-                                <p className="font-semibold flex items-center gap-2">
-                                  <FontAwesomeIcon icon={faDiscord} className="text-indigo-400" />
-                                  Discord 綁定流程
-                                </p>
-                                <span className="text-xs text-indigo-400">請選擇以下其中一種方式</span>
-                              </div>
-                              <div className="space-y-4">
-                                {/* 已有伺服器的流程 */}
-                                <div className="p-3 bg-gray-700/50 rounded-lg">
-                                  <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                                    一、已有 Discord 伺服器用戶
-                                  </h4>
-                                  <ol className="list-decimal list-inside space-y-1.5 text-sm">
-                                    <li>點擊「使用 Discord 登入」</li>
-                                    <li>在彈出視窗中，登入您的 Discord 帳號</li>
-                                    <li>選擇您擁有管理員權限的伺服器</li>
-                                    <li>授權 AWS Blog 365 Bot 加入伺服器</li>
-                                    <li>設定完成後，即可收到測試通知！</li>
-                                  </ol>
-                                </div>
-
-                                {/* 分隔線 */}
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 h-px bg-gray-700"></div>
-                                  <span className="text-gray-500 text-sm">或是</span>
-                                  <div className="flex-1 h-px bg-gray-700"></div>
-                                </div>
-
-                                {/* 新建伺服器的流程 */}
-                                <div className="p-3 bg-gray-700/50 rounded-lg">
-                                  <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                                    二、建立新 Discord 伺服器用戶
-                                  </h4>
-                                  <ol className="list-decimal list-inside space-y-1.5 text-sm">
-                                    <li>點擊 Discord 應用程式的「+」號來建立伺服器</li>
-                                    <li>選擇「建立自己的」來創建新伺服器</li>
-                                    <li>接著按照上述「已有伺服器用戶」的步驟，完成登入與授權流程</li>
-                                  </ol>
-                                </div>
-                              </div>
-                              <div className="mt-3 pt-2 border-t border-gray-700">
-                                <p className="text-gray-300 text-xs">
-                                  注意：
-                                  <br/>1. 請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息。
-                                  <br/>2. 因 Discord 的安全機制，機器人和使用者必須共同存在於至少一個伺服器中，否則無法收到訊息。
-                                  <br/>3. 如果選擇使用現有伺服器，您必須具有該伺服器的管理員權限。
-                                </p>
-                              </div>
-                            </div>
-                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1
-                              w-2 h-2 bg-gray-800/95 rotate-45">
-                            </div>
-                          </div>
-                        </span>
-                        <span className="relative group cursor-help ml-1">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5
-                            bg-gradient-to-r from-blue-500 to-indigo-600
-                            text-white text-xs font-bold rounded-full
-                            shadow-sm hover:shadow-md hover:scale-105
-                            transition-all duration-200 transform">
-                            <FontAwesomeIcon 
-                              icon={faThumbsUp} 
-                              className="text-white text-[11px] animate-pulse"
-                            />
-                            推薦
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-800 flex flex-col gap-2 relative">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="flex items-center gap-2">
+                            Discord 通知
                           </span>
-                          <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2
-                            w-max px-4 py-2.5 text-sm text-white 
-                            bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
-                            transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
-                            shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
-                            <div className="flex items-center gap-2 whitespace-nowrap">
-                              <FontAwesomeIcon icon={faThumbsUp} className="text-blue-400" />
-                              <span>此功能完全免費！推薦使用 Discord 接收通知</span>
-                            </div>
-                            <div className="absolute top-1/2 -left-1 transform -translate-y-1/2
-                              w-2 h-2 bg-gray-800/95 rotate-45">
-                            </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="relative group cursor-help">
+                              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 border border-indigo-200
+                                hover:bg-indigo-100 transition-colors">
+                                <FontAwesomeIcon 
+                                  icon={faDiscord}
+                                  className="text-indigo-500 text-sm"
+                                />
+                                <span className="text-xs text-indigo-700 font-medium">綁定教學</span>
+                              </div>
+                              <div className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2
+                                w-[calc(100vw-2rem)] sm:w-[320px] max-h-[80vh] overflow-y-auto
+                                p-4 text-sm text-white bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
+                                transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
+                                shadow-xl backdrop-blur-sm z-[9999]">
+                                <div className="relative">
+                                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
+                                    <p className="font-semibold flex items-center gap-2">
+                                      <FontAwesomeIcon icon={faDiscord} className="text-indigo-400" />
+                                      Discord 綁定流程
+                                    </p>
+                                    <span className="text-xs text-indigo-400">請選擇以下其中一種方式</span>
+                                  </div>
+                                  <div className="space-y-4">
+                                    {/* 已有伺服器的流程 */}
+                                    <div className="p-3 bg-gray-700/50 rounded-lg">
+                                      <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                        一、已有 Discord 伺服器用戶
+                                      </h4>
+                                      <ol className="list-decimal list-inside space-y-1.5 text-sm">
+                                        <li>點擊「使用 Discord 登入」</li>
+                                        <li>在彈出視窗中，登入您的 Discord 帳號</li>
+                                        <li>選擇您擁有管理員權限的伺服器</li>
+                                        <li>授權 AWS Blog 365 Bot 加入伺服器</li>
+                                        <li>設定完成後，即可收到測試通知！</li>
+                                      </ol>
+                                    </div>
+
+                                    {/* 分隔線 */}
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1 h-px bg-gray-700"></div>
+                                      <span className="text-gray-500 text-sm">或是</span>
+                                      <div className="flex-1 h-px bg-gray-700"></div>
+                                    </div>
+
+                                    {/* 新建伺服器的流程 */}
+                                    <div className="p-3 bg-gray-700/50 rounded-lg">
+                                      <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                        二、建立新 Discord 伺服器用戶
+                                      </h4>
+                                      <ol className="list-decimal list-inside space-y-1.5 text-sm">
+                                        <li>點擊 Discord 應用程式的「+」號來建立伺服器</li>
+                                        <li>選擇「建立自己的」來創建新伺服器</li>
+                                        <li>接著按照上述「已有伺服器用戶」的步驟，完成登入與授權流程</li>
+                                      </ol>
+                                    </div>
+                                  </div>
+                                  <div className="mt-3 pt-2 border-t border-gray-700">
+                                    <p className="text-gray-300 text-xs">
+                                      注意：
+                                      <br/>1. 請確保您的 Discord 隱私設定允許接收來自伺服器成員的私人訊息。
+                                      <br/>2. 因 Discord 的安全機制，機器人和使用者必須共同存在於至少一個伺服器中，否則無法收到訊息。
+                                      <br/>3. 如果選擇使用現有伺服器，您必須具有該伺服器的管理員權限。
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </span>
+                            <span className="relative group cursor-help">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5
+                                bg-gradient-to-r from-blue-500 to-indigo-600
+                                text-white text-xs font-bold rounded-full
+                                shadow-sm hover:shadow-md hover:scale-105
+                                transition-all duration-200 transform">
+                                <FontAwesomeIcon 
+                                  icon={faThumbsUp} 
+                                  className="text-white text-[11px] animate-pulse"
+                                />
+                                推薦
+                              </span>
+                              <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 -mb-2
+                                w-[280px] xs:w-80 p-4 text-sm text-white 
+                                bg-gray-800/95 rounded-xl opacity-0 group-hover:opacity-100 
+                                transition-all duration-200 ease-in-out scale-0 group-hover:scale-100
+                                shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
+                                <div className="flex items-center gap-2">
+                                  <FontAwesomeIcon icon={faThumbsUp} className="text-blue-400 flex-shrink-0" />
+                                  <span className="break-words">此功能完全免費！推薦使用 Discord 接收通知</span>
+                                </div>
+                                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1
+                                  w-2 h-2 bg-gray-800/95 rotate-45 hidden sm:block">
+                                </div>
+                              </div>
+                            </span>
                           </div>
-                        </span>
+                        </div>
                       </h3>
-                      <p className="text-sm text-gray-600">透過 Discord 接收即時通知</p>
-                      
-                      {/* 狀態標籤區域 */}
-                      <div className="mt-2 flex items-center gap-2">
-                        {settings.discordId ? (
-                          <>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 
-                              bg-indigo-50 text-indigo-700 text-xs font-medium 
-                              rounded-full border border-indigo-200">
-                              <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                              已綁定
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              Discord ID: {settings.discordId}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 
-                            bg-gray-50 text-gray-500 text-xs font-medium 
-                            rounded-full border border-gray-200">
+                      <p className="text-xs sm:text-sm text-gray-600">透過 Discord 接收即時通知</p>
+                      {settings.discordId ? (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 
+                            text-indigo-700 text-xs font-medium rounded-full border border-indigo-200">
+                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                            已綁定
+                          </span>
+                          <span className="text-xs text-gray-500 break-all truncate">
+                            Discord ID: {settings.discordId}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 
+                            text-gray-500 text-xs font-medium rounded-full border border-gray-200">
                             未綁定
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  {/* Discord 通知開關 */}
-                  <Switch
-                    checked={localSettings.discordNotification}
-                    onChange={handleDiscordToggle}
-                    disabled={isLoading || !settings.discordId}
-                    sx={{
-                      '& .MuiSwitch-switchBase': {
-                        color: '#9ca3af',
-                        '&:hover': {
-                          backgroundColor: 'rgba(79, 70, 229, 0.04)',
-                        },
-                        '&.Mui-checked': {
-                          color: '#4f46e5',
+                  <div className="flex-shrink-0">
+                    <Switch
+                      checked={localSettings.discordNotification}
+                      onChange={handleDiscordToggle}
+                      disabled={isLoading || !settings.discordId}
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          color: '#9ca3af',
                           '&:hover': {
                             backgroundColor: 'rgba(79, 70, 229, 0.04)',
                           },
-                          '& + .MuiSwitch-track': {
-                            backgroundColor: '#4f46e5',
-                            opacity: 0.5,
+                          '&.Mui-checked': {
+                            color: '#4f46e5',
+                            '&:hover': {
+                              backgroundColor: 'rgba(79, 70, 229, 0.04)',
+                            },
+                            '& + .MuiSwitch-track': {
+                              backgroundColor: '#4f46e5',
+                              opacity: 0.5,
+                            },
+                          },
+                          '&.Mui-disabled': {
+                            color: '#e5e7eb',
                           },
                         },
-                        '&.Mui-disabled': {
-                          color: '#e5e7eb',
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#d1d5db',
+                          opacity: 0.3,
                         },
-                      },
-                      '& .MuiSwitch-track': {
-                        backgroundColor: '#d1d5db',
-                        opacity: 0.3,
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Discord 驗證流程區域 - 只在未綁定且未啟用通知時顯示 */}
+              {/* Discord 驗證流程區域 */}
               {!settings.discordId && !settings.discordNotification && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
+                <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
                   <div className="text-center">
-                    <p className="text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
+                    <p className="text-sm text-gray-600 mb-4">需要先完成 Discord 驗證才能啟用通知功能</p>
                     <button
                       onClick={handleDiscordAuth}
                       className={`
-                        bg-indigo-600 text-white px-6 py-2.5 rounded-lg 
+                        bg-indigo-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg 
                         hover:bg-indigo-700 active:bg-indigo-800
                         transition-all duration-200 ease-in-out
-                        flex items-center gap-2 mx-auto
+                        flex items-center gap-2 mx-auto text-sm sm:text-base
                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
                         disabled:opacity-50 disabled:cursor-not-allowed
                         ${discordAuthStatus === 'authorizing' ? 'animate-pulse' : ''}
@@ -1625,13 +1654,13 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
           </div>
 
           {/* 儲存按鈕區域 */}
-          <div className="flex justify-end mt-6 gap-3">
+          <div className="flex justify-end mt-4 sm:mt-6 gap-3">
             {hasUnsavedChanges && (
               <button
                 onClick={handleReset}
-                className="px-6 py-2.5 rounded-lg text-gray-700 border border-gray-200
+                className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-gray-700 border border-gray-200
                   hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300
-                  transition-all duration-200
+                  transition-all duration-200 text-sm sm:text-base
                   disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSaving}
               >
@@ -1643,7 +1672,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
               onClick={handleSave}
               disabled={isSaving || !hasUnsavedChanges}
               className={`
-                px-6 py-2.5 rounded-lg flex items-center gap-2
+                px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg flex items-center gap-2 text-sm sm:text-base
                 ${isSaving || !hasUnsavedChanges 
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
                   : 'bg-blue-600 hover:bg-blue-700 text-white'

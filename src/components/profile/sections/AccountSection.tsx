@@ -385,7 +385,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-red-600">刪除帳號</h3>
-              <p className="text-sm text-gray-600">這些操作無法復原，請謹慎執行</p>
+              <p className="text-sm text-gray-600">此操作無法復原，請謹慎執行</p>
             </div>
           </div>
 

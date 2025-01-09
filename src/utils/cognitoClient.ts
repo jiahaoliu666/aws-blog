@@ -1,14 +1,11 @@
 // src/utils/cognitoClient.ts  
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";  
-import dotenv from 'dotenv';
-
-dotenv.config(); // 加載 .env 文件中的環境變量
 
 const cognitoClient = new CognitoIdentityProviderClient({  
-  region: "ap-northeast-1", // 確保這裡的區域是正確的
+  region: process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-1",
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '', // 確保這些環境變量已設置
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
+    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || ''
   }
 });  
 

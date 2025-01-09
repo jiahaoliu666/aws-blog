@@ -84,11 +84,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div className="relative w-full lg:w-1/4">
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 right-4 z-50 p-3 rounded-lg bg-gray-800/90 text-white hover:bg-gray-700 
-          transition-all duration-200 backdrop-blur-sm
-          hover:scale-105 active:scale-95 shadow-lg"
+        className="lg:hidden fixed top-4 right-4 z-50 
+          p-3 rounded-xl
+          bg-gradient-to-br from-blue-600 to-blue-700
+          text-white 
+          ring-2 ring-blue-400/30
+          hover:from-blue-500 hover:to-blue-600
+          active:from-blue-700 active:to-blue-800
+          transition-all duration-200 
+          hover:scale-105 active:scale-95 
+          shadow-lg shadow-blue-500/20
+          backdrop-blur-sm"
       >
-        <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} className="text-xl" />
+        <FontAwesomeIcon 
+          icon={isMobileMenuOpen ? faTimes : faBars} 
+          className="text-xl text-white drop-shadow-md
+            transition-transform duration-200
+            hover:rotate-180"
+        />
       </button>
 
       <div className={`

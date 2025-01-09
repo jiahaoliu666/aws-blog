@@ -70,11 +70,14 @@
     0 8px 24px rgba(0, 0, 0, 0.06),
     0 2px 8px rgba(0, 0, 0, 0.04),
     0 0 1px rgba(0, 0, 0, 0.04);
-  transform-origin: right;
+  transform-origin: center;
+  max-width: min(calc(100vw - 2rem), 28rem);
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .toast:hover {
-  transform: translateY(-2px) scale(1.01);
+  transform: translateY(-2px);
   box-shadow: 
     0 12px 36px rgba(0, 0, 0, 0.08),
     0 4px 12px rgba(0, 0, 0, 0.06),
@@ -86,6 +89,7 @@
   transition: width 0.1s linear, opacity 0.2s ease;
   background: currentColor;
   opacity: 0.2;
+  height: 100%;
 }
 
 /* 動畫類 */
@@ -110,5 +114,6 @@
 @media (prefers-color-scheme: dark) {
   .toast {
     --tw-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--tw-shadow);
   }
 }

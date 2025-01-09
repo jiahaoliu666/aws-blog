@@ -37,6 +37,7 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(true); // 初始設為 true
   const [timeLeft, setTimeLeft] = useState<number>(300); // 5分鐘 = 300秒
   const [timerActive, setTimerActive] = useState<boolean>(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [registrationData, setRegistrationData] = useState<{
     email: string;
     password: string;
@@ -176,22 +177,37 @@ const RegisterPage: React.FC = () => {
     };
   }, [isVerificationNeeded, registrationData]);
 
+  const validateEmail = (email: string): boolean => {
+    // 基本電子郵件格式驗證
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@metaage\.com\.tw$/;
+    return emailPattern.test(email);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    
+    if (newEmail && !validateEmail(newEmail)) {
+      setEmailError('請輸入有效的 @metaage.com.tw 電子郵件地址');
+    } else {
+      setEmailError(null);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {  
     e.preventDefault();  
     setRegistrationInProgress(true);
 
-    // 檢查用戶名長度
-    if (username.length > 10) {
-      setError('用戶名不可超過10個字');
+    // 檢查電子郵件格式
+    if (!validateEmail(email)) {
+      setError('請輸入有效的 @metaage.com.tw 電子郵件地址');
       setSuccess(null);
       return;
     }
 
-    // 移除 @metaage.com.tw 的驗證
-    // 如果要基本的電子郵件格式驗證，可以使用以下正則表達式
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      setError('請輸入有效的電子郵件地址');
+    // 檢查用戶名長度
+    if (username.length > 10) {
+      setError('用戶名不可超過10個字');
       setSuccess(null);
       return;
     }
@@ -480,12 +496,15 @@ const RegisterPage: React.FC = () => {
                 type="text"
                 placeholder="@metaage.com.tw"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 required
-                className="border border-gray-300 p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
+                className={`border ${emailError ? 'border-red-500' : 'border-gray-300'} p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 ${emailError ? 'focus:ring-red-500' : 'focus:ring-blue-500'} w-full transition duration-150 ease-in-out text-gray-700`}
                 disabled={isVerificationNeeded}
                 style={{ marginTop: '8px' }}
               />
+              {emailError && (
+                <p className="text-red-500 text-sm mt-1">{emailError}</p>
+              )}
             </div>  
 
             {!isVerificationNeeded && (  
