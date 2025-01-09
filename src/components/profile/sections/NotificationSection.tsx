@@ -453,6 +453,7 @@ const VerifyCodeStep: React.FC<{
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [dialogType, setDialogType] = useState<'back' | 'cancel'>('back');
+  const toast = useToastContext();
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -559,6 +560,18 @@ const VerifyCodeStep: React.FC<{
     }
   };
 
+  const handleCopyVerificationCode = () => {
+    try {
+      if (generatedCode) {
+        navigator.clipboard.writeText(generatedCode);
+        toast.success('已複製驗證碼');
+      }
+    } catch (error) {
+      toast.error('複製失敗，請手動複製');
+      logger.error('複製驗證碼失敗:', error);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto text-center">
       <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
@@ -619,10 +632,7 @@ const VerifyCodeStep: React.FC<{
                           {generatedCode}
                         </div>
                         <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(generatedCode);
-                            toast.success('已複製驗證碼');
-                          }}
+                          onClick={handleCopyVerificationCode}
                           className="absolute right-2 top-1/2 transform -translate-y-1/2
                                    p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg
                                    hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"

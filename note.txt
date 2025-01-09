@@ -6,7 +6,9 @@
 
 向官方line傳訊息沒有收到自動回覆 
 
-discord 訂閱
+彈出視窗會無法正常 discord 訂閱
+
+line webhook 無法正常運作
 
 --------
 

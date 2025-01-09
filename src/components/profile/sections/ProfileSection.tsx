@@ -265,11 +265,11 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
             <div className="flex-1 space-y-8">
               <div className="space-y-6">
                 {/* 用戶名稱 */}
-                <div className="flex flex-col lg:grid lg:grid-cols-[80px_1fr] gap-2 lg:gap-0 lg:items-center">
-                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0">用戶名稱：</label>
+                <div className="flex flex-col lg:grid lg:[grid-template-columns:80px_1fr] xl:grid-cols-[80px_1fr] gap-2 lg:gap-0">
+                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0 lg:flex lg:h-[42px] lg:items-center">用戶名稱：</label>
                   {isEditable.username ? (
                     <div className="flex-1">
-                      <div className="flex flex-col lg:flex-row gap-3">
+                      <div className="flex flex-col lg:flex-col xl:flex-row gap-3">
                         <div className="relative flex-1">
                           <input
                             type="text"
@@ -286,14 +286,14 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                             {`${localUsername.length}/10`}
                           </span>
                         </div>
-                        <div className="flex flex-row gap-2 mt-2 lg:mt-0">
+                        <div className="flex flex-row gap-2 mt-2 [@media(min-width:1024px)_and_(max-width:1079px)]:mt-2 xl:mt-0">
                           <button
                             onClick={(e) => {
                               e.preventDefault();
                               handleSaveProfileChanges(localUsername);
                             }}
                             disabled={isLoading || !localUsername.trim() || localUsername.length > 10}
-                            className="flex-1 lg:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg 
+                            className="flex-1 xl:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg 
                               hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
                               transition duration-150 flex items-center justify-center gap-2 whitespace-nowrap
                               min-w-[80px]"
@@ -305,7 +305,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                           <button
                             onClick={handleCancelChanges}
                             disabled={isLoading}
-                            className="flex-1 lg:flex-none px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
+                            className="flex-1 xl:flex-none px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
                               hover:bg-gray-50 transition duration-150 flex items-center justify-center gap-2 whitespace-nowrap
                               min-w-[80px]"
                           >
