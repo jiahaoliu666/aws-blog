@@ -265,12 +265,12 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
             <div className="flex-1 space-y-8">
               <div className="space-y-6">
                 {/* 用戶名稱 */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <label className="text-sm font-medium text-gray-700">用戶名稱：</label>
+                <div className="flex flex-col lg:grid lg:grid-cols-[80px_1fr] gap-2 lg:gap-0 lg:items-center">
+                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0">用戶名稱：</label>
                   {isEditable.username ? (
                     <div className="flex-1">
-                      <div className="flex gap-3">
-                        <div className="flex-1 relative">
+                      <div className="flex flex-col lg:flex-row gap-3">
+                        <div className="relative flex-1">
                           <input
                             type="text"
                             value={localUsername}
@@ -286,30 +286,37 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                             {`${localUsername.length}/10`}
                           </span>
                         </div>
-                        <button
-                          onClick={handleSave}
-                          disabled={isLoading || !localUsername.trim() || localUsername.length > 10}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg 
-                            hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                            transition duration-150 flex items-center gap-2 whitespace-nowrap"
-                        >
-                          <FontAwesomeIcon icon={isLoading ? faSpinner : faCheck} 
-                            className={isLoading ? 'animate-spin' : ''} />
-                          {isLoading ? '儲存中' : '儲存'}
-                        </button>
-                        <button
-                          onClick={handleCancelChanges}
-                          disabled={isLoading}
-                          className="px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
-                            hover:bg-gray-50 transition duration-150 flex items-center gap-2 whitespace-nowrap"
-                        >
-                          <FontAwesomeIcon icon={faTimes} />
-                          取消
-                        </button>
+                        <div className="flex flex-row gap-2 mt-2 lg:mt-0">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleSaveProfileChanges(localUsername);
+                            }}
+                            disabled={isLoading || !localUsername.trim() || localUsername.length > 10}
+                            className="flex-1 lg:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg 
+                              hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                              transition duration-150 flex items-center justify-center gap-2 whitespace-nowrap
+                              min-w-[80px]"
+                          >
+                            <FontAwesomeIcon icon={isLoading ? faSpinner : faCheck} 
+                              className={isLoading ? 'animate-spin' : ''} />
+                            {isLoading ? '儲存中' : '儲存'}
+                          </button>
+                          <button
+                            onClick={handleCancelChanges}
+                            disabled={isLoading}
+                            className="flex-1 lg:flex-none px-4 py-2 text-gray-700 border border-gray-200 rounded-lg
+                              hover:bg-gray-50 transition duration-150 flex items-center justify-center gap-2 whitespace-nowrap
+                              min-w-[80px]"
+                          >
+                            <FontAwesomeIcon icon={faTimes} />
+                            取消
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3 pl-2">
+                    <div className="flex items-center gap-3">
                       <span className="text-gray-900">{formData.username}</span>
                       <button
                         onClick={() => handleEditClick('username')}
@@ -324,9 +331,9 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 </div>
 
                 {/* 電子郵件 */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <label className="text-sm font-medium text-gray-700">電子郵件：</label>
-                  <div className="flex items-center gap-2 pl-2">
+                <div className="flex flex-col lg:grid lg:grid-cols-[80px_1fr] gap-2 lg:gap-0 lg:items-center">
+                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0">電子郵件：</label>
+                  <div className="flex items-center gap-2">
                     <span className="text-gray-900">{formData.email}</span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 
                       text-green-700 text-xs font-medium rounded-full border border-green-200">
@@ -337,17 +344,17 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 </div>
 
                 {/* 註冊日期 */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <label className="text-sm font-medium text-gray-700">註冊日期：</label>
-                  <span className="text-gray-900 pl-2">
+                <div className="flex flex-col lg:grid lg:grid-cols-[80px_1fr] gap-2 lg:gap-0 lg:items-center">
+                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0">註冊日期：</label>
+                  <span className="text-gray-900">
                     {formatDate(profileData.registrationDate)}
                   </span>
                 </div>
 
                 {/* 通知訂閱 */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <label className="text-sm font-medium text-gray-700">通知方式：</label>
-                  <div className="pl-2">
+                <div className="flex flex-col lg:grid lg:grid-cols-[80px_1fr] gap-2 lg:gap-0 lg:items-center">
+                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0">通知方式：</label>
+                  <div>
                     {getSubscriptionStatus()}
                   </div>
                 </div>

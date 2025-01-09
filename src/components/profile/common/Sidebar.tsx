@@ -8,7 +8,9 @@ import {
   faEye, 
   faCommentDots, 
   faClock,
-  faUserCog 
+  faUserCog,
+  faBars,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { FormData } from '@/types/profileTypes';
 
@@ -32,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(
     'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'
   );
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
@@ -69,8 +72,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    setIsMobileMenuOpen(false);
     
-    // 觸發側邊欄切換事件
     const event = new CustomEvent('sectionChange', { 
       detail: tab 
     });
@@ -78,111 +81,111 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`
-      w-full lg:w-1/4 
-      bg-gradient-to-br from-gray-800/95 via-gray-850 to-gray-900/95
-      backdrop-blur-sm
-      text-white rounded-xl lg:rounded-2xl 
-      shadow-lg lg:shadow-2xl 
-      p-3.5 lg:p-6 
-      min-h-fit lg:min-h-[calc(100vh-8rem)]
-      flex flex-col
-      relative
-      z-0
-    `}>
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-800/95 via-gray-850 to-gray-900/95 rounded-xl lg:rounded-2xl -z-10" />
-      
-      <div className="relative mb-4 lg:mb-8 flex-shrink-0">
-        <div className="flex items-center p-2 lg:flex-col lg:items-center lg:p-4">
-          <div className="relative group">
-            <div className="relative">
-              <img
-                src={currentAvatar || 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'}
-                alt="Profile"
-                className="
-                  w-14 h-14 lg:w-20 lg:h-20 
-                  rounded-full object-cover 
-                  ring-2 ring-blue-500/70 
-                  ring-offset-2 ring-offset-gray-800 
-                  transition-all duration-300 
-                  group-hover:scale-105 
-                  shadow-md
-                "
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png';
-                }}
-              />
-              <div className="absolute -bottom-1 -right-1 lg:-bottom-1 lg:-right-1 w-3.5 h-3.5 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-gray-800 shadow-sm">
-                <span className="absolute inset-0 rounded-full animate-ping bg-green-500 opacity-75"></span>
+    <div className="relative w-full lg:w-1/4">
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 right-4 z-50 p-3 rounded-lg bg-gray-800/90 text-white hover:bg-gray-700 
+          transition-all duration-200 backdrop-blur-sm
+          hover:scale-105 active:scale-95 shadow-lg"
+      >
+        <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} className="text-xl" />
+      </button>
+
+      <div className={`
+        fixed lg:sticky lg:top-0 left-0 
+        w-[85vw] sm:w-[380px] lg:w-auto h-screen
+        bg-gradient-to-br from-gray-800/95 via-gray-850 to-gray-900/95
+        backdrop-blur-sm text-white 
+        rounded-r-2xl lg:rounded-2xl 
+        shadow-2xl
+        p-5 lg:p-6 
+        transform transition-all duration-300 ease-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        lg:block z-40
+      `}>
+        <div className="h-full flex flex-col">
+          <div className="flex-shrink-0 mb-6 lg:mb-8">
+            <div className="flex items-center lg:flex-col lg:items-center lg:p-4">
+              <div className="relative group">
+                <div className="relative">
+                  <img
+                    src={currentAvatar || 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png'}
+                    alt="Profile"
+                    className="w-16 h-16 lg:w-20 lg:h-20 rounded-full object-cover 
+                      ring-2 ring-blue-500/70 ring-offset-2 ring-offset-gray-800 
+                      transition-all duration-300 group-hover:scale-105 shadow-md"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://aws-blog-avatar.s3.ap-northeast-1.amazonaws.com/user.png';
+                    }}
+                  />
+                  <div className="absolute -bottom-1 -right-1 lg:-bottom-1 lg:-right-1 w-4 h-4 
+                    bg-green-500 rounded-full border-2 border-gray-800 shadow-sm">
+                    <span className="absolute inset-0 rounded-full animate-ping bg-green-500 opacity-75"></span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="ml-4 lg:ml-0 lg:text-center lg:mt-4">
+                <h2 className="font-semibold text-lg lg:text-xl tracking-wide mb-1">
+                  {formData.username}
+                </h2>
+                <div className="flex items-center space-x-1.5 text-sm text-gray-400/90">
+                  <svg 
+                    className="w-4 h-4 hidden lg:block" 
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                  <span className="truncate max-w-[200px] lg:max-w-[200px]">{formData.email}</span>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="ml-3.5 lg:ml-0 lg:text-center lg:mt-4">
-            <h2 className="font-semibold text-base lg:text-xl tracking-wide mb-1 lg:mb-1">
-              {formData.username}
-            </h2>
-            <div className="flex items-center space-x-1.5 text-sm lg:text-sm text-gray-400/90">
-              <svg 
-                className="w-4 h-4 hidden lg:block" 
-                fill="currentColor" 
-                viewBox="0 0 20 20"
-              >
-                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-              </svg>
-              <span className="truncate max-w-[180px] lg:max-w-[200px]">{formData.email}</span>
-            </div>
+
+          <div className="flex-grow overflow-y-auto">
+            <ul className="space-y-2.5">
+              {menuItems.map(({ tab, label, icon }, index) => (
+                <li
+                  key={tab}
+                  className={`
+                    p-4 cursor-pointer rounded-xl
+                    transition-all duration-200 
+                    flex items-center space-x-4
+                    group animate-slide-in
+                    ${activeTab === tab 
+                      ? 'bg-blue-600/90 text-white shadow-md shadow-blue-500/20' 
+                      : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                    }
+                  `}
+                  style={{ 
+                    animationDelay: `${index * 0.05}s`
+                  }}
+                  onClick={() => handleTabChange(tab)}
+                >
+                  <FontAwesomeIcon 
+                    icon={icon} 
+                    className={`text-lg ${
+                      activeTab === tab ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                    }`} 
+                  />
+                  <span className="font-medium text-base">{label}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
 
-      <ul className="
-        space-y-2 lg:space-y-2.5 
-        custom-scrollbar
-        block
-        max-h-[calc(100vh-12rem)] lg:max-h-[calc(100vh-16rem)]
-        overflow-y-auto
-        flex-grow
-        relative
-        mb-2 lg:mb-4
-        px-1.5 lg:px-0
-      ">
-        {menuItems.map(({ tab, label, icon }, index) => (
-          <li
-            key={tab}
-            className={`
-              p-3 lg:p-4 
-              cursor-pointer 
-              rounded-lg lg:rounded-xl 
-              transition-all duration-300 
-              flex items-center 
-              space-x-3 lg:space-x-4 
-              group
-              animate-slide-in
-              ${activeTab === tab 
-                ? 'bg-blue-600/90 text-white shadow-md shadow-blue-500/20' 
-                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
-              }
-            `}
-            style={{ 
-              animationDelay: `${index * 0.05}s`
-            }}
-            onClick={() => handleTabChange(tab)}
-          >
-            <FontAwesomeIcon 
-              icon={icon} 
-              className={`text-base lg:text-lg ${
-                activeTab === tab ? 'text-white' : 'text-gray-400 group-hover:text-white'
-              }`} 
-            />
-            <span className="font-medium text-base lg:text-base">{label}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="h-2 lg:h-4 flex-shrink-0" />
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden
+            transition-opacity duration-300"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
     </div>
   );
 };

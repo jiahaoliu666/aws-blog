@@ -210,7 +210,7 @@ const Home: React.FC = () => {
               >
                 <motion.h1 
                   variants={textVariant(0.2)}
-                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold 
+                  className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl font-bold 
                     leading-[1.4] sm:leading-[1.4] md:leading-[1.3] lg:leading-[1.3]
                     tracking-tight
                     py-2 my-1
@@ -231,7 +231,7 @@ const Home: React.FC = () => {
                 <div className="flex gap-4 mt-8">
                   <Link 
                     href="/news" 
-                    className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base md:text-lg font-medium
+                    className="group relative px-8 sm:px-8 py-4 sm:py-4 rounded-xl text-base sm:text-base md:text-lg font-medium
                       bg-gradient-to-r from-blue-600 to-blue-500 
                       text-white
                       transition-all duration-300
@@ -239,7 +239,7 @@ const Home: React.FC = () => {
                       hover:-translate-y-0.5
                       active:translate-y-0.5
                       overflow-hidden
-                      w-full sm:w-auto text-center"
+                      w-auto text-center"
                   >
                     <span className="relative z-10">開始使用</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-600 
