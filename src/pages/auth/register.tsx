@@ -466,7 +466,7 @@ const RegisterPage: React.FC = () => {
           <form className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200" onSubmit={isVerificationNeeded ? handleVerifyCode : handleRegister} style={{ backdropFilter: 'blur(15px)', backgroundColor: 'rgba(255, 255, 255, 0.85)' }}>  
             <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">註冊</h2>  
 
-            <div className="mb-2 relative">
+            <div className="mb-4 relative">
               <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/3 text-gray-500" />
               <input
                 id="username"
@@ -479,7 +479,6 @@ const RegisterPage: React.FC = () => {
                 maxLength={10}
                 className="border border-gray-300 p-3 pl-10 pr-16 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition duration-150 ease-in-out text-gray-700"
                 disabled={isVerificationNeeded}
-                style={{ marginTop: '8px' }}
               />
               {username.length > 0 && (
                 <span className="absolute right-3 top-1/2 transform -translate-y-1/3 text-gray-500 text-sm">
@@ -489,19 +488,20 @@ const RegisterPage: React.FC = () => {
             </div>  
 
             <div className="mb-4 relative">
-              <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-1/2 transform -translate-y-1/4 text-gray-500" />
-              <input
-                id="email"
-                name="email"
-                type="text"
-                placeholder="@metaage.com.tw"
-                value={email}
-                onChange={handleEmailChange}
-                required
-                className={`border ${emailError ? 'border-red-500' : 'border-gray-300'} p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 ${emailError ? 'focus:ring-red-500' : 'focus:ring-blue-500'} w-full transition duration-150 ease-in-out text-gray-700`}
-                disabled={isVerificationNeeded}
-                style={{ marginTop: '8px' }}
-              />
+              <div className="relative">
+                <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  id="email"
+                  name="email"
+                  type="text"
+                  placeholder="@metaage.com.tw"
+                  value={email}
+                  onChange={handleEmailChange}
+                  required
+                  className={`border ${emailError ? 'border-red-500' : 'border-gray-300'} p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 ${emailError ? 'focus:ring-red-500' : 'focus:ring-blue-500'} w-full transition duration-150 ease-in-out text-gray-700`}
+                  disabled={isVerificationNeeded}
+                />
+              </div>
               {emailError && (
                 <p className="text-red-500 text-sm mt-1">{emailError}</p>
               )}

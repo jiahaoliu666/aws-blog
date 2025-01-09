@@ -142,7 +142,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faPalette} className="text-xl text-blue-500" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">主題設定</h3>
+                <h3 className="text-lg font-semibold text-gray-800">文章主題</h3>
                 <p className="text-sm text-gray-600">選擇您偏好的顯示模式</p>
               </div>
             </div>
@@ -179,7 +179,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
             <div className="flex items-center gap-3 mb-4">
               <FontAwesomeIcon icon={faTableColumns} className="text-xl text-blue-500" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">視圖設定</h3>
+                <h3 className="text-lg font-semibold text-gray-800">文章視圖</h3>
                 <p className="text-sm text-gray-600">選擇您偏好的文章顯示方式</p>
               </div>
             </div>

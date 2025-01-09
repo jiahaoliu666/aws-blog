@@ -26,12 +26,33 @@ const client = new Client({
 const dynamoClient = new DynamoDBClient({ region: 'ap-northeast-1' });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  logger.info('收到 LINE Webhook 請求', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body,
+    url: req.url,
+    timestamp: new Date().toISOString()
+  });
+
   try {
+    // 檢查 LINE 配置
+    logger.info('LINE 配置檢查', {
+      hasChannelAccessToken: !!lineConfig.channelAccessToken,
+      hasChannelSecret: !!lineConfig.channelSecret,
+      webhookUrl: lineConfig.webhookUrl,
+      environment: process.env.NODE_ENV
+    });
+
     // 驗證 LINE 簽章
     if (!verifyLineSignature(req)) {
-      logger.error('LINE 簽章驗證失敗');
+      logger.error('LINE 簽章驗證失敗', {
+        signature: req.headers['x-line-signature'],
+        body: req.body
+      });
       return res.status(401).json({ error: '無效的簽章' });
     }
+
+    logger.info('LINE 簽章驗證成功');
 
     const events = req.body.events;
     const lineServiceInstance = new LineService();
@@ -386,7 +407,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json({ success: true });
   } catch (error) {
-    logger.error('Webhook 處理失敗:', error);
+    logger.error('Webhook 處理失敗:', {
+      error: error instanceof Error ? error.message : '未知錯誤',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     res.status(500).json({ error: '內部伺服器錯誤' });
   }
 }

@@ -9,9 +9,11 @@ export const lineConfig: LineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
   channelSecret: process.env.LINE_CHANNEL_SECRET || '',
   apiUrl: 'https://api.line.me/v2/bot',
-  webhookUrl: process.env.NODE_ENV === 'development' 
-    ? `${process.env.NGROK_URL || ''}/api/line/webhook`
-    : `${process.env.NEXT_PUBLIC_API_URL || ''}/api/line/webhook`,
+  webhookUrl: process.env.NODE_ENV === 'production'
+    ? `${process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '')}/api/line/webhook`
+    : process.env.NGROK_URL 
+      ? `${process.env.NGROK_URL}/api/line/webhook`
+      : '/api/line/webhook',
   basicId: process.env.NEXT_PUBLIC_LINE_BASIC_ID || '',
   qrCodeUrl: process.env.NEXT_PUBLIC_LINE_QR_CODE_URL || '',
   officialAccountName: process.env.NEXT_PUBLIC_LINE_OFFICIAL_ACCOUNT_NAME || '',
@@ -23,6 +25,9 @@ export const lineConfig: LineConfig = {
     }
     if (!this.channelSecret) {
       throw new Error('LINE_CHANNEL_SECRET 未設定');
+    }
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL) {
+      throw new Error('生產環境中 NEXT_PUBLIC_API_URL 未設定');
     }
   }
 };
