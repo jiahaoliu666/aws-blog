@@ -4,9 +4,11 @@ import {
   PutItemCommand,
   ScanCommand,
   AttributeValue,
-  GetItemCommand
+  GetItemCommand,
+  QueryCommand,
+  DeleteItemCommand
 } from "@aws-sdk/client-dynamodb";
-import * as puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 import { v4 as uuidv4 } from "uuid";
 import OpenAI from "openai";
 import { logger } from "../utils/logger.js";
@@ -16,6 +18,9 @@ import { sendEmailWithRetry, failedNotifications, processFailedNotifications } f
 import { DISCORD_CONFIG, DISCORD_MESSAGE_TEMPLATES } from '../config/discord';
 import { DiscordNotificationType } from '../types/discordTypes';
 import { ArticleData, LineMessage, LineWebhookEvent, LineApiResponse, VerificationResponse } from '../types/lineTypes';
+
+// 常量定義
+const MAX_NOTIFICATIONS = 50;
 
 // 通用介面定義
 interface BaseContent {
@@ -58,8 +63,8 @@ const FETCH_COUNTS = {
   announcement: 0, // 更新公告數量
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
-  architecture: 5, // 更新架構數量
-  knowledge: 0, // 更新知識中心數量
+  architecture: 0, // 更新架構數量
+  knowledge: 7, // 更新知識中心數量
 };
 
 const prompts = {
@@ -340,7 +345,39 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
       waitUntil: "networkidle2",
       timeout: 60000,
     });
+
+    let currentArticleCount = 0;
     
+    while (currentArticleCount < FETCH_COUNTS.news) {
+      // 等待文章卡片載入
+      await page.waitForSelector('.m-card-title', { timeout: 30000 });
+      
+      // 計算當前頁面上的文章數量
+      const articlesOnPage = await page.$$('.m-card-title');
+      currentArticleCount = articlesOnPage.length;
+      
+      if (currentArticleCount < FETCH_COUNTS.news) {
+        try {
+          // 等待 "More" 按鈕出現
+          await page.waitForSelector('.m-directories-more-arrow-icon', { timeout: 5000 });
+          
+          // 點擊 "More" 按鈕
+          await page.click('.m-directories-more-arrow-icon');
+          
+          // 等待新內容載入
+          await page.waitForTimeout(2000);
+          
+          // 等待網路請求完成
+          await page.waitForNetworkIdle({ timeout: 5000 });
+        } catch (error) {
+          logger.warn(`無法載入更多文章: ${error}`);
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
     const articles = await page.evaluate((count) => {
       const titles = document.querySelectorAll(".m-card-title");
       const infos = document.querySelectorAll(".m-card-info");
@@ -369,12 +406,6 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
         });
     }, FETCH_COUNTS.news);
 
-    // 確保 articles 是陣列
-    if (!Array.isArray(articles)) {
-      logger.error(`   ${emoji} 【${name}】爬取的資料格式不正確`);
-      return;
-    }
-
     for (const article of articles) {
       await saveToDynamoDB(article, 'news', 'AWS_Blog_News');
     }
@@ -386,6 +417,8 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
 
 async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.announcement;
+  let totalArticlesScraped = 0;
+  let currentPage = 1;
   
   const page = await browser.newPage();
   try {
@@ -393,54 +426,96 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
       'Accept-Language': 'en-US,en;q=0.9'
     });
 
-    await gotoWithRetry(
-      page,
-      "https://aws.amazon.com/about-aws/whats-new/?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all",
-      {
+    // 設定基礎 URL
+    const baseUrl = "https://aws.amazon.com/new/";
+    const queryParams = "?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all";
+
+    while (totalArticlesScraped < FETCH_COUNTS.announcement) {
+      const pageUrl = `${baseUrl}${queryParams}&awsm.page-whats-new-content-all=${currentPage}`;
+      
+      logger.info(`${emoji} 正在爬取第 ${currentPage} 頁的公告`);
+      
+      await gotoWithRetry(page, pageUrl, {
         waitUntil: "networkidle2",
         timeout: 60000,
-      }
-    );
+      });
 
-    const announcements = await page.evaluate((fetchCount) => {
-      const cards = document.querySelectorAll('.m-card');
-      const results = [];
+      // 等待文章卡片載入
+      await page.waitForSelector('.m-card', { timeout: 30000 });
 
-      for (let i = 0; i < Math.min(fetchCount, cards.length); i++) {
-        const card = cards[i];
-        const titleElement = card.querySelector('.m-card-title');
-        const infoElement = card.querySelector('.m-card-info');
-        const linkElement = card.querySelector('.m-card-title a');
+      // 檢查是否為最後一頁
+      const isLastPage = await page.evaluate(() => {
+        const nextButton = document.querySelector('.m-icon-angle-right');
+        return !nextButton || nextButton.classList.contains('m-disabled');
+      });
 
-        if (titleElement && linkElement) {
-          const href = linkElement.getAttribute('href') || "";
-          // 組合完整的 URL
-          const fullUrl = href.startsWith('http') ? href : `https://aws.amazon.com${href}`;
+      // 爬取當前頁面的文章
+      const announcements = await page.evaluate(() => {
+        const cards = document.querySelectorAll('.m-card');
+        const results = [];
+
+        for (const card of cards) {
+          const titleElement = card.querySelector('.m-card-title');
+          const infoElement = card.querySelector('.m-card-info');
+          const linkElement = card.querySelector('.m-card-title a');
+
+          if (titleElement && linkElement) {
+            const href = linkElement.getAttribute('href') || "";
+            const fullUrl = href.startsWith('http') ? href : `https://aws.amazon.com${href}`;
+            
+            results.push({
+              title: titleElement.textContent?.trim() || "沒有標題",
+              info: infoElement?.textContent?.trim() || "沒有日期",
+              link: fullUrl
+            });
+          }
+        }
+
+        return results;
+      });
+
+      // 處理當前頁面的文章
+      for (const announcement of announcements) {
+        if (totalArticlesScraped >= FETCH_COUNTS.announcement) {
+          break;
+        }
+
+        // 轉換日期格式
+        announcement.info = convertDateFormat(announcement.info);
+        
+        try {
+          await saveToDynamoDB(announcement, 'announcement', 'AWS_Blog_Announcement');
+          totalArticlesScraped++;
           
-          results.push({
-            title: titleElement.textContent?.trim() || "沒有標題",
-            info: infoElement?.textContent?.trim() || "沒有日期",
-            link: fullUrl
-          });
+          // 更新進度
+          logProgress('announcement', totalArticlesScraped, FETCH_COUNTS.announcement, '爬取進度');
+        } catch (error) {
+          logger.error(`儲存公告失敗: ${error}`);
         }
       }
 
-      return results;
-    }, FETCH_COUNTS.announcement);
+      // 檢查是否需要繼續爬取
+      if (isLastPage || totalArticlesScraped >= FETCH_COUNTS.announcement) {
+        break;
+      }
 
-    for (const announcement of announcements) {
-      // 轉換日期格式
-      announcement.info = convertDateFormat(announcement.info);
-      await saveToDynamoDB(announcement, 'announcement', 'AWS_Blog_Announcement');
+      // 切換到下一頁前等待一下
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      currentPage++;
     }
   } catch (error) {
     logger.error(`   ${emoji} 【${name}】爬取失敗`);
     logger.error(`   ${error}`);
+  } finally {
+    await page.close();
   }
 }
 
 async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
   const page = await browser.newPage();
+  let articlesScraped = 0;
+  let currentPage = 1;
+  
   try {
     page.setDefaultTimeout(30000);
     page.setDefaultNavigationTimeout(30000);
@@ -450,178 +525,288 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
     });
 
-    await gotoWithRetry(
-      page,
-      'https://repost.aws/knowledge-center/all?view=all&sort=recent',
-      {
-        waitUntil: 'networkidle0',
-        timeout: 60000,
-      }
-    );
+    while (articlesScraped < FETCH_COUNTS.knowledge) {
+      const pageUrl = currentPage === 1
+        ? 'https://repost.aws/knowledge-center/all?view=all&sort=recent'
+        : `https://repost.aws/knowledge-center/all?view=all&sort=recent&page=${currentPage}`;
 
-    await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
+      await gotoWithRetry(
+        page,
+        pageUrl,
+        {
+          waitUntil: 'networkidle0',
+          timeout: 60000,
+        }
+      );
 
-    const articles = await page.evaluate(() => {
-      const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
-      return Array.from(items).slice(0, 5).map(item => {
-        const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
-        const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
-        
-        const link = titleElement?.getAttribute('href') || '沒有連結';
-        const description = descriptionElement?.textContent?.trim() || '沒有描述';
-        
-        return { title: '', description, link, info: '' };
+      await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
+
+      const articles = await page.evaluate(() => {
+        const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
+        return Array.from(items).map(item => {
+          const titleElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
+          const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
+          
+          const link = titleElement?.getAttribute('href') || '沒有連結';
+          const description = descriptionElement?.textContent?.trim() || '沒有描述';
+          
+          return { title: '', description, link, info: '' };
+        });
       });
-    });
 
-    for (const article of articles.slice(0, FETCH_COUNTS.knowledge)) {
-      if (!article.link.startsWith('http')) {
-        article.link = `https://repost.aws${article.link}`;
+      for (const article of articles) {
+        if (articlesScraped >= FETCH_COUNTS.knowledge) {
+          break;
+        }
+
+        if (!article.link.startsWith('http')) {
+          article.link = `https://repost.aws${article.link}`;
+        }
+
+        try {
+          await gotoWithRetry(
+            page,
+            article.link,
+            {
+              waitUntil: 'networkidle0',
+              timeout: 30000,
+            }
+          );
+          
+          await page.waitForSelector('.KCArticleView_title___TWq1 h1');
+          
+          article.title = await page.$eval('.KCArticleView_title___TWq1 h1', 
+            (element) => element.textContent?.trim() || '沒有標題'
+          );
+
+          const timestamp = Math.floor(Date.now() / 1000);
+          article.info = timestampToChineseDate(timestamp);
+          
+          await saveToDynamoDB(article, 'knowledge', 'AWS_Blog_Knowledge');
+          articlesScraped++;
+          
+          // 更新進度
+          logProgress('knowledge', articlesScraped, FETCH_COUNTS.knowledge, '爬取進度');
+        } catch (error) {
+          logger.error(`爬取知識文章標題時發生錯誤 (${article.link}):`, error);
+        }
       }
 
-      try {
-        await gotoWithRetry(
-          page,
-          article.link,
-          {
-            waitUntil: 'networkidle0',
-            timeout: 30000,
-          }
-        );
-        
-        await page.waitForSelector('.KCArticleView_title___TWq1 h1');
-        
-        article.title = await page.$eval('.KCArticleView_title___TWq1 h1', 
-          (element) => element.textContent?.trim() || '沒有標題'
-        );
+      // 如果還需要更多文章，檢查並點擊下一頁
+      if (articlesScraped < FETCH_COUNTS.knowledge) {
+        // 等待分頁按鈕載入
+        await page.waitForSelector(`a[aria-label="page ${currentPage + 1}"]`, { timeout: 5000 })
+          .catch(() => null); // 如果找不到下一頁按鈕，就會返回 null
 
-        // 加入時間戳並轉換為中文日期格式
-        const timestamp = Math.floor(Date.now() / 1000);
-        article.info = timestampToChineseDate(timestamp);
-        
-        await saveToDynamoDB(article, 'knowledge', 'AWS_Blog_Knowledge');
-      } catch (error) {
-        logger.error(`爬取知識文章標題時發生錯誤 (${article.link}):`, error);
+        const nextPageButton = await page.$(`a[aria-label="page ${currentPage + 1}"]`);
+        if (!nextPageButton) {
+          logger.info('沒有更多頁面可爬取');
+          break;
+        }
+
+        currentPage++;
+        await nextPageButton.click();
+        await page.waitForTimeout(2000); // 等待頁面載入
       }
     }
   } catch (error) {
     logger.error("爬取知識中心時發生錯誤:", error);
+  } finally {
+    await page.close();
   }
 }
 
 async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
   const page = await browser.newPage();
+  const solutions = [];
+  let currentPage = 1;
+  
   try {
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'en-US,en;q=0.9'
     });
 
-    await gotoWithRetry(
-      page,
-      'https://aws.amazon.com/solutions/',
-      {
-        waitUntil: 'networkidle2',
-        timeout: 60000,
+    while (solutions.length < FETCH_COUNTS.solutions) {
+      const pageUrl = currentPage === 1
+        ? 'https://aws.amazon.com/solutions/'
+        : `https://aws.amazon.com/solutions/?awsm.page-solutions-plus=${currentPage}`;
+
+      await gotoWithRetry(
+        page,
+        pageUrl,
+        {
+          waitUntil: 'networkidle2',
+          timeout: 60000,
+        }
+      );
+
+      // 等待卡片載入
+      await page.waitForSelector('.m-card-container');
+      const cards = await page.$$('.m-card-container');
+
+      // 計算這一頁需要爬取的卡片數量
+      const remainingCount = FETCH_COUNTS.solutions - solutions.length;
+      const cardsToProcess = Math.min(cards.length, remainingCount);
+
+      for (const card of cards.slice(0, cardsToProcess)) {
+        await card.hover();
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const solution = await card.evaluate((el) => {
+          const descElement = el.querySelector('.m-desc p') || el.querySelector('.m-desc');
+          return {
+            title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
+            description: descElement?.textContent?.trim() || '沒有描述',
+            link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
+            info: ''
+          };
+        });
+
+        // 加入時間戳並轉換為中文日期格式
+        const timestamp = Math.floor(Date.now() / 1000);
+        solution.info = timestampToChineseDate(timestamp);
+
+        solutions.push(solution);
       }
-    );
 
-    const cards = await page.$$('.m-card-container');
-    const solutions = [];
+      // 檢查是否需要繼續爬取下一頁
+      if (solutions.length >= FETCH_COUNTS.solutions) {
+        break;
+      }
 
-    for (const card of cards.slice(0, FETCH_COUNTS.solutions)) {
-      await card.hover();
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const solution = await card.evaluate((el) => {
-        const descElement = el.querySelector('.m-desc p') || el.querySelector('.m-desc');
-        return {
-          title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
-          description: descElement?.textContent?.trim() || '沒有描述',
-          link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
-          info: ''
-        };
+      // 檢查是否還有下一頁
+      const hasNextPage = await page.evaluate(() => {
+        const paginationItems = document.querySelectorAll('.m-pagination .m-pagination-item');
+        const currentPageItem = Array.from(paginationItems).find(item => 
+          item.classList.contains('m-active')
+        );
+        return currentPageItem && currentPageItem.nextElementSibling;
       });
 
-      // 加入時間戳並轉換為中文日期格式
-      const timestamp = Math.floor(Date.now() / 1000);
-      solution.info = timestampToChineseDate(timestamp);
+      if (!hasNextPage) {
+        break;
+      }
 
-      solutions.push(solution);
+      currentPage++;
+      // 在切換頁面前等待一下
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
+    // 儲存爬取到的解決方案
     for (const solution of solutions) {
       await saveToDynamoDB(solution, 'solutions', 'AWS_Blog_Solutions');
     }
   } catch (error) {
     logger.error("爬取解決方案時發生錯誤:", error);
+  } finally {
+    await page.close();
   }
 }
 
 async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
   const page = await browser.newPage();
+  const architectures = [];
+  let currentPage = 1;
+  
   try {
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'en-US,en;q=0.9'
     });
 
-    await gotoWithRetry(
-      page,
-      'https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all',
-      {
-        waitUntil: 'networkidle2',
-        timeout: 60000,
-      }
-    );
+    while (architectures.length < FETCH_COUNTS.architecture) {
+      const pageUrl = currentPage === 1
+        ? 'https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all'
+        : `https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all&awsm.page-cards-all=${currentPage}`;
 
-    const cards = await page.$$('.m-card-container');
-    const architectures = [];
+      await gotoWithRetry(
+        page,
+        pageUrl,
+        {
+          waitUntil: 'networkidle2',
+          timeout: 60000,
+        }
+      );
 
-    for (const card of cards.slice(0, FETCH_COUNTS.architecture)) {
-      await card.hover();
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 等待卡片載入
+      await page.waitForSelector('.m-card-container');
+      const cards = await page.$$('.m-card-container');
 
-      const architecture = await card.evaluate((el) => {
-        const descElement = el.querySelector('.m-desc');
-        let description = '';
-        
-        if (descElement) {
-          // 處理第一種情況：直接文字節點
-          const textNodes = Array.from(descElement.childNodes)
-            .filter(node => node.nodeType === Node.TEXT_NODE);
+      // 計算這一頁需要爬取的卡片數量
+      const remainingCount = FETCH_COUNTS.architecture - architectures.length;
+      const cardsToProcess = Math.min(cards.length, remainingCount);
+
+      for (const card of cards.slice(0, cardsToProcess)) {
+        await card.hover();
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const architecture = await card.evaluate((el) => {
+          const descElement = el.querySelector('.m-desc');
+          let description = '';
           
-          if (textNodes.length > 0) {
-            description = textNodes[0]?.textContent?.trim() || '';
-          }
-          
-          // 如果沒有直接文字節點，處理第二種情況：<p>標籤內的文字
-          if (!description) {
-            const firstP = descElement.querySelector('p');
-            if (firstP) {
-              description = firstP.textContent?.trim() || '';
+          if (descElement) {
+            // 處理第一種情況：直接文字節點
+            const textNodes = Array.from(descElement.childNodes)
+              .filter(node => node.nodeType === Node.TEXT_NODE);
+            
+            if (textNodes.length > 0) {
+              description = textNodes[0]?.textContent?.trim() || '';
+            }
+            
+            // 如果沒有直接文字節點，處理第二種情況：<p>標籤內的文字
+            if (!description) {
+              const firstP = descElement.querySelector('p');
+              if (firstP) {
+                description = firstP.textContent?.trim() || '';
+              }
             }
           }
-        }
 
-        return {
-          title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
-          description: description || '沒有描述',
-          link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
-          info: ''
-        };
+          return {
+            title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
+            description: description || '沒有描述',
+            link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
+            info: ''
+          };
+        });
+
+        // 加入時間戳並轉換為中文日期格式
+        const timestamp = Math.floor(Date.now() / 1000);
+        architecture.info = timestampToChineseDate(timestamp);
+
+        architectures.push(architecture);
+      }
+
+      // 檢查是否需要繼續爬取下一頁
+      if (architectures.length >= FETCH_COUNTS.architecture) {
+        break;
+      }
+
+      // 檢查是否還有下一頁
+      const hasNextPage = await page.evaluate(() => {
+        const paginationItems = document.querySelectorAll('.awsm-pagination-page');
+        const currentPageItem = Array.from(paginationItems).find(item => 
+          item.classList.contains('active')
+        );
+        return currentPageItem && currentPageItem.nextElementSibling;
       });
 
-      // 加入時間戳並轉換為中文日期格式
-      const timestamp = Math.floor(Date.now() / 1000);
-      architecture.info = timestampToChineseDate(timestamp);
+      if (!hasNextPage) {
+        break;
+      }
 
-      architectures.push(architecture);
+      currentPage++;
+      // 在切換頁面前等待一下
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
+    // 儲存爬取到的架構
     for (const architecture of architectures) {
       await saveToDynamoDB(architecture, 'architecture', 'AWS_Blog_Architecture');
     }
   } catch (error) {
     logger.error("爬取架構時發生錯誤:", error);
+  } finally {
+    await page.close();
   }
 }
 
@@ -797,9 +982,42 @@ async function broadcastNewContent(contentId: string, type: ContentType): Promis
     // 獲取所有用戶 ID
     const allUserIds = await getAllUserIds();
     
-    // 為每個用戶新增通知記錄
+    // 為每個用戶新增通知記錄並清理舊通知
     for (const userId of allUserIds) {
       try {
+        // 1. 查詢用戶當前的通知數量
+        const queryParams = {
+          TableName: "AWS_Blog_UserNotifications",
+          KeyConditionExpression: "userId = :userId",
+          ExpressionAttributeValues: {
+            ":userId": { S: userId }
+          },
+          ProjectionExpression: "userId, article_id, created_at",
+          ScanIndexForward: false  // 降序排序，最新的在前面
+        };
+
+        const result = await dbClient.send(new QueryCommand(queryParams));
+        const notifications = result.Items || [];
+
+        // 2. 如果通知數量已經達到或超過50，刪除最舊的通知
+        if (notifications.length >= MAX_NOTIFICATIONS) {
+          const notificationsToDelete = notifications.slice(MAX_NOTIFICATIONS - 1);
+          
+          for (const notification of notificationsToDelete) {
+            const deleteParams = {
+              TableName: "AWS_Blog_UserNotifications",
+              Key: {
+                userId: { S: userId },
+                article_id: notification.article_id
+              }
+            };
+
+            await dbClient.send(new DeleteItemCommand(deleteParams));
+            logger.info(`已刪除舊通知: userId=${userId}, article_id=${notification.article_id.S}`);
+          }
+        }
+
+        // 3. 新增新的通知
         await addNotification(userId, contentId, type);
         logger.info(`成功新增通知記錄：用戶 ${userId}, \n內容 ${contentId}`);
       } catch (error) {
@@ -1282,6 +1500,7 @@ export async function updateAllContent(): Promise<void> {
     
     browser = await puppeteer.launch({ 
       headless: true,
+      executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox']
     });
     
