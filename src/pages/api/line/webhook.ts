@@ -444,7 +444,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             logger.info('找不到用戶記錄，發送自動回覆');
             await lineServiceInstance.replyMessage(event.replyToken, [{
               type: 'text',
-              text: '您好，感謝您的訊息！目前此帳號為自動回覆系統，我們無法提供即時的人工回覆。'
+              text: '您好，目前此帳號為自動回覆，無法個別回覆用戶的訊息，感謝您的訊息！'
             }]);
           }
         } catch (error) {

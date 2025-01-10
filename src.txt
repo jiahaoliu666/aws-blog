@@ -202,7 +202,7 @@ src/
 ├── services----------------------------------------------------------- 服務
 │   ├── notificationService.ts      // 通知服務
 │   ├── authService.ts              // 認證服務
-│   ├── dbService.ts                // 資料庫服務
+│   ├── dbService.ts                // 資料庫 (刪除帳號)
 │   ├── lineVerification.ts         // LINE 驗證服務
 │   ├── discordService.ts           // Discord 服務
 │   ├── discordBotService.ts        // Discord Bot 服務

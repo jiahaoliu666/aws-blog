@@ -65,11 +65,11 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
         return;
       }
 
+      // 清除所有本地存儲
+      clearAllStorages();
+      
       // 顯示成功訊息
       showToast('帳號已成功刪除', 'success');
-
-      // 清除本地儲存
-      localStorage.clear();
       
       // 等待 toast 顯示完成後再重導向並重整頁面
       setTimeout(() => {
@@ -85,6 +85,92 @@ export const useProfileAccount = ({ user }: UseProfileAccountProps) => {
       logger.error('刪除帳號失敗:', { error });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // 新增清除所有本地存儲的函數
+  const clearAllStorages = () => {
+    try {
+      logger.info('開始清除所有本地存儲');
+
+      // 1. 清除 localStorage
+      const localStorageKeys = Object.keys(localStorage);
+      localStorageKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          logger.warn(`清除 localStorage key ${key} 失敗:`, e);
+        }
+      });
+      localStorage.clear();
+      
+      // 2. 清除 sessionStorage
+      const sessionStorageKeys = Object.keys(sessionStorage);
+      sessionStorageKeys.forEach(key => {
+        try {
+          sessionStorage.removeItem(key);
+        } catch (e) {
+          logger.warn(`清除 sessionStorage key ${key} 失敗:`, e);
+        }
+      });
+      sessionStorage.clear();
+      
+      // 3. 清除所有 cookies
+      const cookies = document.cookie.split(';');
+      cookies.forEach(cookie => {
+        try {
+          const [name] = cookie.trim().split('=');
+          if (name) {
+            // 使用多個路徑確保完全清除
+            const paths = ['/', '/api', '/auth', '/profile'];
+            paths.forEach(path => {
+              document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}`;
+            });
+          }
+        } catch (e) {
+          logger.warn(`清除 cookie ${cookie} 失敗:`, e);
+        }
+      });
+
+      // 4. 特別處理 next-auth 相關的 cookies
+      const nextAuthCookies = [
+        'next-auth.session-token',
+        'next-auth.csrf-token',
+        'next-auth.callback-url',
+        'next-auth.state',
+        '__Secure-next-auth.session-token',
+        '__Host-next-auth.csrf-token'
+      ];
+
+      nextAuthCookies.forEach(cookieName => {
+        try {
+          document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;secure;samesite=lax`;
+        } catch (e) {
+          logger.warn(`清除 next-auth cookie ${cookieName} 失敗:`, e);
+        }
+      });
+
+      // 5. 清除 IndexedDB 資料（如果有的話）
+      const deleteIndexedDB = async () => {
+        try {
+          const databases = await window.indexedDB.databases();
+          databases.forEach(db => {
+            if (db.name) {
+              window.indexedDB.deleteDatabase(db.name);
+            }
+          });
+        } catch (e) {
+          logger.warn('清除 IndexedDB 失敗:', e);
+        }
+      };
+      deleteIndexedDB().catch(e => logger.warn('執行 IndexedDB 清除失敗:', e));
+
+      logger.info('所有本地存儲清除完成');
+    } catch (error) {
+      logger.error('清除本地存儲時發生錯誤:', {
+        error: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 

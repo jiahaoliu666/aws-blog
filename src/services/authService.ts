@@ -7,7 +7,10 @@ import {
   AdminGetUserCommand,
   NotAuthorizedException,
   UserNotFoundException,
-  InvalidParameterException
+  InvalidParameterException,
+  AdminListDevicesCommand,
+  AdminForgetDeviceCommand,
+  AdminUserGlobalSignOutCommand
 } from "@aws-sdk/client-cognito-identity-provider";
 import { logger } from '@/utils/logger';
 
@@ -150,20 +153,80 @@ export class AuthService {
   
   private async deleteUserFromCognito(userSub: string): Promise<void> {
     try {
-      logger.info('開始刪除 Cognito 用戶', { 
+      logger.info('開始刪除 Cognito 用戶流程', { 
         userSub,
         timestamp: new Date().toISOString()
       });
 
-      const command = new AdminDeleteUserCommand({
-        UserPoolId: this.userPoolId,
-        Username: userSub
-      });
+      // 1. 先執行全域登出，確保所有裝置的 token 失效
+      try {
+        const signOutCommand = new AdminUserGlobalSignOutCommand({
+          UserPoolId: this.userPoolId,
+          Username: userSub
+        });
+        await this.client.send(signOutCommand);
+        logger.info('用戶全域登出成功', { userSub });
+      } catch (error) {
+        logger.warn('全域登出時發生錯誤，繼續執行其他步驟:', error);
+      }
 
-      await this.client.send(command);
-      logger.info('Cognito 用戶刪除成功', { userSub });
+      // 2. 列出並清除所有裝置
+      try {
+        const listDevicesCommand = new AdminListDevicesCommand({
+          UserPoolId: this.userPoolId,
+          Username: userSub,
+          Limit: 60  // 設定較大的限制以確保獲取所有裝置
+        });
+
+        const devicesResponse = await this.client.send(listDevicesCommand);
+        
+        if (devicesResponse.Devices && devicesResponse.Devices.length > 0) {
+          logger.info(`發現 ${devicesResponse.Devices.length} 個裝置需要清除`);
+          
+          // 使用 Promise.allSettled 確保即使部分裝置清除失敗也不會影響整體流程
+          const forgetResults = await Promise.allSettled(
+            devicesResponse.Devices.map(async device => {
+              if (device.DeviceKey) {
+                const forgetDeviceCommand = new AdminForgetDeviceCommand({
+                  UserPoolId: this.userPoolId,
+                  Username: userSub,
+                  DeviceKey: device.DeviceKey
+                });
+                return this.client.send(forgetDeviceCommand);
+              }
+            })
+          );
+
+          // 記錄裝置清除結果
+          const successCount = forgetResults.filter(result => result.status === 'fulfilled').length;
+          const failureCount = forgetResults.filter(result => result.status === 'rejected').length;
+          
+          logger.info('裝置清除完成', {
+            totalDevices: devicesResponse.Devices.length,
+            successCount,
+            failureCount
+          });
+        }
+      } catch (error) {
+        logger.warn('清除裝置時發生錯誤，繼續執行刪除用戶:', error);
+      }
+
+      // 3. 最後刪除用戶
+      try {
+        const deleteCommand = new AdminDeleteUserCommand({
+          UserPoolId: this.userPoolId,
+          Username: userSub
+        });
+
+        await this.client.send(deleteCommand);
+        logger.info('Cognito 用戶刪除成功', { userSub });
+      } catch (error) {
+        logger.error('刪除用戶時發生錯誤:', error);
+        throw error; // 這個錯誤需要拋出，因為這是關鍵步驟
+      }
+
     } catch (error) {
-      logger.error('刪除 Cognito 用戶失敗', {
+      logger.error('刪除 Cognito 用戶過程中發生錯誤', {
         userSub,
         error: error instanceof Error ? error.message : '未知錯誤',
         stack: error instanceof Error ? error.stack : undefined

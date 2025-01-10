@@ -1,14 +1,18 @@
 
 
-響應式設計~
+新增快取 只有當值有變化時才更新 否則都從快取中取值 不然每次都會重新獲取資料 造成額外的成本 並確保同步更新
 
-刪除帳號會刪除哪些數據
+當移除文章時收藏的文章數量要匹配
 
-向官方line傳訊息沒有收到自動回覆 
+當刪除帳號時要自動登出所有裝置
 
-彈出視窗會無法正常 discord 訂閱
+確認通知都能收到 
 
-line webhook 無法正常運作
+移除所有console.log
+
+爬取文章
+
+使用 crontab（Linux/Mac）定期執行爬蟲
 
 --------
 
@@ -46,16 +50,6 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 進行中：
 
 將頁面和元件調整為響應式設計，以適配不同螢幕尺寸（包括手機、平板和桌面）確保在這些設備上的布局和功能正常顯示，同時確保現有功能、樣式完全保持一致，且不影響現有的業務邏輯或功能運作
-
-、手機版測試 
-
-移除所有console.log
-
---------
-
-待執行：
-
-使用 crontab（Linux/Mac）定期執行爬蟲
 
 --------
 
@@ -211,3 +205,11 @@ src/pages/api/line/verify-code.ts
 
 https://8b9f-2407-4b00-1c0b-85b5-14c2-5d67-3889-5001.ngrok-free.app/api/line/webhook
 --------
+
+刪除帳號
+src/services/authService.ts
+src/components/profile/sections/AccountSection.tsx
+src/pages/api/profile/account/delete.ts
+src/templates/deleteAccountEmail.ts
+src/services/dbService.ts
+src/config/constants.ts

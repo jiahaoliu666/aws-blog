@@ -40,14 +40,37 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   // 添加 state 來追踪是否顯示按鈕
   const [showScrollButton, setShowScrollButton] = React.useState(false);
 
+  const [buttonPosition, setButtonPosition] = React.useState(24); // 預設 bottom 位置
+
+  // 檢測底部元素位置並調整按鈕位置
+  const adjustButtonPosition = () => {
+    const footer = document.querySelector('footer');
+    if (footer) {
+      const footerRect = footer.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // 當滾動到接近底部時
+      if (footerRect.top <= viewportHeight) {
+        const newPosition = viewportHeight - footerRect.top + 24; // 24px 為基本間距
+        setButtonPosition(Math.min(newPosition, 80)); // 限制最大上移距離為 80px
+      } else {
+        setButtonPosition(24); // 恢復預設位置
+      }
+    }
+  };
+
   // 添加滾動監聽函數
   const handleScroll = () => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    setShowScrollButton(scrollTop > 300); // 當滾動超過 300px 時顯示按鈕
+    setShowScrollButton(scrollTop > 300);
+    adjustButtonPosition();
   };
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
+    // 初始化時也要檢查一次
+    adjustButtonPosition();
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -85,7 +108,8 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
 
       {showScrollButton && (
         <button  
-          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition duration-300 fixed right-4 bottom-6 flex items-center justify-center p-3"  
+          style={{ bottom: `${buttonPosition}px` }}
+          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition duration-300 fixed right-4 flex items-center justify-center p-3 z-10"  
           onClick={scrollToTop}  
         >  
           <ArrowUp size={28} className="text-white" />  
