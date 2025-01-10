@@ -37,6 +37,7 @@ function useFavoritePageLogic() {
     const [showFavorites, setShowFavorites] = useState<boolean>(true);
     const [filteredFavorites, setFilteredFavorites] = useState<EnhancedFavoriteItem[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>("");
+    const [allFavorites, setAllFavorites] = useState<EnhancedFavoriteItem[]>([]);
     const toast = useToastContext();
 
     // 獲取各種類型的收藏
@@ -65,7 +66,7 @@ function useFavoritePageLogic() {
     }, [language, isClient]);
 
     // 合併所有收藏項目
-    const allFavorites = useMemo(() => {
+    const memoizedAllFavorites = useMemo(() => {
         const all = [
             ...announcementFavorites.map(item => ({ ...item, type: 'announcement', itemType: 'announcement' })),
             ...newsFavorites.map(item => ({ ...item, type: 'news', itemType: 'news' })),
@@ -80,8 +81,8 @@ function useFavoritePageLogic() {
     // 修改分頁和過濾邏輯
     useEffect(() => {
         let filteredItems = selectedType === 'all' 
-            ? allFavorites 
-            : allFavorites.filter((item: EnhancedFavoriteItem) => item.type === selectedType);
+            ? memoizedAllFavorites 
+            : memoizedAllFavorites.filter((item: EnhancedFavoriteItem) => item.type === selectedType);
 
         // 搜尋過濾邏輯
         if (searchTerm) {
@@ -130,20 +131,21 @@ function useFavoritePageLogic() {
         setFilteredFavorites(filteredItems);
 
         // 更新分頁
-        const newTotalPages = Math.ceil(filteredItems.length / 12);
+        const newTotalPages = Math.max(1, Math.ceil(filteredItems.length / 12));
         setTotalPages(newTotalPages);
 
-        // 更新當前顯示項目
-        const startIndex = (currentPage - 1) * 12;
-        const endIndex = startIndex + 12;
-        const newCurrentItems = filteredItems.slice(startIndex, endIndex);
-        setCurrentItems(newCurrentItems);
-
-        // 如果當前頁碼超出範圍，重置為第一頁
-        if (currentPage > newTotalPages && newTotalPages > 0) {
-            setCurrentPage(1);
+        // 確保當前頁碼有效
+        const validCurrentPage = Math.min(currentPage, newTotalPages);
+        if (validCurrentPage !== currentPage) {
+            setCurrentPage(validCurrentPage);
         }
-    }, [allFavorites, selectedType, searchTerm, currentPage, startDate, endDate, sortOrder]);
+
+        // 更新當前顯示項目
+        const startIndex = (validCurrentPage - 1) * 12;
+        const endIndex = startIndex + 12;
+        setCurrentItems(filteredItems.slice(startIndex, endIndex));
+
+    }, [memoizedAllFavorites, selectedType, searchTerm, currentPage, startDate, endDate, sortOrder]);
 
     const handlePageChange = useCallback((newPageIndex?: number) => {
         if (newPageIndex && newPageIndex > 0 && newPageIndex <= totalPages) {
@@ -179,9 +181,83 @@ function useFavoritePageLogic() {
                 throw new Error('移除收藏失敗');
             }
 
-            setCurrentItems(prev => prev.filter(item => item.article_id !== article.article_id));
-            setFilteredFavorites(prev => prev.filter(item => item.article_id !== article.article_id));
-            
+            // 更新所有相關的收藏狀態
+            const updatedAllFavorites = memoizedAllFavorites.filter(
+                item => item.article_id !== article.article_id
+            );
+
+            // 更新過濾後的收藏列表
+            const updatedFilteredFavorites = filteredFavorites.filter(
+                item => item.article_id !== article.article_id
+            );
+
+            // 如果是最後一篇文章被刪除，重置所有狀態
+            if (updatedFilteredFavorites.length === 0) {
+                // 重置所有狀態
+                setFilteredFavorites([]);
+                setCurrentItems([]);
+                setCurrentPage(1);
+                setTotalPages(1);
+                setSelectedType('all');
+                setSearchTerm('');
+                setStartDate('');
+                setEndDate('');
+                setSortOrder('newest');
+                
+                // 更新各類別的收藏狀態
+                announcementFavorites.length = 0;
+                newsFavorites.length = 0;
+                knowledgeFavorites.length = 0;
+                solutionFavorites.length = 0;
+                architectureFavorites.length = 0;
+            } else {
+                setFilteredFavorites(updatedFilteredFavorites);
+                
+                // 計算新的總頁數
+                const newTotalPages = Math.max(1, Math.ceil(updatedFilteredFavorites.length / 12));
+                setTotalPages(newTotalPages);
+
+                // 如果當前頁面沒有內容且不是第一頁，則回到上一頁
+                if (currentPage > newTotalPages) {
+                    setCurrentPage(newTotalPages);
+                }
+
+                // 更新當前顯示的項目
+                const startIndex = (currentPage - 1) * 12;
+                const endIndex = startIndex + 12;
+                const newCurrentItems = updatedFilteredFavorites.slice(startIndex, endIndex);
+                setCurrentItems(newCurrentItems);
+
+                // 更新對應類別的收藏狀態
+                const category = article.itemType?.toLowerCase();
+                if (category === 'announcement') {
+                    announcementFavorites.splice(
+                        announcementFavorites.findIndex(item => item.article_id === article.article_id),
+                        1
+                    );
+                } else if (category === 'news') {
+                    newsFavorites.splice(
+                        newsFavorites.findIndex(item => item.article_id === article.article_id),
+                        1
+                    );
+                } else if (category === 'knowledge') {
+                    knowledgeFavorites.splice(
+                        knowledgeFavorites.findIndex(item => item.article_id === article.article_id),
+                        1
+                    );
+                } else if (category === 'solution') {
+                    solutionFavorites.splice(
+                        solutionFavorites.findIndex(item => item.article_id === article.article_id),
+                        1
+                    );
+                } else if (category === 'architecture') {
+                    architectureFavorites.splice(
+                        architectureFavorites.findIndex(item => item.article_id === article.article_id),
+                        1
+                    );
+                }
+            }
+
             toast.success('已成功移除收藏');
 
         } catch (error) {
@@ -189,7 +265,27 @@ function useFavoritePageLogic() {
             toast.error('移除收藏失敗，請稍後再試');
             throw error;
         }
-    }, [user?.id, toast]);
+    }, [
+        user?.id,
+        toast,
+        memoizedAllFavorites,
+        filteredFavorites,
+        currentPage,
+        setCurrentPage,
+        setFilteredFavorites,
+        setCurrentItems,
+        setTotalPages,
+        setSelectedType,
+        setSearchTerm,
+        setStartDate,
+        setEndDate,
+        setSortOrder,
+        announcementFavorites,
+        newsFavorites,
+        knowledgeFavorites,
+        solutionFavorites,
+        architectureFavorites
+    ]);
 
     // 計算過濾後的收藏數量
     const filteredFavoritesCount = useMemo(() => {
@@ -220,7 +316,7 @@ function useFavoritePageLogic() {
             setStartDate(start);
             setEndDate(end);
         },
-        totalFavorites: allFavorites.length,
+        totalFavorites: memoizedAllFavorites.length,
         isLanguageChanging,
         favoritesByType: {
             announcement: announcementFavorites,
@@ -235,7 +331,7 @@ function useFavoritePageLogic() {
         setFilteredFavorites,
         toggleFavorite,
         filteredFavoritesCount,
-        favorites: allFavorites,
+        favorites: memoizedAllFavorites,
         searchTerm,
         setSearchTerm,
     };

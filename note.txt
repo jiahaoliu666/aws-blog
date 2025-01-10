@@ -6,6 +6,10 @@
 
 當刪除帳號時要自動登出所有裝置
 
+更改discord訪問網站的連結
+
+更改discord callback的連結
+
 確認通知都能收到 
 
 移除所有console.log

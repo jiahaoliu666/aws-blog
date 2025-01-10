@@ -78,6 +78,13 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     lineNotification: propNotificationSettings?.lineNotification ?? hookNotificationSettings?.lineNotification ?? false
   };
 
+  // 使用 useEffect 來確保 localUsername 只在初始化時設置一次
+  useEffect(() => {
+    if (formData.username && !isEditable.username) {
+      setLocalUsername(formData.username);
+    }
+  }, [formData.username, isEditable.username]);
+
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
