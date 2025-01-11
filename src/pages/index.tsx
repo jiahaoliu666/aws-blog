@@ -307,19 +307,19 @@ const Home: React.FC = () => {
                                 <span className={`text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg font-medium 
                                   transition-colors duration-300
                                   ${
-                                  article.category === 'news' 
-                                    ? 'bg-blue-50 text-blue-700 group-hover:bg-blue-100' 
-                                    : article.category === 'solution'
-                                      ? 'bg-green-50 text-green-700 group-hover:bg-green-100'
-                                      : article.category === 'architecture'
-                                        ? 'bg-amber-50 text-amber-700 group-hover:bg-amber-100'
-                                        : article.category === 'knowledge'
-                                          ? 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100'
-                                          : 'bg-purple-50 text-purple-700 group-hover:bg-purple-100'
+                                    article.category === 'news' 
+                                      ? 'bg-blue-50 text-blue-700 group-hover:bg-blue-100' 
+                                      : (article.category === 'solution' || article.category === 'solutions')
+                                        ? 'bg-green-50 text-green-700 group-hover:bg-green-100'
+                                        : article.category === 'architecture'
+                                          ? 'bg-amber-50 text-amber-700 group-hover:bg-amber-100'
+                                          : article.category === 'knowledge'
+                                            ? 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100'
+                                            : 'bg-purple-50 text-purple-700 group-hover:bg-purple-100'
                                   }`}>
                                   {article.category === 'news' 
                                     ? '最新新聞' 
-                                    : article.category === 'solution'
+                                    : (article.category === 'solution' || article.category === 'solutions')
                                       ? '解決方案'
                                       : article.category === 'architecture'
                                         ? '架構參考'

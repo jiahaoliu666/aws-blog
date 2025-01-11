@@ -168,3 +168,46 @@
 .discord-auth-container {
   animation: discord-fade-in 0.5s ease-out;
 }
+
+/* Pagination 深色模式樣式 */
+.dark .amplify-pagination {
+  --amplify-components-pagination-button-color: white;
+  --amplify-components-pagination-button-hover-color: white;
+  --amplify-components-pagination-button-active-color: white;
+  --amplify-components-pagination-button-disabled-color: #9CA3AF;
+  --amplify-components-pagination-button-background-color: #374151;
+  --amplify-components-pagination-button-hover-background-color: #4B5563;
+  --amplify-components-pagination-button-active-background-color: #2563EB;
+  --amplify-components-pagination-button-border-color: #4B5563;
+  --amplify-components-pagination-button-active-border-color: #3B82F6;
+  --amplify-components-pagination-button-hover-border-color: #60A5FA;
+  --amplify-components-pagination-button-font-weight: 500;
+  --amplify-components-pagination-button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .amplify-pagination-button {
+  background-color: var(--amplify-components-pagination-button-background-color);
+  color: var(--amplify-components-pagination-button-color);
+  border-color: var(--amplify-components-pagination-button-border-color);
+  font-weight: var(--amplify-components-pagination-button-font-weight);
+  box-shadow: var(--amplify-components-pagination-button-shadow);
+}
+
+.dark .amplify-pagination-button:hover:not(:disabled) {
+  background-color: var(--amplify-components-pagination-button-hover-background-color);
+  color: var(--amplify-components-pagination-button-hover-color);
+  border-color: var(--amplify-components-pagination-button-hover-border-color);
+}
+
+.dark .amplify-pagination-button-active {
+  background-color: var(--amplify-components-pagination-button-active-background-color) !important;
+  color: var(--amplify-components-pagination-button-active-color) !important;
+  border-color: var(--amplify-components-pagination-button-active-border-color) !important;
+  font-weight: 600 !important;
+}
+
+.dark .amplify-pagination-button:disabled {
+  opacity: 0.5;
+  color: var(--amplify-components-pagination-button-disabled-color);
+  cursor: not-allowed;
+}

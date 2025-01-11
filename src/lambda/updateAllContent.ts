@@ -64,7 +64,7 @@ const FETCH_COUNTS = {
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
-  knowledge: 7, // 更新知識中心數量
+  knowledge: 15, // 更新知識中心數量
 };
 
 const prompts = {
@@ -157,15 +157,17 @@ function formatTitle(title: string): string {
 }
 
 // 通用功能函數
-async function checkIfExists(title: string, tableName: string): Promise<boolean | string> {
+async function checkIfExists(title: string, link: string, tableName: string): Promise<boolean | string> {
   const scanParams = {
     TableName: tableName,
-    FilterExpression: "#title = :title",
+    FilterExpression: "#title = :title OR #link = :link",
     ExpressionAttributeNames: {
       "#title": "title",
+      "#link": "link"
     },
     ExpressionAttributeValues: {
       ":title": { S: title },
+      ":link": { S: link }
     },
   };
 
@@ -173,6 +175,9 @@ async function checkIfExists(title: string, tableName: string): Promise<boolean 
     const data = await dbClient.send(new ScanCommand(scanParams));
     if (data.Items && data.Items.length > 0) {
       const existingItem = data.Items[0];
+      // 記錄更詳細的重複資訊
+      const duplicateReason = existingItem.title.S === title ? '標題重複' : 'URL重複';
+      logger.info(`發現重複內容 (${duplicateReason}): ${title}`);
       return existingItem.summary?.S || false;
     }
     return false;
@@ -231,7 +236,8 @@ async function saveToDynamoDB(
   type: keyof typeof stats,
   tableName: string
 ): Promise<boolean> {
-  const exists = await checkIfExists(content.title, tableName);
+  // 提前檢查重複
+  const exists = await checkIfExists(content.title, content.link, tableName);
   if (exists) {
     stats[type].skipped++;
     const { emoji } = CONTENT_TYPES[type as keyof typeof CONTENT_TYPES];
@@ -239,6 +245,7 @@ async function saveToDynamoDB(
     return false;
   }
 
+  // 只有在確認不重複後才執行這些耗時的操作
   const summary = await summarizeContent(content.link, type);
   const translatedTitle = await translateText(content.title);
   const translatedDescription = content.description ? 
@@ -341,7 +348,16 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
   
   const page = await browser.newPage();
   try {
-    await gotoWithRetry(page, "https://aws.amazon.com/blogs/", {
+    // 設定瀏覽器語言為英文
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache'
+    });
+
+    // 設定瀏覽器地區為美國
+    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
+    
+    await gotoWithRetry(page, "https://aws.amazon.com/blogs/?lang=en", {
       waitUntil: "networkidle2",
       timeout: 60000,
     });
@@ -422,12 +438,17 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
   
   const page = await browser.newPage();
   try {
+    // 設定瀏覽器語言為英文
     await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9'
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache'
     });
 
-    // 設定基礎 URL
-    const baseUrl = "https://aws.amazon.com/new/";
+    // 設定瀏覽器地區為美國
+    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
+
+    // 設定基礎 URL，加入語言參數
+    const baseUrl = "https://aws.amazon.com/new/?lang=en";
     const queryParams = "?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all";
 
     while (totalArticlesScraped < FETCH_COUNTS.announcement) {
@@ -515,10 +536,11 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
   const page = await browser.newPage();
   let articlesScraped = 0;
   let currentPage = 1;
+  const maxRetries = 3;
   
   try {
-    page.setDefaultTimeout(30000);
-    page.setDefaultNavigationTimeout(30000);
+    page.setDefaultTimeout(60000);
+    page.setDefaultNavigationTimeout(60000);
 
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'en-US,en;q=0.9',
@@ -530,16 +552,43 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
         ? 'https://repost.aws/knowledge-center/all?view=all&sort=recent'
         : `https://repost.aws/knowledge-center/all?view=all&sort=recent&page=${currentPage}`;
 
-      await gotoWithRetry(
-        page,
-        pageUrl,
-        {
-          waitUntil: 'networkidle0',
-          timeout: 60000,
-        }
-      );
+      let retryCount = 0;
+      let pageLoaded = false;
 
-      await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
+      while (retryCount < maxRetries && !pageLoaded) {
+        try {
+          await gotoWithRetry(
+            page,
+            pageUrl,
+            {
+              waitUntil: ['networkidle0', 'domcontentloaded'],
+              timeout: 60000,
+            }
+          );
+
+          await page.waitForFunction(
+            () => document.readyState === 'complete',
+            { timeout: 60000 }
+          );
+
+          await page.waitForSelector('.KCArticleCard_card__HW_gu', { 
+            timeout: 60000,
+            visible: true 
+          });
+
+          pageLoaded = true;
+          logger.info(`成功載入第 ${currentPage} 頁`);
+        } catch (error) {
+          retryCount++;
+          if (retryCount === maxRetries) {
+            throw error;
+          }
+          logger.warn(`載入第 ${currentPage} 頁失敗，正在進行第 ${retryCount} 次重試...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+
+      await page.waitForTimeout(2000);
 
       const articles = await page.evaluate(() => {
         const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
@@ -553,6 +602,11 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
           return { title: '', description, link, info: '' };
         });
       });
+
+      if (articles.length === 0) {
+        logger.warn(`第 ${currentPage} 頁沒有找到任何文章，可能需要檢查選擇器或頁面結構`);
+        break;
+      }
 
       for (const article of articles) {
         if (articlesScraped >= FETCH_COUNTS.knowledge) {
@@ -568,12 +622,15 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
             page,
             article.link,
             {
-              waitUntil: 'networkidle0',
-              timeout: 30000,
+              waitUntil: ['networkidle0', 'domcontentloaded'],
+              timeout: 60000,
             }
           );
           
-          await page.waitForSelector('.KCArticleView_title___TWq1 h1');
+          await page.waitForSelector('.KCArticleView_title___TWq1 h1', {
+            timeout: 60000,
+            visible: true
+          });
           
           article.title = await page.$eval('.KCArticleView_title___TWq1 h1', 
             (element) => element.textContent?.trim() || '沒有標題'
@@ -585,28 +642,70 @@ async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
           await saveToDynamoDB(article, 'knowledge', 'AWS_Blog_Knowledge');
           articlesScraped++;
           
-          // 更新進度
           logProgress('knowledge', articlesScraped, FETCH_COUNTS.knowledge, '爬取進度');
+
+          // 返回列表頁
+          await gotoWithRetry(
+            page,
+            pageUrl,
+            {
+              waitUntil: ['networkidle0', 'domcontentloaded'],
+              timeout: 60000,
+            }
+          );
+
+          await page.waitForSelector('.KCArticleCard_card__HW_gu', {
+            timeout: 60000,
+            visible: true
+          });
+
         } catch (error) {
-          logger.error(`爬取知識文章標題時發生錯誤 (${article.link}):`, error);
+          logger.error(`爬取知識文章失敗 (${article.link}):`, error);
+          continue;
         }
       }
 
-      // 如果還需要更多文章，檢查並點擊下一頁
       if (articlesScraped < FETCH_COUNTS.knowledge) {
-        // 等待分頁按鈕載入
-        await page.waitForSelector(`a[aria-label="page ${currentPage + 1}"]`, { timeout: 5000 })
-          .catch(() => null); // 如果找不到下一頁按鈕，就會返回 null
+        try {
+          // 等待分頁元素載入
+          await page.waitForSelector('.ant-pagination', { timeout: 10000 });
+          
+          // 檢查是否有下一頁按鈕且未被禁用
+          const hasNextPage = await page.evaluate(() => {
+            const nextButton = document.querySelector('.ant-pagination-next');
+            return nextButton && !nextButton.classList.contains('ant-pagination-disabled');
+          });
 
-        const nextPageButton = await page.$(`a[aria-label="page ${currentPage + 1}"]`);
-        if (!nextPageButton) {
-          logger.info('沒有更多頁面可爬取');
+          if (!hasNextPage) {
+            logger.info('已到達最後一頁');
+            break;
+          }
+
+          // 點擊下一頁按鈕
+          await page.click('.ant-pagination-next');
+          
+          // 等待頁面加載完成
+          await page.waitForNavigation({ 
+            waitUntil: ['networkidle0', 'domcontentloaded'],
+            timeout: 60000 
+          });
+          
+          // 等待文章卡片重新載入
+          await page.waitForSelector('.KCArticleCard_card__HW_gu', { 
+            timeout: 60000,
+            visible: true 
+          });
+
+          currentPage++;
+          logger.info(`成功切換到第 ${currentPage} 頁`);
+          
+          // 確保頁面完全載入
+          await page.waitForTimeout(3000);
+
+        } catch (error) {
+          logger.error(`切換到第 ${currentPage + 1} 頁時發生錯誤:`, error);
           break;
         }
-
-        currentPage++;
-        await nextPageButton.click();
-        await page.waitForTimeout(2000); // 等待頁面載入
       }
     }
   } catch (error) {
@@ -623,79 +722,109 @@ async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
   
   try {
     await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9'
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache'
     });
+    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
 
     while (solutions.length < FETCH_COUNTS.solutions) {
       const pageUrl = currentPage === 1
-        ? 'https://aws.amazon.com/solutions/'
-        : `https://aws.amazon.com/solutions/?awsm.page-solutions-plus=${currentPage}`;
+        ? 'https://aws.amazon.com/solutions/?lang=en'
+        : `https://aws.amazon.com/solutions/?lang=en&awsm.page-solutions-plus=${currentPage}`;
 
-      await gotoWithRetry(
-        page,
-        pageUrl,
-        {
-          waitUntil: 'networkidle2',
-          timeout: 60000,
-        }
-      );
+      logger.info(`正在爬取第 ${currentPage} 頁的解決方案`);
 
-      // 等待卡片載入
-      await page.waitForSelector('.m-card-container');
-      const cards = await page.$$('.m-card-container');
-
-      // 計算這一頁需要爬取的卡片數量
-      const remainingCount = FETCH_COUNTS.solutions - solutions.length;
-      const cardsToProcess = Math.min(cards.length, remainingCount);
-
-      for (const card of cards.slice(0, cardsToProcess)) {
-        await card.hover();
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const solution = await card.evaluate((el) => {
-          const descElement = el.querySelector('.m-desc p') || el.querySelector('.m-desc');
-          return {
-            title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
-            description: descElement?.textContent?.trim() || '沒有描述',
-            link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
-            info: ''
-          };
-        });
-
-        // 加入時間戳並轉換為中文日期格式
-        const timestamp = Math.floor(Date.now() / 1000);
-        solution.info = timestampToChineseDate(timestamp);
-
-        solutions.push(solution);
-      }
-
-      // 檢查是否需要繼續爬取下一頁
-      if (solutions.length >= FETCH_COUNTS.solutions) {
-        break;
-      }
-
-      // 檢查是否還有下一頁
-      const hasNextPage = await page.evaluate(() => {
-        const paginationItems = document.querySelectorAll('.m-pagination .m-pagination-item');
-        const currentPageItem = Array.from(paginationItems).find(item => 
-          item.classList.contains('m-active')
-        );
-        return currentPageItem && currentPageItem.nextElementSibling;
+      await gotoWithRetry(page, pageUrl, {
+        waitUntil: 'networkidle2',
+        timeout: 60000,
       });
 
-      if (!hasNextPage) {
-        break;
+      // 等待卡片載入
+      await page.waitForSelector('.m-card');
+      
+      // 先獲取所有卡片的資訊
+      const cardsInfo = await page.evaluate(() => {
+        const cards = document.querySelectorAll('.m-card');
+        return Array.from(cards).map(card => {
+          const titleElement = card.querySelector('.m-headline a');
+          return {
+            title: titleElement?.textContent?.trim() || '沒有標題',
+            link: (titleElement as HTMLAnchorElement)?.href || ''
+          };
+        });
+      });
+
+      // 逐一處理每個卡片
+      for (const cardInfo of cardsInfo) {
+        if (solutions.length >= FETCH_COUNTS.solutions) break;
+        
+        try {
+          // 先檢查是否重複
+          const exists = await checkIfExists(cardInfo.title, cardInfo.link, 'AWS_Blog_Solutions');
+          if (exists) {
+            stats.solutions.skipped++;
+            logger.info(`   💡 內容已存在，跳過: ${cardInfo.title}`);
+            solutions.push({ ...cardInfo, info: '' });
+            logProgress('solutions', solutions.length, FETCH_COUNTS.solutions, '爬取進度');
+            continue;
+          }
+
+          // 訪問詳細頁面
+          await gotoWithRetry(page, cardInfo.link, {
+            waitUntil: 'networkidle2',
+            timeout: 30000,
+          });
+
+          // 等待頁面內容載入
+          await page.waitForSelector('h1');
+
+          // 獲取完整的標題和描述
+          const solutionData = await page.evaluate(() => {
+            const titleElement = document.querySelector('h1');
+            const descElement = document.querySelector('.lb-content-wrapper p') || 
+                              document.querySelector('.lb-wrapper p') ||
+                              document.querySelector('main p');
+
+            return {
+              title: titleElement?.textContent?.trim() || '沒有標題',
+              description: descElement?.textContent?.trim() || '沒有描述',
+              link: window.location.href,
+              info: ''
+            };
+          });
+
+          const timestamp = Math.floor(Date.now() / 1000);
+          solutionData.info = timestampToChineseDate(timestamp);
+          
+          // 儲存到資料庫
+          await saveToDynamoDB(solutionData, 'solutions', 'AWS_Blog_Solutions');
+          solutions.push(solutionData);
+          
+          logProgress('solutions', solutions.length, FETCH_COUNTS.solutions, '爬取進度');
+
+          // 返回列表頁
+          await gotoWithRetry(page, pageUrl, {
+            waitUntil: 'networkidle2',
+            timeout: 30000,
+          });
+
+          // 等待卡片重新載入
+          await page.waitForSelector('.m-card');
+
+        } catch (error) {
+          logger.error(`爬取解決方案失敗 (${cardInfo.title}):`, error);
+          continue;
+        }
       }
 
-      currentPage++;
-      // 在切換頁面前等待一下
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (solutions.length < FETCH_COUNTS.solutions) {
+        currentPage++;
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        break;
+      }
     }
 
-    // 儲存爬取到的解決方案
-    for (const solution of solutions) {
-      await saveToDynamoDB(solution, 'solutions', 'AWS_Blog_Solutions');
-    }
   } catch (error) {
     logger.error("爬取解決方案時發生錯誤:", error);
   } finally {
@@ -709,14 +838,19 @@ async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
   let currentPage = 1;
   
   try {
+    // 設定瀏覽器語言為英文
     await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9'
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache'
     });
+
+    // 設定瀏覽器地區為美國
+    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
 
     while (architectures.length < FETCH_COUNTS.architecture) {
       const pageUrl = currentPage === 1
-        ? 'https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all'
-        : `https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all&awsm.page-cards-all=${currentPage}`;
+        ? 'https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all&lang=en'
+        : `https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all&lang=en&awsm.page-cards-all=${currentPage}`;
 
       await gotoWithRetry(
         page,
@@ -1501,7 +1635,7 @@ export async function updateAllContent(): Promise<void> {
     browser = await puppeteer.launch({ 
       headless: true,
       executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox', '--lang=en-US']
     });
     
     // 依序執行各項爬取任務
