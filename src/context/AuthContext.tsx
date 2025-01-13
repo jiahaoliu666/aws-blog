@@ -178,49 +178,135 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 清除所有本地存儲
   const clearAllStorages = () => {
     try {
-      // 清除 localStorage
+      logger.info('開始清除所有本地存儲');
+
+      // 1. 清除 localStorage
+      const localStorageKeys = Object.keys(localStorage);
+      localStorageKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          logger.warn(`清除 localStorage key ${key} 失敗:`, e);
+        }
+      });
       localStorage.clear();
       
-      // 清除 sessionStorage
+      // 2. 清除 sessionStorage
+      const sessionStorageKeys = Object.keys(sessionStorage);
+      sessionStorageKeys.forEach(key => {
+        try {
+          sessionStorage.removeItem(key);
+        } catch (e) {
+          logger.warn(`清除 sessionStorage key ${key} 失敗:`, e);
+        }
+      });
       sessionStorage.clear();
       
-      // 清除所有 cookies
-      document.cookie.split(';').forEach(cookie => {
-        const [name] = cookie.trim().split('=');
-        if (name) {
-          ['/', '/api', '/auth', '/profile'].forEach(path => {
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}`;
-          });
+      // 3. 清除所有 cookies
+      const cookies = document.cookie.split(';');
+      cookies.forEach(cookie => {
+        try {
+          const [name] = cookie.trim().split('=');
+          if (name) {
+            // 使用多個路徑確保完全清除
+            const paths = ['/', '/api', '/auth', '/profile'];
+            paths.forEach(path => {
+              document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path}`;
+            });
+          }
+        } catch (e) {
+          logger.warn(`清除 cookie ${cookie} 失敗:`, e);
         }
       });
 
-      // 特別處理 next-auth cookies
-      [
+      // 4. 特別處理 next-auth 相關的 cookies
+      const nextAuthCookies = [
         'next-auth.session-token',
         'next-auth.csrf-token',
         'next-auth.callback-url',
         'next-auth.state',
         '__Secure-next-auth.session-token',
         '__Host-next-auth.csrf-token'
-      ].forEach(cookieName => {
-        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;secure;samesite=lax`;
+      ];
+      nextAuthCookies.forEach(cookieName => {
+        try {
+          document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;secure;samesite=lax`;
+        } catch (e) {
+          logger.warn(`清除 next-auth cookie ${cookieName} 失敗:`, e);
+        }
       });
 
-      logger.info('所有本地存儲已清除');
+      // 5. 清除 IndexedDB 資料（如果有的話）
+      const deleteIndexedDB = async () => {
+        try {
+          const databases = await window.indexedDB.databases();
+          databases.forEach(db => {
+            if (db.name) {
+              window.indexedDB.deleteDatabase(db.name);
+            }
+          });
+        } catch (e) {
+          logger.warn('清除 IndexedDB 失敗:', e);
+        }
+      };
+      deleteIndexedDB().catch(e => logger.warn('執行 IndexedDB 清除失敗:', e));
+
+      logger.info('所有本地存儲清除完成');
     } catch (error) {
-      logger.error('清除本地存儲時發生錯誤:', error);
+      logger.error('清除本地存儲時發生錯誤:', {
+        error: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
   // 執行自動登出
   const performAutoLogout = async () => {
-    setUser(null);
-    clearAllStorages();
-    
-    // 如果不在登入頁面，則重導向到登入頁面
-    if (router.pathname !== '/auth/login') {
-      await router.push('/auth/login');
+    try {
+      // 1. 先清除所有本地存儲
+      clearAllStorages();
+      
+      // 2. 設置用戶狀態為 null
+      setUser(null);
+      
+      // 3. 添加登出標記防止自動恢復
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('isLoggedOut', 'true');
+      }
+      
+      // 4. 如果不在登入頁面，則重導向到登入頁面
+      if (router.pathname !== '/auth/login') {
+        await router.push('/auth/login');
+      }
+    } catch (error) {
+      logger.error('執行自動登出時發生錯誤:', {
+        error: error instanceof Error ? error.message : '未知錯誤',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
+  };
+
+  const logoutUser = async (): Promise<boolean> => {
+    try {
+      if (user) {
+        // 1. 嘗試執行 Cognito 登出
+        try {
+          const command = new GlobalSignOutCommand({ AccessToken: user.accessToken });
+          await cognitoClient.send(command);
+        } catch (error) {
+          // 即使 Cognito 登出失敗，仍繼續本地登出流程
+          logger.warn('Cognito 登出失敗，繼續執行本地登出:', error);
+        }
+
+        // 2. 執行本地登出流程
+        await performAutoLogout();
+        return true;
+      }
+    } catch (err) {
+      setError(`登出失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);
+      return false;
+    }
+    return false;
   };
 
   // 使用動態間隔的檢查機制
@@ -229,6 +315,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!isClient) return;
 
       try {
+        // 檢查是否有登出標記
+        const isLoggedOut = sessionStorage.getItem('isLoggedOut') === 'true';
+        if (isLoggedOut) {
+          // 如果有登出標記，不執行驗證
+          return;
+        }
+
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
@@ -443,21 +536,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(`登入失敗: ${errorMessage}`);
       return false;
     }
-  };
-
-  const logoutUser = async (): Promise<boolean> => {
-    try {
-      if (user) {
-        const command = new GlobalSignOutCommand({ AccessToken: user.accessToken });
-        await cognitoClient.send(command);
-        await performAutoLogout();
-        return true;
-      }
-    } catch (err) {
-      setError(`登出失敗: ${err instanceof Error ? err.message : "未知錯誤"}`);
-      return false;
-    }
-    return false;
   };
 
   const updateUser = (userData: Partial<User>) => {

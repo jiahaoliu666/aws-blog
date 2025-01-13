@@ -116,16 +116,15 @@ const Navbar: React.FC<NavbarProps> = ({ setCurrentSourcePage }) => {
 
   const handleLogout = async () => {  
     try {  
-      await logoutUser();  
-      localStorage.clear();
-      setFavorites([]);
       if (user) {
-        alert('您已成功登出!');
         await logActivity(user.sub, '登出帳戶');
+        const success = await logoutUser();
+        if (success) {
+          alert('您已成功登出!');
+        }
       }
-      window.location.reload();
     } catch (error) {  
-      console.error('Failed to logout:', error);  
+      console.error('登出失敗:', error);  
     }  
   };  
 
