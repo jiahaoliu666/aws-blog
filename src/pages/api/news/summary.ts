@@ -8,9 +8,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { article_id, title, language } = req.query;  
 
   // 記錄接收到的請求參數  
-  console.log(  
-    `Received request with article_id: ${article_id}, title: ${title}, language: ${language}`  
-  );  
+  // console.log(  
+  //   `Received request with article_id: ${article_id}, title: ${title}, language: ${language}`  
+  // );  
 
   // 檢查必要的參數是否存在  
   if (!article_id || !title) {  
@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {  
     // 發送查詢命令以獲取指定文章的數據  
     const data = await dbClient.send(new GetItemCommand(params));  
-    console.log("DynamoDB response:", data);  
+    // console.log("DynamoDB response:", data);  
 
     if (data.Item) {  
       const summary = data.Item.summary?.S;  

@@ -6,9 +6,9 @@ const dbClient = new DynamoDBClient({ region: "ap-northeast-1" });
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { article_id, title, language } = req.query;
 
-    console.log(
-        `Received request with article_id: ${article_id}, title: ${title}, language: ${language}`
-    );
+    // console.log(
+    //     `Received request with article_id: ${article_id}, title: ${title}, language: ${language}`
+    // );
 
     if (!article_id || !title) {
         console.error("缺少必要的參數");
@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const data = await dbClient.send(new GetItemCommand(params));
-        console.log("DynamoDB response:", data);
+        // console.log("DynamoDB response:", data);
 
         if (data.Item) {
             const summary = data.Item.summary?.S;

@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const data = await dbClient.send(new GetItemCommand(params));
-        console.log("DynamoDB response:", data);
+        // console.log("DynamoDB response:", data);
 
         if (data.Item) {
             const summary = data.Item.summary?.S;

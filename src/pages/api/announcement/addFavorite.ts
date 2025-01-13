@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: '請求參數不完整' });
         }
 
-        console.log('請求參數:', { userId, articleId, title });
+        // console.log('請求參數:', { userId, articleId, title });
 
         const getAnnouncementParams = {
             TableName: ANNOUNCEMENT_TABLE,
@@ -49,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             };
 
             await client.send(new PutCommand(params));
-            console.log('收藏成功:', params.Item);
+            // console.log('收藏成功:', params.Item);
 
             return res.status(200).json({ message: '收藏成功', item: { userId, article_id: articleId } });
         } catch (error) {

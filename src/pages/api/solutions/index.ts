@@ -18,15 +18,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     try {
-        console.log('開始查詢 Solutions 表:', scanParams);
+        // console.log('開始查詢 Solutions 表:', scanParams);
         const data = await dbClient.send(new ScanCommand(scanParams));
         
         if (!data.Items || data.Items.length === 0) {
-            console.log('未找到解決方案數據');
+            // console.log('未找到解決方案數據');
             return res.status(200).json([]);
         }
 
-        console.log('DynamoDB 原始數據:', JSON.stringify(data.Items, null, 2));
+        // console.log('DynamoDB 原始數據:', JSON.stringify(data.Items, null, 2));
 
         const solutions = data.Items.map(item => ({
             article_id: item.article_id?.S,
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             info: item.info?.S
         }));
 
-        console.log('處理後的解決方案數據:', JSON.stringify(solutions, null, 2));
+        // console.log('處理後的解決方案數據:', JSON.stringify(solutions, null, 2));
         res.status(200).json(solutions);
     } catch (error) {
         console.error('獲取解決方案時發生錯誤:', error);

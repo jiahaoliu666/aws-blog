@@ -51,7 +51,7 @@ const ArchitecturePage: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                console.log('開始加載架構參考數據...');
+                // console.log('開始加載架構參考數據...');
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 // console.log('當前架構參考數據:', currentArchitectures);
                 setIsLoading(false);

@@ -20,21 +20,21 @@ export default async function handler(
   });
 
   if (req.method !== 'POST') {
-    console.log('請求方法不允許:', req.method);
+    // console.log('請求方法不允許:', req.method);
     return res.status(405).json({ message: '方法不允許' });
   }
 
   const { userId, articleId } = req.body;
-  console.log('請求參數:', { userId, articleId });
+  // console.log('請求參數:', { userId, articleId });
 
   if (!userId) {
-    console.log('缺少用戶ID');
+    // console.log('缺少用戶ID');
     return res.status(400).json({ message: '缺少必要參數' });
   }
 
   try {
     if (articleId) {
-      console.log('開始標記單個通知已讀');
+      // console.log('開始標記單個通知已讀');
       const params = {
         TableName: 'AWS_Blog_UserNotifications',
         Key: {
@@ -49,11 +49,11 @@ export default async function handler(
           ':read': { BOOL: true }
         }
       };
-      console.log('更新參數:', JSON.stringify(params, null, 2));
+      // console.log('更新參數:', JSON.stringify(params, null, 2));
       await dynamoClient.send(new UpdateItemCommand(params));
-      console.log('單個通知標記完成');
+      // console.log('單個通知標記完成');
     } else {
-      console.log('開始標記所有通知已讀');
+      // console.log('開始標記所有通知已讀');
       const queryParams = {
         TableName: 'AWS_Blog_UserNotifications',
         KeyConditionExpression: 'userId = :userId',
@@ -61,14 +61,14 @@ export default async function handler(
           ':userId': { S: userId }
         }
       };
-      console.log('查詢參數:', JSON.stringify(queryParams, null, 2));
+      // console.log('查詢參數:', JSON.stringify(queryParams, null, 2));
 
       const { Items } = await dynamoClient.send(new QueryCommand(queryParams));
-      console.log('找到待更新通知數量:', Items?.length);
+      // console.log('找到待更新通知數量:', Items?.length);
       
       if (Items) {
         for (const item of Items) {
-          console.log('正在更新通知:', item.article_id.S);
+          // console.log('正在更新通知:', item.article_id.S);
           const updateParams = {
             TableName: 'AWS_Blog_UserNotifications',
             Key: {
@@ -85,7 +85,7 @@ export default async function handler(
           };
           await dynamoClient.send(new UpdateItemCommand(updateParams));
         }
-        console.log('所有通知已標記為已讀');
+        // console.log('所有通知已標記為已讀');
       }
     }
 

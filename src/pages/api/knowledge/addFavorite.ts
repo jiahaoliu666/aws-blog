@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: '請求參數不完整' });
         }
 
-        console.log('收到收藏請求:', { userId, articleId, title });
+        // console.log('收到收藏請求:', { userId, articleId, title });
 
         const getKnowledgeParams = {
             TableName: KNOWLEDGE_TABLE,
@@ -30,10 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
 
         try {
-            console.log('查詢知識庫文章:', getKnowledgeParams);
+            // console.log('查詢知識庫文章:', getKnowledgeParams);
             const knowledgeResponse = await client.send(new GetCommand(getKnowledgeParams));
             
-            console.log('查詢結果:', knowledgeResponse.Item);
+            // console.log('查詢結果:', knowledgeResponse.Item);
 
             const knowledgeData = knowledgeResponse.Item;
 
@@ -52,9 +52,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 },
             };
 
-            console.log('準備添加收藏:', params);
+            // console.log('準備添加收藏:', params);
             await client.send(new PutCommand(params));
-            console.log('收藏成功');
+            // console.log('收藏成功');
 
             return res.status(200).json({ 
                 message: '收藏成功', 
