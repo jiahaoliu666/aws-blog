@@ -52,9 +52,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 },
             };
 
-            console.log('準備添加收藏:', params);
+            // console.log('準備添加收藏:', params);
             await client.send(new PutCommand(params));
-            console.log('收藏成功');
+            // console.log('收藏成功');
 
             return res.status(200).json({ 
                 message: '收藏成功', 

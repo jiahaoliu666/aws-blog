@@ -105,9 +105,9 @@ export default async function handler(
       userNotificationsParams.ExpressionAttributeValues[':category'] = { S: category };
     }
 
-    console.log('查詢用戶通知參數:', JSON.stringify(userNotificationsParams, null, 2));
+    // console.log('查詢用戶通知參數:', JSON.stringify(userNotificationsParams, null, 2));
     const userNotifications = await dynamoClient.send(new QueryCommand(userNotificationsParams));
-    console.log('用戶通知數量:', userNotifications.Items?.length || 0);
+    // console.log('用戶通知數量:', userNotifications.Items?.length || 0);
 
     if (!userNotifications.Items?.length) {
       return res.status(200).json({ notifications: [] });
@@ -154,7 +154,7 @@ export default async function handler(
         const article = articleResponse.Items?.[0];
 
         if (!article) {
-          console.log(`未找到文章: ${articleId}`);
+          // console.log(`未找到文章: ${articleId}`);
           return null;
         }
 
@@ -188,7 +188,7 @@ export default async function handler(
 
     // 過濾掉無效的通知並返回
     const validNotifications = notifications.filter(Boolean);
-    console.log('有效通知數量:', validNotifications.length);
+    // console.log('有效通知數量:', validNotifications.length);
 
     return res.status(200).json({ 
       notifications: validNotifications,

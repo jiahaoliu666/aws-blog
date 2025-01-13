@@ -40,10 +40,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ProjectionExpression: "article_id, title, published_at, info, description, link, summary, createdAt, author, translated_title, translated_description"
         };
 
-        console.log('正在查詢 DynamoDB，參數:', {
-            TableName: process.env.DYNAMODB_ANNOUNCEMENT_TABLE,
-            Region: process.env.AWS_REGION
-        });
+        // console.log('正在查詢 DynamoDB，參數:', {
+        //     TableName: process.env.DYNAMODB_ANNOUNCEMENT_TABLE,
+        //     Region: process.env.AWS_REGION
+        // });
 
         // 執行查詢
         const result = await dynamodb.scan(params).promise();
@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // 修改語言過濾邏輯
         const filteredItems = result.Items;  
 
-        console.log(`成功過濾 ${language} 語言的公告，共 ${filteredItems.length} 筆`);
+        // console.log(`成功過濾 ${language} 語言的公告，共 ${filteredItems.length} 筆`);
         res.status(200).json(filteredItems);
 
     } catch (error) {

@@ -18,15 +18,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     try {
-        console.log('開始查詢 Architecture 表:', scanParams);
+        // console.log('開始查詢 Architecture 表:', scanParams);
         const data = await dbClient.send(new ScanCommand(scanParams));
         
         if (!data.Items || data.Items.length === 0) {
-            console.log('未找到架構參考數據');
+            // console.log('未找到架構參考數據');
             return res.status(200).json([]);
         }
 
-        console.log('DynamoDB 原始數據:', JSON.stringify(data.Items, null, 2));
+        // console.log('DynamoDB 原始數據:', JSON.stringify(data.Items, null, 2));
 
         const architectures = data.Items.map(item => ({
             article_id: item.article_id?.S,
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             summary: item.summary?.S,
         }));
 
-        console.log('處理後的架構參考數據:', JSON.stringify(architectures, null, 2));
+        // console.log('處理後的架構參考數據:', JSON.stringify(architectures, null, 2));
         res.status(200).json(architectures);
     } catch (error) {
         console.error('獲取架構參考時發生錯誤:', error);

@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: '請求參數不完整' });
         }
 
-        console.log('請求參數:', { userId });
+        // console.log('請求參數:', { userId });
 
         const getFavoritesParams = {
             TableName: USER_FAVORITES_TABLE,
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
         };
 
-        console.log('正在查詢用戶收藏:', JSON.stringify(getFavoritesParams));
+        // console.log('正在查詢用戶收藏:', JSON.stringify(getFavoritesParams));
 
         try {
             const favoritesResponse = await client.send(new QueryCommand(getFavoritesParams));
@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 },
             };
 
-            console.log('正在批量查詢知識庫文章資料:', JSON.stringify(batchGetParams));
+            // console.log('正在批量查詢知識庫文章資料:', JSON.stringify(batchGetParams));
             const knowledgeResponse = await client.send(new BatchGetCommand(batchGetParams));
 
             const knowledgeArticles = knowledgeResponse.Responses?.[KNOWLEDGE_TABLE] || [];

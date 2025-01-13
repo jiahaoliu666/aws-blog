@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: '請求參數不完整' });
         }
 
-        console.log('收到收藏請求:', { userId, articleId, title });
+        // console.log('收到收藏請求:', { userId, articleId, title });
 
         // 查詢 AWS_Blog_News 表，檢查文章是否存在
         const getNewsParams = {
@@ -33,10 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
 
         try {
-            console.log('查詢新聞文章:', getNewsParams);
+            // console.log('查詢新聞文章:', getNewsParams);
             const articleResponse = await client.send(new GetCommand(getNewsParams));
             
-            console.log('查詢結果:', articleResponse.Item);
+            // console.log('查詢結果:', articleResponse.Item);
 
             // 檢查查詢結果
             if (!articleResponse.Item) {
@@ -55,11 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 },
             };
 
-            console.log('準備儲存的用戶收藏資料:', JSON.stringify(params));
+            // console.log('準備儲存的用戶收藏資料:', JSON.stringify(params));
 
             // 將收藏信息寫入 AWS_Blog_UserFavorites 表
             await client.send(new PutCommand(params));
-            console.log('收藏成功:', params.Item);
+            // console.log('收藏成功:', params.Item);
 
             return res.status(200).json({ message: '收藏成功', item: { userId, article_id: articleId } });
         } catch (error: unknown) {

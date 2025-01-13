@@ -33,7 +33,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       const command = new PutItemCommand(params);
       await dynamoClient.send(command);
-      console.log(`Recent article saved: ${articleId} for user: ${userId} at ${timestamp}`);
+      // console.log(`Recent article saved: ${articleId} for user: ${userId} at ${timestamp}`);
       res.status(200).json({ message: 'Recent article saved successfully' });
     } catch (error) {
       console.error('Error saving recent article:', error);
