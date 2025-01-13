@@ -21,7 +21,7 @@ export const useSolutionFavorites = () => {
                 const response = await axios.get(`/api/solutions/getFavorites?userId=${user.sub}`);
                 setFavorites(response.data.items || []);
             } catch (error) {
-                console.error('獲取收藏解決方案失敗:', error);
+                // console.error('獲取收藏解決方案失敗:', error);
                 setFavorites([]);
             }
         };

@@ -52,15 +52,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             const solutions = solutionsResponse.Responses?.[SOLUTIONS_TABLE] || [];
 
-            const responseItems = favorites.map(fav => {
-                const solution = solutions.find(a => a.article_id === fav.article_id);
-                return {
-                    ...fav,
-                    ...solution,
-                };
-            });
+            // 只保留能在解決方案資料表中找到對應文章的收藏
+            const validResponseItems = favorites
+                .map(fav => {
+                    const solution = solutions.find(a => a.article_id === fav.article_id);
+                    if (!solution) {
+                        console.warn(`收藏的文章 ${fav.article_id} 在解決方案資料表中未找到`);
+                        return null;
+                    }
+                    return {
+                        ...fav,
+                        ...solution,
+                    };
+                })
+                .filter((item): item is NonNullable<typeof item> => item !== null);
 
-            return res.status(200).json({ message: '成功獲取收藏', items: responseItems });
+            return res.status(200).json({ 
+                message: '成功獲取收藏', 
+                items: validResponseItems,
+                totalCount: validResponseItems.length 
+            });
         } catch (error: unknown) {
             if (error instanceof Error) {
                 console.error('查詢用戶收藏時發生錯誤:', error);

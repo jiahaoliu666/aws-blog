@@ -31,7 +31,16 @@ export const generateAccountDeletionEmail = (data: AccountDeletionEmailData): st
             <strong>用戶 ID：</strong> ${data.userId}
           </p>
           <p style="margin: 10px 0; color: #666;">
-            <strong>刪除時間：</strong> ${data.deletedAt}
+            <strong>刪除時間：</strong> ${new Date(data.deletedAt).toLocaleString('zh-TW', {
+              timeZone: 'Asia/Taipei',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            })}
           </p>
         </div>
         

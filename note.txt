@@ -1,21 +1,8 @@
 
 
-響應式設計
+使用 crontab（Linux/Mac）定期執行爬蟲
 
-刪除帳號會刪除哪些數據
-
-向官方line傳訊息沒有收到自動回覆 
-
-彈出視窗會無法正常 discord 訂閱
-
-line webhook 無法正常運作
-
---------
-
-git checkout main
-git checkout branch
-git pull origin main
-git checkout branch
+全面檢驗測試
 
 --------
 UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專業、人性化、完整
@@ -40,22 +27,6 @@ UI介面、外觀、整體佈局、風格、間距、排版進行優化，要專
 只需傳入不同的表名作為參數，這樣可以減少代碼重複，提高維護性。
 
 完成UI/UX 設計
-
---------
-
-進行中：
-
-將頁面和元件調整為響應式設計，以適配不同螢幕尺寸（包括手機、平板和桌面）確保在這些設備上的布局和功能正常顯示，同時確保現有功能、樣式完全保持一致，且不影響現有的業務邏輯或功能運作
-
-、手機版測試 
-
-移除所有console.log
-
---------
-
-待執行：
-
-使用 crontab（Linux/Mac）定期執行爬蟲
 
 --------
 
@@ -211,3 +182,11 @@ src/pages/api/line/verify-code.ts
 
 https://8b9f-2407-4b00-1c0b-85b5-14c2-5d67-3889-5001.ngrok-free.app/api/line/webhook
 --------
+
+刪除帳號
+src/services/authService.ts
+src/components/profile/sections/AccountSection.tsx
+src/pages/api/profile/account/delete.ts
+src/templates/deleteAccountEmail.ts
+src/services/dbService.ts
+src/config/constants.ts

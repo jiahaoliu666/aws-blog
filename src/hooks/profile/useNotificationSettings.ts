@@ -418,7 +418,7 @@ export const useNotificationSettings = (userId: string) => {
         );
 
         if (authWindow === null) {
-          showToast('請允許開啟彈出視窗以完成 Discord 授權', 'warning');
+          showToast('請允許開啟彈出視窗或更換瀏覽器後嘗試', 'warning');
         }
         
         setIsDiscordVerifying(true);

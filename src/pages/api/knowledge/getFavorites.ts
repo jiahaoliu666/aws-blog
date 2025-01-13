@@ -51,16 +51,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const knowledgeResponse = await client.send(new BatchGetCommand(batchGetParams));
 
             const knowledgeArticles = knowledgeResponse.Responses?.[KNOWLEDGE_TABLE] || [];
+            
+            // 只保留能在知識庫資料表中找到對應文章的收藏
+            const validResponseItems = favorites
+                .map(fav => {
+                    const knowledge = knowledgeArticles.find(a => a.article_id === fav.article_id);
+                    if (!knowledge) {
+                        console.warn(`收藏的文章 ${fav.article_id} 在知識庫中未找到`);
+                        return null;
+                    }
+                    return {
+                        ...fav,
+                        ...knowledge,
+                    };
+                })
+                .filter((item): item is NonNullable<typeof item> => item !== null);
 
-            const responseItems = favorites.map(fav => {
-                const knowledge = knowledgeArticles.find(a => a.article_id === fav.article_id);
-                return {
-                    ...fav,
-                    ...knowledge,
-                };
+            return res.status(200).json({ 
+                message: '成功獲取收藏', 
+                items: validResponseItems,
+                totalCount: validResponseItems.length 
             });
-
-            return res.status(200).json({ message: '成功獲取收藏', items: responseItems });
         } catch (error: unknown) {
             if (error instanceof Error) {
                 console.error('查詢用戶收藏時發生錯誤:', error);

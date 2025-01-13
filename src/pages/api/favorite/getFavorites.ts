@@ -91,21 +91,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const response = await client.send(new BatchGetCommand(batchGetParams));
                     const articles = response.Responses?.[tableName] || [];
 
-                    return favs.map((fav: FavoriteItem) => {
-                        const article = articles.find(a => a.article_id === fav.article_id);
-                        return {
-                            ...fav,
-                            ...article,
-                        };
-                    });
+                    // 只保留能在對應資料表中找到文章的收藏
+                    return favs
+                        .map((fav: FavoriteItem) => {
+                            const article = articles.find(a => a.article_id === fav.article_id);
+                            if (!article) {
+                                console.warn(`收藏的文章 ${fav.article_id} 在 ${cat} 資料表中未找到`);
+                                return null;
+                            }
+                            return {
+                                ...fav,
+                                ...article,
+                            };
+                        })
+                        .filter((item: FavoriteItem | null): item is FavoriteItem => item !== null);
                 })
             );
 
-            const responseItems = allResults.flat();
+            const validResponseItems = allResults.flat();
 
             return res.status(200).json({ 
                 message: '成功獲取收藏', 
-                items: responseItems 
+                items: validResponseItems,
+                totalCount: validResponseItems.length 
             });
         } catch (error: unknown) {
             if (error instanceof Error) {

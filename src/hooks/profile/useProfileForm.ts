@@ -153,9 +153,6 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
       [field]: true
     }));
     setIsEditing(true);
-    if (field === 'username') {
-      setLocalUsername(formData.username);
-    }
   };
 
   const handleCancelChanges = () => {
@@ -190,16 +187,18 @@ export const useProfileForm = ({ user, updateUser }: UseProfileFormProps): UsePr
 
   useEffect(() => {
     if (user) {
-      setLocalUsername(user.username);
-      setFormData(prev => ({
-        ...prev,
-        username: user.username,
-        email: user.email || '',
-        registrationDate: user.registrationDate || '',
-        avatar: user.avatar || '/default-avatar.png'
-      }));
+      if (!isEditable.username) {
+        setLocalUsername(user.username);
+        setFormData(prev => ({
+          ...prev,
+          username: user.username,
+          email: user.email || '',
+          registrationDate: user.registrationDate || '',
+          avatar: user.avatar || '/default-avatar.png'
+        }));
+      }
     }
-  }, [user]);
+  }, [user, isEditable.username]);
 
   return {
     formData,

@@ -239,7 +239,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) {
-      console.warn('註冊日期未定義:', dateString);
+      // console.warn('註冊日期未定義:', dateString);
       return '未知日期';
     }
 

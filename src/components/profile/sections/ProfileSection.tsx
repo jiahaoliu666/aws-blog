@@ -78,6 +78,13 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
     lineNotification: propNotificationSettings?.lineNotification ?? hookNotificationSettings?.lineNotification ?? false
   };
 
+  // 使用 useEffect 來確保 localUsername 只在初始化時設置一次
+  useEffect(() => {
+    if (formData.username && !isEditable.username) {
+      setLocalUsername(formData.username);
+    }
+  }, [formData.username, isEditable.username]);
+
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
@@ -127,7 +134,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) {
-      console.warn('註冊日期未定義');
+      // console.warn('註冊日期未定義');
       return '未知日期';
     }
 
@@ -331,12 +338,12 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
                 </div>
 
                 {/* 電子郵件 */}
-                <div className="flex flex-col lg:grid lg:grid-cols-[80px_1fr] gap-2 lg:gap-0 lg:items-center">
-                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0">電子郵件：</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-900">{formData.email}</span>
+                <div className="flex flex-col lg:grid lg:grid-cols-[80px_1fr] gap-2 lg:gap-0">
+                  <label className="text-sm font-medium text-gray-700 mb-1 lg:mb-0 lg:flex lg:h-[42px] lg:items-center">電子郵件：</label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-gray-900 break-all">{formData.email}</span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 
-                      text-green-700 text-xs font-medium rounded-full border border-green-200">
+                      text-green-700 text-xs font-medium rounded-full border border-green-200 whitespace-nowrap">
                       <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                       已驗證
                     </span>

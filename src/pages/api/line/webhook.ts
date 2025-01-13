@@ -31,7 +31,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     headers: req.headers,
     body: req.body,
     url: req.url,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    config: {
+      hasChannelAccessToken: !!lineConfig.channelAccessToken,
+      hasChannelSecret: !!lineConfig.channelSecret,
+      webhookUrl: lineConfig.webhookUrl,
+      environment: process.env.NODE_ENV
+    }
   });
 
   try {
@@ -47,7 +53,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!verifyLineSignature(req)) {
       logger.error('LINE 簽章驗證失敗', {
         signature: req.headers['x-line-signature'],
-        body: req.body
+        body: req.body,
+        timestamp: new Date().toISOString()
       });
       return res.status(401).json({ error: '無效的簽章' });
     }
@@ -58,7 +65,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const lineServiceInstance = new LineService();
     
     for (const event of events) {
-      logger.info('收到 LINE 事件:', { event });
+      logger.info('處理 LINE 事件:', { 
+        eventType: event.type,
+        userId: event.source.userId,
+        timestamp: new Date(event.timestamp).toISOString()
+      });
 
       // 處理加入好友事件
       if (event.type === 'follow') {
@@ -67,6 +78,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             type: 'text',
             text: '歡迎加入！請輸入您的用戶ID以開始驗證程序。\n您可以在網站的個人設定頁面找到您的用戶ID。'
           }]);
+          logger.info('已發送歡迎訊息', {
+            userId: event.source.userId,
+            timestamp: new Date().toISOString()
+          });
           continue;
         } catch (error) {
           logger.error('發送歡迎訊息失敗:', error);
@@ -77,10 +92,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (event.type === 'message' && event.message?.type === 'text') {
         const messageText = event.message.text.trim();
         
+        logger.info('收到文字訊息:', {
+          userId: event.source.userId,
+          message: messageText,
+          timestamp: new Date().toISOString()
+        });
+        
         try {
           // 檢查是否為驗證碼
           const verificationCodePattern = /^[0-9A-Z]{6}$/;
           if (verificationCodePattern.test(messageText)) {
+            logger.info('檢測到驗證碼格式的訊息:', { code: messageText });
+            
             // 使用 Scan 操作查詢未驗證的記錄
             const scanParams = {
               TableName: "AWS_Blog_LineVerifications",
@@ -98,6 +121,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               const verificationRecord = scanResponse.Items[0];
               const userId = verificationRecord.userId.S;
               const expiryTime = Number(verificationRecord.verificationExpiry.N || 0);
+
+              logger.info('找到驗證記錄:', {
+                userId,
+                expiryTime,
+                currentTime: Date.now(),
+                isExpired: Date.now() > expiryTime
+              });
 
               // 檢查驗證碼是否過期
               if (Date.now() <= expiryTime) {
@@ -130,6 +160,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 await dynamoClient.send(new PutItemCommand(notificationParams));
 
+                logger.info('驗證成功，已更新設定:', {
+                  userId,
+                  lineId: event.source.userId,
+                  timestamp: new Date().toISOString()
+                });
+
                 // 發送驗證成功訊息
                 await lineServiceInstance.replyMessage(event.replyToken, [{
                   type: 'flex',
@@ -160,7 +196,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }]);
 
                 continue;
+              } else {
+                logger.warn('驗證碼已過期:', {
+                  userId,
+                  expiryTime: new Date(expiryTime).toISOString(),
+                  currentTime: new Date().toISOString()
+                });
               }
+            } else {
+              logger.warn('找不到對應的驗證記錄:', { code: messageText });
             }
           }
 
@@ -196,6 +240,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const formattedExpiryTime = expiryTime.toLocaleTimeString('zh-TW', {
               hour: '2-digit',
               minute: '2-digit'
+            });
+
+            logger.info('已生成驗證碼:', {
+              userId: messageText,
+              lineId,
+              verificationCode,
+              expiryTime: formattedExpiryTime
             });
 
             // 發送驗證資訊給用戶
@@ -390,9 +441,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             logger.info('已發送驗證資訊', { lineId, verificationCode });
           } else {
             // 找不到用戶記錄時的回應
+            logger.info('找不到用戶記錄，發送自動回覆');
             await lineServiceInstance.replyMessage(event.replyToken, [{
               type: 'text',
-              text: '您好，感謝您的訊息！目前此帳號為自動回覆系統，我們無法提供即時的人工回覆。'
+              text: '您好，目前此帳號為自動回覆，無法個別回覆用戶的訊息，感謝您的訊息！'
             }]);
           }
         } catch (error) {

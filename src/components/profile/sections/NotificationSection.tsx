@@ -1558,7 +1558,7 @@ const NotificationSectionUI: React.FC<NotificationSectionProps> = ({
                                 shadow-xl backdrop-blur-sm pointer-events-none z-[9999]">
                                 <div className="flex items-center gap-2">
                                   <FontAwesomeIcon icon={faThumbsUp} className="text-blue-400 flex-shrink-0" />
-                                  <span className="break-words">此功能完全免費！推薦使用 Discord 接收通知</span>
+                                  <span className="break-words">此功能完全免費，推薦使用 Discord 接收通知！</span>
                                 </div>
                                 <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1
                                   w-2 h-2 bg-gray-800/95 rotate-45 hidden sm:block">

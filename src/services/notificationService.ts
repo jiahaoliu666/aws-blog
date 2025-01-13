@@ -1,4 +1,4 @@
-import { DynamoDBClient, UpdateItemCommand, QueryCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, UpdateItemCommand, QueryCommand, PutItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
 import { EmailService } from "./emailService";
 import { logger } from "../utils/logger";
 
@@ -104,10 +104,50 @@ export class NotificationService {
     try {
       await this.dbClient.send(new PutItemCommand(params));
       await this.updateUnreadCount(userId);
+      await this.cleanupOldNotifications(userId);
       logger.info(`成功新增通知: userId=${userId}, article_id=${articleId}`);
     } catch (error) {
       logger.error("新增通知失敗:", error);
       throw error;
+    }
+  }
+
+  private async cleanupOldNotifications(userId: string): Promise<void> {
+    try {
+      // 1. 查詢用戶的所有通知，按照時間戳排序
+      const queryParams = {
+        TableName: "AWS_Blog_UserNotifications",
+        KeyConditionExpression: "userId = :userId",
+        ExpressionAttributeValues: {
+          ":userId": { S: userId }
+        },
+        ProjectionExpression: "userId, article_id, created_at",
+        ScanIndexForward: false  // 降序排序，最新的在前面
+      };
+
+      const result = await this.dbClient.send(new QueryCommand(queryParams));
+      const notifications = result.Items || [];
+
+      // 2. 如果通知數量超過50，刪除多餘的舊通知
+      if (notifications.length > MAX_NOTIFICATIONS) {
+        const notificationsToDelete = notifications.slice(MAX_NOTIFICATIONS);
+        
+        for (const notification of notificationsToDelete) {
+          const deleteParams = {
+            TableName: "AWS_Blog_UserNotifications",
+            Key: {
+              userId: { S: userId },
+              article_id: notification.article_id
+            }
+          };
+
+          await this.dbClient.send(new DeleteItemCommand(deleteParams));
+          logger.info(`已刪除舊通知: userId=${userId}, article_id=${notification.article_id.S}`);
+        }
+      }
+    } catch (error) {
+      logger.error(`清理舊通知時發生錯誤: userId=${userId}`, error);
+      // 不拋出錯誤，因為這是背景清理操作
     }
   }
 

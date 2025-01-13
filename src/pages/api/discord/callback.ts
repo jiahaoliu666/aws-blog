@@ -86,7 +86,7 @@ export default async function handler(
         'TEST',
         '✨ Discord 通知功能已啟用',
         '歡迎使用 AWS Blog 365！\n\n您已成功開啟 Discord 通知功能。',
-        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        process.env.NEXT_PUBLIC_BASE_URL || 'https://awsblog365.com/'
       );
 
       if (!testDmResult) {

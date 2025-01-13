@@ -88,11 +88,11 @@ const HistorySection: React.FC<HistorySectionProps> = ({ recentArticles }) => {
                     rel="noopener noreferrer"
                     className={`block bg-white rounded-xl border-2 border-gray-200 
                       transition-all duration-300 hover:shadow-xl hover:border-blue-300
-                      ${isGridView ? 'p-6' : 'p-7'} shadow-md hover:-translate-y-0.5`}
+                      ${isGridView ? 'p-4 h-[160px] flex flex-col justify-center' : 'p-7'} shadow-md hover:-translate-y-0.5`}
                   >
-                    <div className="flex gap-5">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+                    <div className={`flex gap-3 ${isGridView ? 'flex-1 justify-center' : ''}`}>
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <div className={`flex flex-wrap gap-2 mb-2 ${isGridView ? 'items-start' : 'sm:items-center sm:flex-row'}`}>
                           <span className={`inline-flex items-center px-3 py-1 
                             rounded-full text-xs font-medium tracking-wide
                             ${article.sourcePage === '最新新聞' 

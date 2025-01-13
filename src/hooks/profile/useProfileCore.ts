@@ -254,8 +254,8 @@ export const useProfileCore = ({ user = null }: UseProfileCoreProps = {}): UsePr
 
   // 調試日誌
   useEffect(() => {
-    console.log('User in useProfileCore:', currentUser);
-    console.log('Registration date in useProfileCore:', currentUser?.registrationDate);
+    // console.log('User in useProfileCore:', currentUser);
+    // console.log('Registration date in useProfileCore:', currentUser?.registrationDate);
   }, [currentUser]);
 
   useEffect(() => {

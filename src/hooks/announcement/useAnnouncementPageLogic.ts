@@ -45,7 +45,7 @@ function useAnnouncementPageLogic() {
     const { favorites, toggleFavorite } = useAnnouncementFavorites();
 
     const announcements: ExtendedAnnouncement[] = useMemo(() => {
-        console.log('Fetched announcements:', fetchedAnnouncements);
+        // console.log('Fetched announcements:', fetchedAnnouncements);
         return fetchedAnnouncements.map((announcement: Announcement) => ({
             ...announcement,
             isFavorite: !!favorites.find(fav => fav.article_id === announcement.article_id),
@@ -57,8 +57,8 @@ function useAnnouncementPageLogic() {
     }, [fetchedAnnouncements, favorites, language]);
 
     useEffect(() => {
-        console.log('Current announcements:', currentAnnouncements);
-        console.log('Filtered announcements:', filteredAnnouncements);
+        // console.log('Current announcements:', currentAnnouncements);
+        // console.log('Filtered announcements:', filteredAnnouncements);
         let updatedAnnouncements: ExtendedAnnouncement[] = showFavorites ? favorites : filteredAnnouncements;
 
         if (startDate || endDate) {

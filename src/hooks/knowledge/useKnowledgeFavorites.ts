@@ -16,7 +16,7 @@ export const useKnowledgeFavorites = () => {
                     const response = await axios.get(`/api/knowledge/getFavorites?userId=${user.sub}`);
                     setFavorites(response.data.items || []);
                 } catch (error) {
-                    console.error('獲取收藏知識庫失敗:', error);
+                    // console.error('獲取收藏知識庫失敗:', error);
                 }
             }
         };
