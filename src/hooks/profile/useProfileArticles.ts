@@ -57,7 +57,7 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
         description: item.description?.S
       })) || [];
     } catch (error) {
-      console.error('獲取收藏文章失敗:', error);
+      // console.error('獲取收藏文章失敗:', error);
       return [];
     }
   };
@@ -287,7 +287,7 @@ export const useProfileArticles = ({ user }: UseProfileArticlesProps) => {
 
       return validFavorites;
     } catch (error) {
-      console.error('獲取收藏文章失敗:', error);
+      // console.error('獲取收藏文章失敗:', error);
       return [];
     }
   }, []);

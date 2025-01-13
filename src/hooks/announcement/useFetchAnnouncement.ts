@@ -12,7 +12,7 @@ const useFetchAnnouncement = (language: string): ExtendedAnnouncement[] => {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log('Fetched announcement data:', data);
+                // console.log('Fetched announcement data:', data);
 
                 const initializedAnnouncements: ExtendedAnnouncement[] = data.map((announcement: Announcement) => ({
                     ...announcement,

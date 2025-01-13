@@ -17,7 +17,7 @@ export const useArchitectureFavorites = () => {
                     const response = await axios.get(`/api/architecture/getFavorites?userId=${user.sub}`);
                     setFavorites(response.data.items || []);
                 } catch (error) {
-                    console.error('獲取收藏架構失敗:', error);
+                    // console.error('獲取收藏架構失敗:', error);
                 }
             }
         };

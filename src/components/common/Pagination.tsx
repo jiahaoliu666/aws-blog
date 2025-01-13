@@ -47,17 +47,26 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   // 檢測底部元素位置並調整按鈕位置
   const adjustButtonPosition = () => {
     const footer = document.querySelector('footer');
-    if (footer) {
+    const pagination = document.querySelector('.amplify-pagination');
+    if (footer && pagination) {
       const footerRect = footer.getBoundingClientRect();
+      const paginationRect = pagination.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       
-      // 當滾動到接近底部時
-      if (footerRect.top <= viewportHeight) {
-        const newPosition = viewportHeight - footerRect.top + 24; // 24px 為基本間距
-        setButtonPosition(Math.min(newPosition, 80)); // 限制最大上移距離為 80px
+      // 計算與分頁按鈕的距離
+      const distanceToPagination = viewportHeight - paginationRect.bottom;
+      
+      // 如果分頁按鈕在視窗內
+      if (paginationRect.bottom <= viewportHeight) {
+        // 確保向上按鈕在分頁按鈕上方至少 20px
+        const minPosition = viewportHeight - paginationRect.top + 20;
+        setButtonPosition(Math.max(minPosition, 24));
+      } else if (footerRect.top <= viewportHeight) {
+        // 如果接近頁腳，調整位置
+        const newPosition = viewportHeight - footerRect.top + 24;
+        setButtonPosition(Math.min(newPosition, 80));
       } else {
-        setButtonPosition(24); // 恢復預設位置
+        setButtonPosition(24);
       }
     }
   };
@@ -79,7 +88,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   }, []);
 
   return (  
-    <div className="flex flex-col items-center mt-6 py-4">  
+    <div className="flex flex-col items-center mt-6 py-4 relative">  
       <div className={isDarkMode ? 'dark' : ''}>
         <AmplifyPagination  
           currentPage={currentPage}  
@@ -93,8 +102,11 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
       {showScrollButton && (
         <button  
           style={{ bottom: `${buttonPosition}px` }}
-          className={`mt-4 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-full shadow-lg transition duration-300 fixed right-4 flex items-center justify-center p-3 z-10`}  
+          className={`mt-4 ${
+            isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'
+          } text-white rounded-full shadow-lg transition duration-300 fixed md:right-8 right-4 flex items-center justify-center p-3 z-10`}  
           onClick={scrollToTop}  
+          aria-label="回到頂部"
         >  
           <ArrowUp size={28} className="text-white" />  
         </button>

@@ -69,7 +69,7 @@ const NewsPage: React.FC = () => {
             try {
                 console.log('開始加載新聞數據...');
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log('當前新聞數據:', currentArticles);
+                // console.log('當前新聞數據:', currentArticles);
                 setIsLoading(false);
             } catch (error) {
                 console.error('加載數據時出錯:', error);
@@ -81,9 +81,9 @@ const NewsPage: React.FC = () => {
     }, [currentArticles]);
 
     useEffect(() => {
-        console.log('articles 數據更新:', articles);
-        console.log('filteredArticles 數據更新:', filteredArticles);
-        console.log('currentArticles 數據更新:', currentArticles);
+        // console.log('articles 數據更新:', articles);
+        // console.log('filteredArticles 數據更新:', filteredArticles);
+        // console.log('currentArticles 數據更新:', currentArticles);
     }, [articles, filteredArticles, currentArticles]);
 
     useEffect(() => {

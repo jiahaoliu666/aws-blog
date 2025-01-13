@@ -17,7 +17,7 @@ export const useFavoriteFavorites = () => {
                     const response = await axios.get(`/api/favorite/getFavorites?userId=${user.sub}`);
                     setFavorites(response.data.items || []);
                 } catch (error) {
-                    console.error('獲取收藏項目失敗:', error);
+                    // console.error('獲取收藏項目失敗:', error);
                 }
             }
         };

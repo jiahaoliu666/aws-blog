@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('處理後的收藏文章數據:', JSON.stringify(favorites, null, 2));
         res.status(200).json(favorites);
     } catch (error) {
-        console.error('獲取收藏文章時發生錯誤:', error);
+        // console.error('獲取收藏文章時發生錯誤:', error);
         res.status(500).json({ 
             error: '無法獲取收藏文章',
             details: error instanceof Error ? error.message : '未知錯誤'

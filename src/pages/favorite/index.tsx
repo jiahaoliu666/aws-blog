@@ -57,7 +57,7 @@ const FavoritePage: React.FC = () => {
             try {
                 console.log('開始加載收藏數據...');
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log('當前收藏數據:', currentItems);
+                // console.log('當前收藏數據:', currentItems);
                 setIsLoading(false);
             } catch (error) {
                 console.error('加載數據時出錯:', error);
@@ -69,9 +69,9 @@ const FavoritePage: React.FC = () => {
     }, [currentItems]);
 
     useEffect(() => {
-        console.log('favorites 數據更新:', favorites);
-        console.log('filteredFavorites 數據更新:', filteredFavorites);
-        console.log('currentItems 數據更新:', currentItems);
+        // console.log('favorites 數據更新:', favorites);
+        // console.log('filteredFavorites 數據更新:', filteredFavorites);
+        // console.log('currentItems 數據更新:', currentItems);
     }, [favorites, filteredFavorites, currentItems]);
 
     const resetFilters = () => {

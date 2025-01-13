@@ -18,7 +18,7 @@ export const useNewsFavorites = () => {
                     const response = await axios.get(`/api/news/getFavorites?userId=${user.sub}`);
                     setFavorites(response.data.items || []);
                 } catch (error) {
-                    console.error('獲取收藏文章失敗:', error);
+                    // console.error('獲取收藏文章失敗:', error);
                 }
             }
         };

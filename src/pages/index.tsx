@@ -206,7 +206,7 @@ const Home: React.FC = () => {
                 variants={staggerContainer}
                 initial="hidden"
                 animate="show"
-                className="text-left space-y-6 sm:space-y-8 px-4 sm:px-0"
+                className="text-left space-y-6 sm:space-y-8 px-4 "
               >
                 <motion.h1 
                   variants={textVariant(0.2)}

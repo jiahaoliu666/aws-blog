@@ -73,7 +73,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
       setLoading(true);
       
       try {
-        console.log('發送請求到:', `/api/notifications?userId=${userId}`);
+        // console.log('發送請求到:', `/api/notifications?userId=${userId}`);
         const response = await fetch(
           `/api/notifications?userId=${userId}`,
           {
@@ -90,7 +90,7 @@ const Notification: React.FC<NotificationProps> = ({ userId, unreadCount, setUnr
         }
 
         const data = await response.json();
-        console.log('獲取到的數據:', data);
+        // console.log('獲取到的數據:', data);
         
         if (data && Array.isArray(data.notifications)) {
           console.log('通知數量:', data.notifications.length);

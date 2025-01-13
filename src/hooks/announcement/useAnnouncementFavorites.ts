@@ -19,7 +19,7 @@ export const useAnnouncementFavorites = () => {
                     const response = await axios.get(`/api/announcement/getFavorites?userId=${user.sub}`);
                     setFavorites(response.data.items || []);
                 } catch (error) {
-                    console.error('獲取收藏公告失敗:', error);
+                    // console.error('獲取收藏公告失敗:', error);
                 }
             }
         };

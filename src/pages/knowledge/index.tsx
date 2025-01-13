@@ -53,7 +53,7 @@ const KnowledgePage: React.FC = () => {
             try {
                 console.log('開始加載知識中心數據...');
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log('當前知識中心數據:', currentKnowledge);
+                // console.log('當前知識中心數據:', currentKnowledge);
                 setIsLoading(false);
             } catch (error) {
                 console.error('加載數據時出錯:', error);
@@ -65,9 +65,9 @@ const KnowledgePage: React.FC = () => {
     }, [currentKnowledge]);
 
     useEffect(() => {
-        console.log('knowledge 數據更新:', knowledge);
-        console.log('filteredKnowledge 數據更新:', filteredKnowledge);
-        console.log('currentKnowledge 數據更新:', currentKnowledge);
+        // console.log('knowledge 數據更新:', knowledge);
+        // console.log('filteredKnowledge 數據更新:', filteredKnowledge);
+        // console.log('currentKnowledge 數據更新:', currentKnowledge);
     }, [knowledge, filteredKnowledge, currentKnowledge]);
 
     const resetFilters = () => {

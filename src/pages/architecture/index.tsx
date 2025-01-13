@@ -53,7 +53,7 @@ const ArchitecturePage: React.FC = () => {
             try {
                 console.log('開始加載架構參考數據...');
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log('當前架構參考數據:', currentArchitectures);
+                // console.log('當前架構參考數據:', currentArchitectures);
                 setIsLoading(false);
             } catch (error) {
                 console.error('加載數據時出錯:', error);
@@ -65,9 +65,9 @@ const ArchitecturePage: React.FC = () => {
     }, [currentArchitectures]);
 
     useEffect(() => {
-        console.log('architectures 數據更新:', architectures);
-        console.log('filteredArchitectures 數據更新:', filteredArchitectures);
-        console.log('currentArchitectures 數據更新:', currentArchitectures);
+        // console.log('architectures 數據更新:', architectures);
+        // console.log('filteredArchitectures 數據更新:', filteredArchitectures);
+        // console.log('currentArchitectures 數據更新:', currentArchitectures);
     }, [architectures, filteredArchitectures, currentArchitectures]);
 
     const resetFilters = () => {

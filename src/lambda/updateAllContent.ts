@@ -8,7 +8,7 @@ import {
   QueryCommand,
   DeleteItemCommand
 } from "@aws-sdk/client-dynamodb";
-import puppeteer from "puppeteer-core";
+import { chromium, Browser, Page } from "playwright";
 import { v4 as uuidv4 } from "uuid";
 import OpenAI from "openai";
 import { logger } from "../utils/logger.js";
@@ -64,7 +64,7 @@ const FETCH_COUNTS = {
   news: 0, // 更新新聞數量
   solutions: 0, // 更新解決方案數量
   architecture: 0, // 更新架構數量
-  knowledge: 15, // 更新知識中心數量
+  knowledge: 0, // 更新知識中心數量
 };
 
 const prompts = {
@@ -296,9 +296,9 @@ async function saveToDynamoDB(
 
 // 爬蟲相關函數
 async function gotoWithRetry(
-  page: puppeteer.Page,
+  page: Page,
   url: string,
-  options: puppeteer.WaitForOptions & { timeout?: number },
+  options: { waitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit" } = { waitUntil: "networkidle" },
   retries = 3
 ): Promise<void> {
   for (let i = 0; i < retries; i++) {
@@ -343,30 +343,23 @@ function timestampToChineseDate(timestamp: number): string {
 }
 
 // 各類型內容的爬蟲函數
-async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
+async function scrapeNews(browser: Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.news;
   
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    locale: 'en-US',
+    geolocation: { latitude: 37.7749, longitude: -122.4194 }
+  });
+  const page = await context.newPage();
+  
   try {
-    // 設定瀏覽器語言為英文
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Cache-Control': 'no-cache'
-    });
-
-    // 設定瀏覽器地區為美國
-    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
-    
-    await gotoWithRetry(page, "https://aws.amazon.com/blogs/?lang=en", {
-      waitUntil: "networkidle2",
-      timeout: 60000,
-    });
+    await gotoWithRetry(page, "https://aws.amazon.com/blogs/?lang=en");
 
     let currentArticleCount = 0;
     
     while (currentArticleCount < FETCH_COUNTS.news) {
       // 等待文章卡片載入
-      await page.waitForSelector('.m-card-title', { timeout: 30000 });
+      await page.waitForSelector('.m-card-title');
       
       // 計算當前頁面上的文章數量
       const articlesOnPage = await page.$$('.m-card-title');
@@ -375,7 +368,7 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
       if (currentArticleCount < FETCH_COUNTS.news) {
         try {
           // 等待 "More" 按鈕出現
-          await page.waitForSelector('.m-directories-more-arrow-icon', { timeout: 5000 });
+          await page.waitForSelector('.m-directories-more-arrow-icon');
           
           // 點擊 "More" 按鈕
           await page.click('.m-directories-more-arrow-icon');
@@ -384,7 +377,7 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
           await page.waitForTimeout(2000);
           
           // 等待網路請求完成
-          await page.waitForNetworkIdle({ timeout: 5000 });
+          await page.waitForLoadState('networkidle');
         } catch (error) {
           logger.warn(`無法載入更多文章: ${error}`);
           break;
@@ -428,25 +421,23 @@ async function scrapeNews(browser: puppeteer.Browser): Promise<void> {
   } catch (error) {
     logger.error(`   ${emoji} 【${name}】爬取失敗`);
     logger.error(`   ${error}`);
+  } finally {
+    await context.close();
   }
 }
 
-async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
+async function scrapeAnnouncement(browser: Browser): Promise<void> {
   const { name, emoji } = CONTENT_TYPES.announcement;
   let totalArticlesScraped = 0;
   let currentPage = 1;
   
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    locale: 'en-US',
+    geolocation: { latitude: 37.7749, longitude: -122.4194 }
+  });
+  const page = await context.newPage();
+  
   try {
-    // 設定瀏覽器語言為英文
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Cache-Control': 'no-cache'
-    });
-
-    // 設定瀏覽器地區為美國
-    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
-
     // 設定基礎 URL，加入語言參數
     const baseUrl = "https://aws.amazon.com/new/?lang=en";
     const queryParams = "?whats-new-content-all.sort-by=item.additionalFields.postDateTime&whats-new-content-all.sort-order=desc&awsf.whats-new-categories=*all";
@@ -456,13 +447,10 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
       
       logger.info(`${emoji} 正在爬取第 ${currentPage} 頁的公告`);
       
-      await gotoWithRetry(page, pageUrl, {
-        waitUntil: "networkidle2",
-        timeout: 60000,
-      });
+      await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 60000 });
 
       // 等待文章卡片載入
-      await page.waitForSelector('.m-card', { timeout: 30000 });
+      await page.waitForSelector('.m-card');
 
       // 檢查是否為最後一頁
       const isLastPage = await page.evaluate(() => {
@@ -521,154 +509,177 @@ async function scrapeAnnouncement(browser: puppeteer.Browser): Promise<void> {
       }
 
       // 切換到下一頁前等待一下
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await page.waitForTimeout(2000);
       currentPage++;
     }
   } catch (error) {
     logger.error(`   ${emoji} 【${name}】爬取失敗`);
     logger.error(`   ${error}`);
   } finally {
-    await page.close();
+    await context.close();
   }
 }
 
-async function scrapeKnowledge(browser: puppeteer.Browser): Promise<void> {
-  const page = await browser.newPage();
+async function scrapeKnowledge(browser: Browser): Promise<void> {
+  const context = await browser.newContext({
+    locale: 'en-US',
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  });
+  const page = await context.newPage();
   let articlesScraped = 0;
   let currentPage = 1;
-  const maxRetries = 3;
+  let hasNextPage = true;
   
   try {
-    page.setDefaultTimeout(60000);
-    page.setDefaultNavigationTimeout(60000);
-
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en-US,en;q=0.9',
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
-    });
-
-    // 首先訪問第一頁
-    const initialUrl = 'https://repost.aws/knowledge-center/all?view=all&sort=recent';
-    await gotoWithRetry(page, initialUrl, {
-      waitUntil: ['networkidle0', 'domcontentloaded'],
-      timeout: 60000,
-    });
-
-    // 獲取所有分頁的 URL
-    const pageUrls = await page.evaluate(() => {
-      const pageItems = document.querySelectorAll('.ant-pagination-item a[aria-label^="page"]');
-      return Array.from(pageItems).map(item => {
-        const href = (item as HTMLAnchorElement).getAttribute('href') || '';
-        return {
-          page: (item as HTMLAnchorElement).getAttribute('aria-label')?.replace('page ', '') || '',
-          url: href ? `https://repost.aws${href}` : ''
-        };
-      });
-    });
-
-    // 依序訪問每一頁
-    for (const pageUrl of pageUrls) {
-      if (articlesScraped >= FETCH_COUNTS.knowledge) break;
-
-      let retryCount = 0;
-      let pageLoaded = false;
-
-      // 載入頁面並重試機制
-      while (retryCount < maxRetries && !pageLoaded) {
-        try {
-          await gotoWithRetry(page, pageUrl.url, {
-            waitUntil: ['networkidle0', 'domcontentloaded'],
-            timeout: 60000,
-          });
-
-          await page.waitForFunction(
-            () => document.readyState === 'complete',
-            { timeout: 60000 }
-          );
-
-          await page.waitForSelector('.KCArticleCard_card__HW_gu', { 
-            timeout: 60000,
-            visible: true 
-          });
-
-          pageLoaded = true;
-          logger.info(`成功載入第 ${pageUrl.page} 頁`);
-        } catch (error) {
-          retryCount++;
-          if (retryCount === maxRetries) {
-            throw error;
+    logger.info(`📚 開始爬取知識中心文章`);
+    
+    while (articlesScraped < FETCH_COUNTS.knowledge && hasNextPage) {
+      logger.info(`正在爬取第 ${currentPage} 頁的文章`);
+      
+      try {
+        // 檢查下一頁按鈕
+        if (currentPage > 1) {
+          const nextPageSelector = `.ant-pagination-item-${currentPage}`;
+          const nextPageButton = await page.waitForSelector(nextPageSelector, { timeout: 5000 });
+          
+          if (!nextPageButton) {
+            logger.info('沒有更多頁面可爬取');
+            hasNextPage = false;
+            break;
           }
-          logger.warn(`載入第 ${pageUrl.page} 頁失敗，正在進行第 ${retryCount} 次重試...`);
-          await new Promise(resolve => setTimeout(resolve, 5000));
+
+          // 獲取下一頁的 href
+          const nextPageHref = await page.$eval(nextPageSelector + ' a', el => el.getAttribute('href'));
+          if (!nextPageHref) {
+            logger.info('無法獲取下一頁連結');
+            hasNextPage = false;
+            break;
+          }
+
+          // 構建完整的 URL
+          const nextPageUrl = `https://repost.aws${nextPageHref}`;
+          
+          // 訪問下一頁
+          await gotoWithRetry(
+            page,
+            nextPageUrl,
+            {
+              waitUntil: 'networkidle'
+            }
+          );
+          
+          logger.info(`成功切換到第 ${currentPage} 頁，繼續爬取文章`);
+        } else {
+          // 第一頁的訪問
+          await gotoWithRetry(
+            page,
+            'https://repost.aws/knowledge-center/all?view=all&sort=recent',
+            {
+              waitUntil: 'networkidle'
+            }
+          );
         }
-      }
 
-      // 等待內容載入
-      await page.waitForTimeout(2000);
-
-      // 爬取當前頁面的文章連結
-      const articleLinks = await page.evaluate(() => {
-        const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
-        return Array.from(items).map(item => {
-          const linkElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
-          const link = linkElement?.getAttribute('href') || '';
-          return link ? `https://repost.aws${link}` : '';
-        }).filter(link => link !== '');
-      });
-
-      // 逐一訪問每篇文章並獲取完整資訊
-      for (const articleLink of articleLinks) {
-        if (articlesScraped >= FETCH_COUNTS.knowledge) break;
-
-        try {
-          // 訪問文章頁面
-          await gotoWithRetry(page, articleLink, {
-            waitUntil: ['networkidle0', 'domcontentloaded'],
-            timeout: 60000,
-          });
-
-          // 等待標題和描述載入
-          await page.waitForSelector('[data-test="kcArticle-title"] h1');
-          await page.waitForSelector('[data-test="kcArticle-description"] p');
-
-          // 獲取完整的標題和描述
-          const articleData = await page.evaluate(() => {
-            const titleElement = document.querySelector('[data-test="kcArticle-title"] h1');
-            const descriptionElement = document.querySelector('[data-test="kcArticle-description"] p');
+        // 等待文章列表載入
+        await page.waitForSelector('.KCArticleCard_card__HW_gu', { timeout: 30000 });
+        
+        // 獲取當前頁面的所有文章連結
+        const articles = await page.evaluate(() => {
+          const items = document.querySelectorAll('.KCArticleCard_card__HW_gu');
+          return Array.from(items).map(item => {
+            const linkElement = item.querySelector('.KCArticleCard_title__dhRk_ a');
+            const descriptionElement = item.querySelector('.KCArticleCard_descriptionBody__hLZPL a');
             
-            return {
-              title: titleElement?.textContent?.trim() || '沒有標題',
-              description: descriptionElement?.textContent?.trim() || '沒有描述',
-              link: window.location.href,
-              info: ''
-            };
+            const link = linkElement?.getAttribute('href') || '沒有連結';
+            const description = descriptionElement?.textContent?.trim() || '沒有描述';
+            
+            return { title: '', description, link, info: '' };
           });
+        });
 
-          const timestamp = Math.floor(Date.now() / 1000);
-          articleData.info = timestampToChineseDate(timestamp);
-          
-          await saveToDynamoDB(articleData, 'knowledge', 'AWS_Blog_Knowledge');
-          articlesScraped++;
-          
-          logProgress('knowledge', articlesScraped, FETCH_COUNTS.knowledge, '爬取進度');
+        // 處理當前頁面的每篇文章
+        for (const article of articles) {
+          if (articlesScraped >= FETCH_COUNTS.knowledge) {
+            hasNextPage = false;
+            break;
+          }
 
-          // 在訪問下一篇文章前稍作等待
-          await page.waitForTimeout(1000);
+          if (!article.link.startsWith('http')) {
+            article.link = `https://repost.aws${article.link}`;
+          }
 
-        } catch (error) {
-          logger.error(`爬取文章失敗 (${articleLink}):`, error);
-          continue;
+          try {
+            // 使用新的 context 來訪問文章詳細頁面
+            const articleContext = await browser.newContext({
+              locale: 'en-US',
+              userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            });
+            const articlePage = await articleContext.newPage();
+
+            await gotoWithRetry(
+              articlePage,
+              article.link,
+              {
+                waitUntil: 'networkidle'
+              }
+            );
+            
+            // 等待標題載入
+            await articlePage.waitForSelector('.KCArticleView_title___TWq1 h1', { timeout: 30000 });
+            
+            // 獲取文章標題和描述
+            const articleData = await articlePage.evaluate(() => {
+              const titleElement = document.querySelector('[data-test="kcArticle-title"] h1');
+              const descriptionElement = document.querySelector('[data-test="kcArticle-description"] p');
+              
+              return {
+                title: titleElement?.textContent?.trim() || '沒有標題',
+                description: descriptionElement?.textContent?.trim() || '沒有描述',
+                link: window.location.href,
+                info: ''
+              };
+            });
+
+            // 設置時間戳
+            const timestamp = Math.floor(Date.now() / 1000);
+            articleData.info = timestampToChineseDate(timestamp);
+
+            // 儲存到資料庫
+            await saveToDynamoDB(articleData, 'knowledge', 'AWS_Blog_Knowledge');
+            articlesScraped++;
+            
+            logProgress('knowledge', articlesScraped, FETCH_COUNTS.knowledge, '爬取進度');
+
+            // 關閉文章頁面的 context
+            await articleContext.close();
+
+          } catch (error) {
+            logger.error(`處理知識文章失敗 (${article.link}):`, error);
+            continue;
+          }
         }
+
+        // 準備進入下一頁
+        if (articlesScraped < FETCH_COUNTS.knowledge) {
+          currentPage++;
+        } else {
+          hasNextPage = false;
+        }
+
+      } catch (error) {
+        logger.error(`處理第 ${currentPage} 頁時發生錯誤:`, error);
+        hasNextPage = false;
+        break;
       }
     }
   } catch (error) {
     logger.error("爬取知識中心時發生錯誤:", error);
   } finally {
-    await page.close();
+    await context.close();
   }
 }
 
-async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
+async function scrapeSolutions(browser: Browser): Promise<void> {
   const page = await browser.newPage();
   const solutions = [];
   let currentPage = 1;
@@ -678,7 +689,6 @@ async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
       'Accept-Language': 'en-US,en;q=0.9',
       'Cache-Control': 'no-cache'
     });
-    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
 
     while (solutions.length < FETCH_COUNTS.solutions) {
       const pageUrl = currentPage === 1
@@ -688,8 +698,7 @@ async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
       logger.info(`正在爬取第 ${currentPage} 頁的解決方案`);
 
       await gotoWithRetry(page, pageUrl, {
-        waitUntil: 'networkidle2',
-        timeout: 60000,
+        waitUntil: 'networkidle'
       });
 
       // 等待卡片載入
@@ -724,8 +733,7 @@ async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
 
           // 訪問詳細頁面
           await gotoWithRetry(page, cardInfo.link, {
-            waitUntil: 'networkidle2',
-            timeout: 30000,
+            waitUntil: 'networkidle'
           });
 
           // 等待頁面內容載入
@@ -757,8 +765,7 @@ async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
 
           // 返回列表頁
           await gotoWithRetry(page, pageUrl, {
-            waitUntil: 'networkidle2',
-            timeout: 30000,
+            waitUntil: 'networkidle'
           });
 
           // 等待卡片重新載入
@@ -785,7 +792,7 @@ async function scrapeSolutions(browser: puppeteer.Browser): Promise<void> {
   }
 }
 
-async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
+async function scrapeArchitecture(browser: Browser): Promise<void> {
   const page = await browser.newPage();
   const architectures = [];
   let currentPage = 1;
@@ -797,99 +804,129 @@ async function scrapeArchitecture(browser: puppeteer.Browser): Promise<void> {
       'Cache-Control': 'no-cache'
     });
 
-    // 設定瀏覽器地區為美國
-    await page.setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
-
     while (architectures.length < FETCH_COUNTS.architecture) {
+      // 修改 URL 結構，確保分頁參數正確
+      const baseUrl = 'https://aws.amazon.com/architecture/';
+      const queryParams = 'cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all';
+
+      logger.info(`正在爬取第 ${currentPage} 頁的架構參考`);
+
+      // 構建完整的 URL，包含分頁參數
       const pageUrl = currentPage === 1
-        ? 'https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all&lang=en'
-        : `https://aws.amazon.com/architecture/?cards-all.sort-by=item.additionalFields.sortDate&cards-all.sort-order=desc&awsf.content-type=content-type%23reference-arch-diagram&awsf.methodology=*all&awsf.tech-category=*all&awsf.industries=*all&awsf.business-category=*all&lang=en&awsm.page-cards-all=${currentPage}`;
+        ? `${baseUrl}?${queryParams}`
+        : `${baseUrl}?${queryParams}&awsm.page-cards-all=${currentPage}`;
 
-      await gotoWithRetry(
-        page,
-        pageUrl,
-        {
-          waitUntil: 'networkidle2',
-          timeout: 60000,
-        }
-      );
-
-      // 等待卡片載入
-      await page.waitForSelector('.m-card-container');
-      const cards = await page.$$('.m-card-container');
-
-      // 計算這一頁需要爬取的卡片數量
-      const remainingCount = FETCH_COUNTS.architecture - architectures.length;
-      const cardsToProcess = Math.min(cards.length, remainingCount);
-
-      for (const card of cards.slice(0, cardsToProcess)) {
-        await card.hover();
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const architecture = await card.evaluate((el) => {
-          const descElement = el.querySelector('.m-desc');
-          let description = '';
-          
-          if (descElement) {
-            // 處理第一種情況：直接文字節點
-            const textNodes = Array.from(descElement.childNodes)
-              .filter(node => node.nodeType === Node.TEXT_NODE);
-            
-            if (textNodes.length > 0) {
-              description = textNodes[0]?.textContent?.trim() || '';
-            }
-            
-            // 如果沒有直接文字節點，處理第二種情況：<p>標籤內的文字
-            if (!description) {
-              const firstP = descElement.querySelector('p');
-              if (firstP) {
-                description = firstP.textContent?.trim() || '';
-              }
-            }
-          }
-
-          return {
-            title: el.querySelector('.m-headline a')?.textContent?.trim() || '沒有標題',
-            description: description || '沒有描述',
-            link: (el.querySelector('.m-headline a') as HTMLAnchorElement)?.href || '沒有連結',
-            info: ''
-          };
+      try {
+        await gotoWithRetry(page, pageUrl, {
+          waitUntil: 'networkidle'
         });
 
-        // 加入時間戳並轉換為中文日期格式
-        const timestamp = Math.floor(Date.now() / 1000);
-        architecture.info = timestampToChineseDate(timestamp);
+        // 等待卡片載入
+        await page.waitForSelector('.m-card-container', { timeout: 30000 });
+        
+        // 獲取當前頁面的所有卡片
+        const cards = await page.$$('.m-card-container');
+        
+        // 如果沒有找到卡片，可能已經到達最後一頁
+        if (!cards || cards.length === 0) {
+          logger.info('沒有找到更多架構參考，停止爬取');
+          break;
+        }
+        
+        // 計算這一頁需要爬取的卡片數量
+        const remainingCount = FETCH_COUNTS.architecture - architectures.length;
+        const cardsToProcess = Math.min(cards.length, remainingCount);
 
-        architectures.push(architecture);
-      }
+        // 處理每個卡片
+        for (let i = 0; i < cardsToProcess; i++) {
+          const card = cards[i];
+          
+          try {
+            // 等待卡片內容完全載入
+            await card.hover();
+            await page.waitForTimeout(500);
 
-      // 檢查是否需要繼續爬取下一頁
-      if (architectures.length >= FETCH_COUNTS.architecture) {
+            const architecture = await card.evaluate((el) => {
+              const titleElement = el.querySelector('.m-headline a');
+              const descElement = el.querySelector('.m-desc');
+              
+              // 改進描述提取邏輯
+              let description = '';
+              if (descElement) {
+                // 處理第一種情況：直接文字節點
+                const textNodes = Array.from(descElement.childNodes)
+                  .filter(node => node.nodeType === Node.TEXT_NODE);
+                
+                if (textNodes.length > 0) {
+                  description = textNodes[0]?.textContent?.trim() || '';
+                }
+                
+                // 如果沒有直接文字節點，處理第二種情況：<p>標籤內的文字
+                if (!description) {
+                  const firstP = descElement.querySelector('p');
+                  if (firstP) {
+                    description = firstP.textContent?.trim() || '';
+                  }
+                }
+              }
+
+              return {
+                title: titleElement?.textContent?.trim() || '沒有標題',
+                description: description || '沒有描述',
+                link: (titleElement as HTMLAnchorElement)?.href || '沒有連結',
+                info: ''
+              };
+            });
+
+            // 設置時間戳
+            const timestamp = Math.floor(Date.now() / 1000);
+            architecture.info = timestampToChineseDate(timestamp);
+
+            // 檢查是否為有效的架構資料
+            if (architecture.title !== '沒有標題' && architecture.link !== '沒有連結') {
+              architectures.push(architecture);
+              logger.info(`成功提取架構：${architecture.title}`);
+              
+              // 更新進度
+              logProgress('architecture', architectures.length, FETCH_COUNTS.architecture, '爬取進度');
+              
+              // 如果已達到目標數量，提前結束
+              if (architectures.length >= FETCH_COUNTS.architecture) {
+                logger.info('已達到目標數量，停止爬取');
+                break;
+              }
+            }
+          } catch (error) {
+            logger.error(`處理卡片時發生錯誤:`, error);
+            continue;
+          }
+        }
+
+        // 檢查是否需要繼續爬取下一頁
+        if (architectures.length >= FETCH_COUNTS.architecture) {
+          break;
+        }
+
+        // 在切換到下一頁之前等待
+        await page.waitForTimeout(2000);
+        currentPage++;
+
+      } catch (error) {
+        logger.error(`爬取架構時發生錯誤:`, error);
         break;
       }
-
-      // 檢查是否還有下一頁
-      const hasNextPage = await page.evaluate(() => {
-        const paginationItems = document.querySelectorAll('.awsm-pagination-page');
-        const currentPageItem = Array.from(paginationItems).find(item => 
-          item.classList.contains('active')
-        );
-        return currentPageItem && currentPageItem.nextElementSibling;
-      });
-
-      if (!hasNextPage) {
-        break;
-      }
-
-      currentPage++;
-      // 在切換頁面前等待一下
-      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     // 儲存爬取到的架構
+    logger.info(`開始儲存 ${architectures.length} 個架構到資料庫`);
     for (const architecture of architectures) {
-      await saveToDynamoDB(architecture, 'architecture', 'AWS_Blog_Architecture');
+      try {
+        await saveToDynamoDB(architecture, 'architecture', 'AWS_Blog_Architecture');
+      } catch (error) {
+        logger.error(`儲存架構失敗: ${architecture.title}`, error);
+      }
     }
+
   } catch (error) {
     logger.error("爬取架構時發生錯誤:", error);
   } finally {
@@ -1560,7 +1597,7 @@ async function getDiscordNotificationUsers(): Promise<NotificationUser[]> {
 }
 
 // 修改主要的爬取函數
-async function scrapeContent(browser: puppeteer.Browser, type: ContentType, articles: ContentData[]) {
+async function scrapeContent(browser: Browser, type: ContentType, articles: ContentData[]) {
   // 獲取啟用通知的用戶
   const notificationUsers = await getDiscordNotificationUsers();
 
@@ -1574,7 +1611,7 @@ async function scrapeContent(browser: puppeteer.Browser, type: ContentType, arti
 
 // 修改主程序的日誌輸出
 export async function updateAllContent(): Promise<void> {
-  let browser: puppeteer.Browser | null = null;
+  let browser: Browser | null = null;
   const startTime = Date.now();
   const boxWidth = 62;
   const line = '─'.repeat(boxWidth - 2);
@@ -1585,10 +1622,8 @@ export async function updateAllContent(): Promise<void> {
     logger.info(`│ 📅 執行時間：${new Date().toLocaleString()}${' '.repeat(boxWidth - new Date().toLocaleString().length - 8)}`);
     logger.info(`└${line}┘`);
     
-    browser = await puppeteer.launch({ 
-      headless: true,
-      executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      args: ['--incognito', '--no-sandbox', '--disable-setuid-sandbox', '--lang=en-US']
+    browser = await chromium.launch({
+      headless: true
     });
     
     // 依序執行各項爬取任務

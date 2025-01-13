@@ -25,7 +25,7 @@ interface VersionHistory {
 const versionHistory: VersionHistory[] = [
   {
     version: '1.0.0',
-    date: '2025-01-04',
+    date: '2025-01-10',
     type: 'feature',
     title: '初始版本發布',
     description: [
@@ -40,7 +40,7 @@ const versionHistory: VersionHistory[] = [
       '【多語言支援】提供繁體中文/英文即時切換功能',
       '【活動日誌】記錄用戶瀏覽與操作行為，支援日誌檢索與過濾',
       '【意見反饋】意見反饋提交表單介面',
-      '【自動更新】建置定期爬蟲機制，實現內容自動更新',
+      '【自動更新】文章自動更新機制',
       '【搜尋功能】提供高效全文檢索與多條件篩選',
       '【AWS服務整合】整合Cognito身份驗證、S3儲存、DynamoDB資料庫等',
     ]
