@@ -60,11 +60,11 @@ dotenv.config({ path: ".env.local" });
 
 // 常量定義
 const FETCH_COUNTS = {
-  announcement: 0, // 更新公告數量
-  news: 0, // 更新新聞數量
-  solutions: 0, // 更新解決方案數量
-  architecture: 0, // 更新架構數量
-  knowledge: 0, // 更新知識中心數量
+  announcement: 10, // 更新公告數量
+  news: 10, // 更新新聞數量
+  solutions: 10, // 更新解決方案數量
+  architecture: 10, // 更新架構數量
+  knowledge: 10, // 更新知識中心數量
 };
 
 const prompts = {
@@ -704,13 +704,40 @@ async function scrapeSolutions(browser: Browser): Promise<void> {
       // 等待卡片載入
       await page.waitForSelector('.m-card');
       
-      // 先獲取所有卡片的資訊
+      // 修改獲取卡片資訊的部分
       const cardsInfo = await page.evaluate(() => {
         const cards = document.querySelectorAll('.m-card');
         return Array.from(cards).map(card => {
           const titleElement = card.querySelector('.m-headline a');
+          const descElement = card.querySelector('.m-desc');
+          let description = '';
+          
+          if (descElement) {
+            // 描述提取邏輯保持不變
+            const textNodes = Array.from(descElement.childNodes)
+              .filter(node => node.nodeType === Node.TEXT_NODE);
+            
+            if (textNodes.length > 0) {
+              description = textNodes[0]?.textContent?.trim() || '';
+            }
+            
+            if (!description) {
+              const firstP = descElement.querySelector('p');
+              if (firstP) {
+                description = firstP.textContent?.trim() || '';
+              }
+            }
+
+            if (!description) {
+              description = descElement.textContent?.trim() || '';
+            }
+          }
+
+          description = description.replace(/\s+/g, ' ').trim();
+
           return {
-            title: titleElement?.textContent?.trim() || '沒有標題',
+            title: '', // 先不取標題，等�問詳細頁面時再取
+            description: description || '沒有描述',
             link: (titleElement as HTMLAnchorElement)?.href || ''
           };
         });
@@ -721,41 +748,38 @@ async function scrapeSolutions(browser: Browser): Promise<void> {
         if (solutions.length >= FETCH_COUNTS.solutions) break;
         
         try {
-          // 先檢查是否重複
-          const exists = await checkIfExists(cardInfo.title, cardInfo.link, 'AWS_Blog_Solutions');
-          if (exists) {
-            stats.solutions.skipped++;
-            logger.info(`   💡 內容已存在，跳過: ${cardInfo.title}`);
-            solutions.push({ ...cardInfo, info: '' });
-            logProgress('solutions', solutions.length, FETCH_COUNTS.solutions, '爬取進度');
-            continue;
-          }
-
-          // 訪問詳細頁面
+          // 訪問詳細頁面�取完整標題
           await gotoWithRetry(page, cardInfo.link, {
             waitUntil: 'networkidle'
           });
 
-          // 等待頁面內容載入
-          await page.waitForSelector('h1');
+          // 等待並獲取完整標題
+          await page.waitForSelector('.lb-breadcrumbs-dropTitle h1');
+          const fullTitle = await page.$eval('.lb-breadcrumbs-dropTitle h1', 
+            (element) => element.textContent?.trim() || '沒有標題'
+          );
 
-          // 獲取完整的標題和描述
-          const solutionData = await page.evaluate(() => {
-            const titleElement = document.querySelector('h1');
-            const descElement = document.querySelector('.lb-content-wrapper p') || 
-                              document.querySelector('.lb-wrapper p') ||
-                              document.querySelector('main p');
+          const solutionWithTitle = {
+            ...cardInfo,
+            title: fullTitle
+          };
 
-            return {
-              title: titleElement?.textContent?.trim() || '沒有標題',
-              description: descElement?.textContent?.trim() || '沒有描述',
-              link: window.location.href,
-              info: ''
-            };
-          });
+          // 先檢查是否重複
+          const exists = await checkIfExists(solutionWithTitle.title, solutionWithTitle.link, 'AWS_Blog_Solutions');
+          if (exists) {
+            stats.solutions.skipped++;
+            logger.info(`   💡 內容已存在，跳過: ${solutionWithTitle.title}`);
+            solutions.push({ ...solutionWithTitle, info: '' });
+            logProgress('solutions', solutions.length, FETCH_COUNTS.solutions, '爬取進度');
+            continue;
+          }
 
+          // 添加時間戳
           const timestamp = Math.floor(Date.now() / 1000);
-          solutionData.info = timestampToChineseDate(timestamp);
+          const solutionData = {
+            ...solutionWithTitle,
+            info: timestampToChineseDate(timestamp)
+          };
           
           // 儲存到資料庫
           await saveToDynamoDB(solutionData, 'solutions', 'AWS_Blog_Solutions');
@@ -772,7 +796,7 @@ async function scrapeSolutions(browser: Browser): Promise<void> {
           await page.waitForSelector('.m-card');
 
         } catch (error) {
-          logger.error(`爬取解決方案失敗 (${cardInfo.title}):`, error);
+          logger.error(`爬取解決方案失敗 (${cardInfo.link}):`, error);
           continue;
         }
       }
