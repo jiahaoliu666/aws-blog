@@ -1,9 +1,8 @@
-import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
-import { sesClient } from "../config/aws";
 import { EMAIL_CONFIG } from "../config/constants";
 import { logger } from "../utils/logger";
 import RateLimiter from "../utils/rateLimiter";
 import { EmailNotification } from "../types/emailTypes";
+import { emailConfig } from "../config/email";
 
 const rateLimiter = new RateLimiter(EMAIL_CONFIG.RATE_LIMIT);
 
@@ -14,33 +13,42 @@ interface EmailResult {
 }
 
 export class EmailService {
-  async sendEmail(notification: EmailNotification) {
+  private transporter: any;
+
+  constructor() {
+    if (typeof window === 'undefined') {
+      const nodemailer = require('nodemailer');
+      this.transporter = nodemailer.createTransport({
+        host: emailConfig.smtp.host,
+        port: emailConfig.smtp.port,
+        secure: emailConfig.smtp.secure,
+        auth: {
+          user: emailConfig.smtp.auth.user,
+          pass: emailConfig.smtp.auth.pass
+        }
+      });
+    }
+  }
+
+  async sendEmail(notification: EmailNotification): Promise<EmailResult> {
     try {
+      if (typeof window !== 'undefined') {
+        throw new Error('郵件發送只能在伺服器端執行');
+      }
+
       await rateLimiter.acquire();
 
       const emailContent = notification.html;
-      const params = {
-        Source: process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
-        Destination: {
-          ToAddresses: [notification.to],
-        },
-        Message: {
-          Subject: {
-            Data: notification.subject,
-            Charset: "UTF-8",
-          },
-          Body: {
-            Html: {
-              Data: emailContent,
-              Charset: "UTF-8",
-            }
-          }
-        }
+      const mailOptions = {
+        from: process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
+        to: notification.to,
+        subject: notification.subject,
+        html: emailContent
       };
 
-      await sesClient.send(new SendEmailCommand(params));
+      const info = await this.transporter.sendMail(mailOptions);
       logger.info('成功發送郵件至:', { recipient: notification.to });
-      return { success: true, error: null };
+      return { success: true, error: null, messageId: info.messageId };
       
     } catch (error) {
       return { 
@@ -51,6 +59,10 @@ export class EmailService {
   }
 
   async sendBatchEmails(notifications: EmailNotification[]) {
+    if (typeof window !== 'undefined') {
+      throw new Error('批量郵件發送只能在伺服器端執行');
+    }
+
     const results: PromiseSettledResult<any>[] = [];
     const batches = this.chunkArray(notifications, EMAIL_CONFIG.BATCH_SIZE);
 
@@ -77,14 +89,18 @@ export class EmailService {
   }
 
   private chunkArray<T>(array: T[], size: number): T[][] {
-    return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
+    return Array.from({ length: Math.ceil(array.length / size) }, (_, i) => 
       array.slice(i * size, i * size + size)
     );
   }
 }
 
 export const sendEmailNotification = async (notification: EmailNotification) => {
+  if (typeof window !== 'undefined') {
+    throw new Error('郵件發送只能在伺服器端執行');
+  }
   const emailService = new EmailService();
   return await emailService.sendEmail(notification);
 };
-export const sendEmail = sendEmailNotification;  // 添加別名導出
+
+export const sendEmail = sendEmailNotification;
