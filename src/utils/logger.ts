@@ -1,6 +1,6 @@
 export const logger = {
   info: (message: string, ...args: any[]) => {
-    // console.log(message, ...args);
+    console.log(message, ...args);
   },
   debug: (message: string, ...args: any[]) => {
     if (process.env.NODE_ENV !== 'production') {

@@ -318,97 +318,113 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 檢查是否有登出標記
         const isLoggedOut = sessionStorage.getItem('isLoggedOut') === 'true';
         if (isLoggedOut) {
-          // 如果有登出標記，不執行驗證
           return;
         }
 
         const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
+        if (!storedUser) return;
+
+        const parsedUser = JSON.parse(storedUser);
+        if (!parsedUser.sub) return;
+
+        // 如果目前沒有用戶狀態，但有存儲的用戶資料，則恢復用戶狀態
+        if (!user && parsedUser.sub) {
+          setUser(parsedUser);
+        }
+
+        // 避免頻繁驗證，增加節流
+        const lastValidationTime = sessionStorage.getItem('lastValidationTime');
+        const now = Date.now();
+        if (lastValidationTime && (now - parseInt(lastValidationTime)) < 60000) { // 1分鐘內不重複驗證
+          return;
+        }
+        sessionStorage.setItem('lastValidationTime', now.toString());
+
+        const command = new AdminGetUserCommand({
+          UserPoolId: userPoolId,
+          Username: parsedUser.sub
+        });
+        
+        try {
+          const response = await cognitoClient.send(command);
           
-          // 如果目前沒有用戶狀態，但有存儲的用戶資料，則恢復用戶狀態
-          if (!user && parsedUser.sub) {
-            setUser(parsedUser);
-          }
+          if (response.UserAttributes) {
+            const userAttributes = response.UserAttributes.reduce((acc, attr) => {
+              if (attr.Name && attr.Value) {
+                acc[attr.Name] = attr.Value;
+              }
+              return acc;
+            }, {} as Record<string, string>);
 
-          // 只有在有用戶資料時才進行驗證和更新
-          if (parsedUser.sub) {
-            const command = new AdminGetUserCommand({
-              UserPoolId: userPoolId,
-              Username: parsedUser.sub
-            });
-            
             try {
-              const response = await cognitoClient.send(command);
+              // 從 DynamoDB 獲取額外的用戶資訊
+              const dynamoClient = new DynamoDBClient({
+                region: 'ap-northeast-1',
+                credentials: {
+                  accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+                  secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+                },
+              });
+
+              const queryParams = {
+                TableName: 'AWS_Blog_UserProfiles',
+                KeyConditionExpression: 'userId = :userId',
+                ExpressionAttributeValues: {
+                  ':userId': { S: parsedUser.sub },
+                },
+              };
+
+              const queryCommand = new QueryCommand(queryParams);
+              const dynamoResponse = await dynamoClient.send(queryCommand);
               
-              // 如果用戶存在，更新用戶資訊
-              if (response.UserAttributes) {
-                const userAttributes = response.UserAttributes.reduce((acc, attr) => {
-                  if (attr.Name && attr.Value) {
-                    acc[attr.Name] = attr.Value;
-                  }
-                  return acc;
-                }, {} as Record<string, string>);
+              const avatarUrl = dynamoResponse.Items?.[0]?.avatarUrl?.S;
 
-                // 從 DynamoDB 獲取額外的用戶資訊（如頭像）
-                const dynamoClient = new DynamoDBClient({
-                  region: 'ap-northeast-1',
-                  credentials: {
-                    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-                  },
-                });
+              // 更新用戶資訊，保持必要欄位的存在
+              const updatedUserData: User = {
+                ...parsedUser,
+                email: userAttributes.email || parsedUser.email,
+                username: userAttributes.name || parsedUser.username,
+                avatar: avatarUrl || parsedUser.avatar,
+                accessToken: parsedUser.accessToken,
+                refreshToken: parsedUser.refreshToken
+              };
 
-                const queryParams = {
-                  TableName: 'AWS_Blog_UserProfiles',
-                  KeyConditionExpression: 'userId = :userId',
-                  ExpressionAttributeValues: {
-                    ':userId': { S: parsedUser.sub },
-                  },
-                };
+              localStorage.setItem("user", JSON.stringify(updatedUserData));
+              setUser(updatedUserData);
 
-                const queryCommand = new QueryCommand(queryParams);
-                const dynamoResponse = await dynamoClient.send(queryCommand);
-                
-                const avatarUrl = dynamoResponse.Items?.[0]?.avatarUrl?.S;
-
-                // 更新用戶資訊，保持必要欄位的存在
-                const updatedUserData: User = {
-                  ...parsedUser,
-                  email: userAttributes.email || parsedUser.email,
-                  username: userAttributes.name || parsedUser.username,
-                  avatar: avatarUrl || parsedUser.avatar,
-                  accessToken: parsedUser.accessToken,
-                  refreshToken: parsedUser.refreshToken
-                };
-
-                // 更新 localStorage 和狀態
-                localStorage.setItem("user", JSON.stringify(updatedUserData));
-                setUser(updatedUserData);
-
-                // 如果頭像有更新，觸發全局事件
-                if (avatarUrl && avatarUrl !== parsedUser.avatar) {
-                  window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: avatarUrl }));
-                }
-                
-                logger.info('用戶資訊已更新:', {
-                  userSub: parsedUser.sub,
-                  hasAvatar: !!avatarUrl,
-                  timestamp: new Date().toISOString()
-                });
+              if (avatarUrl && avatarUrl !== parsedUser.avatar) {
+                window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: avatarUrl }));
               }
-              return true;
-            } catch (error) {
-              if (error instanceof UserNotFoundException) {
-                logger.warn('用戶已不存在，執行自動登出:', {
-                  userSub: parsedUser.sub,
-                  timestamp: new Date().toISOString()
-                });
-                await performAutoLogout();
-                return false;
-              }
-              throw error;
+            } catch (dynamoError) {
+              // DynamoDB 錯誤不應該導致登出
+              logger.warn('獲取用戶資料時發生非致命錯誤:', {
+                error: dynamoError instanceof Error ? dynamoError.message : '未知錯誤',
+                userSub: parsedUser.sub
+              });
             }
+          }
+        } catch (error) {
+          if (error instanceof UserNotFoundException) {
+            logger.warn('用戶已不存在，執行自動登出:', {
+              userSub: parsedUser.sub,
+              timestamp: new Date().toISOString()
+            });
+            await performAutoLogout();
+            return false;
+          }
+          
+          // 其他錯誤不應該立即導致登出
+          logger.error('驗證用戶時發生錯誤:', {
+            error: error instanceof Error ? error.message : '未知錯誤',
+            userSub: parsedUser.sub
+          });
+          
+          // 如果是網絡錯誤或其他臨時性錯誤，不執行登出
+          if (error instanceof Error && 
+              (error.message.includes('Network') || 
+               error.message.includes('timeout') || 
+               error.message.includes('rate exceeded'))) {
+            return;
           }
         }
       } catch (error) {

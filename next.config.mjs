@@ -31,6 +31,8 @@ const nextConfig = {
         fs: false,
         net: false,
         tls: false,
+        dns: false,
+        child_process: false
       };
     }
     config.optimization = {

@@ -16,17 +16,28 @@ export class EmailService {
   private transporter: any;
 
   constructor() {
+    // 確保只在伺服器端初始化
     if (typeof window === 'undefined') {
-      const nodemailer = require('nodemailer');
+      this.initializeTransporter();
+    }
+  }
+
+  private async initializeTransporter() {
+    try {
+      // 動態導入 nodemailer
+      const nodemailer = (await import('nodemailer')).default;
+      
       this.transporter = nodemailer.createTransport({
-        host: emailConfig.smtp.host,
-        port: emailConfig.smtp.port,
-        secure: emailConfig.smtp.secure,
+        host: "email-smtp.ap-northeast-1.amazonaws.com",
+        port: 587,
+        secure: false,
         auth: {
-          user: emailConfig.smtp.auth.user,
-          pass: emailConfig.smtp.auth.pass
+          user: process.env.SMTP_USERNAME,
+          pass: process.env.SMTP_PASSWORD
         }
       });
+    } catch (error) {
+      logger.error('初始化郵件傳輸器失敗:', error);
     }
   }
 
@@ -36,11 +47,16 @@ export class EmailService {
         throw new Error('郵件發送只能在伺服器端執行');
       }
 
+      // 確保 transporter 已初始化
+      if (!this.transporter) {
+        await this.initializeTransporter();
+      }
+
       await rateLimiter.acquire();
 
       const emailContent = notification.html;
       const mailOptions = {
-        from: process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
+        from: process.env.SMTP_SENDER_EMAIL || process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
         to: notification.to,
         subject: notification.subject,
         html: emailContent
@@ -51,6 +67,7 @@ export class EmailService {
       return { success: true, error: null, messageId: info.messageId };
       
     } catch (error) {
+      logger.error('發送郵件失敗:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : '發送郵件失敗' 
