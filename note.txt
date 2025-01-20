@@ -1,11 +1,5 @@
 
 
-使用 crontab（Linux/Mac）定期執行爬蟲
-
-找出哪些使用 mail 改為使用smtp
-
-最後全部更改重要的環境變數
-
 --------
 
 全部收藏
@@ -174,58 +168,5 @@ src/pages/api/profile/account/delete.ts
 src/templates/deleteAccountEmail.ts
 src/services/dbService.ts
 src/config/constants.ts
-
---------
-
-修改時間配置
-/Users/liujiahao/Library/LaunchAgents/com.awsblog.crawler.plist
-
-重新載入配置
-launchctl unload ~/Library/LaunchAgents/com.awsblog.crawler.plist 2>/dev/null || true && launchctl load ~/Library/LaunchAgents/com.awsblog.crawler.plist
-
-查看下次執行時間
-launchctl print gui/$UID/com.awsblog.crawler
-
-# 查看特定任務的狀態
-launchctl list | grep com.awsblog.crawler
-
-# 查看所有用戶級別的任務列表
-launchctl list
-
-# 查看任務的詳細資訊
-launchctl print gui/$UID/com.awsblog.crawler
-
-# 查看任務的運行日誌
-tail -f /Users/liujiahao/Documents/all/scripts/logs/launchd.log
-
-# 查看錯誤日誌
-tail -f /Users/liujiahao/Documents/all/scripts/logs/launchd-error.log
-
-# 停用自動執行（不會刪除配置，只是暫時停止）
-launchctl disable gui/$UID/com.awsblog.crawler
-
-# 啟用自動執行
-launchctl enable gui/$UID/com.awsblog.crawler
-
-# 立即執行一次任務（不影響排程）
-launchctl start com.awsblog.crawler
-
-# 停止正在執行的任務
-launchctl stop com.awsblog.crawler
-
-# 移除任務（完全停止自動執行）
-launchctl remove com.awsblog.crawler
-
-# 重新啟動任務
-launchctl kickstart gui/$UID/com.awsblog.crawler
-
-# 檢查進程是否在運行
-ps aux | grep run-crawler
-
-# 檢查最近的系統日誌中與任務相關的訊息
-log show --predicate 'subsystem contains "com.apple.launchd"' --last 1h | grep com.awsblog.crawler
-
-# 檢查任務配置文件的權限
-ls -l ~/Library/LaunchAgents/com.awsblog.crawler.plist
 
 --------
