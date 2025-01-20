@@ -172,7 +172,7 @@ src/
 │       │   ├── ProfileSection.tsx  // 個人資訊
 │       │   ├── PasswordSection.tsx // 修改密碼
 │       │   ├── NotificationSection.tsx // 訂閱通知
-│       │   └── PreferencesSection.tsx // 偏好設定
+│       │   ├── PreferencesSection.tsx // 偏好設定
 │       │   ├── HistorySection.tsx  // 觀看記錄
 │       │   ├── ActivityLogSection.tsx // 活動日誌
 │       │   ├── FeedbackSection.tsx // 意見反饋

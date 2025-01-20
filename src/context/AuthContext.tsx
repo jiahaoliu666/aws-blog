@@ -18,11 +18,8 @@ import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 // 檢查頻率設定（毫秒）
 const CHECK_INTERVALS = {
   ACTIVE: 2 * 60 * 1000,    // 活躍狀態：每 2 分鐘
-  IDLE: 5 * 60 * 1000,      // 閒置狀態：每 5 分鐘
   BACKGROUND: 10 * 60 * 1000 // 背景狀態：每 10 分鐘
 } as const;
-
-const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 分鐘沒有操作視為閒置
 
 interface AuthContextType {
   user: User | null;
@@ -40,8 +37,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [lastActivity, setLastActivity] = useState<number>(Date.now());
-  const [isIdle, setIsIdle] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const router = useRouter();
 
@@ -52,65 +47,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsClient(true);
   }, []);
 
-  // 更新最後活動時間
-  const updateLastActivity = () => {
-    setLastActivity(Date.now());
-    setIsIdle(false);
-  };
-
-  // 監聽用戶活動
+  // 只保留頁面可見性監聽
   useEffect(() => {
     if (!isClient) return;
 
-    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
-    const handleActivity = () => {
-      updateLastActivity();
-    };
-
-    events.forEach(event => {
-      window.addEventListener(event, handleActivity);
-    });
-
-    // 監聽頁面可見性變化
     const handleVisibilityChange = () => {
       setIsVisible(!document.hidden);
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, handleActivity);
-      });
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isClient]);
 
-  // 根據用戶狀態決定檢查頻率
+  // 修改檢查間隔的函數
   const getCheckInterval = (): number => {
-    if (!isVisible) {
-      return CHECK_INTERVALS.BACKGROUND;
-    }
-    if (isIdle) {
-      return CHECK_INTERVALS.IDLE;
-    }
-    return CHECK_INTERVALS.ACTIVE;
+    return !isVisible ? CHECK_INTERVALS.BACKGROUND : CHECK_INTERVALS.ACTIVE;
   };
-
-  // 檢查是否閒置
-  useEffect(() => {
-    if (!isClient) return;
-
-    const checkIdleStatus = () => {
-      const now = Date.now();
-      if (now - lastActivity >= IDLE_TIMEOUT) {
-        setIsIdle(true);
-      }
-    };
-
-    const idleCheckInterval = setInterval(checkIdleStatus, 60000); // 每分鐘檢查一次閒置狀態
-
-    return () => clearInterval(idleCheckInterval);
-  }, [isClient, lastActivity]);
 
   // 驗證用戶是否仍然存在並更新用戶資訊
   const validateAndUpdateUser = async (userSub: string): Promise<boolean> => {
@@ -176,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // 清除所有本地存儲
-  const clearAllStorages = () => {
+  const clearAllStorages = async () => {
     try {
       logger.info('開始清除所有本地存儲');
 
@@ -249,14 +203,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           logger.warn('清除 IndexedDB 失敗:', e);
         }
       };
-      deleteIndexedDB().catch(e => logger.warn('執行 IndexedDB 清除失敗:', e));
+      await deleteIndexedDB();
+
+      // 6. 驗證清除結果
+      const verifyStorageClear = () => {
+        const isLocalStorageCleared = localStorage.length === 0;
+        const isSessionStorageCleared = sessionStorage.length === 0;
+        const isCookiesCleared = document.cookie.split(';').every(cookie => cookie.trim() === '');
+
+        if (!isLocalStorageCleared || !isSessionStorageCleared || !isCookiesCleared) {
+          throw new Error('存儲清除驗證失敗');
+        }
+      };
+      verifyStorageClear();
+
+      // 7. 設置登出標記
+      sessionStorage.setItem('isLoggedOut', 'true');
+      sessionStorage.setItem('logoutTimestamp', Date.now().toString());
 
       logger.info('所有本地存儲清除完成');
+      return true;
     } catch (error) {
       logger.error('清除本地存儲時發生錯誤:', {
         error: error instanceof Error ? error.message : '未知錯誤',
         stack: error instanceof Error ? error.stack : undefined
       });
+      return false;
     }
   };
 
@@ -264,7 +236,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const performAutoLogout = async () => {
     try {
       // 1. 先清除所有本地存儲
-      clearAllStorages();
+      const isStorageCleared = await clearAllStorages();
+      if (!isStorageCleared) {
+        throw new Error('清除本地存儲失敗');
+      }
       
       // 2. 設置用戶狀態為 null
       setUser(null);
@@ -272,17 +247,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 3. 添加登出標記防止自動恢復
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('isLoggedOut', 'true');
+        sessionStorage.setItem('logoutTimestamp', Date.now().toString());
+        
+        // 觸發登出事件
+        window.dispatchEvent(new Event('logout'));
       }
+
+      // 4. 驗證登出狀態
+      const verifyLogoutState = () => {
+        const hasUser = localStorage.getItem('user');
+        const hasToken = localStorage.getItem('token');
+        const hasPreferences = localStorage.getItem('userPreferences');
+        if (hasUser || hasToken || hasPreferences) {
+          throw new Error('用戶數據清除驗證失敗');
+        }
+      };
+      verifyLogoutState();
       
-      // 4. 如果不在登入頁面，則重導向到登入頁面
+      // 5. 如果不在登入頁面，則重導向到登入頁面
       if (router.pathname !== '/auth/login') {
         await router.push('/auth/login');
       }
+
+      logger.info('用戶登出成功，所有狀態已清除');
+      return true;
     } catch (error) {
       logger.error('執行自動登出時發生錯誤:', {
         error: error instanceof Error ? error.message : '未知錯誤',
         stack: error instanceof Error ? error.stack : undefined
       });
+      return false;
     }
   };
 
@@ -317,18 +311,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // 檢查是否有登出標記
         const isLoggedOut = sessionStorage.getItem('isLoggedOut') === 'true';
-        if (isLoggedOut) {
-          return;
+        const logoutTimestamp = sessionStorage.getItem('logoutTimestamp');
+        
+        // 如果有登出標記且在30分鐘內，保持登出狀態
+        if (isLoggedOut && logoutTimestamp) {
+          const thirtyMinutes = 30 * 60 * 1000;
+          if (Date.now() - parseInt(logoutTimestamp) < thirtyMinutes) {
+            return;
+          }
         }
 
         const storedUser = localStorage.getItem("user");
-        if (!storedUser) return;
+        if (!storedUser) {
+          // 如果沒有存儲的用戶數據，但當前狀態有用戶，則清除狀態
+          if (user) {
+            setUser(null);
+          }
+          return;
+        }
 
         const parsedUser = JSON.parse(storedUser);
-        if (!parsedUser.sub) return;
+        if (!parsedUser.accessToken) {
+          // 如果存儲的用戶數據沒有 token，執行登出流程
+          await performAutoLogout();
+          return;
+        }
 
         // 如果目前沒有用戶狀態，但有存儲的用戶資料，則恢復用戶狀態
-        if (!user && parsedUser.sub) {
+        if (!user && parsedUser.accessToken) {
           setUser(parsedUser);
         }
 
@@ -340,12 +350,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         sessionStorage.setItem('lastValidationTime', now.toString());
 
-        const command = new AdminGetUserCommand({
-          UserPoolId: userPoolId,
-          Username: parsedUser.sub
-        });
-        
+        // 驗證 token 是否有效
         try {
+          const command = new AdminGetUserCommand({
+            UserPoolId: userPoolId,
+            Username: parsedUser.sub
+          });
+          
           const response = await cognitoClient.send(command);
           
           if (response.UserAttributes) {
@@ -356,52 +367,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return acc;
             }, {} as Record<string, string>);
 
-            try {
-              // 從 DynamoDB 獲取額外的用戶資訊
-              const dynamoClient = new DynamoDBClient({
-                region: 'ap-northeast-1',
-                credentials: {
-                  accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-                  secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-                },
-              });
+            // 更新用戶資訊
+            const updatedUserData: User = {
+              ...parsedUser,
+              email: userAttributes.email || parsedUser.email,
+              username: userAttributes.name || parsedUser.username,
+              accessToken: parsedUser.accessToken,
+              refreshToken: parsedUser.refreshToken
+            };
 
-              const queryParams = {
-                TableName: 'AWS_Blog_UserProfiles',
-                KeyConditionExpression: 'userId = :userId',
-                ExpressionAttributeValues: {
-                  ':userId': { S: parsedUser.sub },
-                },
-              };
+            localStorage.setItem("user", JSON.stringify(updatedUserData));
+            setUser(updatedUserData);
 
-              const queryCommand = new QueryCommand(queryParams);
-              const dynamoResponse = await dynamoClient.send(queryCommand);
-              
-              const avatarUrl = dynamoResponse.Items?.[0]?.avatarUrl?.S;
-
-              // 更新用戶資訊，保持必要欄位的存在
-              const updatedUserData: User = {
-                ...parsedUser,
-                email: userAttributes.email || parsedUser.email,
-                username: userAttributes.name || parsedUser.username,
-                avatar: avatarUrl || parsedUser.avatar,
-                accessToken: parsedUser.accessToken,
-                refreshToken: parsedUser.refreshToken
-              };
-
-              localStorage.setItem("user", JSON.stringify(updatedUserData));
-              setUser(updatedUserData);
-
-              if (avatarUrl && avatarUrl !== parsedUser.avatar) {
-                window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: avatarUrl }));
-              }
-            } catch (dynamoError) {
-              // DynamoDB 錯誤不應該導致登出
-              logger.warn('獲取用戶資料時發生非致命錯誤:', {
-                error: dynamoError instanceof Error ? dynamoError.message : '未知錯誤',
-                userSub: parsedUser.sub
-              });
-            }
+            logger.info('用戶狀態已更新:', {
+              userId: parsedUser.sub,
+              hasToken: !!updatedUserData.accessToken,
+              timestamp: new Date().toISOString()
+            });
           }
         } catch (error) {
           if (error instanceof UserNotFoundException) {
@@ -410,7 +392,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               timestamp: new Date().toISOString()
             });
             await performAutoLogout();
-            return false;
+            return;
           }
           
           // 其他錯誤不應該立即導致登出
@@ -425,6 +407,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                error.message.includes('timeout') || 
                error.message.includes('rate exceeded'))) {
             return;
+          }
+
+          // 如果是認證相關的錯誤，執行登出
+          if (error instanceof Error && 
+              (error.message.includes('token') || 
+               error.message.includes('authentication') || 
+               error.message.includes('unauthorized'))) {
+            await performAutoLogout();
           }
         }
       } catch (error) {
@@ -451,9 +441,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const interval = getCheckInterval();
       logger.debug('執行用戶驗證檢查:', {
         interval: interval / 1000,
-        isIdle,
         isVisible,
-        lastActivity: new Date(lastActivity).toISOString(),
+        lastActivity: new Date(Date.now()).toISOString(),
         hasUser: !!user
       });
       validateCurrentUser();
@@ -463,7 +452,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isClient, isIdle, isVisible, lastActivity]);
+  }, [isClient, isVisible, user, userPoolId]);
 
   const registerUser = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
@@ -537,7 +526,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setUser(userData);
         setError(null);
-        updateLastActivity(); // 更新最後活動時間
         
         return true;
       }
