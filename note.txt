@@ -131,8 +131,11 @@ src/hooks/profile/useNotificationSettings.ts
 
 
 smtp 設定
-src/components/profile/sections/FeedbackSection.tsx
 src/pages/api/profile/sendFeedback.ts
+src/services/emailService.ts
+src/pages/api/notifications/sendEmail.ts
+src/config/email.ts
+src/pages/api/email/send.ts
 src/hooks/profile/useProfileFeedback.ts
 src/hooks/profile/useProfileCore.ts
 --------

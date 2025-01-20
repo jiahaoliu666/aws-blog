@@ -16,16 +16,34 @@ const s3Client = new S3Client({
   },
 });
 
+// 驗證 SMTP 配置
+const validateSmtpConfig = () => {
+  const requiredVars = ['SMTP_HOST', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'SMTP_SENDER_EMAIL'];
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    throw new Error(`缺少必要的 SMTP 配置: ${missingVars.join(', ')}`);
+  }
+};
+
 // 創建 SMTP 傳輸器
-const transporter = nodemailer.createTransport({
-  host: 'email-smtp.ap-northeast-1.amazonaws.com',
-  port: 587,
-  secure: false, // 使用 STARTTLS
-  auth: {
-    user: process.env.SMTP_USERNAME,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+const createTransporter = async () => {
+  validateSmtpConfig();
+  
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
+  // 驗證傳輸器配置
+  await transporter.verify();
+  return transporter;
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -38,26 +56,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let attachmentFiles: Attachment[] = [];
 
   try {
+    // 驗證必要參數
+    if (!title || !content || !email || !category) {
+      return res.status(400).json({ 
+        success: false, 
+        error: '缺少必要參數' 
+      });
+    }
+
     // 處理單一圖片上傳
     if (image) {
-      console.log('Received image for upload');
-      const buffer = Buffer.from(image.split(',')[1], 'base64');
-      console.log('Image buffer length:', buffer.length);
-      const params = {
-        Bucket: 'aws-blog-feedback',
-        Key: `feedback-images/${email}-${Date.now()}.png`,
-        Body: buffer,
-        ContentType: 'image/png',
-      };
-      const command = new PutObjectCommand(params);
       try {
-        console.log('Attempting to upload image to S3');
+        const buffer = Buffer.from(image.split(',')[1], 'base64');
+        const params = {
+          Bucket: 'aws-blog-feedback',
+          Key: `feedback-images/${email}-${Date.now()}.png`,
+          Body: buffer,
+          ContentType: 'image/png',
+        };
+        const command = new PutObjectCommand(params);
         await s3Client.send(command);
         imageUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
-        console.log('Image uploaded successfully:', imageUrl);
       } catch (s3Error) {
-        console.error('S3 upload error:', s3Error);
-        throw new Error('Failed to upload image to S3');
+        throw new Error('圖片上傳失敗');
       }
     }
 
@@ -66,9 +87,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       attachmentFiles = attachments;
     }
 
+    // 初始化郵件傳輸器
+    const transporter = await createTransporter();
+
     // 準備郵件內容
     const mailOptions = {
-      from: process.env.SMTP_SENDER_EMAIL || 'no-reply@awsblog365.com',
+      from: process.env.SMTP_SENDER_EMAIL,
       to: 'awsblogfeedback@gmail.com',
       subject: `[用戶反饋] ${category}: ${title}`,
       html: `
@@ -134,7 +158,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       attachments: attachmentFiles
     });
   } catch (error) {
-    console.error('Error sending feedback:', error);
     res.status(500).json({ 
       message: 'Error sending feedback', 
       error: error instanceof Error ? error.message : 'Unknown error',

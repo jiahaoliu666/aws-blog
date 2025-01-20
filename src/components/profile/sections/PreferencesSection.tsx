@@ -38,7 +38,7 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
 }) => {
   const { user } = useAuthContext();
   const { showToast } = useToastContext();
-  const { preferences } = useProfilePreferences();
+  const { preferences, clearPreferences } = useProfilePreferences();
   const { setThemeMode } = useTheme();
   
   // 使用本地狀態來追蹤暫時的設定變更
@@ -57,6 +57,20 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
       });
     }
   }, [preferences]);
+
+  // 監聽登出事件
+  useEffect(() => {
+    const handleLogout = () => {
+      // 重置所有本地狀態
+      setTempSettings(initialSettings);
+      setHasChanges(false);
+    };
+
+    window.addEventListener('logout', handleLogout);
+    return () => {
+      window.removeEventListener('logout', handleLogout);
+    };
+  }, [initialSettings]);
 
   // 處理本地設定變更
   const handleLocalSettingChange = (key: string, value: any) => {
@@ -101,12 +115,16 @@ const PreferencesSection: React.FC<SettingsSectionProps> = ({
       setThemeMode(tempSettings.theme === 'dark');
       setHasChanges(false);
       showToast('設定已儲存', 'success');
+      
       // 使用 setTimeout 延遲重整頁面
       setTimeout(() => {
         window.location.reload();
-      }, 2000); // 2秒後重整
+      }, 2000);
     } catch (error) {
       showToast('儲存失敗', 'error');
+      // 發生錯誤時重置為原始設定
+      setTempSettings(preferences);
+      setHasChanges(false);
     }
   };
 

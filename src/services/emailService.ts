@@ -24,11 +24,25 @@ export class EmailService {
 
   private async initializeTransporter() {
     try {
-      // 動態導入 nodemailer
       const nodemailer = (await import('nodemailer')).default;
       
+      const requiredEnvVars = {
+        SMTP_HOST: process.env.SMTP_HOST,
+        SMTP_USERNAME: process.env.SMTP_USERNAME,
+        SMTP_PASSWORD: process.env.SMTP_PASSWORD,
+        SMTP_SENDER_EMAIL: process.env.SMTP_SENDER_EMAIL
+      };
+
+      const missingVars = Object.entries(requiredEnvVars)
+        .filter(([_, value]) => !value)
+        .map(([key]) => key);
+
+      if (missingVars.length > 0) {
+        throw new Error(`缺少必要的環境變數: ${missingVars.join(', ')}`);
+      }
+      
       this.transporter = nodemailer.createTransport({
-        host: "email-smtp.ap-northeast-1.amazonaws.com",
+        host: process.env.SMTP_HOST,
         port: 587,
         secure: false,
         auth: {
@@ -36,8 +50,11 @@ export class EmailService {
           pass: process.env.SMTP_PASSWORD
         }
       });
+
+      await this.transporter.verify();
+      
     } catch (error) {
-      logger.error('初始化郵件傳輸器失敗:', error);
+      throw new Error('初始化郵件傳輸器失敗: ' + (error instanceof Error ? error.message : '未知錯誤'));
     }
   }
 
@@ -47,7 +64,6 @@ export class EmailService {
         throw new Error('郵件發送只能在伺服器端執行');
       }
 
-      // 確保 transporter 已初始化
       if (!this.transporter) {
         await this.initializeTransporter();
       }
@@ -56,21 +72,33 @@ export class EmailService {
 
       const emailContent = notification.html;
       const mailOptions = {
-        from: process.env.SMTP_SENDER_EMAIL || process.env.SES_SENDER_EMAIL || process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
+        from: process.env.SMTP_SENDER_EMAIL,
         to: notification.to,
         subject: notification.subject,
         html: emailContent
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      logger.info('成功發送郵件至:', { recipient: notification.to });
-      return { success: true, error: null, messageId: info.messageId };
+      
+      return { 
+        success: true, 
+        error: null, 
+        messageId: info.messageId 
+      };
       
     } catch (error) {
-      logger.error('發送郵件失敗:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      
+      if (errorMessage.includes('535 Authentication')) {
+        return {
+          success: false,
+          error: 'SMTP 認證失敗，請檢查 SMTP 用戶名和密碼是否正確'
+        };
+      }
+      
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : '發送郵件失敗' 
+        error: errorMessage
       };
     }
   }
@@ -94,7 +122,6 @@ export class EmailService {
             return result;
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-            logger.error(`批量發送郵件時發生錯誤: ${errorMessage}`);
             throw new Error(errorMessage);
           }
         })

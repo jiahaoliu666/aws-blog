@@ -20,6 +20,7 @@ export type UseProfilePreferencesReturn = {
   updatePreferences: (newSettings: PreferenceSettings & { userId: string }) => Promise<void>;
   handleSettingChange: (key: string, value: any) => void;
   isLoading: boolean;
+  clearPreferences: () => void;
 };
 
 export const useProfilePreferences = (): UseProfilePreferencesReturn => {
@@ -61,8 +62,14 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
           autoSummarize: response.Item.autoSummarize || false
         };
         setPreferences(newPreferences);
-        // 將資料庫的設定同步到 localStorage
-        localStorage.setItem('userPreferences', JSON.stringify(newPreferences));
+        
+        // 將資料庫的設定同步到 localStorage，並加入時間戳
+        const storageData = {
+          ...newPreferences,
+          timestamp: Date.now(),
+          userId: authUser.id
+        };
+        localStorage.setItem('userPreferences', JSON.stringify(storageData));
       }
     } catch (err) {
       console.error('讀取偏好設定失敗:', err);
@@ -71,9 +78,18 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
       if (localPreferences) {
         try {
           const parsed = JSON.parse(localPreferences);
-          setPreferences(parsed);
+          // 檢查時間戳和用戶ID是否匹配
+          if (parsed.userId === authUser.id && 
+              Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) { // 24小時內的緩存
+            const { theme, language, viewMode, autoSummarize } = parsed;
+            setPreferences({ theme, language, viewMode, autoSummarize });
+          } else {
+            // 清除過期或不匹配的緩存
+            localStorage.removeItem('userPreferences');
+          }
         } catch (e) {
           console.error('解析本地設定失敗:', e);
+          localStorage.removeItem('userPreferences');
         }
       }
     } finally {
@@ -117,11 +133,17 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
         updatedAt: new Date().toISOString()
       };
 
+      // 先更新本地存儲
+      const storageData = {
+        ...updateData,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('userPreferences', JSON.stringify(storageData));
+
       // 轉換設定值為中文的函數
       const getThemeText = (theme: string) => theme === 'light' ? '淺色' : '深色';
       const getLanguageText = (lang: string) => {
-        const normalizedLang = lang.includes('-') ? lang : `${lang}-US`;  // 將 'en' 轉換為 'en-US'
-        
+        const normalizedLang = lang.includes('-') ? lang : `${lang}-US`;
         const langMap: { [key: string]: string } = {
           'zh-TW': '繁體中文',
           'en-US': '英文',
@@ -148,6 +170,7 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
         changes.push(`一鍵總結：${getBooleanText(preferences.autoSummarize)} → ${getBooleanText(newSettings.autoSummarize)}`);
       }
 
+      // 更新資料庫
       await docClient.send(new PutCommand({
         TableName: TABLE_NAME,
         Item: updateData
@@ -160,23 +183,41 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
       }
 
       setPreferences(newSettings);
-      localStorage.setItem('userPreferences', JSON.stringify(newSettings));
-      
       showToast('設定已更新成功！', 'success');
 
-      // 3秒後重新載入頁面
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
-      
     } catch (err) {
       console.error('更新偏好設定失敗:', err);
       showToast('更新設定失敗，請稍後再試', 'error');
+      // 發生錯誤時，清除本地存儲以避免不一致
+      localStorage.removeItem('userPreferences');
       throw err;
     } finally {
       setIsLoading(false);
     }
   }, [showToast, preferences]);
+
+  // 清除偏好設定
+  const clearPreferences = useCallback(() => {
+    localStorage.removeItem('userPreferences');
+    setPreferences({
+      theme: 'light',
+      language: 'zh-TW',
+      viewMode: 'grid',
+      autoSummarize: false
+    });
+  }, []);
+
+  // 監聽登出事件
+  useEffect(() => {
+    const handleLogout = () => {
+      clearPreferences();
+    };
+
+    window.addEventListener('logout', handleLogout);
+    return () => {
+      window.removeEventListener('logout', handleLogout);
+    };
+  }, [clearPreferences]);
 
   // 初始載入設定
   useEffect(() => {
@@ -189,5 +230,6 @@ export const useProfilePreferences = (): UseProfilePreferencesReturn => {
     updatePreferences,
     handleSettingChange,
     isLoading,
+    clearPreferences
   };
 }; 
