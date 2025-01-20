@@ -96,9 +96,11 @@ src/
 │   │   │   └── webhook.ts          // LINE Webhook API
 │   │   │   └── generate-code.ts    // 生成 LINE 驗證碼 API
 │   │   └── discord 
-│   │       └── callback.ts         // Discord 授權回調 API
-│   │       └── auth.ts             // Discord 授權 API
-│   │       └── webhook.ts          // Discord Webhook API
+│   │   │   └── callback.ts         // Discord 授權回調 API
+│   │   │   └── auth.ts             // Discord 授權 API
+│   │   │   └── webhook.ts          // Discord Webhook API
+│   │   └── email
+│   │       └── send.ts            // 發送郵件 API
 │   ├── 404.tsx                     // 404 錯誤頁面
 │   ├── _document.tsx               // 自定義文檔
 ├── hooks----------------------------------------------------------- Hooks
@@ -234,3 +236,8 @@ src/
 ├── templates----------------------------------------------------------- 模板
 │   ├── lineTemplates.ts            // LINE 模板
 │   └── deleteAccountEmail.ts       // 刪除帳戶電子郵件模板
+
+
+
+
+

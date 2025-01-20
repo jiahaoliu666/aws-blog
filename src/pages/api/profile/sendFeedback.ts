@@ -2,27 +2,45 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import nodemailer from 'nodemailer';
 
-// const s3Client = new S3Client({
-//   region: 'ap-northeast-1',
-//   credentials: {
-//     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-//   },
-// });
+interface Attachment {
+  url: string;
+  name: string;
+}
+
+// 創建 S3 客戶端
+const s3Client = new S3Client({
+  region: 'ap-northeast-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+// 創建 SMTP 傳輸器
+const transporter = nodemailer.createTransport({
+  host: 'email-smtp.ap-northeast-1.amazonaws.com',
+  port: 587,
+  secure: false, // 使用 STARTTLS
+  auth: {
+    user: process.env.SMTP_USERNAME,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { title, content, email, image } = req.body;
+  const { title, content, email, category, image, attachments } = req.body;
 
   let imageUrl = '';
+  let attachmentFiles: Attachment[] = [];
 
   try {
+    // 處理單一圖片上傳
     if (image) {
       console.log('Received image for upload');
-      // 確保 image 是 base64 格式，並且去掉前綴
       const buffer = Buffer.from(image.split(',')[1], 'base64');
       console.log('Image buffer length:', buffer.length);
       const params = {
@@ -34,59 +52,93 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const command = new PutObjectCommand(params);
       try {
         console.log('Attempting to upload image to S3');
-        console.log('S3 upload parameters:', params);
-        // await s3Client.send(command);
+        await s3Client.send(command);
         imageUrl = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`;
         console.log('Image uploaded successfully:', imageUrl);
       } catch (s3Error) {
         console.error('S3 upload error:', s3Error);
         throw new Error('Failed to upload image to S3');
       }
-    } else {
-      console.log('No image provided for upload');
     }
-  } catch (error) {
-    console.error('Image processing error:', error);
-    throw new Error('Failed to process image');
-  }
 
-  // 使用 nodemailer 發送電子郵件
-  const transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-      user: process.env.GMAIL_USER, // 確保這裡的用戶名正確
-      pass: process.env.GMAIL_PASS, // 確保這裡的密碼或應用專用密碼正確
-    },
-  });
+    // 處理多個附件
+    if (attachments && Array.isArray(attachments)) {
+      attachmentFiles = attachments;
+    }
 
-  const mailOptions = {
-    from: email,
-    to: 'awsblogfeedback@gmail.com', // 替換為接收反饋的電子郵件
-    subject: `標題: ${title}`,
-    text: `
-      Feedback from: ${email}
-      Title: ${title}
-      Content: ${content}
-      Image URL: ${imageUrl ? imageUrl : 'No image provided'}
-    `,
-    html: `
-      <h2>AWS Blog 365 反饋內容</h2>
-      <p><strong>寄件人：</strong> ${email}</p>
-      <p><strong>標題：</strong> ${title}</p>
-      <p><strong>內容：</strong></p>
-      <p>${content}</p>
-      ${imageUrl ? `<p><strong>圖片：</strong></p><img src="${imageUrl}" alt="Feedback Image" style="max-width: 100%; height: auto;" />` : '<p><strong>圖片：</strong>未提供</p>'}
-    `,
-  };
+    // 準備郵件內容
+    const mailOptions = {
+      from: process.env.SMTP_SENDER_EMAIL || 'no-reply@awsblog365.com',
+      to: 'awsblogfeedback@gmail.com',
+      subject: `[用戶反饋] ${category}: ${title}`,
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #232f3e; margin: 0;">AWS Blog 365 用戶反饋</h1>
+              </div>
+              
+              <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                <h2 style="color: #232f3e; margin-top: 0;">反饋內容</h2>
+                <p style="line-height: 1.6;"><strong>標題：</strong> ${title}</p>
+                <p style="line-height: 1.6;"><strong>類別：</strong> ${category}</p>
+                <p style="line-height: 1.6;"><strong>內容：</strong></p>
+                <p style="line-height: 1.6;">${content}</p>
+                
+                ${imageUrl || attachmentFiles.length > 0 ? `
+                  <div style="margin-top: 20px;">
+                    <p style="line-height: 1.6;"><strong>附件：</strong></p>
+                    ${imageUrl ? `
+                      <div style="margin-bottom: 10px;">
+                        <img src="${imageUrl}" alt="Feedback Image" style="max-width: 100%; height: auto;" />
+                      </div>
+                    ` : ''}
+                    ${attachmentFiles.length > 0 ? `
+                      <ul style="line-height: 1.6;">
+                        ${attachmentFiles.map((file, index) => `
+                          <li>
+                            <a href="${file.url}" style="color: #0066c0;">${file.name}</a>
+                          </li>
+                        `).join('')}
+                      </ul>
+                    ` : ''}
+                  </div>
+                ` : ''}
+              </div>
 
-  try {
+              <div style="background-color: #ffffff; padding: 20px; border-radius: 6px;">
+                <h2 style="color: #232f3e; margin-top: 0;">用戶資訊</h2>
+                <p style="line-height: 1.6;"><strong>電子郵件：</strong>${email}</p>
+                <p style="line-height: 1.6;"><strong>提交時間：</strong>${new Date().toLocaleString()}</p>
+              </div>
+
+              <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
+              <div style="text-align: center; color: #666; font-size: 14px;">
+                <p>此為系統自動發送郵件，請勿直接回覆</p>
+                <p style="margin-top: 10px;">AWS Blog 365 團隊敬上</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+
+    // 發送郵件
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: 'Feedback sent successfully' });
+    
+    res.status(200).json({ 
+      message: 'Feedback sent successfully',
+      success: true,
+      imageUrl: imageUrl || null,
+      attachments: attachmentFiles
+    });
   } catch (error) {
-    const err = error as Error;
-    console.error('Error sending feedback:', err);
-    // 添加更多的錯誤信息
-    console.error('Error details:', err.stack);
-    res.status(500).json({ message: 'Error sending feedback', error: err.message });
+    console.error('Error sending feedback:', error);
+    res.status(500).json({ 
+      message: 'Error sending feedback', 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      success: false
+    });
   }
 }

@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { User } from '@/types/userType';
 import { logger } from '@/utils/logger';
-import { toast } from 'react-toastify';
 import logActivity from '@/pages/api/profile/activity-log';
 import { useToastContext } from '@/context/ToastContext';
 
@@ -54,14 +52,6 @@ export const useProfileFeedback = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
-  const sesClient = new SESClient({
-    region: 'ap-northeast-1',
-    credentials: {
-      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-    },
-  });
-
   const s3Client = new S3Client({
     region: 'ap-northeast-1',
     credentials: {
@@ -74,30 +64,30 @@ export const useProfileFeedback = ({
 
   const validateFeedback = (data: FeedbackData): boolean => {
     if (!data.title.trim()) {
-      toast.error('請輸入標題');
+      showToast('請輸入標題', 'error');
       return false;
     }
 
     if (!data.content.trim()) {
-      toast.error('請輸入反饋內容');
+      showToast('請輸入反饋內容', 'error');
       return false;
     }
 
     if (data.content.length > 500) {
-      toast.error('反饋內容不能超過500個字');
+      showToast('反饋內容不能超過500個字', 'error');
       return false;
     }
 
     if (!data.category) {
-      toast.error('請選擇反饋類別');
+      showToast('請選擇反饋類別', 'error');
       return false;
     }
 
     return true;
   };
 
-  const uploadAttachments = async (files: File[]): Promise<string[]> => {
-    const uploadedUrls: string[] = [];
+  const uploadAttachments = async (files: File[]): Promise<Array<{ url: string; name: string }>> => {
+    const uploadedFiles: Array<{ url: string; name: string }> = [];
 
     for (const file of files) {
       if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
@@ -134,7 +124,10 @@ export const useProfileFeedback = ({
 
         // 構建公開訪問 URL
         const publicUrl = `https://aws-blog-feedback.s3.ap-northeast-1.amazonaws.com/${fileKey}`;
-        uploadedUrls.push(publicUrl);
+        uploadedFiles.push({
+          url: publicUrl,
+          name: file.name
+        });
         
         console.log('File uploaded successfully:', publicUrl);
       } catch (error) {
@@ -143,7 +136,7 @@ export const useProfileFeedback = ({
       }
     }
 
-    return uploadedUrls;
+    return uploadedFiles;
   };
 
   const handleSubmitFeedback = async (submitData: {
@@ -152,8 +145,12 @@ export const useProfileFeedback = ({
     category: string;
     attachments: File[];
   }) => {
-    if (!user?.sub) {
+    if (!user?.email) {
       showToast('請先登入', 'error');
+      return;
+    }
+
+    if (!validateFeedback(submitData)) {
       return;
     }
 
@@ -162,75 +159,39 @@ export const useProfileFeedback = ({
       setFeedbackMessage('正在提交反饋...');
 
       // 上傳附件
-      let attachmentUrls: string[] = [];
+      let attachmentFiles: Array<{ url: string; name: string }> = [];
       if (submitData.attachments?.length > 0) {
-        attachmentUrls = await uploadAttachments(submitData.attachments);
+        try {
+          attachmentFiles = await uploadAttachments(submitData.attachments);
+          console.log('附件上傳成功:', attachmentFiles);
+        } catch (uploadError) {
+          console.error('附件上傳失敗:', uploadError);
+          showToast('附件上傳失敗，請稍後重試', 'error');
+          throw uploadError;
+        }
       }
 
-      // 發送郵件
-      const command = new SendEmailCommand({
-        Destination: {
-          ToAddresses: ['awsblogfeedback@gmail.com'],
+      // 發送反饋到 API 端點
+      const response = await fetch('/api/profile/sendFeedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        Message: {
-          Body: {
-            Html: {
-              Data: `
-                <html>
-                  <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
-                      <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #232f3e; margin: 0;">AWS Blog 365 用戶反饋</h1>
-                      </div>
-                      
-                      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-                        <h2 style="color: #232f3e; margin-top: 0;">反饋內容</h2>
-                        <p style="line-height: 1.6;"><strong>標題：</strong> ${submitData.title}</p>
-                        <p style="line-height: 1.6;"><strong>類別：</strong> ${submitData.category}</p>
-                        <p style="line-height: 1.6;"><strong>內容：</strong></p>
-                        <p style="line-height: 1.6;">${submitData.content}</p>
-                        
-                        ${attachmentUrls.length > 0 ? `
-                          <div style="margin-top: 20px;">
-                            <p style="line-height: 1.6;"><strong>附件：</strong></p>
-                            <ul style="line-height: 1.6;">
-                              ${attachmentUrls.map((url, index) => {
-                                const fileName = submitData.attachments[index].name;
-                                return `<li><a href="${url}" style="color: #0066c0;">${fileName}</a></li>`;
-                              }).join('')}
-                            </ul>
-                          </div>
-                        ` : ''}
-                      </div>
-
-                      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px;">
-                        <h2 style="color: #232f3e; margin-top: 0;">用戶資訊</h2>
-                        <p style="line-height: 1.6;"><strong>用戶 ID：</strong>${user?.sub}</p>
-                        <p style="line-height: 1.6;"><strong>電子郵件：</strong>${user?.email}</p>
-                        <p style="line-height: 1.6;"><strong>用戶名稱：</strong>${user?.username}</p>
-                        <p style="line-height: 1.6;"><strong>提交時間：</strong>${new Date().toLocaleString()}</p>
-                      </div>
-
-                      <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
-                      <div style="text-align: center; color: #666; font-size: 14px;">
-                        <p>此為系統自動發送郵件，請勿直接回覆</p>
-                        <p style="margin-top: 10px;">AWS Blog 365 團隊敬上</p>
-                      </div>
-                    </div>
-                  </body>
-                </html>
-              `
-            }
-          },
-          Subject: {
-            Data: `[用戶反饋] ${submitData.category}: ${submitData.title}`
-          }
-        },
-        Source: process.env.NEXT_PUBLIC_SES_SENDER_EMAIL || 'no-reply@awsblog365.com',
+        body: JSON.stringify({
+          title: submitData.title,
+          content: submitData.content,
+          category: submitData.category,
+          email: user.email,
+          attachments: attachmentFiles
+        }),
       });
 
-      await sesClient.send(command);
-      
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '提交反饋失敗');
+      }
+
       // 記錄用戶活動
       await logActivity(user.sub, '成功提交意見反饋');
       
@@ -271,7 +232,7 @@ export const useProfileFeedback = ({
     const validFiles = files.filter(file => {
       const isValid = file.type === 'image/jpeg' || file.type === 'image/png';
       if (!isValid) {
-        toast.error(`${file.name} 格式不支援，僅支援 JPEG 和 PNG 格式`);
+        showToast(`${file.name} 格式不支援，僅支援 JPEG 和 PNG 格式`, 'error');
       }
       return isValid;
     });
@@ -280,7 +241,7 @@ export const useProfileFeedback = ({
       // 確保總數不超過限制
       const newAttachments = [...attachments, ...validFiles].slice(0, MAX_ATTACHMENTS);
       setAttachments(newAttachments);
-      toast.success(`成功添加 ${validFiles.length} 個附件`);
+      showToast(`成功添加 ${validFiles.length} 個附件`, 'success');
     }
   };
 
