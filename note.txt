@@ -82,6 +82,8 @@ npx tsx src/lambda/updateArchitecture.ts
 npx tsx src/lambda/updateKnowledge.ts
 
 npx tsx src/lambda/updateAllContent.ts
+
+npx tsx src/lambda/lambda_updateAllContent.ts
 --------
 
 獲取資料表info值
