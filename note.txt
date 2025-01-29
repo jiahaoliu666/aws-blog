@@ -11,7 +11,6 @@ src/hooks/favorite/useFetchFavorite.ts
 src/hooks/favorite/useFavoriteFavorites.ts
 src/hooks/favorite/useFavoritePageLogic.ts
 --------
-
 discord 通知
 src/lambda/updateAllContent.ts
 src/services/discordService.ts
