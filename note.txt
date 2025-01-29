@@ -1,6 +1,5 @@
 
 --------
-
 全部收藏
 src/types/favoriteTypes.ts
 src/pages/api/favorite/index.ts
