@@ -10,7 +10,6 @@ src/pages/favorite/index.tsx
 src/hooks/favorite/useFetchFavorite.ts
 src/hooks/favorite/useFavoriteFavorites.ts
 src/hooks/favorite/useFavoritePageLogic.ts
-
 --------
 
 discord 通知
